@@ -25,7 +25,7 @@ backend/storage/logs/*
 !backend/storage/logs/.gitignore
 
 # Demo credentials (sensitive)
-Demo_NIC_Credentials.md
+# Demo_NIC_Credentials.md
 
 # IDE and OS
 .idea/
