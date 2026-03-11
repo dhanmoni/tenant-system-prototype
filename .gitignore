@@ -1,0 +1,45 @@
+# Dependencies
+backend/vendor/
+frontend/node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Build / cache
+frontend/dist/
+frontend/dist-ssr/
+backend/bootstrap/cache/*
+!backend/bootstrap/cache/.gitignore
+backend/storage/framework/cache/data/*
+!backend/storage/framework/cache/data/.gitignore
+backend/storage/framework/sessions/*
+!backend/storage/framework/sessions/.gitignore
+backend/storage/framework/views/*
+!backend/storage/framework/views/.gitignore
+backend/storage/logs/*
+!backend/storage/logs/.gitignore
+
+# Demo credentials (sensitive)
+Demo_NIC_Credentials.md
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs and debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# PHP
+*.phpunit.result.cache
