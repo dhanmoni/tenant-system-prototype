@@ -66,6 +66,7 @@ function Admin({ user }) {
       await api.post('/api/states', stateForm)
       setStateForm({ name: '' })
       setSuccess('State created.')
+      setTimeout(() => setSuccess(''), 3000)
       await loadAll()
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to create state')
@@ -92,6 +93,7 @@ function Admin({ user }) {
         district_head_id: '',
       })
       setSuccess('District created.')
+      setTimeout(() => setSuccess(''), 3000)
       await loadAll()
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to create district')
@@ -122,6 +124,7 @@ function Admin({ user }) {
         reports_to_user_id: '',
       })
       setSuccess('User created.')
+      setTimeout(() => setSuccess(''), 3000)
       await loadAll()
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to create user')
