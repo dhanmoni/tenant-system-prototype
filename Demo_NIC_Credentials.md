@@ -58,23 +58,19 @@
      - **Apply for Tenancy Certificate** – Multi-step tenancy application form.
      - **Status** – List and view status of own tenancy applications.
 
-4. **Staff roles (Director, Assistant Director, District Head, District Assistant)**
-   - **Dashboard** – Welcome and sign-in info.
+4. **Staff roles (Staff, Director, Assistant Director, District Head, District Assistant)**
+   - **Dashboard** – Welcome, staff email, and sign-in info.
+   - **Application Status** – View tenancy applications (filtered by office/user).
    - **State Management** – List/manage states.
    - **District Management** – List/manage districts.
-   - **Office Management**
-     - **Office** – List/manage offices.
-     - **Designation** – List/manage designations.
-   - **Role Management** – List/manage roles.
-   - **User Management**
-     - **Office user** – Users by office.
-     - **User** – Tenant users.
+   - **User Management** – View user list (Office user / User), open user detail to **update** or **delete** users (no create, approve, or block).
 
 5. **System admin only**
-   - All staff features above, plus:
-   - **User Management** (full CRUD, approve, block).
+   - Dashboard (with stats and quick actions), Application Status, State Management, District Management, plus:
+   - **Office Management** – Office, Designation.
+   - **Role Management** – List/manage roles.
+   - **User Management** – Office user, User (full CRUD, approve, block).
    - **User Activity Log** – View activity logs.
-   - **States, Districts, Designations, Roles, Offices** – Full create/edit/delete.
    - **Admin (/admin)** – Admin-specific UI (if used).
 
 6. **Other routes**
@@ -99,29 +95,49 @@
 
 All passwords below are: **`password`**
 
-| Role                  | Email                   | Password  |
-|-----------------------|-------------------------|-----------|
-| System Admin          | admin@nic.in            | password  |
-| Director              | director@nic.in         | password  |
-| Assistant Director    | assistant.director@nic.in| password  |
-| District Head         | district.head@nic.in     | password  |
-| District Assistant    | district.assistant@nic.in| password  |
-| Tenant Owner          | tenant@nic.in           | password  |
-| User (tenant owner)   | user1@gmail.com         | password  |
+### Staff dashboard
+
+To use the **staff dashboard** (Staff, Director, Assistant Director, District Head, District Assistant), log in with any of these:
+
+| Role               | Email                      | Password  |
+|--------------------|----------------------------|-----------|
+| Staff              | staff@nic.in               | password  |
+| Director           | director@nic.in            | password  |
+| Assistant Director | assistant.director@nic.in  | password  |
+| District Head      | district.head@nic.in       | password  |
+| District Assistant | district.assistant@nic.in  | password  |
+
+The staff dashboard shows your **staff email** and role, today’s date/time, and Application Status, State Management, District Management, and **User Management** (view, update, delete users).
+
+### All roles
+
+| Role                  | Email                     | Password  |
+|-----------------------|---------------------------|-----------|
+| System Admin          | admin@nic.in              | password  |
+| Staff                 | staff@nic.in              | password  |
+| Director              | director@nic.in           | password  |
+| Assistant Director    | assistant.director@nic.in | password  |
+| District Head         | district.head@nic.in      | password  |
+| District Assistant    | district.assistant@nic.in | password  |
+| Tenant Owner          | tenant@nic.in             | password  |
+| Landlord / Owner      | landlord@nic.in           | password  |
+| User (tenant owner)   | user1@gmail.com           | password  |
 
 ---
 
 ## Quick reference – login table
 
-| Role               | Email                    | Password  |
-|--------------------|--------------------------|-----------|
-| System Admin       | `admin@nic.in`           | `password`|
-| Director           | `director@nic.in`        | `password`|
-| Assistant Director | `assistant.director@nic.in` | `password`|
-| District Head      | `district.head@nic.in`  | `password`|
-| District Assistant | `district.assistant@nic.in` | `password`|
-| Tenant Owner       | `tenant@nic.in`          | `password`|
-| User               | `user1@gmail.com`        | `password`|
+| Role               | Email                      | Password   |
+|--------------------|----------------------------|------------|
+| System Admin       | `admin@nic.in`             | `password` |
+| Staff (staff)       | `staff@nic.in`             | `password` |
+| Director (staff)    | `director@nic.in`          | `password` |
+| Assistant Director (staff) | `assistant.director@nic.in` | `password` |
+| District Head (staff) | `district.head@nic.in`   | `password` |
+| District Assistant (staff) | `district.assistant@nic.in` | `password` |
+| Tenant Owner       | `tenant@nic.in`            | `password` |
+| Landlord / Owner   | `landlord@nic.in`          | `password` |
+| User               | `user1@gmail.com`          | `password` |
 
 ---
 

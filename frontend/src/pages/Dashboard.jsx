@@ -1,5 +1,18 @@
 import { useEffect, useState } from 'react'
+import {
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend,
+	ArcElement,
+} from 'chart.js'
+import { Bar, Doughnut } from 'react-chartjs-2'
 import api, { csrf } from '../api'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement)
 
 function Dashboard({ user, onLogout }) {
 	const [activePanel, setActivePanel] = useState('welcome')
@@ -71,6 +84,11 @@ function Dashboard({ user, onLogout }) {
 	const [activityUserQuery, setActivityUserQuery] = useState('')
 	const [activityFrom, setActivityFrom] = useState('')
 	const [activityTo, setActivityTo] = useState('')
+	const [adminStats, setAdminStats] = useState(null)
+	const [adminStatsLoading, setAdminStatsLoading] = useState(false)
+	const [staffStats, setStaffStats] = useState(null)
+	const [staffStatsLoading, setStaffStatsLoading] = useState(false)
+	const [adminRecentActivity, setAdminRecentActivity] = useState([])
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [profileType, setProfileType] = useState('')
@@ -383,6 +401,24 @@ function Dashboard({ user, onLogout }) {
 		}
 	}
 
+	const loadAdminDashboard = async () => {
+		if (user?.role !== 'system_admin') return
+		setAdminStatsLoading(true)
+		setError('')
+		try {
+			const [statsRes, activityRes] = await Promise.all([
+				api.get('/api/dashboard-stats'),
+				api.get('/api/activity-logs', { params: { page: 1 } }),
+			])
+			setAdminStats(statsRes.data || null)
+			setAdminRecentActivity(activityRes.data?.data || [])
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to load dashboard')
+		} finally {
+			setAdminStatsLoading(false)
+		}
+	}
+
 	const loadProfile = async () => {
 		setError('')
 		setSuccess('')
@@ -399,11 +435,13 @@ function Dashboard({ user, onLogout }) {
 			setProfileAddress(profileUser.address || '')
 			setProfilePin(profileUser.pin_code || '')
 			setProfilePan(profileUser.pan_card || '')
-			if (profileUser.user_passport_photo_path) {
+			const photoUrl = profileUser.passport_photo_url
+			const photoPath = profileUser.passport_photo_path || profileUser.user_passport_photo_path
+			if (photoUrl) {
+				setProfilePhotoPreview(photoUrl)
+			} else if (photoPath) {
 				const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-				setProfilePhotoPreview(
-					`${baseUrl}/storage/${profileUser.user_passport_photo_path}`
-				)
+				setProfilePhotoPreview(`${baseUrl}/storage/${photoPath}`)
 			} else {
 				setProfilePhotoPreview('')
 			}
@@ -413,7 +451,7 @@ function Dashboard({ user, onLogout }) {
 					profileUser.address &&
 					profileUser.pin_code &&
 					profileUser.pan_card &&
-					profileUser.user_passport_photo_path
+					(photoUrl || photoPath)
 				)
 			)
 		} catch (err) {
@@ -431,10 +469,10 @@ function Dashboard({ user, onLogout }) {
 			await csrf()
 			const formData = new FormData()
 			formData.append('_method', 'PUT')
-			formData.append('profile_type', profileType)
-			formData.append('address', profileAddress)
-			formData.append('pin_code', profilePin)
-			formData.append('pan_card', profilePan)
+			formData.append('profile_type', (profileType || '').trim())
+			formData.append('address', (profileAddress || '').trim())
+			formData.append('pin_code', (profilePin || '').trim().slice(0, 6))
+			formData.append('pan_card', (profilePan || '').trim().toUpperCase().slice(0, 10))
 			if (profilePhoto) {
 				formData.append('passport_photo', profilePhoto)
 			}
@@ -444,11 +482,13 @@ function Dashboard({ user, onLogout }) {
 			setProfileAddress(profileUser.address || '')
 			setProfilePin(profileUser.pin_code || '')
 			setProfilePan(profileUser.pan_card || '')
-			if (profileUser.user_passport_photo_path) {
+			const photoUrl = profileUser.passport_photo_url
+			const photoPath = profileUser.passport_photo_path || profileUser.user_passport_photo_path
+			if (photoUrl) {
+				setProfilePhotoPreview(photoUrl)
+			} else if (photoPath) {
 				const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-				setProfilePhotoPreview(
-					`${baseUrl}/storage/${profileUser.user_passport_photo_path}`
-				)
+				setProfilePhotoPreview(`${baseUrl}/storage/${photoPath}`)
 			} else {
 				setProfilePhotoPreview('')
 			}
@@ -456,15 +496,12 @@ function Dashboard({ user, onLogout }) {
 			setSuccess('Profile saved successfully.')
 			setProfileEditing(false)
 		} catch (err) {
-			const message =
-				err?.response?.data?.message ||
-				err?.response?.data?.errors?.profile_type?.[0] ||
-				err?.response?.data?.errors?.address?.[0] ||
-				err?.response?.data?.errors?.pin_code?.[0] ||
-				err?.response?.data?.errors?.pan_card?.[0] ||
-				err?.response?.data?.errors?.passport_photo?.[0] ||
-				'Failed to save profile'
-			setError(message)
+			const data = err?.response?.data
+			const errors = data?.errors || {}
+			const firstError =
+				errors.profile_type?.[0] || errors.address?.[0] || errors.pin_code?.[0] ||
+				errors.pan_card?.[0] || errors.passport_photo?.[0]
+			setError(firstError || data?.message || 'Failed to save profile')
 		}
 	}
 
@@ -525,7 +562,26 @@ function Dashboard({ user, onLogout }) {
 		if (activePanel === 'tenancy-certificate') {
 			loadTenancyOffices()
 		}
-	}, [activePanel])
+		if (activePanel === 'welcome' && user?.role === 'system_admin') {
+			loadAdminDashboard()
+		}
+		if (activePanel === 'welcome' && user?.role !== 'tenant owner' && user?.role !== 'system_admin') {
+			loadStaffDashboard()
+		}
+	}, [activePanel, user?.role])
+
+	const loadStaffDashboard = async () => {
+		setStaffStatsLoading(true)
+		setError('')
+		try {
+			const { data } = await api.get('/api/staff-dashboard-stats')
+			setStaffStats(data || null)
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to load dashboard')
+		} finally {
+			setStaffStatsLoading(false)
+		}
+	}
 
 	const loadStatusApplications = async (page = 1) => {
 		setStatusLoading(true)
@@ -534,11 +590,16 @@ function Dashboard({ user, onLogout }) {
 			const { data } = await api.get('/api/tenancy-applications/my', {
 				params: { page },
 			})
-			setStatusApplications(data.data || [])
-			setStatusPage(data.current_page || 1)
-			setStatusTotalPages(data.last_page || 1)
+			// Handle Laravel paginator { data: [], current_page, last_page } or plain array
+			const list = Array.isArray(data) ? data : (data?.data ?? [])
+			setStatusApplications(list)
+			setStatusPage(Number(data?.current_page) || 1)
+			setStatusTotalPages(Number(data?.last_page) || 1)
 		} catch (err) {
 			setError(err?.response?.data?.message || 'Failed to load applications')
+			setStatusApplications([])
+			setStatusPage(1)
+			setStatusTotalPages(1)
 		} finally {
 			setStatusLoading(false)
 		}
@@ -722,194 +783,271 @@ function Dashboard({ user, onLogout }) {
 				!!profilePhotoPreview
 
 			return (
-				<div className="auth-card dashboard-card">
-					<h1>Profile</h1>
-					<p className="muted">Complete Your Profile.</p>
-					{profileLoading ? <div className="muted">Loading profile...</div> : null}
+				<div className="auth-card dashboard-card profile-page">
+					<div className="profile-page-header">
+						<h1>Profile</h1>
+						<p className="muted">
+							{hasProfile && !profileEditing
+								? 'View and manage your account details.'
+								: 'Complete or update your profile information.'}
+						</p>
+					</div>
+					{profileLoading ? (
+						<div className="profile-loading">Loading profile…</div>
+					) : null}
 					{error ? <div className="error">{error}</div> : null}
 					{success ? <div className="admin-success">{success}</div> : null}
-					{hasProfile && !profileEditing ? (
+					{!profileLoading && hasProfile && !profileEditing ? (
 						<div className="profile-summary">
-							<div className="profile-summary-grid">
-								<div className="profile-summary-item profile-summary-type">
-									<span className="profile-summary-label">Are you a</span>
-									<span className="profile-summary-value">
-										{profileType === 'landlord' ? 'Landlord' : 'Tenant'}
-									</span>
-								</div>
-								<div className="profile-summary-item profile-summary-name">
-									<span className="profile-summary-label">Name</span>
-									<span className="profile-summary-value">{profileName}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-email">
-									<span className="profile-summary-label">Email</span>
-									<span className="profile-summary-value">{profileEmail}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-phone">
-									<span className="profile-summary-label">Phone</span>
-									<span className="profile-summary-value">{profilePhone}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-address">
-									<span className="profile-summary-label">Address</span>
-									<span className="profile-summary-value">{profileAddress}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-district">
-									<span className="profile-summary-label">District</span>
-									<span className="profile-summary-value">{profileDistrict}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-state">
-									<span className="profile-summary-label">State</span>
-									<span className="profile-summary-value">{profileState}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-pin">
-									<span className="profile-summary-label">PIN Code</span>
-									<span className="profile-summary-value">{profilePin}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-pan">
-									<span className="profile-summary-label">PAN Card</span>
-									<span className="profile-summary-value">{profilePan}</span>
-								</div>
-								<div className="profile-summary-item profile-summary-photo">
-									<span className="profile-summary-label">Passport Photo</span>
+							<div className="profile-hero">
+								<div className="profile-avatar-wrap">
 									{profilePhotoPreview ? (
 										<img
 											src={profilePhotoPreview}
-											alt="Passport"
-											className="profile-photo-preview"
+											alt=""
+											className="profile-avatar-img"
 										/>
 									) : (
-										<span className="profile-summary-value">Not uploaded</span>
+										<div className="profile-avatar-placeholder">
+											<span className="profile-avatar-initial">
+												{profileName ? profileName.trim().charAt(0).toUpperCase() : '?'}
+											</span>
+										</div>
 									)}
 								</div>
+								<h2 className="profile-hero-name">{profileName}</h2>
+								<span
+									className={`profile-type-badge ${profileType === 'landlord' ? 'landlord' : 'tenant'}`}
+								>
+									{profileType === 'landlord' ? 'Landlord' : 'Tenant'}
+								</span>
+								<p className="profile-hero-email">{profileEmail}</p>
 							</div>
-							<button
-								type="button"
-								onClick={() => {
-									setProfileEditing(true)
-									setSuccess('')
-									setError('')
-								}}
-							>
-								Edit Profile
-							</button>
+							<div className="profile-section">
+								<h3 className="profile-section-title">Personal details</h3>
+								<div className="profile-summary-grid">
+									<div className="profile-summary-item">
+										<span className="profile-summary-label">Name</span>
+										<span className="profile-summary-value">{profileName}</span>
+									</div>
+									<div className="profile-summary-item">
+										<span className="profile-summary-label">Email</span>
+										<span className="profile-summary-value">{profileEmail}</span>
+									</div>
+									<div className="profile-summary-item">
+										<span className="profile-summary-label">Phone</span>
+										<span className="profile-summary-value">{profilePhone || '—'}</span>
+									</div>
+								</div>
+							</div>
+							<div className="profile-section">
+								<h3 className="profile-section-title">Address</h3>
+								<div className="profile-summary-grid">
+									<div className="profile-summary-item profile-summary-address-full">
+										<span className="profile-summary-label">Address</span>
+										<span className="profile-summary-value">{profileAddress}</span>
+									</div>
+									<div className="profile-summary-item">
+										<span className="profile-summary-label">District</span>
+										<span className="profile-summary-value">{profileDistrict || '—'}</span>
+									</div>
+									<div className="profile-summary-item">
+										<span className="profile-summary-label">State</span>
+										<span className="profile-summary-value">{profileState || '—'}</span>
+									</div>
+									<div className="profile-summary-item">
+										<span className="profile-summary-label">PIN Code</span>
+										<span className="profile-summary-value">{profilePin}</span>
+									</div>
+								</div>
+							</div>
+							<div className="profile-section">
+								<h3 className="profile-section-title">Identity</h3>
+								<div className="profile-summary-grid">
+									<div className="profile-summary-item">
+										<span className="profile-summary-label">PAN Card</span>
+										<span className="profile-summary-value">{profilePan}</span>
+									</div>
+								</div>
+							</div>
+							<div className="profile-actions">
+								<button
+									type="button"
+									className="profile-edit-btn"
+									onClick={() => {
+										setProfileEditing(true)
+										setSuccess('')
+										setError('')
+									}}
+								>
+									Edit Profile
+								</button>
+							</div>
 						</div>
-					) : (
+					) : !profileLoading ? (
 						<form onSubmit={handleProfileSubmit} className="profile-form">
-							<fieldset className="profile-type-row">
-								<legend>Are you a</legend>
-								<label>
-									<input
-										type="radio"
-										name="profile_type"
-										value="landlord"
-										checked={profileType === 'landlord'}
-										onChange={(e) => setProfileType(e.target.value)}
+							<div className="profile-form-section profile-form-section-photo">
+								<h3 className="profile-section-title">Profile photo</h3>
+								<div className="profile-upload-wrap">
+									<div className="profile-upload-preview">
+										{profilePhotoPreview ? (
+											<img src={profilePhotoPreview} alt="" className="profile-avatar-img" />
+										) : (
+											<div className="profile-avatar-placeholder">
+												<span className="profile-avatar-initial">
+													{profileName ? profileName.trim().charAt(0).toUpperCase() : '?'}
+												</span>
+											</div>
+										)}
+									</div>
+									<label className="profile-upload-label">
+										<input
+											type="file"
+											accept="image/png, image/jpeg"
+											required={!profilePhotoPreview}
+											onChange={(e) => {
+												const file = e.target.files?.[0] || null
+												setProfilePhoto(file)
+												if (file) {
+													const reader = new FileReader()
+													reader.onload = () =>
+														setProfilePhotoPreview(reader.result?.toString() || '')
+													reader.readAsDataURL(file)
+												} else {
+													setProfilePhotoPreview('')
+												}
+											}}
+											className="profile-upload-input"
+										/>
+										<span className="profile-upload-btn">
+											{profilePhotoPreview ? 'Change photo' : 'Upload photo'}
+										</span>
+									</label>
+									<p className="profile-upload-hint">Passport size. PNG or JPEG.</p>
+								</div>
+							</div>
+							<div className="profile-form-section">
+								<h3 className="profile-section-title">Profile type</h3>
+								<fieldset className="profile-type-row">
+									<legend className="sr-only">Are you a</legend>
+									<label>
+										<input
+											type="radio"
+											name="profile_type"
+											value="landlord"
+											checked={profileType === 'landlord'}
+											onChange={(e) => setProfileType(e.target.value)}
+											required
+										/>
+										Landlord
+									</label>
+									<label>
+										<input
+											type="radio"
+											name="profile_type"
+											value="tenant"
+											checked={profileType === 'tenant'}
+											onChange={(e) => setProfileType(e.target.value)}
+											required
+										/>
+										Tenant
+									</label>
+								</fieldset>
+							</div>
+							<div className="profile-form-section">
+								<h3 className="profile-section-title">Personal details</h3>
+								<label className="profile-field profile-field-name">
+									Name
+									<input type="text" value={profileName} readOnly required />
+								</label>
+								<label className="profile-field profile-field-email">
+									Email
+									<input type="email" value={profileEmail} readOnly required />
+								</label>
+								<label className="profile-field profile-field-phone">
+									Phone
+									<input type="text" value={profilePhone} readOnly required />
+								</label>
+								<label className="profile-field profile-field-state">
+									State
+									<input type="text" value={profileState} readOnly required />
+								</label>
+								<label className="profile-field profile-field-district">
+									District
+									<input type="text" value={profileDistrict} readOnly required />
+								</label>
+							</div>
+							<div className="profile-form-section">
+								<h3 className="profile-section-title">Address</h3>
+								<label className="profile-field profile-field-address">
+									Address
+									<textarea
+										rows="4"
+										value={profileAddress}
+										onChange={(e) => setProfileAddress(e.target.value)}
+										maxLength={500}
 										required
 									/>
-									Landlord
 								</label>
-								<label>
+								<label className="profile-field profile-field-pin">
+									PIN Code
 									<input
-										type="radio"
-										name="profile_type"
-										value="tenant"
-										checked={profileType === 'tenant'}
-										onChange={(e) => setProfileType(e.target.value)}
+										type="text"
+										inputMode="numeric"
+										value={profilePin}
+										onChange={(e) => {
+											const nextValue = e.target.value
+											if (/^\d*$/.test(nextValue)) {
+												setProfilePin(nextValue)
+											}
+										}}
+										pattern="^\d{6}$"
+										title="Enter a 6 digit PIN code."
+										maxLength={6}
 										required
 									/>
-									Tenant
 								</label>
-							</fieldset>
-							<label className="profile-field profile-field-name">
-								Name
-								<input type="text" value={profileName} readOnly required />
-							</label>
-							<label className="profile-field profile-field-email">
-								Email
-								<input type="email" value={profileEmail} readOnly required />
-							</label>
-							<label className="profile-field profile-field-phone">
-								Phone
-								<input type="text" value={profilePhone} readOnly required />
-							</label>
-							<label className="profile-field profile-field-state">
-								State
-								<input type="text" value={profileState} readOnly required />
-							</label>
-							<label className="profile-field profile-field-district">
-								District
-								<input type="text" value={profileDistrict} readOnly required />
-							</label>
-							<label className="profile-field profile-field-address">
-								Address
-								<textarea
-									rows="4"
-									value={profileAddress}
-									onChange={(e) => setProfileAddress(e.target.value)}
-									maxLength={500}
-									required
-								/>
-							</label>
-							<label className="profile-field profile-field-pin">
-								PIN Code
-								<input
-									type="text"
-									inputMode="numeric"
-									value={profilePin}
-									onChange={(e) => {
-										const nextValue = e.target.value
-										if (/^\d*$/.test(nextValue)) {
-											setProfilePin(nextValue)
-										}
-									}}
-									pattern="^\d{6}$"
-									title="Enter a 6 digit PIN code."
-									maxLength={6}
-									required
-								/>
-							</label>
-							<label className="profile-field profile-field-pan">
-								PAN Card
-								<input
-									type="text"
-									value={profilePan}
-									onChange={(e) => {
-										const nextValue = e.target.value.toUpperCase()
-										if (/^[A-Z0-9]*$/.test(nextValue)) {
-											setProfilePan(nextValue)
-										}
-									}}
-									pattern="^[A-Z]{5}[0-9]{4}[A-Z]$"
-									title="Enter a valid PAN (e.g. ABCDE1234F)."
-									maxLength={10}
-									required
-								/>
-							</label>
-							<label className="profile-field profile-field-photo">
-								Passport size photograph
-								<input
-									type="file"
-									accept="image/png, image/jpeg"
-									required={!profilePhotoPreview}
-									onChange={(e) => {
-										const file = e.target.files?.[0] || null
-										setProfilePhoto(file)
-										if (file) {
-											const reader = new FileReader()
-											reader.onload = () =>
-												setProfilePhotoPreview(reader.result?.toString() || '')
-											reader.readAsDataURL(file)
-										} else {
-											setProfilePhotoPreview('')
-										}
-									}}
-								/>
-							</label>
-							<button type="submit" disabled={profileLoading}>
-								{profileLoading ? 'Saving...' : 'Save Profile'}
-							</button>
+							</div>
+							<div className="profile-form-section">
+								<h3 className="profile-section-title">Identity</h3>
+								<label className="profile-field profile-field-pan">
+									PAN Card
+									<input
+										type="text"
+										value={profilePan}
+										onChange={(e) => {
+											const nextValue = e.target.value.toUpperCase()
+											if (/^[A-Z0-9]*$/.test(nextValue)) {
+												setProfilePan(nextValue)
+											}
+										}}
+										pattern="^[A-Z]{5}[0-9]{4}[A-Z]$"
+										title="Enter a valid PAN (e.g. ABCDE1234F)."
+										maxLength={10}
+										required
+									/>
+								</label>
+							</div>
+							<div className="profile-form-actions">
+								<button type="submit" className="profile-save-btn" disabled={profileLoading}>
+									{profileLoading ? 'Saving…' : 'Save Profile'}
+								</button>
+								{hasProfile ? (
+									<button
+										type="button"
+										className="secondary"
+										onClick={() => {
+											setProfileEditing(false)
+											setSuccess('')
+											setError('')
+										}}
+									>
+										Cancel
+									</button>
+								) : null}
+							</div>
 						</form>
-					)}
+					) : null}
 				</div>
 			)
 		}
@@ -1646,10 +1784,11 @@ function Dashboard({ user, onLogout }) {
 				return roleName !== 'tenant owner' && roleName !== 'tenant_owner'
 			})
 
+			const isStaff = user?.role !== 'tenant owner' && user?.role !== 'system_admin'
 			return (
 				<div className="auth-card dashboard-card">
-					<h1>{userListMode === 'tenant' ? 'User List' : 'Add User'}</h1>
-					{userListMode !== 'tenant' ? (
+					<h1>{userListMode === 'tenant' ? 'User List' : isStaff ? 'User Management' : 'Add User'}</h1>
+					{userListMode !== 'tenant' && user?.role === 'system_admin' ? (
 						<>
 							<p className="muted">
 								Create a user. Default password is <strong>Test@123</strong>.
@@ -2497,8 +2636,10 @@ function Dashboard({ user, onLogout }) {
 					}
 					const formData = new FormData()
 					formData.append('registration_date', tenancyRegistrationDate)
-					formData.append('office_id', tenancyOfficeId || '')
-					formData.append('apply_type', applyType)
+					if (tenancyOfficeId) {
+						formData.append('office_id', tenancyOfficeId)
+					}
+					formData.append('apply_type', applyType || 'Individual')
 					formData.append('landlord_name', landlordName)
 					formData.append('landlord_address', landlordAddress)
 					formData.append('landlord_email', landlordEmail)
@@ -2514,23 +2655,23 @@ function Dashboard({ user, onLogout }) {
 					formData.append('tenant_email', tenantEmail)
 					formData.append('tenant_phone', tenantPhone)
 					formData.append('tenant_pan', tenantPan)
-					formData.append('tenant_previous_tenancy', tenantPreviousTenancy)
+					formData.append('tenant_previous_tenancy', tenantPreviousTenancy || '')
 					formData.append('property_possession_date', propertyPossessionDate)
-					formData.append('property_rent_payable', propertyRentPayable)
+					formData.append('property_rent_payable', String(Number(propertyRentPayable) || 0))
 					formData.append(
 						'property_premises_description',
 						propertyPremisesDescription
 					)
 					formData.append(
 						'property_furniture_description',
-						propertyFurnitureDescription
+						propertyFurnitureDescription || ''
 					)
-					formData.append('property_charge_electricity', propertyChargeElectricity)
-					formData.append('property_charge_water', propertyChargeWater)
-					formData.append('property_charge_furnishing', propertyChargeFurnishing)
+					formData.append('property_charge_electricity', propertyChargeElectricity || '')
+					formData.append('property_charge_water', propertyChargeWater || '')
+					formData.append('property_charge_furnishing', propertyChargeFurnishing || '')
 					formData.append(
 						'property_charge_other_services',
-						propertyChargeOtherServices
+						propertyChargeOtherServices || ''
 					)
 					formData.append('property_tenancy_duration', propertyTenancyDuration)
 					if (agreementFile) {
@@ -2574,25 +2715,88 @@ function Dashboard({ user, onLogout }) {
 					setEditingApplicationId(null)
 					setSuccess('Application submitted successfully.')
 				} catch (err) {
-					setError(err?.response?.data?.message || 'Failed to submit application')
+					const data = err?.response?.data
+					const errors = data?.errors
+					let msg = data?.message || 'Failed to submit application'
+					if (errors && typeof errors === 'object') {
+						const list = Object.entries(errors).flatMap(([field, messages]) =>
+							(Array.isArray(messages) ? messages : [messages]).map((m) => `${field}: ${m}`)
+						)
+						if (list.length) msg = list.join('. ')
+					}
+					setError(msg)
 				} finally {
 					setTenancySubmitting(false)
 				}
 			}
 
 			const tenancySteps = [
-				{ id: 1, label: 'Registration And Applying Office Details' },
+				{ id: 1, label: 'Registration & Office' },
 				{ id: 2, label: 'Tenancy Details' },
 				{ id: 3, label: 'Property Details' },
 				{ id: 4, label: 'Uploads' },
 				{ id: 5, label: 'Preview' },
-				{ id: 6, label: 'Finish' },
+				{ id: 6, label: 'Submit' },
+			]
+
+			const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
+			const criteriaList = [
+				{
+					met: !!tenancyRegistrationDate && !registrationTooOld,
+					text: 'Tenancy agreement must be registered within the last 3 months.',
+				},
+				{
+					met: !!applyType && (applyType === 'Joint' || applyType === 'Individual'),
+					text: applyType
+						? `Application type: ${applyType} (${applyType === 'Joint' ? 'registered within 2 months' : 'registered 2–3 months ago'}).`
+						: 'Application type will be Joint (≤2 months) or Individual (2–3 months) based on registration date.',
+				},
+				{ met: !!tenancyOfficeId, text: 'Applying office must be selected.' },
 			]
 
 			return (
-				<div className="auth-card dashboard-card">
-					<h1>Apply for Tenancy Certificate</h1>
-					<p className="muted">Start a new tenancy certificate application.</p>
+				<div className="auth-card dashboard-card tenancy-certificate-page">
+					<div className="tenancy-page-header">
+						<h1>Apply for Tenancy Certificate</h1>
+						<p className="muted">
+							Ensure you meet the eligibility criteria below before applying. The process follows the Rent Control Act provisions.
+						</p>
+					</div>
+					<div className="tenancy-criteria-box">
+						<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
+						<p className="tenancy-criteria-intro">
+							You may apply only if the following conditions are satisfied:
+						</p>
+						<ul className="tenancy-criteria-list">
+							{criteriaList.map((item, i) => (
+								<li key={i} className={item.met ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
+									<span className="tenancy-criteria-icon" aria-hidden>{item.met ? '✓' : '○'}</span>
+									<span>{item.text}</span>
+								</li>
+							))}
+						</ul>
+						{tenancyRegistrationDate && (
+							<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
+								{eligibilityMet ? (
+									<>
+										<strong>You are eligible</strong> to apply. Application type: <strong>{applyType}</strong>. You may proceed to the next step.
+									</>
+								) : registrationTooOld ? (
+									<>
+										<strong>Not eligible.</strong> Registration date is more than 3 months old. You cannot apply for a tenancy certificate as per the rules.
+									</>
+								) : null}
+							</div>
+						)}
+					</div>
+					<div className="tenancy-required-docs">
+						<h3 className="tenancy-docs-title">Required documents</h3>
+						<ul>
+							<li>Registered tenancy agreement (PDF)</li>
+							<li>Passport-size photographs (landlord and tenant)</li>
+							<li>Signatures (landlord and tenant)</li>
+						</ul>
+					</div>
 					{error ? <div className="error">{error}</div> : null}
 					<div className="tenancy-steps">
 						{tenancySteps.map((step, index) => {
@@ -2640,9 +2844,10 @@ function Dashboard({ user, onLogout }) {
 					>
 						{tenancyStep === 1 ? (
 							<>
+								<h3 className="tenancy-step-heading">Step 1: Registration & applying office</h3>
 								<label>
 									<span className="label-text required">
-										Date of registration
+										Date of registration (of tenancy agreement)
 									</span>
 									<input
 										type="date"
@@ -2693,6 +2898,7 @@ function Dashboard({ user, onLogout }) {
 						) : null}
 						{tenancyStep === 2 ? (
 							<>
+								<h3 className="tenancy-step-heading">Step 2: Landlord, manager & tenant details</h3>
 								<fieldset className="tenancy-fieldset">
 									<legend className="tenancy-legend-italic">
 										Landlord Details
@@ -2870,6 +3076,7 @@ function Dashboard({ user, onLogout }) {
 						) : null}
 						{tenancyStep === 3 ? (
 							<>
+								<h3 className="tenancy-step-heading">Step 3: Property details</h3>
 								<fieldset className="tenancy-fieldset">
 									<legend>Property Details</legend>
 									<label>
@@ -2987,6 +3194,7 @@ function Dashboard({ user, onLogout }) {
 						) : null}
 						{tenancyStep === 4 ? (
 							<>
+								<h3 className="tenancy-step-heading">Step 4: Document uploads</h3>
 								<fieldset className="tenancy-fieldset">
 									<legend>Uploads</legend>
 									<label className="tenancy-field-full">
@@ -3108,6 +3316,7 @@ function Dashboard({ user, onLogout }) {
 						) : null}
 						{tenancyStep === 5 ? (
 							<>
+								<h3 className="tenancy-step-heading">Step 5: Preview & verify</h3>
 								<div className="tenancy-preview">
 									<h2>Preview</h2>
 									<div className="tenancy-preview-section">
@@ -3460,14 +3669,617 @@ function Dashboard({ user, onLogout }) {
 			)
 		}
 
-		return (
-			<div className="auth-card dashboard-card">
-				<h1>Welcome</h1>
-				<p className="muted">You are signed in as:</p>
-				<div className="user-pill">
-					<strong>{user?.name}</strong>
-					<span>{user?.email}</span>
+		// Tenant owner: full dashboard with dummy overview and flow
+		if (user?.role === 'tenant owner') {
+			const dummyStats = [
+				{ label: 'Total Applications', value: 2, icon: 'documents' },
+				{ label: 'Under Process', value: 1, icon: 'clock' },
+				{ label: 'Approved', value: 1, icon: 'check' },
+			]
+			const DashboardIcon = ({ name, className = '' }) => {
+				const icons = {
+					documents: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+							<polyline points="14 2 14 8 20 8" />
+							<line x1="16" y1="13" x2="8" y2="13" />
+							<line x1="16" y1="17" x2="8" y2="17" />
+							<polyline points="10 9 9 9 8 9" />
+						</svg>
+					),
+					clock: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<circle cx="12" cy="12" r="10" />
+							<polyline points="12 6 12 12 16 14" />
+						</svg>
+					),
+					check: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+							<polyline points="22 4 12 14.01 9 11.01" />
+						</svg>
+					),
+					user: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+							<circle cx="12" cy="7" r="4" />
+						</svg>
+					),
+					documentPlus: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+							<polyline points="14 2 14 8 20 8" />
+							<line x1="12" y1="18" x2="12" y2="12" />
+							<line x1="9" y1="15" x2="15" y2="15" />
+						</svg>
+					),
+					status: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					),
+					list: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<line x1="8" y1="6" x2="21" y2="6" />
+							<line x1="8" y1="12" x2="21" y2="12" />
+							<line x1="8" y1="18" x2="21" y2="18" />
+							<line x1="3" y1="6" x2="3.01" y2="6" />
+							<line x1="3" y1="12" x2="3.01" y2="12" />
+							<line x1="3" y1="18" x2="3.01" y2="18" />
+						</svg>
+					),
+					welcome: (
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+							<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+							<polyline points="9 22 9 12 15 12 15 22" />
+						</svg>
+					),
+				}
+				return icons[name] || null
+			}
+			const dummyRecentApplications = [
+				{ id: 'dummy-1', application_no: 'TEN-20250311-001', registration_date: '2025-03-01', status: 'Under process', current_with: 'District Office' },
+				{ id: 'dummy-2', application_no: 'TEN-20250305-002', registration_date: '2025-02-28', status: 'Approved', current_with: '-' },
+			]
+			return (
+				<div className="dashboard-home">
+					<div className="auth-card dashboard-card dashboard-welcome-card">
+						<h1 className="dashboard-title-with-icon">
+							<DashboardIcon name="welcome" className="dashboard-heading-icon" />
+							Welcome
+						</h1>
+						<p className="muted">You are signed in as:</p>
+						<div className="user-pill">
+							<strong>{user?.name}</strong>
+							<span>{user?.email}</span>
+						</div>
+						<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
+							Log out
+						</button>
+					</div>
+					<div className="dashboard-overview-cards">
+						{dummyStats.map((stat) => (
+							<div key={stat.label} className="dashboard-stat-card">
+								<span className="dashboard-stat-icon-wrap">
+									<DashboardIcon name={stat.icon} className="dashboard-stat-icon" />
+								</span>
+								<span className="dashboard-stat-value">{stat.value}</span>
+								<span className="dashboard-stat-label">{stat.label}</span>
+							</div>
+						))}
+					</div>
+					<div className="auth-card dashboard-card">
+						<h2 className="dashboard-section-title">
+							<DashboardIcon name="status" className="dashboard-section-icon" />
+							Quick actions
+						</h2>
+						<p className="muted">Access your profile and tenancy services.</p>
+						<div className="dashboard-quick-actions">
+							<button
+								type="button"
+								className="dashboard-action-btn"
+								onClick={() => {
+									setActivePanel('profile')
+									loadProfile()
+								}}
+							>
+								<DashboardIcon name="user" className="dashboard-action-icon" />
+								View / Edit Profile
+							</button>
+							<button
+								type="button"
+								className="dashboard-action-btn"
+								onClick={() => {
+									setActivePanel('tenancy-certificate')
+									loadTenancyOffices()
+									resetTenancyForm()
+								}}
+							>
+								<DashboardIcon name="documentPlus" className="dashboard-action-icon" />
+								Apply for Tenancy Certificate
+							</button>
+							<button
+								type="button"
+								className="dashboard-action-btn"
+								onClick={() => {
+									setActivePanel('status')
+									loadStatusApplications(1)
+								}}
+							>
+								<DashboardIcon name="list" className="dashboard-action-icon" />
+								View Application Status
+							</button>
+						</div>
+					</div>
+					<div className="auth-card dashboard-card">
+						<h2 className="dashboard-section-title">
+							<DashboardIcon name="list" className="dashboard-section-icon" />
+							Recent applications
+						</h2>
+						<p className="muted">Your latest tenancy certificate applications (demo data).</p>
+						<div className="admin-table-wrapper">
+							<table className="admin-table status-table">
+								<thead>
+									<tr>
+										<th>Application No</th>
+										<th>Registration Date</th>
+										<th>Status</th>
+										<th>Current With</th>
+										<th className="table-actions-head">Actions</th>
+									</tr>
+								</thead>
+								<tbody>
+									{dummyRecentApplications.map((app) => (
+										<tr key={app.id}>
+											<td>{app.application_no}</td>
+											<td>{app.registration_date}</td>
+											<td>
+												<span className="dashboard-status-cell">
+													{app.status === 'Approved' ? (
+														<DashboardIcon name="check" className="dashboard-status-icon dashboard-status-icon--success" />
+													) : (
+														<DashboardIcon name="clock" className="dashboard-status-icon dashboard-status-icon--pending" />
+													)}
+													{app.status}
+												</span>
+											</td>
+											<td>{app.current_with}</td>
+											<td className="table-actions">
+												<button
+													type="button"
+													onClick={() => {
+														setActivePanel('status')
+														loadStatusApplications(1)
+													}}
+												>
+													View
+												</button>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+						<p className="muted" style={{ marginTop: 12, marginBottom: 0 }}>
+							Use <strong>Status</strong> in the menu to see your real applications.
+						</p>
+					</div>
 				</div>
+			)
+		}
+
+		// Staff dashboard home (director, assistant_director, district_head, district_assistant) – stats, charts, quick actions
+		if (user?.role !== 'tenant owner' && user?.role !== 'system_admin') {
+			const StaffIcon = ({ name, className = '' }) => {
+				const icons = {
+					chart: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+					</svg>
+					),
+					users: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+					</svg>
+					),
+					file: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+					</svg>
+					),
+				}
+				return icons[name] || null
+			}
+			const s = staffStats || {}
+			const staffStatCards = [
+				{ label: 'States', value: s.states_count, icon: 'chart' },
+				{ label: 'Districts', value: s.districts_count, icon: 'chart' },
+				{ label: 'Users', value: s.users_count, icon: 'users' },
+				{ label: 'Applications', value: s.applications_count, icon: 'file' },
+			]
+			const staffQuickActions = [
+				{ label: 'Application Status', panel: 'status', load: () => { setError(''); setSuccess(''); loadStatusApplications(1) } },
+				{ label: 'State Management', panel: 'state', load: () => loadStates(1) },
+				{ label: 'District Management', panel: 'district', load: () => { loadStates(1); loadDistricts(1) } },
+				{ label: 'User Management (Office)', panel: 'user', load: () => { setUserListMode('office'); setError(''); setSuccess(''); loadAllOffices(); loadAllDesignations(); loadAllRoles(); loadUsers() } },
+				{ label: 'User Management (Tenants)', panel: 'user', load: () => { setUserListMode('tenant'); setError(''); setSuccess(''); loadAllOffices(); loadAllDesignations(); loadAllRoles(); loadUsers() } },
+			]
+			return (
+				<div className="dashboard-home staff-dashboard-home">
+					<div className="auth-card dashboard-card dashboard-welcome-card">
+						<h1 className="dashboard-title-with-icon">Staff dashboard</h1>
+						<p className="muted">You are signed in as:</p>
+						<div className="user-pill">
+							<strong>{user?.name}</strong>
+							<span className="staff-email-row">
+								<span className="muted">Staff email:</span> {user?.email}
+							</span>
+							{user?.role && <span className="user-pill-role">{user.role.replace(/_/g, ' ')}</span>}
+						</div>
+						<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
+							Log out
+						</button>
+					</div>
+					{staffStatsLoading ? (
+						<div className="dashboard-stats-loading">Loading dashboard…</div>
+					) : (
+						<>
+							<div className="dashboard-overview-cards admin-stats-cards staff-stats-cards">
+								{staffStatCards.map((card) => (
+									<div key={card.label} className="dashboard-stat-card">
+										<span className="dashboard-stat-icon-wrap">
+											<StaffIcon name={card.icon} className="dashboard-stat-icon" />
+										</span>
+										<span className="dashboard-stat-value">{card.value ?? '—'}</span>
+										<span className="dashboard-stat-label">{card.label}</span>
+									</div>
+								))}
+							</div>
+							{staffStats && (
+								<div className="dashboard-charts-row">
+									<div className="auth-card dashboard-card dashboard-chart-card">
+										<h2 className="dashboard-section-title">Overview</h2>
+										<p className="muted">States, districts, users, and applications (your scope).</p>
+										<div className="dashboard-chart-wrap">
+											<Bar
+												data={{
+													labels: ['States', 'Districts', 'Users', 'Applications'],
+													datasets: [{
+														label: 'Count',
+														data: [
+															s.states_count ?? 0,
+															s.districts_count ?? 0,
+															s.users_count ?? 0,
+															s.applications_count ?? 0,
+														],
+														backgroundColor: [
+															'rgba(13, 71, 161, 0.85)',
+															'rgba(13, 71, 161, 0.7)',
+															'rgba(13, 71, 161, 0.75)',
+															'rgba(94, 208, 124, 0.85)',
+														],
+														borderColor: ['#0d47a1', '#0d47a1', '#0d47a1', '#5ed07c'],
+														borderWidth: 1,
+													}],
+												}}
+												options={{
+													responsive: true,
+													maintainAspectRatio: false,
+													plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+													scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+												}}
+											/>
+										</div>
+									</div>
+									<div className="auth-card dashboard-card dashboard-chart-card">
+										<h2 className="dashboard-section-title">Applications by status</h2>
+										<p className="muted">Tenancy applications (your office / account).</p>
+										<div className="dashboard-chart-wrap dashboard-chart-wrap--doughnut">
+											{Object.keys(s.applications_by_status || {}).length > 0 ? (
+												<Doughnut
+													data={{
+														labels: Object.keys(s.applications_by_status || {}),
+														datasets: [{
+															data: Object.values(s.applications_by_status || {}),
+															backgroundColor: [
+																'rgba(13, 71, 161, 0.85)',
+																'rgba(94, 208, 124, 0.85)',
+																'rgba(255, 193, 7, 0.85)',
+																'rgba(244, 67, 54, 0.85)',
+																'rgba(158, 158, 158, 0.85)',
+															],
+															borderWidth: 1,
+														}],
+													}}
+													options={{
+														responsive: true,
+														maintainAspectRatio: false,
+														plugins: { legend: { position: 'bottom' } },
+													}}
+												/>
+											) : (
+												<p className="muted">No applications yet.</p>
+											)}
+										</div>
+									</div>
+								</div>
+							)}
+							<div className="auth-card dashboard-card staff-info-card">
+								<h2 className="dashboard-section-title">Quick actions</h2>
+								<p className="muted">Jump to management screens. All links open the correct panel.</p>
+								<div className="staff-quick-actions-grid">
+									{staffQuickActions.map((action, idx) => (
+										<button
+											key={idx}
+											type="button"
+											className="dashboard-action-btn"
+											onClick={() => {
+												setActivePanel(action.panel)
+												action.load()
+											}}
+										>
+											{action.label}
+										</button>
+									))}
+								</div>
+							</div>
+							<div className="auth-card dashboard-card staff-info-card">
+								<h2 className="dashboard-section-title">About</h2>
+								<p className="muted">You can manage states, districts, and users (view, update, delete). Creating users, offices, roles, designations, and activity log are for system administrators.</p>
+							</div>
+						</>
+					)}
+				</div>
+			)
+		}
+
+		// Admin dashboard home (system_admin only) – stats, charts, quick actions, activity
+		const AdminIcon = ({ name, className = '' }) => {
+			const icons = {
+				chart: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+					</svg>
+				),
+				users: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+					</svg>
+				),
+				building: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01" /><path d="M9 12v.01" /><path d="M9 15v.01" /><path d="M9 18v.01" />
+					</svg>
+				),
+				file: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+					</svg>
+				),
+				activity: (
+					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+						<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+					</svg>
+				),
+			}
+			return icons[name] || null
+		}
+		const stats = adminStats || {}
+		const statCards = [
+			{ label: 'States', value: stats.states_count, icon: 'chart' },
+			{ label: 'Districts', value: stats.districts_count, icon: 'chart' },
+			{ label: 'Offices', value: stats.offices_count, icon: 'building' },
+			{ label: 'Users', value: stats.users_count, icon: 'users' },
+			{ label: 'Roles', value: stats.roles_count, icon: 'file' },
+			{ label: 'Designations', value: stats.designations_count, icon: 'file' },
+			{ label: 'Tenancy applications', value: stats.applications_count, icon: 'file' },
+		]
+		const quickLinks = [
+			{ label: 'State Management', panel: 'state', icon: 'chart', load: () => { loadStates(1) } },
+			{ label: 'District Management', panel: 'district', icon: 'chart', load: () => { loadStates(1); loadDistricts(1) } },
+			{ label: 'Office Management', panel: 'office', icon: 'building', load: () => { loadAllStates(); loadAllDistricts(); loadOffices(1) } },
+			{ label: 'Designation', panel: 'designation', icon: 'file', load: () => loadDesignations(1) },
+			{ label: 'Role Management', panel: 'role', icon: 'file', load: () => loadRoles(1) },
+			{ label: 'User Management', panel: 'user', icon: 'users', load: () => loadUsers() },
+			{ label: 'Activity Log', panel: 'user-activity-log', icon: 'activity', load: () => { loadActivityUsers(); loadActivityLogs(1) } },
+		]
+		const formatActivityTime = (str) => {
+			if (!str) return '—'
+			try {
+				const d = new Date(str)
+				return Number.isNaN(d.getTime()) ? str : d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+			} catch {
+				return str
+			}
+		}
+		return (
+			<div className="dashboard-home admin-dashboard-home">
+				<div className="auth-card dashboard-card dashboard-welcome-card">
+					<h1 className="dashboard-title-with-icon">
+						<AdminIcon name="chart" className="dashboard-heading-icon" />
+						Admin dashboard
+					</h1>
+					<p className="muted">You are signed in as:</p>
+					<div className="user-pill">
+						<strong>{user?.name}</strong>
+						<span>{user?.email}</span>
+						{user?.role && <span className="user-pill-role">{user.role.replace(/_/g, ' ')}</span>}
+					</div>
+					<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
+						Log out
+					</button>
+				</div>
+				{adminStatsLoading ? (
+					<div className="dashboard-stats-loading">Loading dashboard…</div>
+				) : (
+					<>
+						<div className="dashboard-overview-cards admin-stats-cards">
+							{statCards.map((card) => (
+								<div key={card.label} className="dashboard-stat-card">
+									<span className="dashboard-stat-icon-wrap">
+										<AdminIcon name={card.icon} className="dashboard-stat-icon" />
+									</span>
+									<span className="dashboard-stat-value">{card.value ?? '—'}</span>
+									<span className="dashboard-stat-label">{card.label}</span>
+								</div>
+							))}
+						</div>
+						{adminStats && (
+							<div className="dashboard-charts-row">
+								<div className="auth-card dashboard-card dashboard-chart-card">
+									<h2 className="dashboard-section-title">Overview (counts)</h2>
+									<p className="muted">Entities in the system.</p>
+									<div className="dashboard-chart-wrap">
+										<Bar
+											data={{
+												labels: ['States', 'Districts', 'Offices', 'Users', 'Roles', 'Designations', 'Applications'],
+												datasets: [{
+													label: 'Count',
+													data: [
+														stats.states_count ?? 0,
+														stats.districts_count ?? 0,
+														stats.offices_count ?? 0,
+														stats.users_count ?? 0,
+														stats.roles_count ?? 0,
+														stats.designations_count ?? 0,
+														stats.applications_count ?? 0,
+													],
+													backgroundColor: [
+														'rgba(13, 71, 161, 0.8)',
+														'rgba(13, 71, 161, 0.7)',
+														'rgba(13, 71, 161, 0.6)',
+														'rgba(13, 71, 161, 0.75)',
+														'rgba(13, 71, 161, 0.65)',
+														'rgba(13, 71, 161, 0.55)',
+														'rgba(94, 208, 124, 0.8)',
+													],
+													borderColor: ['#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#5ed07c'],
+													borderWidth: 1,
+												}],
+											}}
+											options={{
+												responsive: true,
+												maintainAspectRatio: false,
+												plugins: {
+													legend: { display: false },
+													tooltip: { mode: 'index', intersect: false },
+												},
+												scales: {
+													y: { beginAtZero: true, ticks: { stepSize: 1 } },
+												},
+											}}
+										/>
+									</div>
+								</div>
+								<div className="auth-card dashboard-card dashboard-chart-card">
+									<h2 className="dashboard-section-title">Applications by status</h2>
+									<p className="muted">Tenancy certificate applications.</p>
+									<div className="dashboard-chart-wrap dashboard-chart-wrap--doughnut">
+										{Object.keys(stats.applications_by_status || {}).length > 0 ? (
+											<Doughnut
+												data={{
+													labels: Object.keys(stats.applications_by_status || {}),
+													datasets: [{
+														data: Object.values(stats.applications_by_status || {}),
+														backgroundColor: [
+															'rgba(13, 71, 161, 0.85)',
+															'rgba(27, 94, 32, 0.85)',
+															'rgba(245, 124, 0, 0.85)',
+															'rgba(198, 40, 40, 0.85)',
+															'rgba(94, 208, 124, 0.85)',
+														],
+														borderColor: '#fff',
+														borderWidth: 2,
+													}],
+												}}
+												options={{
+													responsive: true,
+													maintainAspectRatio: false,
+													plugins: {
+														legend: { position: 'bottom' },
+														tooltip: { mode: 'index' },
+													},
+												}}
+											/>
+										) : (
+											<div className="dashboard-chart-empty">No application data yet.</div>
+										)}
+									</div>
+								</div>
+							</div>
+						)}
+						<div className="auth-card dashboard-card">
+							<h2 className="dashboard-section-title">
+								<AdminIcon name="activity" className="dashboard-section-icon" />
+								Quick actions
+							</h2>
+							<p className="muted">Jump to management sections.</p>
+							<div className="dashboard-quick-actions">
+								{quickLinks.map((link) => (
+									<button
+										key={link.panel}
+										type="button"
+										className="dashboard-action-btn"
+										onClick={() => {
+											link.load()
+											setActivePanel(link.panel)
+											setError('')
+											setSuccess('')
+										}}
+									>
+										<AdminIcon name={link.icon} className="dashboard-action-icon" />
+										{link.label}
+									</button>
+								))}
+							</div>
+						</div>
+						<div className="auth-card dashboard-card">
+							<h2 className="dashboard-section-title">
+								<AdminIcon name="activity" className="dashboard-section-icon" />
+								Recent activity
+							</h2>
+							<p className="muted">Latest user actions and sign-ins.</p>
+							{adminRecentActivity.length === 0 ? (
+								<p className="muted">No recent activity.</p>
+							) : (
+								<div className="admin-table-wrapper">
+									<table className="admin-table">
+										<thead>
+											<tr>
+												<th>User</th>
+												<th>Action</th>
+												<th>Time</th>
+											</tr>
+										</thead>
+										<tbody>
+											{adminRecentActivity.slice(0, 5).map((log, idx) => (
+												<tr key={log.id || idx}>
+													<td>{log.user?.name || log.user_name || '—'}</td>
+													<td>{log.action || '—'}</td>
+													<td>{formatActivityTime(log.logged_at || log.created_at)}</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							)}
+							<button
+								type="button"
+								className="dashboard-action-btn"
+								style={{ marginTop: 12 }}
+								onClick={() => {
+									loadActivityUsers()
+									loadActivityLogs(1)
+									setActivePanel('user-activity-log')
+								}}
+							>
+								View full activity log
+							</button>
+						</div>
+					</>
+				)}
 			</div>
 		)
 	}
@@ -3475,6 +4287,7 @@ function Dashboard({ user, onLogout }) {
 	return (
 		<section className="dashboard-layout">
 			<aside className="dashboard-menu">
+				<h2>Menu</h2>
 				<nav className="dashboard-links">
 					<a
 						className="dashboard-link"
@@ -3501,14 +4314,15 @@ function Dashboard({ user, onLogout }) {
 								Profile
 							</a>
 							<a
-								className="dashboard-link"
+								className="dashboard-link dashboard-link-expandable"
 								href="#services-menu"
 								onClick={(e) => {
 									e.preventDefault()
 									setServicesMenuOpen((prev) => !prev)
 								}}
 							>
-								Services
+								<span>Services</span>
+								<span className={`dashboard-link-chevron ${servicesMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
 							</a>
 							{servicesMenuOpen ? (
 								<div className="dashboard-submenu">
@@ -3541,7 +4355,96 @@ function Dashboard({ user, onLogout }) {
 							) : null}
 						</>
 					) : null}
-					{user?.role !== 'tenant owner' ? (
+					{user?.role !== 'tenant owner' && user?.role !== 'system_admin' ? (
+						<>
+							<a
+								className="dashboard-link"
+								href="#status"
+								onClick={(e) => {
+									e.preventDefault()
+									setActivePanel('status')
+									loadStatusApplications(1)
+									setError('')
+									setSuccess('')
+								}}
+							>
+								Application Status
+							</a>
+							<a
+								className="dashboard-link"
+								href="#state"
+								onClick={(e) => {
+									e.preventDefault()
+									setActivePanel('state')
+									loadStates(1)
+								}}
+							>
+								State Management
+							</a>
+							<a
+								className="dashboard-link"
+								href="#district"
+								onClick={(e) => {
+									e.preventDefault()
+									setActivePanel('district')
+									loadStates(1)
+									loadDistricts(1)
+								}}
+							>
+								District Management
+							</a>
+							<a
+								className="dashboard-link dashboard-link-expandable"
+								href="#staff-user-menu"
+								onClick={(e) => {
+									e.preventDefault()
+									setUserMenuOpen((prev) => !prev)
+								}}
+							>
+								<span>User Management</span>
+								<span className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
+							</a>
+							{userMenuOpen ? (
+								<div className="dashboard-submenu">
+									<a
+										className="dashboard-link"
+										href="#office-user"
+										onClick={(e) => {
+											e.preventDefault()
+											setActivePanel('user')
+											setUserListMode('office')
+											setError('')
+											setSuccess('')
+											loadAllOffices()
+											loadAllDesignations()
+											loadAllRoles()
+											loadUsers()
+										}}
+									>
+										Office user
+									</a>
+									<a
+										className="dashboard-link"
+										href="#user"
+										onClick={(e) => {
+											e.preventDefault()
+											setActivePanel('user')
+											setUserListMode('tenant')
+											setError('')
+											setSuccess('')
+											loadAllOffices()
+											loadAllDesignations()
+											loadAllRoles()
+											loadUsers()
+										}}
+									>
+										User
+									</a>
+								</div>
+							) : null}
+						</>
+					) : null}
+					{user?.role === 'system_admin' ? (
 						<>
 							<a
 								className="dashboard-link"
@@ -3567,14 +4470,15 @@ function Dashboard({ user, onLogout }) {
 								District Management
 							</a>
 							<a
-								className="dashboard-link"
+								className="dashboard-link dashboard-link-expandable"
 								href="#office-menu"
 								onClick={(e) => {
 									e.preventDefault()
 									setOfficeMenuOpen((prev) => !prev)
 								}}
 							>
-								Office Management
+								<span>Office Management</span>
+								<span className={`dashboard-link-chevron ${officeMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
 							</a>
 							{officeMenuOpen ? (
 								<div className="dashboard-submenu">
@@ -3622,14 +4526,15 @@ function Dashboard({ user, onLogout }) {
 								Role Management
 							</a>
 							<a
-								className="dashboard-link"
+								className="dashboard-link dashboard-link-expandable"
 								href="#user-menu"
 								onClick={(e) => {
 									e.preventDefault()
 									setUserMenuOpen((prev) => !prev)
 								}}
 							>
-								User Management
+								<span>User Management</span>
+								<span className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
 							</a>
 							{userMenuOpen ? (
 								<div className="dashboard-submenu">

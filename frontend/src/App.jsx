@@ -108,31 +108,33 @@ function App() {
 				</div>
 			</header>
 
-			{/* Green Navigation Bar */}
-			<div className="globalnav">
-				<div className="globalnav-inner">
-					<nav className={user ? 'nav-auth' : undefined}>
-						{!user ? (
-							<>
-								<Link to="/">Home</Link>
-								<Link to="/#login">Login</Link>
-								<Link to="/#register">Register</Link>
-								{/*<Link to="/policies">Policies</Link>*/}
-								<Link to="/contact">Contact Us</Link>
-							</>
-						) : (
-							<>
-								<span className="topbar-welcome">Welcome {user.name}</span>
-								<div className="nav-actions">
-									<button className="nav-link" type="button" onClick={handleLogout}>
-										Logout
-									</button>
-								</div>
-							</>
-						)}
-					</nav>
+			{/* Green Navigation Bar – hidden on dashboard (welcome & logout are in dashboard) */}
+			{!(user && location.pathname === '/dashboard') && (
+				<div className="globalnav">
+					<div className="globalnav-inner">
+						<nav className={user ? 'nav-auth' : undefined}>
+							{!user ? (
+								<>
+									<Link to="/">Home</Link>
+									<Link to="/#login">Login</Link>
+									<Link to="/#register">Register</Link>
+									{/*<Link to="/policies">Policies</Link>*/}
+									<Link to="/contact">Contact Us</Link>
+								</>
+							) : (
+								<>
+									<span className="topbar-welcome">Welcome {user.name}</span>
+									<div className="nav-actions">
+										<button className="nav-link" type="button" onClick={handleLogout}>
+											Logout
+										</button>
+									</div>
+								</>
+							)}
+						</nav>
+					</div>
 				</div>
-			</div>
+			)}
 
 			{showCarousel ? (
 				<section className="carousel" aria-label="Tenant and owner highlights">

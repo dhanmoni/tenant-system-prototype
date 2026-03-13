@@ -14,6 +14,9 @@ const api = axios.create({
   withCredentials: true,
   xsrfCookieName: 'XSRF-TOKEN',
   xsrfHeaderName: 'X-XSRF-TOKEN',
+  headers: {
+    Accept: 'application/json',
+  },
 })
 
 export const csrf = () => api.get('/sanctum/csrf-cookie')

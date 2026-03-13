@@ -276,8 +276,9 @@ function UserDetail({ user: currentUser }) {
             {user.created_at ? new Date(user.created_at).toLocaleString() : '-'}
           </div>
         </label>
-        {String(user.role || '').toLowerCase().trim() === 'tenant owner' ||
-        String(user.role || '').toLowerCase().trim() === 'tenant_owner' ? (
+        {currentUser?.role === 'system_admin' &&
+        (String(user.role || '').toLowerCase().trim() === 'tenant owner' ||
+          String(user.role || '').toLowerCase().trim() === 'tenant_owner') ? (
           <label>
             Block user
             <label className="toggle-switch">
@@ -323,7 +324,7 @@ function UserDetail({ user: currentUser }) {
             <button type="button" onClick={() => setEditMode(true)}>
               Edit
             </button>
-            {!user.approved_at ? (
+            {currentUser?.role === 'system_admin' && !user.approved_at ? (
               <button type="button" onClick={handleApprove}>
                 Approve
               </button>

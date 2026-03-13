@@ -23,6 +23,16 @@
   --nic-card-shadow: 0 4px 6px rgba(50,50,93,.15), 0 1px 3px rgba(0,0,0,.08);
   --nic-card-shadow-hover: 0 13px 27px -5px rgba(50,50,93,.25), 0 8px 16px -8px rgba(0,0,0,.3), 0 -6px 16px -6px rgba(0,0,0,.025);
   --nic-link: #005776;
+  /* Government / NIC Dashboard */
+  --gov-blue: #0d47a1;
+  --gov-blue-dark: #0a3d8a;
+  --gov-blue-light: #e3f2fd;
+  --gov-heading: #1a237e;
+  --gov-border: #b0bec5;
+  --gov-bg: #f5f5f5;
+  /* Form fields: subtle grey (gov-style) */
+  --form-field-bg: #f1f3f5;
+  --form-field-border: #cfd8dc;
 }
 
 *,

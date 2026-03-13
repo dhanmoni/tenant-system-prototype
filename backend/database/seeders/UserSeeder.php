@@ -77,6 +77,17 @@ class UserSeeder extends Seeder
                 'approved_at' => now(),
             ],
             [
+                'name' => 'Staff',
+                'email' => 'staff@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_ASSISTANT_DIRECTOR,
+                'district_id' => $district?->id,
+                'office_id' => $office?->id,
+                'designation_id' => $designationAD?->id,
+                'phone' => '9111111110',
+                'approved_at' => now(),
+            ],
+            [
                 'name' => 'Tenant Owner',
                 'email' => 'tenant@nic.in',
                 'password' => 'password',
@@ -98,12 +109,23 @@ class UserSeeder extends Seeder
                 'phone' => '9333333333',
                 'approved_at' => now(),
             ],
+            [
+                'name' => 'Landlord / Owner',
+                'email' => 'landlord@nic.in',
+                'password' => 'password',
+                'role' => 'tenant owner',
+                'district_id' => $district?->id,
+                'office_id' => null,
+                'designation_id' => null,
+                'phone' => '9222222221',
+                'approved_at' => now(),
+            ],
         ];
 
         foreach ($users as $data) {
             $password = $data['password'];
             unset($data['password']);
-            User::firstOrCreate(
+            User::updateOrCreate(
                 ['email' => $data['email']],
                 array_merge($data, [
                     'password' => Hash::make($password),

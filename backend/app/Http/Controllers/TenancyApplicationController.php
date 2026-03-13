@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Office;
 use App\Models\TenancyApplication;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class TenancyApplicationController extends Controller
 {
@@ -29,7 +32,7 @@ class TenancyApplicationController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'registration_date' => ['required', 'date'],
+            'registration_date' => ['required', 'date', 'before_or_equal:today'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'apply_type' => ['required', 'string', 'max:32'],
             'landlord_name' => ['required', 'string', 'max:255'],
@@ -65,6 +68,21 @@ class TenancyApplicationController extends Controller
             'landlord_photo_path' => ['nullable', 'string', 'max:255'],
             'tenant_photo_path' => ['nullable', 'string', 'max:255'],
         ]);
+
+        // Government criteria: registration must be within 3 months; apply_type Joint (≤2 months) or Individual (2–3 months)
+        $regDate = Carbon::parse($data['registration_date']);
+        $monthsDiff = Carbon::now()->diffInMonths($regDate, false);
+        if ($monthsDiff > 3) {
+            throw ValidationException::withMessages([
+                'registration_date' => ['The tenancy agreement registration date must be within the last 3 months. You are not eligible to apply.'],
+            ]);
+        }
+        $allowedApplyTypes = ['Joint', 'Individual'];
+        if (!in_array($data['apply_type'], $allowedApplyTypes, true)) {
+            throw ValidationException::withMessages([
+                'apply_type' => ['Application type must be Joint (registration within 2 months) or Individual (registration within 2–3 months).'],
+            ]);
+        }
 
         $application = DB::transaction(function () use ($data, $request) {
             $now = Carbon::now();
@@ -135,7 +153,7 @@ class TenancyApplicationController extends Controller
         }
 
         $data = $request->validate([
-            'registration_date' => ['required', 'date'],
+            'registration_date' => ['required', 'date', 'before_or_equal:today'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'apply_type' => ['required', 'string', 'max:32'],
             'landlord_name' => ['required', 'string', 'max:255'],
@@ -171,6 +189,20 @@ class TenancyApplicationController extends Controller
             'landlord_photo_path' => ['nullable', 'string', 'max:255'],
             'tenant_photo_path' => ['nullable', 'string', 'max:255'],
         ]);
+
+        // Government criteria: registration within 3 months; apply_type Joint or Individual
+        $regDate = Carbon::parse($data['registration_date']);
+        $monthsDiff = Carbon::now()->diffInMonths($regDate, false);
+        if ($monthsDiff > 3) {
+            throw ValidationException::withMessages([
+                'registration_date' => ['The tenancy agreement registration date must be within the last 3 months. You are not eligible to apply.'],
+            ]);
+        }
+        if (!in_array($data['apply_type'], ['Joint', 'Individual'], true)) {
+            throw ValidationException::withMessages([
+                'apply_type' => ['Application type must be Joint or Individual.'],
+            ]);
+        }
 
         $now = Carbon::now();
         $status = 'Under process';
@@ -224,6 +256,14 @@ class TenancyApplicationController extends Controller
                 $q->where('user_id', $user->id);
                 if (!empty($user->office_id)) {
                     $q->orWhere('office_id', $user->office_id);
+                }
+                // Staff without office_id, or to include all offices in their district
+                $staffRoles = [User::ROLE_DIRECTOR, User::ROLE_ASSISTANT_DIRECTOR, User::ROLE_DISTRICT_HEAD, User::ROLE_DISTRICT_ASSISTANT];
+                if (in_array($user->role, $staffRoles, true) && !empty($user->district_id)) {
+                    $officeIds = Office::where('district_id', $user->district_id)->pluck('id')->toArray();
+                    if (!empty($officeIds)) {
+                        $q->orWhereIn('office_id', $officeIds);
+                    }
                 }
             });
         }
@@ -370,6 +410,17 @@ class TenancyApplicationController extends Controller
             return true;
         }
 
-        return !empty($user->office_id) && (int) $application->office_id === (int) $user->office_id;
+        if (!empty($user->office_id) && (int) $application->office_id === (int) $user->office_id) {
+            return true;
+        }
+
+        // Staff can access applications from any office in their district
+        $staffRoles = [User::ROLE_DIRECTOR, User::ROLE_ASSISTANT_DIRECTOR, User::ROLE_DISTRICT_HEAD, User::ROLE_DISTRICT_ASSISTANT];
+        if (in_array($user->role, $staffRoles, true) && !empty($user->district_id) && !empty($application->office_id)) {
+            $office = Office::find($application->office_id);
+            return $office && (int) $office->district_id === (int) $user->district_id;
+        }
+
+        return false;
     }
 }

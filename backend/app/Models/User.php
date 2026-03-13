@@ -35,7 +35,6 @@ class User extends Authenticatable
         'address',
         'pin_code',
         'pan_card',
-        'user_passport_photo_path',
         'passport_photo_path',
         'approved_at',
         'approved_by_user_id',
