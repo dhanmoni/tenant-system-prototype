@@ -4125,7 +4125,7 @@ function Dashboard({ user, onLogout }) {
 									<div className="dashboard-chart-wrap">
 										<Bar
 											data={{
-												labels: ['States', 'Districts', 'Offices', 'Users', 'Roles', 'Designations', 'Applications'],
+												labels: ['States', 'Districts', 'Offices', 'Users', 'Roles', 'Designations'],
 												datasets: [{
 													label: 'Count',
 													data: [
@@ -4135,7 +4135,6 @@ function Dashboard({ user, onLogout }) {
 														stats.users_count ?? 0,
 														stats.roles_count ?? 0,
 														stats.designations_count ?? 0,
-														stats.applications_count ?? 0,
 													],
 													backgroundColor: [
 														'rgba(13, 71, 161, 0.8)',
@@ -4144,9 +4143,8 @@ function Dashboard({ user, onLogout }) {
 														'rgba(13, 71, 161, 0.75)',
 														'rgba(13, 71, 161, 0.65)',
 														'rgba(13, 71, 161, 0.55)',
-														'rgba(94, 208, 124, 0.8)',
 													],
-													borderColor: ['#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#5ed07c'],
+													borderColor: ['#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1', '#0d47a1'],
 													borderWidth: 1,
 												}],
 											}}
