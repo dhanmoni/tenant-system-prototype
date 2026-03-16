@@ -3934,26 +3934,24 @@ function Dashboard({ user, onLogout }) {
 								<div className="dashboard-charts-row">
 									<div className="auth-card dashboard-card dashboard-chart-card">
 										<h2 className="dashboard-section-title">Overview</h2>
-										<p className="muted">States, districts, users, and applications (your scope).</p>
+										<p className="muted">States, districts, users, and applications</p>
 										<div className="dashboard-chart-wrap">
 											<Bar
 												data={{
-													labels: ['States', 'Districts', 'Users', 'Applications'],
+													labels: ['States', 'Districts', 'Users'],
 													datasets: [{
 														label: 'Count',
 														data: [
 															s.states_count ?? 0,
 															s.districts_count ?? 0,
 															s.users_count ?? 0,
-															s.applications_count ?? 0,
 														],
 														backgroundColor: [
 															'rgba(13, 71, 161, 0.85)',
 															'rgba(13, 71, 161, 0.7)',
 															'rgba(13, 71, 161, 0.75)',
-															'rgba(94, 208, 124, 0.85)',
 														],
-														borderColor: ['#0d47a1', '#0d47a1', '#0d47a1', '#5ed07c'],
+														borderColor: ['#0d47a1', '#0d47a1', '#0d47a1'],
 														borderWidth: 1,
 													}],
 												}}
@@ -3968,7 +3966,7 @@ function Dashboard({ user, onLogout }) {
 									</div>
 									<div className="auth-card dashboard-card dashboard-chart-card">
 										<h2 className="dashboard-section-title">Applications by status</h2>
-										<p className="muted">Tenancy applications (your office / account).</p>
+										<p className="muted">Tenancy applications.</p>
 										<div className="dashboard-chart-wrap dashboard-chart-wrap--doughnut">
 											{Object.keys(s.applications_by_status || {}).length > 0 ? (
 												<Doughnut
