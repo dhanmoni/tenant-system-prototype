@@ -1,64 +1,64 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Lato:wght@300;400;700;900&display=swap');
 
 :root {
-  font-family: 'Lato', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #333;
-  background-color: #f8f8f8;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+	font-family: 'Lato', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	line-height: 1.5;
+	font-weight: 400;
+	color: #333;
+	background-color: #f8f8f8;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 
-  /* NIC Theme Colors */
-  --nic-green: #5ed07c;
-  --nic-green-dark: #4ab868;
-  --nic-dark: #3c3d41;
-  --nic-text: #333;
-  --nic-text-light: #505050;
-  --nic-white: #ffffff;
-  --nic-bg: #f8f8f8;
-  --nic-border: #e7e7e7;
-  --nic-card-shadow: 0 4px 6px rgba(50,50,93,.15), 0 1px 3px rgba(0,0,0,.08);
-  --nic-card-shadow-hover: 0 13px 27px -5px rgba(50,50,93,.25), 0 8px 16px -8px rgba(0,0,0,.3), 0 -6px 16px -6px rgba(0,0,0,.025);
-  --nic-link: #005776;
-  /* Government / NIC Dashboard */
-  --gov-blue: #0d47a1;
-  --gov-blue-dark: #0a3d8a;
-  --gov-blue-light: #e3f2fd;
-  --gov-heading: #1a237e;
-  --gov-border: #b0bec5;
-  --gov-bg: #f5f5f5;
-  /* Form fields: subtle grey (gov-style) */
-  --form-field-bg: #f1f3f5;
-  --form-field-border: #cfd8dc;
+	/* NIC Theme Colors */
+	--nic-green: #4b8aea;
+	--nic-green-dark: #1c66d4;
+	--nic-dark: #3c3d41;
+	--nic-text: #333;
+	--nic-text-light: #505050;
+	--nic-white: #ffffff;
+	--nic-bg: #f8f8f8;
+	--nic-border: #e7e7e7;
+	--nic-card-shadow: 0 4px 6px rgba(50, 50, 93, .15), 0 1px 3px rgba(0, 0, 0, .08);
+	--nic-card-shadow-hover: 0 13px 27px -5px rgba(50, 50, 93, .25), 0 8px 16px -8px rgba(0, 0, 0, .3), 0 -6px 16px -6px rgba(0, 0, 0, .025);
+	--nic-link: #005776;
+	/* Government / NIC Dashboard */
+	--gov-blue: #0d47a1;
+	--gov-blue-dark: #0a3d8a;
+	--gov-blue-light: #e3f2fd;
+	--gov-heading: #1a237e;
+	--gov-border: #b0bec5;
+	--gov-bg: #f5f5f5;
+	/* Form fields: subtle grey (gov-style) */
+	--form-field-bg: #f1f3f5;
+	--form-field-border: #cfd8dc;
 }
 
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  background-color: var(--nic-bg);
+	margin: 0;
+	min-height: 100vh;
+	background-color: var(--nic-bg);
 }
 
 a {
-  color: var(--nic-link);
-  text-decoration: none;
+	color: var(--nic-link);
+	text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
+	text-decoration: underline;
 }
 
 button,
 input,
 select,
 textarea {
-  font-family: inherit;
+	font-family: inherit;
 }

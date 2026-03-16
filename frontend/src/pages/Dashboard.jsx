@@ -2742,14 +2742,10 @@ function Dashboard({ user, onLogout }) {
 			const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
 			const criteriaList = [
 				{
-					met: !!tenancyRegistrationDate && !registrationTooOld,
-					text: 'Tenancy agreement must be registered within the last 3 months.',
-				},
-				{
 					met: !!applyType && (applyType === 'Joint' || applyType === 'Individual'),
 					text: applyType
-						? `Application type: ${applyType} (${applyType === 'Joint' ? 'registered within 2 months' : 'registered 2–3 months ago'}).`
-						: 'Application type will be Joint (≤2 months) or Individual (2–3 months) based on registration date.',
+						? `Application type: ${applyType} (${applyType === 'Joint' ? 'registered within 2 months' : 'registered >2 months ago'}).`
+						: 'Application type will be Joint (≤2 months) or Individual (>2 months) based on registration date.',
 				},
 				{ met: !!tenancyOfficeId, text: 'Applying office must be selected.' },
 			]
@@ -2758,9 +2754,6 @@ function Dashboard({ user, onLogout }) {
 				<div className="auth-card dashboard-card tenancy-certificate-page">
 					<div className="tenancy-page-header">
 						<h1>Apply for Tenancy Certificate</h1>
-						<p className="muted">
-							Ensure you meet the eligibility criteria below before applying. The process follows the Rent Control Act provisions.
-						</p>
 					</div>
 					<div className="tenancy-criteria-box">
 						<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
@@ -3875,19 +3868,19 @@ function Dashboard({ user, onLogout }) {
 			const StaffIcon = ({ name, className = '' }) => {
 				const icons = {
 					chart: (
-					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-						<line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-					</svg>
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+							<line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+						</svg>
 					),
 					users: (
-					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-						<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-					</svg>
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+							<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+						</svg>
 					),
 					file: (
-					<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
-					</svg>
+						<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+							<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+						</svg>
 					),
 				}
 				return icons[name] || null

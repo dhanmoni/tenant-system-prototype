@@ -16,7 +16,7 @@ class OfficeSeeder extends Seeder
         foreach ($districts as $district) {
             Office::firstOrCreate(
                 [
-                    'name' => 'NIC Office - ' . $district->name,
+                    'name' => 'Office - ' . $district->name,
                     'district_id' => $district->id,
                 ],
                 [
