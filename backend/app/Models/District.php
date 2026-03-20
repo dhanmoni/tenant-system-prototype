@@ -40,4 +40,9 @@ class District extends Model
     {
         return $this->hasMany(Office::class);
     }
+
+    public function villageWards()
+    {
+        return $this->hasMany(VillageWard::class);
+    }
 }

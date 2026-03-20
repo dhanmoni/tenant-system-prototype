@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create('village_wards', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('type', 16)->default('village'); // village, ward, town
+            $table->foreignId('district_id')->constrained('districts')->cascadeOnDelete();
+            $table->timestamps();
+
+            $table->unique(['name', 'district_id']);
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('village_wards');
+    }
+};

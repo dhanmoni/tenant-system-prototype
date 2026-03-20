@@ -157,6 +157,33 @@ function Dashboard({ user, onLogout }) {
 	const [statusViewLoading, setStatusViewLoading] = useState(false)
 	const [editingApplicationId, setEditingApplicationId] = useState(null)
 
+	const [tenancyVillageWardId, setTenancyVillageWardId] = useState('')
+	const [tenancyVillageWards, setTenancyVillageWards] = useState([])
+	const [tenancyVillageWardsLoading, setTenancyVillageWardsLoading] = useState(false)
+	const [tenancyDistrictId, setTenancyDistrictId] = useState('')
+	const [tenancyDistricts, setTenancyDistricts] = useState([])
+	const [tenancyDistrictsLoading, setTenancyDistrictsLoading] = useState(false)
+	const [initiatorRole, setInitiatorRole] = useState('')
+	const [mergeConflict, setMergeConflict] = useState(null)
+	const [copiedRefCode, setCopiedRefCode] = useState('')
+
+	useEffect(() => {
+		if (!user) return
+		if (initiatorRole === 'LANDLORD') {
+			setLandlordName(user.name || '')
+			setLandlordPhone(user.phone || '')
+			setLandlordEmail(user.email || '')
+			if (user.address) setLandlordAddress(user.address)
+			if (user.pan) setLandlordPan(user.pan)
+		} else if (initiatorRole === 'TENANT') {
+			setTenantName(user.name || '')
+			setTenantPhone(user.phone || '')
+			setTenantEmail(user.email || '')
+			if (user.address) setTenantAddress(user.address)
+			if (user.pan) setTenantPan(user.pan)
+		}
+	}, [initiatorRole, user])
+
 	const officeDistrictOptions = officeStateId
 		? officeDistricts.filter((district) => {
 			const districtStateId = district.state_id ?? district.state?.id
@@ -312,6 +339,45 @@ function Dashboard({ user, onLogout }) {
 		} finally {
 			setTenancyOfficesLoading(false)
 		}
+	}
+
+	const loadTenancyDistricts = async () => {
+		setTenancyDistrictsLoading(true)
+		try {
+			const { data } = await api.get('/api/public/districts')
+			const items = Array.isArray(data) ? data : (data.districts || data.data || [])
+			setTenancyDistricts(items)
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to load districts')
+		} finally {
+			setTenancyDistrictsLoading(false)
+		}
+	}
+
+	const loadTenancyVillageWards = async (districtId) => {
+		if (!districtId) {
+			setTenancyVillageWards([])
+			return
+		}
+		setTenancyVillageWardsLoading(true)
+		try {
+			const { data } = await api.get('/api/public/village-wards', {
+				params: { district_id: districtId },
+			})
+			const items = Array.isArray(data) ? data : data.data || []
+			setTenancyVillageWards(items)
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to load village/wards')
+		} finally {
+			setTenancyVillageWardsLoading(false)
+		}
+	}
+
+	const copyToClipboard = (text) => {
+		navigator.clipboard.writeText(text).then(() => {
+			setCopiedRefCode(text)
+			setTimeout(() => setCopiedRefCode(''), 2000)
+		}).catch(() => {})
 	}
 
 	const loadAllDesignations = async () => {
@@ -561,6 +627,7 @@ function Dashboard({ user, onLogout }) {
 	useEffect(() => {
 		if (activePanel === 'tenancy-certificate') {
 			loadTenancyOffices()
+			loadTenancyDistricts()
 		}
 		if (activePanel === 'welcome' && user?.role === 'system_admin') {
 			loadAdminDashboard()
@@ -717,6 +784,11 @@ function Dashboard({ user, onLogout }) {
 		setTenancyReceipt(null)
 		setSuccess('')
 		setError('')
+		setTenancyVillageWardId('')
+		setTenancyVillageWards([])
+		setTenancyDistrictId('')
+		setInitiatorRole(profileType === 'landlord' ? 'LANDLORD' : profileType === 'tenant' ? 'TENANT' : '')
+		setMergeConflict(null)
 	}
 
 	const handleStateSubmit = async (e) => {
@@ -2414,9 +2486,11 @@ function Dashboard({ user, onLogout }) {
 								<thead>
 									<tr>
 										<th>Application No</th>
+										<th>UID</th>
 										<th>Application Type</th>
 										<th>Application Date</th>
 										<th>Status</th>
+										<th>Completion</th>
 										<th className="table-actions-head">Actions</th>
 									</tr>
 								</thead>
@@ -2424,6 +2498,7 @@ function Dashboard({ user, onLogout }) {
 									{statusApplications.map((app) => (
 										<tr key={app.id}>
 											<td>{app.application_no}</td>
+											<td>{app.uid || '-'}</td>
 											<td>{app.application_type || 'Tenancy Certificate'}</td>
 											<td>
 												{app.created_at
@@ -2436,6 +2511,13 @@ function Dashboard({ user, onLogout }) {
 													app.application_type || 'Tenancy Certificate'
 												)}
 											</td>
+											<td>
+												{app.initiator_completed && app.second_party_completed ? (
+													<span className="completion-badge completion-badge--done">✓ Both Completed</span>
+												) : (
+													<span className="completion-badge completion-badge--partial">⏳ Awaiting {app.initiator_role === 'LANDLORD' ? 'Tenant' : 'Landlord'}</span>
+												)}
+											</td>
 											<td className="table-actions">
 												<button
 													type="button"
@@ -2446,6 +2528,18 @@ function Dashboard({ user, onLogout }) {
 												>
 													View
 												</button>
+												{app.status === 'PARTIAL' && app.ref_code ? (
+													<button
+														type="button"
+														className="secondary"
+														onClick={() => {
+															const link = `${window.location.origin}/join?refCode=${app.ref_code}`
+															copyToClipboard(link)
+														}}
+													>
+														{copiedRefCode === app.ref_code ? '✓ Copied!' : 'Copy Invite Link'}
+													</button>
+												) : null}
 											</td>
 										</tr>
 									))}
@@ -2517,6 +2611,10 @@ function Dashboard({ user, onLogout }) {
 								<div>
 									<span className="label-text">Application No</span>
 									<span>{application.application_no}</span>
+								</div>
+								<div>
+									<span className="label-text">UID</span>
+									<span>{application.uid || '-'}</span>
 								</div>
 								<div>
 									<span className="label-text">Office Applied To</span>
@@ -2638,6 +2736,12 @@ function Dashboard({ user, onLogout }) {
 					formData.append('registration_date', tenancyRegistrationDate)
 					if (tenancyOfficeId) {
 						formData.append('office_id', tenancyOfficeId)
+					}
+					if (tenancyVillageWardId) {
+						formData.append('village_ward_id', tenancyVillageWardId)
+					}
+					if (initiatorRole) {
+						formData.append('initiator_role', initiatorRole)
 					}
 					formData.append('apply_type', applyType || 'Individual')
 					formData.append('landlord_name', landlordName)
@@ -2839,6 +2943,19 @@ function Dashboard({ user, onLogout }) {
 							<>
 								<h3 className="tenancy-step-heading">Step 1: Registration & applying office</h3>
 								<label>
+									<span className="label-text required">You are initiating as:</span>
+									<select
+										value={initiatorRole}
+										onChange={(e) => setInitiatorRole(e.target.value)}
+										disabled={formLocked}
+										required
+									>
+										<option value="">---SELECT---</option>
+										<option value="LANDLORD">Landlord</option>
+										<option value="TENANT">Tenant</option>
+									</select>
+								</label>
+								<label>
 									<span className="label-text required">
 										Date of registration (of tenancy agreement)
 									</span>
@@ -2882,6 +2999,40 @@ function Dashboard({ user, onLogout }) {
 									{tenancyOfficesLoading ? (
 										<span className="muted">Loading offices...</span>
 									) : null}
+								</label>
+								<label>
+									<span className="label-text required">District</span>
+									<select
+										value={tenancyDistrictId}
+										onChange={(e) => {
+											setTenancyDistrictId(e.target.value)
+											setTenancyVillageWardId('')
+											loadTenancyVillageWards(e.target.value)
+										}}
+										disabled={formLocked}
+										required
+									>
+										<option value="">---SELECT---</option>
+										{tenancyDistricts.map((d) => (
+											<option key={d.id} value={d.id}>{d.name}</option>
+										))}
+									</select>
+									{tenancyDistrictsLoading ? <span className="muted">Loading...</span> : null}
+								</label>
+								<label>
+									<span className="label-text required">Village/Ward</span>
+									<select
+										value={tenancyVillageWardId}
+										onChange={(e) => setTenancyVillageWardId(e.target.value)}
+										disabled={formLocked || !tenancyDistrictId}
+										required
+									>
+										<option value="">---SELECT---</option>
+										{tenancyVillageWards.map((vw) => (
+											<option key={vw.id} value={vw.id}>{vw.name} - {vw.type}</option>
+										))}
+									</select>
+									{tenancyVillageWardsLoading ? <span className="muted">Loading...</span> : null}
 								</label>
 								<label>
 									Apply type

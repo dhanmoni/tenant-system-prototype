@@ -10,7 +10,7 @@ function Login({ onLogin }) {
 	const [mode, setMode] = useState('login')
 
 	// Login form state
-	const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+	const [loginForm, setLoginForm] = useState({ phone: '', password: '' })
 	const [loginError, setLoginError] = useState('')
 	const [loginLoading, setLoginLoading] = useState(false)
 
@@ -86,8 +86,9 @@ function Login({ onLogin }) {
 			await csrf()
 			const { data } = await api.post('/api/login', loginForm)
 			onLogin(data.user)
-			navigate('/dashboard', { replace: true })
-			window.history.replaceState(null, '', '/dashboard')
+			const from = location.state?.from?.pathname || '/dashboard'
+			const search = location.state?.from?.search || ''
+			navigate(from + search, { replace: true })
 		} catch (err) {
 			setLoginError(err?.response?.data?.message || 'Login failed')
 		} finally {
@@ -107,11 +108,13 @@ function Login({ onLogin }) {
 			await csrf()
 			const { data } = await api.post('/api/register', regForm)
 			onLogin(data.user)
-			navigate('/dashboard')
+			const from = location.state?.from?.pathname || '/dashboard'
+			const search = location.state?.from?.search || ''
+			navigate(from + search, { replace: true })
 		} catch (err) {
 			setRegError(
 				err?.response?.data?.message ||
-				err?.response?.data?.errors?.email?.[0] ||
+				err?.response?.data?.errors?.phone?.[0] ||
 				'Registration failed'
 			)
 		} finally {
@@ -172,11 +175,11 @@ function Login({ onLogin }) {
 								{loginError ? <div className="error">{loginError}</div> : null}
 								<form onSubmit={handleLoginSubmit}>
 									<label>
-										Email
+										Phone Number
 										<input
-											type="email"
-											name="email"
-											value={loginForm.email}
+											type="tel"
+											name="phone"
+											value={loginForm.phone}
 											onChange={handleLoginChange}
 											required
 										/>
@@ -213,8 +216,8 @@ function Login({ onLogin }) {
 										<input type="text" name="name" value={regForm.name} onChange={handleRegChange} required />
 									</label>
 									<label>
-										Email
-										<input type="email" name="email" value={regForm.email} onChange={handleRegChange} required />
+										Email (Optional)
+										<input type="email" name="email" value={regForm.email} onChange={handleRegChange} />
 									</label>
 									<label>
 										Password
@@ -225,8 +228,8 @@ function Login({ onLogin }) {
 										<input type="password" name="password_confirmation" value={regForm.password_confirmation} onChange={handleRegChange} required />
 									</label>
 									<label>
-										Phone
-										<input type="text" name="phone" value={regForm.phone} onChange={handleRegChange} required />
+										Phone Number
+										<input type="tel" name="phone" value={regForm.phone} onChange={handleRegChange} required />
 									</label>
 									<label>
 										State

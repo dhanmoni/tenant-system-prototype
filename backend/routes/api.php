@@ -12,16 +12,12 @@ use App\Http\Controllers\StateController;
 use App\Http\Controllers\TenancyApplicationController;
 use App\Http\Controllers\UserActivityLogController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\VillageWardController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
 */
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -29,12 +25,17 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/public/states', [StateController::class, 'publicIndex']);
 Route::get('/public/districts', [DistrictController::class, 'publicIndex']);
 Route::get('/public/offices', [OfficeController::class, 'publicIndex']);
-Route::post('/tenancy-applications', [TenancyApplicationController::class, 'store']);
+Route::get('/public/village-wards', [VillageWardController::class, 'publicIndex']);
 Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplicationController::class, 'receipt']);
 Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Joint tenancy routes (must be before {tenancyApplication} parameter routes)
+    Route::get('/tenancy-applications/lookup', [TenancyApplicationController::class, 'lookupByRefCode']);
+    Route::post('/tenancy-applications/join', [TenancyApplicationController::class, 'joinApplication']);
+    Route::post('/tenancy-applications/check-ref-code', [TenancyApplicationController::class, 'checkRefCode']);
     Route::get('/tenancy-applications/my', [TenancyApplicationController::class, 'myApplications']);
+    Route::post('/tenancy-applications', [TenancyApplicationController::class, 'store']);
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
 });
@@ -45,7 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 
-    // State and District: allowed for system_admin and staff (director, assistant_director, district_head, district_assistant)
+    // State and District: allowed for system_admin and staff
     Route::middleware('role:system_admin,director,assistant_director,district_head,district_assistant')->group(function () {
         Route::get('/states', [StateController::class, 'index']);
         Route::post('/states', [StateController::class, 'store']);
@@ -59,7 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/districts/{district}/assign-district-head', [DistrictController::class, 'assignDistrictHead']);
     });
 
-    // User Management (read, update, delete) + read-only offices/designations/roles for staff and admin
+    // User Management + read-only offices/designations/roles for staff and admin
     Route::middleware('role:system_admin,director,assistant_director,district_head,district_assistant')->group(function () {
         Route::get('/users', [UserManagementController::class, 'index']);
         Route::get('/users/{user}', [UserManagementController::class, 'show']);
@@ -70,7 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/roles', [RoleController::class, 'index']);
     });
 
-    // Staff dashboard statistics (counts + applications scoped by user/office)
+    // Staff dashboard statistics
     Route::middleware('role:director,assistant_director,district_head,district_assistant')->group(function () {
         Route::get('/staff-dashboard-stats', [DashboardController::class, 'staffStats']);
     });

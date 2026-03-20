@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import UserDetail from './pages/UserDetail'
+import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
@@ -196,6 +197,14 @@ function App() {
 						element={
 							<ProtectedRoute user={user}>
 								<UserDetail user={user} />
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/join"
+						element={
+							<ProtectedRoute user={user}>
+								<JoinApplication user={user} />
 							</ProtectedRoute>
 						}
 					/>
