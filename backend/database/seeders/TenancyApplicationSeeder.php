@@ -134,7 +134,7 @@ class TenancyApplicationSeeder extends Seeder
                     'property_possession_date' => now()->subDays(20),
                     'property_rent_payable' => 20000.00,
                     'property_premises_description' => 'Office-linked application',
-                    'property_furniture_description' => 'N/A',
+                    'property_furniture_description' => '',
                     'property_tenancy_duration' => '11 months',
                     'uid' => TenancyApplication::generateUid($villageWard),
                     'movement_history' => [['status' => 'COMPLETED', 'current_with' => 'NIC Office', 'moved_at' => now()->toDateTimeString()]],

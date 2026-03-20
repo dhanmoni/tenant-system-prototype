@@ -173,6 +173,7 @@ function Dashboard({ user, onLogout }) {
 	const [statusSortBy, setStatusSortBy] = useState('created_at')
 	const [statusSortOrder, setStatusSortOrder] = useState('desc')
 	const [activeSearchColumn, setActiveSearchColumn] = useState(null) // 'application_no', 'uid', or null
+	const [propertyTenancyEndDate, setPropertyTenancyEndDate] = useState('')
 
 	useEffect(() => {
 		const handleClickOutside = (event) => {
@@ -232,6 +233,29 @@ function Dashboard({ user, onLogout }) {
 			if (user.pan) setTenantPan(user.pan)
 		}
 	}, [initiatorRole, user])
+
+	useEffect(() => {
+		if (propertyPossessionDate && propertyTenancyEndDate) {
+			const start = new Date(propertyPossessionDate)
+			const end = new Date(propertyTenancyEndDate)
+			if (!isNaN(start) && !isNaN(end) && end > start) {
+				let years = end.getFullYear() - start.getFullYear()
+				let months = end.getMonth() - start.getMonth()
+				if (months < 0) {
+					years--
+					months += 12
+				}
+				let durationStr = ''
+				if (years > 0) durationStr += `${years} year${years > 1 ? 's' : ''} `
+				if (months > 0) durationStr += `${months} month${months > 1 ? 's' : ''}`
+				setPropertyTenancyDuration(durationStr.trim() || 'Less than 1 month')
+			} else {
+				setPropertyTenancyDuration('')
+			}
+		} else {
+			setPropertyTenancyDuration('')
+		}
+	}, [propertyPossessionDate, propertyTenancyEndDate])
 
 	const officeDistrictOptions = officeStateId
 		? officeDistricts.filter((district) => {
@@ -820,6 +844,7 @@ function Dashboard({ user, onLogout }) {
 		setPropertyChargeFurnishing(application.property_charge_furnishing || '')
 		setPropertyChargeOtherServices(application.property_charge_other_services || '')
 		setPropertyTenancyDuration(application.property_tenancy_duration || '')
+		setPropertyTenancyEndDate('') // We don't have end date in backend, so clear it
 		setAgreementFile(null)
 		setAgreementPreviewUrl(
 			application.agreement_pdf_path
@@ -883,6 +908,7 @@ function Dashboard({ user, onLogout }) {
 		setPropertyChargeFurnishing('')
 		setPropertyChargeOtherServices('')
 		setPropertyTenancyDuration('')
+		setPropertyTenancyEndDate('')
 		setTenancyReceipt(null)
 		setSuccess('')
 		setError('')
@@ -990,11 +1016,7 @@ function Dashboard({ user, onLogout }) {
 									)}
 								</div>
 								<h2 className="profile-hero-name">{profileName}</h2>
-								<span
-									className={`profile-type-badge ${profileType === 'landlord' ? 'landlord' : 'tenant'}`}
-								>
-									{profileType === 'landlord' ? 'Landlord' : 'Tenant'}
-								</span>
+
 								<p className="profile-hero-email">{profileEmail}</p>
 							</div>
 							<div className="profile-section">
@@ -1099,34 +1121,6 @@ function Dashboard({ user, onLogout }) {
 									</label>
 									<p className="profile-upload-hint">Passport size. PNG or JPEG.</p>
 								</div>
-							</div>
-							<div className="profile-form-section">
-								<h3 className="profile-section-title">Profile type</h3>
-								<fieldset className="profile-type-row">
-									<legend className="sr-only">Are you a</legend>
-									<label>
-										<input
-											type="radio"
-											name="profile_type"
-											value="landlord"
-											checked={profileType === 'landlord'}
-											onChange={(e) => setProfileType(e.target.value)}
-											required
-										/>
-										Landlord
-									</label>
-									<label>
-										<input
-											type="radio"
-											name="profile_type"
-											value="tenant"
-											checked={profileType === 'tenant'}
-											onChange={(e) => setProfileType(e.target.value)}
-											required
-										/>
-										Tenant
-									</label>
-								</fieldset>
 							</div>
 							<div className="profile-form-section">
 								<h3 className="profile-section-title">Personal details</h3>
@@ -2591,9 +2585,9 @@ function Dashboard({ user, onLogout }) {
 													className={`header-action-btn ${statusSearchAppNo ? 'active' : ''} ${activeSearchColumn === 'application_no' ? 'showing-popup' : ''}`}
 													onClick={() => setActiveSearchColumn(activeSearchColumn === 'application_no' ? null : 'application_no')}
 												>
-													<StatusTableSearchIcon 
-														active={activeSearchColumn === 'application_no'} 
-														filtered={!!statusSearchAppNo} 
+													<StatusTableSearchIcon
+														active={activeSearchColumn === 'application_no'}
+														filtered={!!statusSearchAppNo}
 													/>
 												</button>
 											</div>
@@ -2633,9 +2627,9 @@ function Dashboard({ user, onLogout }) {
 													className={`header-action-btn ${statusSearchUid ? 'active' : ''} ${activeSearchColumn === 'uid' ? 'showing-popup' : ''}`}
 													onClick={() => setActiveSearchColumn(activeSearchColumn === 'uid' ? null : 'uid')}
 												>
-													<StatusTableSearchIcon 
-														active={activeSearchColumn === 'uid'} 
-														filtered={!!statusSearchUid} 
+													<StatusTableSearchIcon
+														active={activeSearchColumn === 'uid'}
+														filtered={!!statusSearchUid}
 													/>
 												</button>
 											</div>
@@ -3060,41 +3054,45 @@ function Dashboard({ user, onLogout }) {
 					<div className="tenancy-page-header">
 						<h1>Apply for Tenancy Certificate</h1>
 					</div>
-					<div className="tenancy-criteria-box">
-						<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
-						<p className="tenancy-criteria-intro">
-							You may apply only if the following conditions are satisfied:
-						</p>
-						<ul className="tenancy-criteria-list">
-							{criteriaList.map((item, i) => (
-								<li key={i} className={item.met ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
-									<span className="tenancy-criteria-icon" aria-hidden>{item.met ? '✓' : '○'}</span>
-									<span>{item.text}</span>
-								</li>
-							))}
-						</ul>
-						{tenancyRegistrationDate && (
-							<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
-								{eligibilityMet ? (
-									<>
-										<strong>You are eligible</strong> to apply. Application type: <strong>{applyType}</strong>. You may proceed to the next step.
-									</>
-								) : registrationTooOld ? (
-									<>
-										<strong>Not eligible.</strong> Registration date is more than 3 months old. You cannot apply for a tenancy certificate as per the rules.
-									</>
-								) : null}
+					{tenancyStep === 1 && (
+						<>
+							<div className="tenancy-criteria-box">
+								<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
+								<p className="tenancy-criteria-intro">
+									You may apply only if the following conditions are satisfied:
+								</p>
+								<ul className="tenancy-criteria-list">
+									{criteriaList.map((item, i) => (
+										<li key={i} className={item.met ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
+											<span className="tenancy-criteria-icon" aria-hidden>{item.met ? '✓' : '○'}</span>
+											<span>{item.text}</span>
+										</li>
+									))}
+								</ul>
+								{tenancyRegistrationDate && (
+									<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
+										{eligibilityMet ? (
+											<>
+												<strong>You are eligible</strong> to apply. Application type: <strong>{applyType}</strong>. You may proceed to the next step.
+											</>
+										) : registrationTooOld ? (
+											<>
+												<strong>Not eligible.</strong> Registration date is more than 3 months old. You cannot apply for a tenancy certificate as per the rules.
+											</>
+										) : null}
+									</div>
+								)}
 							</div>
-						)}
-					</div>
-					<div className="tenancy-required-docs">
-						<h3 className="tenancy-docs-title">Required documents</h3>
-						<ul>
-							<li>Registered tenancy agreement (PDF)</li>
-							<li>Passport-size photographs (landlord and tenant)</li>
-							<li>Signatures (landlord and tenant)</li>
-						</ul>
-					</div>
+							<div className="tenancy-required-docs">
+								<h3 className="tenancy-docs-title">Required documents</h3>
+								<ul>
+									<li>Registered tenancy agreement (PDF)</li>
+									<li>Passport-size photographs (landlord and tenant)</li>
+									<li>Signatures (landlord and tenant)</li>
+								</ul>
+							</div>
+						</>
+					)}
 					{error ? <div className="error">{error}</div> : null}
 					<div className="tenancy-steps">
 						{tenancySteps.map((step, index) => {
@@ -3256,7 +3254,7 @@ function Dashboard({ user, onLogout }) {
 											type="text"
 											value={landlordName}
 											onChange={(e) => setLandlordName(e.target.value)}
-											readOnly={landlordPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3265,7 +3263,7 @@ function Dashboard({ user, onLogout }) {
 										<textarea
 											value={landlordAddress}
 											onChange={(e) => setLandlordAddress(e.target.value)}
-											readOnly={landlordPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3275,7 +3273,7 @@ function Dashboard({ user, onLogout }) {
 											type="email"
 											value={landlordEmail}
 											onChange={(e) => setLandlordEmail(e.target.value)}
-											readOnly={landlordPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3285,7 +3283,7 @@ function Dashboard({ user, onLogout }) {
 											type="tel"
 											value={landlordPhone}
 											onChange={(e) => setLandlordPhone(e.target.value)}
-											readOnly={landlordPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3297,7 +3295,7 @@ function Dashboard({ user, onLogout }) {
 											onChange={(e) =>
 												setLandlordPan(e.target.value.toUpperCase())
 											}
-											readOnly={landlordPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3363,7 +3361,7 @@ function Dashboard({ user, onLogout }) {
 											type="text"
 											value={tenantName}
 											onChange={(e) => setTenantName(e.target.value)}
-											readOnly={tenantPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3372,7 +3370,7 @@ function Dashboard({ user, onLogout }) {
 										<textarea
 											value={tenantAddress}
 											onChange={(e) => setTenantAddress(e.target.value)}
-											readOnly={tenantPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3382,7 +3380,7 @@ function Dashboard({ user, onLogout }) {
 											type="email"
 											value={tenantEmail}
 											onChange={(e) => setTenantEmail(e.target.value)}
-											readOnly={tenantPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3392,7 +3390,7 @@ function Dashboard({ user, onLogout }) {
 											type="tel"
 											value={tenantPhone}
 											onChange={(e) => setTenantPhone(e.target.value)}
-											readOnly={tenantPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3404,7 +3402,7 @@ function Dashboard({ user, onLogout }) {
 											onChange={(e) =>
 												setTenantPan(e.target.value.toUpperCase())
 											}
-											readOnly={tenantPrefilled || formLocked}
+											readOnly={formLocked}
 											required
 										/>
 									</label>
@@ -3522,18 +3520,24 @@ function Dashboard({ user, onLogout }) {
 									</label>
 									<label>
 										<span className="label-text required">
-											Duration of Tenancy
+											Tenancy End Date
 										</span>
 										<input
-											type="text"
-											value={propertyTenancyDuration}
-											onChange={(e) =>
-												setPropertyTenancyDuration(e.target.value)
-											}
-											readOnly={formLocked}
+											type="date"
+											onClick={(e) => !formLocked && e.target.showPicker && e.target.showPicker()}
+											value={propertyTenancyEndDate}
+											onChange={(e) => setPropertyTenancyEndDate(e.target.value)}
+											disabled={formLocked}
+											min={propertyPossessionDate || ''}
 											required
 										/>
+										{propertyTenancyDuration && (
+											<div className="tenancy-duration-display">
+												Tenancy Duration: <strong>{propertyTenancyDuration}</strong>
+											</div>
+										)}
 									</label>
+									<input type="hidden" value={propertyTenancyDuration} />
 								</fieldset>
 							</>
 						) : null}
@@ -3567,10 +3571,7 @@ function Dashboard({ user, onLogout }) {
 										<input
 											type="file"
 											accept="image/*"
-											disabled={
-												formLocked ||
-												(profileType === 'landlord' && !!landlordPhotoPreview)
-											}
+											disabled={formLocked}
 											onChange={(e) => {
 												const file = e.target.files?.[0] || null
 												setLandlordPhotoFile(file)
@@ -3614,10 +3615,7 @@ function Dashboard({ user, onLogout }) {
 										<input
 											type="file"
 											accept="image/*"
-											disabled={
-												formLocked ||
-												(profileType === 'tenant' && !!tenantPhotoPreview)
-											}
+											disabled={formLocked}
 											onChange={(e) => {
 												const file = e.target.files?.[0] || null
 												setTenantPhotoFile(file)

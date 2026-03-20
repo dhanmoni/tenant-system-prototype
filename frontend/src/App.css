@@ -3167,3 +3167,18 @@ button.secondary:hover {
 	font-weight: 500;
 	color: #64748b;
 }
+
+.tenancy-duration-display {
+	margin-top: 10px;
+	padding: 12px 16px;
+	background-color: #f0fff4;
+	border-radius: 4px;
+	color: #333;
+	font-size: 1rem;
+	display: inline-block;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tenancy-duration-display strong {
+	font-size: 1rem;
+}
