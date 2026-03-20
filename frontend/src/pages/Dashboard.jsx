@@ -166,6 +166,55 @@ function Dashboard({ user, onLogout }) {
 	const [initiatorRole, setInitiatorRole] = useState('')
 	const [mergeConflict, setMergeConflict] = useState(null)
 	const [copiedRefCode, setCopiedRefCode] = useState('')
+	const [columnWidths, setColumnWidths] = useState({})
+	const [resizing, setResizing] = useState(null)
+	const [statusSearchAppNo, setStatusSearchAppNo] = useState('')
+	const [statusSearchUid, setStatusSearchUid] = useState('')
+	const [statusSortBy, setStatusSortBy] = useState('created_at')
+	const [statusSortOrder, setStatusSortOrder] = useState('desc')
+	const [activeSearchColumn, setActiveSearchColumn] = useState(null) // 'application_no', 'uid', or null
+
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (activeSearchColumn && !event.target.closest('.header-search-popup') && !event.target.closest('.header-action-btn')) {
+				setActiveSearchColumn(null)
+			}
+		}
+		document.addEventListener('mousedown', handleClickOutside)
+		return () => document.removeEventListener('mousedown', handleClickOutside)
+	}, [activeSearchColumn])
+
+	const startResizing = (id, e) => {
+		e.preventDefault()
+		const header = e.target.parentElement
+		setResizing({
+			id,
+			startX: e.clientX,
+			startWidth: columnWidths[id] || header.offsetWidth,
+		})
+	}
+
+	useEffect(() => {
+		if (!resizing) return
+		const doResize = (e) => {
+			const delta = e.clientX - resizing.startX
+			setColumnWidths((prev) => ({
+				...prev,
+				[resizing.id]: Math.max(50, resizing.startWidth + delta),
+			}))
+		}
+		const stopResizing = () => {
+			setResizing(null)
+			document.body.classList.remove('resizing')
+		}
+		document.addEventListener('mousemove', doResize)
+		document.addEventListener('mouseup', stopResizing)
+		document.body.classList.add('resizing')
+		return () => {
+			document.removeEventListener('mousemove', doResize)
+			document.removeEventListener('mouseup', stopResizing)
+		}
+	}, [resizing])
 
 	useEffect(() => {
 		if (!user) return
@@ -377,7 +426,7 @@ function Dashboard({ user, onLogout }) {
 		navigator.clipboard.writeText(text).then(() => {
 			setCopiedRefCode(text)
 			setTimeout(() => setCopiedRefCode(''), 2000)
-		}).catch(() => {})
+		}).catch(() => { })
 	}
 
 	const loadAllDesignations = async () => {
@@ -650,13 +699,58 @@ function Dashboard({ user, onLogout }) {
 		}
 	}
 
-	const loadStatusApplications = async (page = 1) => {
+	const StatusTableSortIcon = ({ column }) => {
+		if (statusSortBy !== column) {
+			return (
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sort-icon-svg">
+					<path d="M7 15l5 5 5-5M7 9l5-5 5 5" />
+				</svg>
+			)
+		}
+		if (statusSortOrder === 'asc') {
+			return (
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sort-icon-svg active">
+					<path d="M18 15l-6-6-6 6" />
+				</svg>
+			)
+		}
+		return (
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sort-icon-svg active">
+				<path d="M6 9l6 6 6-6" />
+			</svg>
+		)
+	}
+
+	const StatusTableSearchIcon = ({ active, filtered }) => (
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`search-icon-svg ${active ? 'active' : ''} ${filtered ? 'filtered' : ''}`}>
+			<circle cx="11" cy="11" r="8" />
+			<line x1="21" y1="21" x2="16.65" y2="16.65" />
+		</svg>
+	)
+
+	const StatusTableLoader = () => (
+		<tr>
+			<td colSpan="6">
+				<div className="table-loader-container">
+					<div className="loader-spinner"></div>
+					<span className="table-loader-text">Loading applications...</span>
+				</div>
+			</td>
+		</tr>
+	)
+
+	const loadStatusApplications = async (page = 1, overrides = {}) => {
 		setStatusLoading(true)
 		setError('')
 		try {
-			const { data } = await api.get('/api/tenancy-applications/my', {
-				params: { page },
-			})
+			const params = {
+				page,
+				application_no: overrides.application_no !== undefined ? overrides.application_no : (statusSearchAppNo || undefined),
+				uid: overrides.uid !== undefined ? overrides.uid : (statusSearchUid || undefined),
+				sort_by: overrides.sort_by || statusSortBy,
+				sort_order: overrides.sort_order || statusSortOrder,
+			}
+			const { data } = await api.get('/api/tenancy-applications/my', { params })
 			// Handle Laravel paginator { data: [], current_page, last_page } or plain array
 			const list = Array.isArray(data) ? data : (data?.data ?? [])
 			setStatusApplications(list)
@@ -670,6 +764,14 @@ function Dashboard({ user, onLogout }) {
 		} finally {
 			setStatusLoading(false)
 		}
+	}
+
+	const handleStatusSort = (column) => {
+		const newOrder = statusSortBy === column && statusSortOrder === 'asc' ? 'desc' : 'asc'
+		setStatusSortBy(column)
+		setStatusSortOrder(newOrder)
+		// We use a timeout to ensure state is updated before loading
+		setTimeout(() => loadStatusApplications(1), 0)
 	}
 
 	const loadStatusApplication = async (id) => {
@@ -2477,45 +2579,144 @@ function Dashboard({ user, onLogout }) {
 					<h1>Application Status</h1>
 					<p className="muted">Track your tenancy certificate applications.</p>
 					{error ? <div className="error">{error}</div> : null}
-					{statusLoading ? <div className="muted">Loading...</div> : null}
-					{statusApplications.length === 0 && !statusLoading ? (
-						<div className="muted">No applications found.</div>
-					) : (
-						<div className="admin-table-wrapper">
-							<table className="admin-table status-table">
-								<thead>
+					<div className="admin-table-wrapper">
+						<table className="admin-table status-table">
+							<thead>
+								<tr>
+									<th style={{ width: columnWidths['status_app_no'] }}>
+										<div className="th-content">
+											<span>Application No</span>
+											<div className="header-actions">
+												<button
+													className={`header-action-btn ${statusSearchAppNo ? 'active' : ''} ${activeSearchColumn === 'application_no' ? 'showing-popup' : ''}`}
+													onClick={() => setActiveSearchColumn(activeSearchColumn === 'application_no' ? null : 'application_no')}
+												>
+													<StatusTableSearchIcon 
+														active={activeSearchColumn === 'application_no'} 
+														filtered={!!statusSearchAppNo} 
+													/>
+												</button>
+											</div>
+											{activeSearchColumn === 'application_no' && (
+												<div className="header-search-popup">
+													<input
+														type="text"
+														value={statusSearchAppNo}
+														onChange={(e) => setStatusSearchAppNo(e.target.value)}
+														onKeyDown={(e) => {
+															if (e.key === 'Enter') {
+																loadStatusApplications(1)
+																setActiveSearchColumn(null)
+															}
+														}}
+														placeholder="Search App No..."
+														autoFocus
+													/>
+													<div className="popup-actions">
+														<button className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+														<button className="btn-clear" onClick={() => {
+															setStatusSearchAppNo('');
+															setActiveSearchColumn(null);
+															loadStatusApplications(1, { application_no: '' });
+														}}>Clear</button>
+													</div>
+												</div>
+											)}
+										</div>
+										<span className="resizer" onMouseDown={(e) => startResizing('status_app_no', e)} />
+									</th>
+									<th style={{ width: columnWidths['status_uid'] }}>
+										<div className="th-content">
+											<span>UID</span>
+											<div className="header-actions">
+												<button
+													className={`header-action-btn ${statusSearchUid ? 'active' : ''} ${activeSearchColumn === 'uid' ? 'showing-popup' : ''}`}
+													onClick={() => setActiveSearchColumn(activeSearchColumn === 'uid' ? null : 'uid')}
+												>
+													<StatusTableSearchIcon 
+														active={activeSearchColumn === 'uid'} 
+														filtered={!!statusSearchUid} 
+													/>
+												</button>
+											</div>
+											{activeSearchColumn === 'uid' && (
+												<div className="header-search-popup">
+													<input
+														type="text"
+														value={statusSearchUid}
+														onChange={(e) => setStatusSearchUid(e.target.value)}
+														onKeyDown={(e) => {
+															if (e.key === 'Enter') {
+																loadStatusApplications(1)
+																setActiveSearchColumn(null)
+															}
+														}}
+														placeholder="Search UID..."
+														autoFocus
+													/>
+													<div className="popup-actions">
+														<button className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+														<button className="btn-clear" onClick={() => {
+															setStatusSearchUid('');
+															setActiveSearchColumn(null);
+															loadStatusApplications(1, { uid: '' });
+														}}>Clear</button>
+													</div>
+												</div>
+											)}
+										</div>
+										<span className="resizer" onMouseDown={(e) => startResizing('status_uid', e)} />
+									</th>
+									<th style={{ width: columnWidths['status_date'] }}>
+										<div className="th-content sortable" onClick={() => handleStatusSort('created_at')}>
+											<span>Application Date</span>
+											<div className="header-actions">
+												<StatusTableSortIcon column="created_at" />
+											</div>
+										</div>
+										<span className="resizer" onMouseDown={(e) => startResizing('status_date', e)} />
+									</th>
+									<th style={{ width: columnWidths['status_status'] }}>
+										<span>Status</span>
+										<span className="resizer" onMouseDown={(e) => startResizing('status_status', e)} />
+									</th>
+									<th style={{ width: columnWidths['status_completion'] }}>
+										<span>Completion</span>
+										<span className="resizer" onMouseDown={(e) => startResizing('status_completion', e)} />
+									</th>
+									<th className="table-actions-head">Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{statusLoading ? (
+									<StatusTableLoader />
+								) : statusApplications.length === 0 ? (
 									<tr>
-										<th>Application No</th>
-										<th>UID</th>
-										<th>Application Type</th>
-										<th>Application Date</th>
-										<th>Status</th>
-										<th>Completion</th>
-										<th className="table-actions-head">Actions</th>
+										<td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+											No applications found.
+										</td>
 									</tr>
-								</thead>
-								<tbody>
-									{statusApplications.map((app) => (
+								) : (
+									statusApplications.map((app) => (
 										<tr key={app.id}>
-											<td>{app.application_no}</td>
-											<td>{app.uid || '-'}</td>
-											<td>{app.application_type || 'Tenancy Certificate'}</td>
-											<td>
+											<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
+											<td style={{ width: columnWidths['status_uid'] }}>{app.uid || '-'}</td>
+											<td style={{ width: columnWidths['status_date'] }}>
 												{app.created_at
 													? new Date(app.created_at).toLocaleDateString()
 													: '-'}
 											</td>
-											<td>
+											<td style={{ width: columnWidths['status_status'] }}>
 												{formatTenancyApplicationStatus(
 													app.status,
 													app.application_type || 'Tenancy Certificate'
 												)}
 											</td>
-											<td>
+											<td style={{ width: columnWidths['status_completion'] }}>
 												{app.initiator_completed && app.second_party_completed ? (
-													<span className="completion-badge completion-badge--done">✓ Both Completed</span>
+													<span className="completion-badge completion-badge--done">Both Completed</span>
 												) : (
-													<span className="completion-badge completion-badge--partial">⏳ Awaiting {app.initiator_role === 'LANDLORD' ? 'Tenant' : 'Landlord'}</span>
+													<span className="completion-badge completion-badge--partial">Awaiting {app.initiator_role === 'LANDLORD' ? 'Tenant' : 'Landlord'}</span>
 												)}
 											</td>
 											<td className="table-actions">
@@ -2537,37 +2738,37 @@ function Dashboard({ user, onLogout }) {
 															copyToClipboard(link)
 														}}
 													>
-														{copiedRefCode === app.ref_code ? '✓ Copied!' : 'Copy Invite Link'}
+														{copiedRefCode ? '✓ Copied!' : 'Copy Invite Link'}
 													</button>
 												) : null}
 											</td>
 										</tr>
-									))}
-								</tbody>
-							</table>
-							<div className="table-pagination">
-								<button
-									type="button"
-									className="secondary"
-									onClick={() => loadStatusApplications(statusPage - 1)}
-									disabled={statusPage <= 1}
-								>
-									Previous
-								</button>
-								<span className="pagination-info">
-									Page {statusPage} of {statusTotalPages}
-								</span>
-								<button
-									type="button"
-									className="secondary"
-									onClick={() => loadStatusApplications(statusPage + 1)}
-									disabled={statusPage >= statusTotalPages}
-								>
-									Next
-								</button>
-							</div>
+									))
+								)}
+							</tbody>
+						</table>
+						<div className="table-pagination">
+							<button
+								type="button"
+								className="secondary"
+								onClick={() => loadStatusApplications(statusPage - 1)}
+								disabled={statusPage <= 1}
+							>
+								Previous
+							</button>
+							<span className="pagination-info">
+								Page {statusPage} of {statusTotalPages}
+							</span>
+							<button
+								type="button"
+								className="secondary"
+								onClick={() => loadStatusApplications(statusPage + 1)}
+								disabled={statusPage >= statusTotalPages}
+							>
+								Next
+							</button>
 						</div>
-					)}
+					</div>
 				</div>
 			)
 		}

@@ -737,8 +737,9 @@ main.main-fluid {
 /* ── Tables ── */
 .admin-table-wrapper {
 	margin-top: 20px;
-	display: grid;
-	gap: 10px;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	width: 100%;
 }
 
 .admin-table-wrapper h2 {
@@ -747,11 +748,54 @@ main.main-fluid {
 	color: var(--nic-text);
 }
 
+/* ── Filters ── */
+.filter-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-end;
+	margin-bottom: 20px;
+	background: #f8f9fa;
+	padding: 16px;
+	border-radius: 8px;
+	border: 1px solid var(--nic-border);
+}
+
+.filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.filter-group label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--nic-text-light);
+}
+
+.filter-group input,
+.filter-group select {
+	padding: 8px 12px;
+	border: 1px solid var(--nic-border);
+	border-radius: 4px;
+	font-size: 0.9rem;
+	min-width: 200px;
+}
+
+.filter-actions {
+	display: flex;
+	gap: 10px;
+}
+
+.status-filters {
+	margin-top: 10px;
+}
+
 .admin-table {
 	width: 100%;
 	border-collapse: collapse;
 	font-size: 0.9rem;
-	table-layout: fixed;
+	table-layout: auto;
 }
 
 .admin-table th,
@@ -798,7 +842,48 @@ main.main-fluid {
 .office-table td {
 	min-width: 90px;
 	white-space: normal;
-	overflow-wrap: anywhere;
+}
+
+/* ── Resizable Table Headers ── */
+.admin-table th {
+	position: relative;
+	background: #f8f9fa;
+	user-select: none;
+}
+
+.resizer {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 100%;
+	width: 2px;
+	background: rgba(0, 0, 0, 0.05);
+	cursor: col-resize;
+	user-select: none;
+	touch-action: none;
+	z-index: 1;
+}
+
+.resizer:hover,
+.resizing .resizer {
+	background: var(--nic-green);
+	width: 2px;
+}
+
+.admin-table td {
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.admin-table td:hover {
+	white-space: normal;
+	overflow: visible;
+	position: relative;
+	background: #fff;
+	z-index: 2;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .office-table th:nth-child(3),
@@ -2885,7 +2970,7 @@ button.secondary:hover {
 	gap: 12px 24px;
 }
 
-.tenancy-preview-grid > div {
+.tenancy-preview-grid>div {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
@@ -2933,4 +3018,152 @@ button.secondary:hover {
 		flex-direction: column;
 		gap: 10px;
 	}
+}
+
+/* -- Table Header Actions (Search/Sort) -- */
+.admin-table th .th-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	position: relative;
+}
+
+.admin-table th .th-content.sortable {
+	cursor: pointer;
+}
+
+.header-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: 4px;
+}
+
+.header-action-btn {
+	background: transparent;
+	border: none;
+	padding: 4px;
+	cursor: pointer;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: background-color 0.2s, color 0.2s;
+	color: var(--gov-blue-dark);
+}
+
+.header-search-popup {
+	position: absolute;
+	top: calc(100% + 8px);
+	left: 0;
+	z-index: 1000;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	padding: 12px;
+	box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	min-width: 200px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.header-search-popup::before {
+	content: '';
+	position: absolute;
+	top: -6px;
+	left: 12px;
+	width: 10px;
+	height: 10px;
+	background: #fff;
+	border-left: 1px solid #e2e8f0;
+	border-top: 1px solid #e2e8f0;
+	transform: rotate(45deg);
+}
+
+.header-search-popup input {
+	padding: 8px 12px;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	font-size: 0.875rem;
+	width: 100%;
+	outline: none;
+}
+
+.header-search-popup .popup-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.header-search-popup .popup-actions .btn-find {
+	background: var(--gov-blue);
+	color: #fff;
+	border: none;
+	padding: 6px 12px;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.header-search-popup .popup-actions .btn-find:hover {
+	background: var(--gov-blue-dark);
+}
+
+.header-search-popup .popup-actions .btn-clear {
+	background: #fff;
+	color: #64748b;
+	border: 1px solid #e2e8f0;
+	padding: 6px 12px;
+	font-size: 0.8rem;
+	font-weight: 500;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.header-search-popup .popup-actions .btn-clear:hover {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+}
+
+.sort-icon-svg,
+.search-icon-svg {
+	display: block;
+	color: #fff;
+	transition: stroke 0.2s, color 0.2s;
+}
+
+.search-icon-svg.active {
+	stroke-width: 2.5;
+}
+
+.search-icon-svg.filtered {
+	color: #ff9807 !important;
+	stroke: #ff9807 !important;
+	stroke-width: 2.5;
+}
+
+.sort-icon-svg.active {
+	stroke-width: 2.5;
+}
+
+/* Loading Spinner */
+.table-loader-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 40px 0;
+	color: var(--gov-blue);
+	gap: 12px;
+}
+
+.table-loader-text {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #64748b;
 }

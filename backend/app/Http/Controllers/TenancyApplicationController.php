@@ -545,8 +545,22 @@ class TenancyApplicationController extends Controller
                 }
             });
         }
+ 
+         if ($request->filled('application_no')) {
+             $query->where('application_no', 'like', '%' . $request->input('application_no') . '%');
+         }
+ 
+        if ($request->filled('uid')) {
+            $query->where('uid', 'like', '%' . $request->input('uid') . '%');
+        }
 
-        $applications = $query->orderByDesc('created_at')->paginate(10, [
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $allowedSort = ['created_at', 'application_no', 'uid', 'status'];
+        if (!in_array($sortBy, $allowedSort, true)) $sortBy = 'created_at';
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'], true)) $sortOrder = 'desc';
+
+        $applications = $query->orderBy($sortBy, $sortOrder)->paginate(10, [
             'id',
             'application_no',
             'ref_code',
