@@ -97,6 +97,7 @@ class TenancyApplicationSeeder extends Seeder
                 'property_premises_description' => '2 BHK Apartment, 900 sq ft',
                 'property_furniture_description' => 'Semi furnished',
                 'property_tenancy_duration' => '11 months',
+                'uid' => TenancyApplication::generateUid($villageWard),
                 'movement_history' => [['status' => 'PARTIAL', 'current_with' => null, 'moved_at' => now()->toDateTimeString()]],
             ]
         );

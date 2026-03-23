@@ -9,7 +9,16 @@ use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StateController;
+use App\Http\Controllers\RentRevisionApplicationController;
+use App\Http\Controllers\OtherChargesRevisionApplicationController;
+use App\Http\Controllers\ValuerAppointmentApplicationController;
+use App\Http\Controllers\RentCourtPossessionApplicationController;
+use App\Http\Controllers\RentCourtFilingApplicationController;
+use App\Http\Controllers\RentAuthorityFilingApplicationController;
+use App\Http\Controllers\RentCourtAppealApplicationController;
+use App\Http\Controllers\RentTribunalAppealApplicationController;
 use App\Http\Controllers\TenancyApplicationController;
+use App\Http\Controllers\TenantFormsStatusController;
 use App\Http\Controllers\UserActivityLogController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\VillageWardController;
@@ -38,6 +47,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tenancy-applications', [TenancyApplicationController::class, 'store']);
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
+});
+
+// Tenant Forms (Assam Tenancy Rules draft) - tenant owner only
+Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('role:tenant owner')->group(function () {
+        Route::get('/tenant-forms/my', [TenantFormsStatusController::class, 'my']);
+        Route::post('/rent-revision-applications', [RentRevisionApplicationController::class, 'store']);
+        Route::get('/rent-revision-applications/{id}', [RentRevisionApplicationController::class, 'show']);
+        Route::post('/other-charges-revision-applications', [OtherChargesRevisionApplicationController::class, 'store']);
+        Route::get('/other-charges-revision-applications/{id}', [OtherChargesRevisionApplicationController::class, 'show']);
+        Route::post('/valuer-appointment-applications', [ValuerAppointmentApplicationController::class, 'store']);
+        Route::get('/valuer-appointment-applications/{id}', [ValuerAppointmentApplicationController::class, 'show']);
+        Route::post('/rent-court-possession-applications', [RentCourtPossessionApplicationController::class, 'store']);
+        Route::get('/rent-court-possession-applications/{id}', [RentCourtPossessionApplicationController::class, 'show']);
+        Route::post('/rent-court-filing-applications', [RentCourtFilingApplicationController::class, 'store']);
+        Route::get('/rent-court-filing-applications/{id}', [RentCourtFilingApplicationController::class, 'show']);
+        Route::post('/rent-authority-filing-applications', [RentAuthorityFilingApplicationController::class, 'store']);
+        Route::get('/rent-authority-filing-applications/{id}', [RentAuthorityFilingApplicationController::class, 'show']);
+        Route::post('/rent-court-appeal-applications', [RentCourtAppealApplicationController::class, 'store']);
+        Route::get('/rent-court-appeal-applications/{id}', [RentCourtAppealApplicationController::class, 'show']);
+        Route::post('/rent-tribunal-appeal-applications', [RentTribunalAppealApplicationController::class, 'store']);
+        Route::get('/rent-tribunal-appeal-applications/{id}', [RentTribunalAppealApplicationController::class, 'show']);
+    });
 });
 
 Route::middleware('auth:sanctum')->group(function () {

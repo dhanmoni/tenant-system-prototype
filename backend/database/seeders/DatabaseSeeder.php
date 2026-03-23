@@ -21,6 +21,14 @@ class DatabaseSeeder extends Seeder
             DesignationSeeder::class,
             UserSeeder::class,
             TenancyApplicationSeeder::class,
+            RentRevisionApplicationSeeder::class,
+            OtherChargesRevisionApplicationSeeder::class,
+            ValuerAppointmentApplicationSeeder::class,
+            RentCourtPossessionApplicationSeeder::class,
+            RentCourtFilingApplicationSeeder::class,
+            RentAuthorityFilingApplicationSeeder::class,
+            RentCourtAppealApplicationSeeder::class,
+            RentTribunalAppealApplicationSeeder::class,
         ]);
     }
 }

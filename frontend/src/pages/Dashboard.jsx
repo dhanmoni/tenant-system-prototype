@@ -11,6 +11,14 @@ import {
 } from 'chart.js'
 import { Bar, Doughnut } from 'react-chartjs-2'
 import api, { csrf } from '../api'
+import FormIRentRevisionPanel from '../components/FormIRentRevisionPanel'
+import FormIARentRevisionPanel from '../components/FormIARentRevisionPanel'
+import FormIBValuerAppointmentPanel from '../components/FormIBValuerAppointmentPanel'
+import Form4RentCourtPossessionPanel from '../components/Form4RentCourtPossessionPanel'
+import Form5RentCourtFilingPanel from '../components/Form5RentCourtFilingPanel'
+import Form6RentAuthorityFilingPanel from '../components/Form6RentAuthorityFilingPanel'
+import Form7RentCourtAppealPanel from '../components/Form7RentCourtAppealPanel'
+import Form8RentTribunalAppealPanel from '../components/Form8RentTribunalAppealPanel'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement)
 
@@ -19,6 +27,12 @@ function Dashboard({ user, onLogout }) {
 	const [officeMenuOpen, setOfficeMenuOpen] = useState(false)
 	const [userMenuOpen, setUserMenuOpen] = useState(false)
 	const [servicesMenuOpen, setServicesMenuOpen] = useState(false)
+	const [serviceGroupsOpen, setServiceGroupsOpen] = useState({
+		revision: true,
+		court: false,
+		authority: false,
+		appeals: false,
+	})
 	const [stateName, setStateName] = useState('')
 	const [states, setStates] = useState([])
 	const [statePage, setStatePage] = useState(1)
@@ -155,6 +169,15 @@ function Dashboard({ user, onLogout }) {
 	const [statusTotalPages, setStatusTotalPages] = useState(1)
 	const [statusViewApplication, setStatusViewApplication] = useState(null)
 	const [statusViewLoading, setStatusViewLoading] = useState(false)
+
+	const [formViewType, setFormViewType] = useState('')
+	const [formViewApplication, setFormViewApplication] = useState(null)
+	const [formViewLoading, setFormViewLoading] = useState(false)
+
+	const [tenantRecentApplications, setTenantRecentApplications] = useState([])
+	const [tenantRecentLoading, setTenantRecentLoading] = useState(false)
+	const [tenantRecentViewMode, setTenantRecentViewMode] = useState('card')
+
 	const [editingApplicationId, setEditingApplicationId] = useState(null)
 
 	const [tenancyVillageWardId, setTenancyVillageWardId] = useState('')
@@ -273,7 +296,7 @@ function Dashboard({ user, onLogout }) {
 		const normalizedType = String(applicationType || '').toLowerCase()
 		const normalizedStatus = String(status || '').trim().toLowerCase()
 
-		if (normalizedStatus === 'submiited') {
+		if (normalizedStatus === 'submiited' || normalizedStatus === 'submitted') {
 			return 'Submitted'
 		}
 
@@ -286,6 +309,24 @@ function Dashboard({ user, onLogout }) {
 
 		return status || '-'
 	}
+
+	const EyeIcon = ({ size = 18 }) => (
+		<svg
+			width={size}
+			height={size}
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+			<circle cx="12" cy="12" r="3" />
+		</svg>
+	)
+
 	const formatDateTime = (value) => {
 		if (!value) return '-'
 		const normalized =
@@ -705,6 +746,9 @@ function Dashboard({ user, onLogout }) {
 		if (activePanel === 'welcome' && user?.role === 'system_admin') {
 			loadAdminDashboard()
 		}
+		if (activePanel === 'welcome' && user?.role === 'tenant owner') {
+			loadTenantRecentApplications()
+		}
 		if (activePanel === 'welcome' && user?.role !== 'tenant owner' && user?.role !== 'system_admin') {
 			loadStaffDashboard()
 		}
@@ -720,6 +764,24 @@ function Dashboard({ user, onLogout }) {
 			setError(err?.response?.data?.message || 'Failed to load dashboard')
 		} finally {
 			setStaffStatsLoading(false)
+		}
+	}
+
+	const loadTenantRecentApplications = async () => {
+		setTenantRecentLoading(true)
+		setError('')
+		try {
+			const { data } = await api.get('/api/tenant-forms/my', {
+				params: { page: 1, sort_by: 'created_at', sort_order: 'desc' },
+			})
+			const list = Array.isArray(data) ? data : data?.data ?? []
+			// Show only the latest few on the dashboard home.
+			setTenantRecentApplications(list.slice(0, 6))
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to load recent applications')
+			setTenantRecentApplications([])
+		} finally {
+			setTenantRecentLoading(false)
 		}
 	}
 
@@ -774,7 +836,8 @@ function Dashboard({ user, onLogout }) {
 				sort_by: overrides.sort_by || statusSortBy,
 				sort_order: overrides.sort_order || statusSortOrder,
 			}
-			const { data } = await api.get('/api/tenancy-applications/my', { params })
+			const endpoint = user?.role === 'tenant owner' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
+			const { data } = await api.get(endpoint, { params })
 			// Handle Laravel paginator { data: [], current_page, last_page } or plain array
 			const list = Array.isArray(data) ? data : (data?.data ?? [])
 			setStatusApplications(list)
@@ -808,6 +871,37 @@ function Dashboard({ user, onLogout }) {
 			setError(err?.response?.data?.message || 'Failed to load application')
 		} finally {
 			setStatusViewLoading(false)
+		}
+	}
+
+	const formKeyToEndpoint = {
+		'form-i-rent-revision': '/api/rent-revision-applications',
+		'form-i-a-other-charges-revision': '/api/other-charges-revision-applications',
+		'form-i-b-valuers-appointment': '/api/valuer-appointment-applications',
+		'form-4-rent-court-possession': '/api/rent-court-possession-applications',
+		'form-5-rent-court-filing': '/api/rent-court-filing-applications',
+		'form-6-rent-authority-filing': '/api/rent-authority-filing-applications',
+		'form-7-rent-court-appeal': '/api/rent-court-appeal-applications',
+		'form-8-rent-tribunal-appeal': '/api/rent-tribunal-appeal-applications',
+	}
+
+	const loadFormStatusApplication = async (formKey, id) => {
+		setFormViewLoading(true)
+		setError('')
+		setFormViewType(formKey || '')
+		try {
+			const endpoint = formKeyToEndpoint[formKey]
+			if (!endpoint) {
+				throw new Error('Unknown form type')
+			}
+
+			const { data } = await api.get(`${endpoint}/${id}`)
+			setFormViewApplication(data.application || null)
+		} catch (err) {
+			setError(err?.response?.data?.message || err?.message || 'Failed to load form')
+			setFormViewApplication(null)
+		} finally {
+			setFormViewLoading(false)
 		}
 	}
 
@@ -2568,179 +2662,413 @@ function Dashboard({ user, onLogout }) {
 		}
 
 		if (activePanel === 'status') {
+			const tenancyCertificateRows = statusApplications.filter((app) =>
+				String(app.application_type || '').toLowerCase().includes('tenancy certificate')
+			)
+
+			const formRows = statusApplications.filter(
+				(app) =>
+					!String(app.application_type || '')
+						.toLowerCase()
+						.includes('tenancy certificate')
+			)
+
+			const revisionRows = formRows.filter((app) => {
+				const t = String(app.application_type || '').toLowerCase()
+				return (
+					t.includes('form-i:') ||
+					t.includes('form-i-a:') ||
+					t.includes('form-i-b:')
+				)
+			})
+
+			const courtRows = formRows.filter((app) => {
+				const t = String(app.application_type || '').toLowerCase()
+				return t.includes('form-iv:') || t.includes('form-v:')
+			})
+
+			const authorityRows = formRows.filter((app) => {
+				const t = String(app.application_type || '').toLowerCase()
+				return t.includes('form-vi:')
+			})
+
+			const appealsRows = formRows.filter((app) => {
+				const t = String(app.application_type || '').toLowerCase()
+				return t.includes('form-vii:') || t.includes('form-viii:')
+			})
+
 			return (
 				<div className="auth-card dashboard-card">
 					<h1>Application Status</h1>
-					<p className="muted">Track your tenancy certificate applications.</p>
+					<p className="muted">Track the status of your submitted applications.</p>
 					{error ? <div className="error">{error}</div> : null}
 					<div className="admin-table-wrapper">
-						<table className="admin-table status-table">
-							<thead>
-								<tr>
-									<th style={{ width: columnWidths['status_app_no'] }}>
-										<div className="th-content">
-											<span>Application No</span>
-											<div className="header-actions">
-												<button
-													className={`header-action-btn ${statusSearchAppNo ? 'active' : ''} ${activeSearchColumn === 'application_no' ? 'showing-popup' : ''}`}
-													onClick={() => setActiveSearchColumn(activeSearchColumn === 'application_no' ? null : 'application_no')}
-												>
-													<StatusTableSearchIcon
-														active={activeSearchColumn === 'application_no'}
-														filtered={!!statusSearchAppNo}
-													/>
-												</button>
-											</div>
-											{activeSearchColumn === 'application_no' && (
-												<div className="header-search-popup">
-													<input
-														type="text"
-														value={statusSearchAppNo}
-														onChange={(e) => setStatusSearchAppNo(e.target.value)}
-														onKeyDown={(e) => {
-															if (e.key === 'Enter') {
-																loadStatusApplications(1)
-																setActiveSearchColumn(null)
-															}
-														}}
-														placeholder="Search App No..."
-														autoFocus
-													/>
-													<div className="popup-actions">
-														<button className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
-														<button className="btn-clear" onClick={() => {
-															setStatusSearchAppNo('');
-															setActiveSearchColumn(null);
-															loadStatusApplications(1, { application_no: '' });
-														}}>Clear</button>
-													</div>
-												</div>
-											)}
-										</div>
-										<span className="resizer" onMouseDown={(e) => startResizing('status_app_no', e)} />
-									</th>
-									<th style={{ width: columnWidths['status_uid'] }}>
-										<div className="th-content">
-											<span>UID</span>
-											<div className="header-actions">
-												<button
-													className={`header-action-btn ${statusSearchUid ? 'active' : ''} ${activeSearchColumn === 'uid' ? 'showing-popup' : ''}`}
-													onClick={() => setActiveSearchColumn(activeSearchColumn === 'uid' ? null : 'uid')}
-												>
-													<StatusTableSearchIcon
-														active={activeSearchColumn === 'uid'}
-														filtered={!!statusSearchUid}
-													/>
-												</button>
-											</div>
-											{activeSearchColumn === 'uid' && (
-												<div className="header-search-popup">
-													<input
-														type="text"
-														value={statusSearchUid}
-														onChange={(e) => setStatusSearchUid(e.target.value)}
-														onKeyDown={(e) => {
-															if (e.key === 'Enter') {
-																loadStatusApplications(1)
-																setActiveSearchColumn(null)
-															}
-														}}
-														placeholder="Search UID..."
-														autoFocus
-													/>
-													<div className="popup-actions">
-														<button className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
-														<button className="btn-clear" onClick={() => {
-															setStatusSearchUid('');
-															setActiveSearchColumn(null);
-															loadStatusApplications(1, { uid: '' });
-														}}>Clear</button>
-													</div>
-												</div>
-											)}
-										</div>
-										<span className="resizer" onMouseDown={(e) => startResizing('status_uid', e)} />
-									</th>
-									<th style={{ width: columnWidths['status_date'] }}>
-										<div className="th-content sortable" onClick={() => handleStatusSort('created_at')}>
-											<span>Application Date</span>
-											<div className="header-actions">
-												<StatusTableSortIcon column="created_at" />
-											</div>
-										</div>
-										<span className="resizer" onMouseDown={(e) => startResizing('status_date', e)} />
-									</th>
-									<th style={{ width: columnWidths['status_status'] }}>
-										<span>Status</span>
-										<span className="resizer" onMouseDown={(e) => startResizing('status_status', e)} />
-									</th>
-									<th style={{ width: columnWidths['status_completion'] }}>
-										<span>Completion</span>
-										<span className="resizer" onMouseDown={(e) => startResizing('status_completion', e)} />
-									</th>
-									<th className="table-actions-head">Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{statusLoading ? (
-									<StatusTableLoader />
-								) : statusApplications.length === 0 ? (
-									<tr>
-										<td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
-											No applications found.
-										</td>
-									</tr>
-								) : (
-									statusApplications.map((app) => (
-										<tr key={app.id}>
-											<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
-											<td style={{ width: columnWidths['status_uid'] }}>{app.uid || '-'}</td>
-											<td style={{ width: columnWidths['status_date'] }}>
-												{app.created_at
-													? new Date(app.created_at).toLocaleDateString()
-													: '-'}
-											</td>
-											<td style={{ width: columnWidths['status_status'] }}>
-												{formatTenancyApplicationStatus(
-													app.status,
-													app.application_type || 'Tenancy Certificate'
-												)}
-											</td>
-											<td style={{ width: columnWidths['status_completion'] }}>
-												{app.initiator_completed && app.second_party_completed ? (
-													<span className="completion-badge completion-badge--done">Both Completed</span>
-												) : (
-													<span className="completion-badge completion-badge--partial">Awaiting {app.initiator_role === 'LANDLORD' ? 'Tenant' : 'Landlord'}</span>
-												)}
-											</td>
-											<td className="table-actions">
-												<button
-													type="button"
-													onClick={() => {
-														setActivePanel('status-view')
-														loadStatusApplication(app.id)
-													}}
-												>
-													View
-												</button>
-												{app.status === 'PARTIAL' && app.ref_code ? (
-													<button
-														type="button"
-														className="secondary"
-														onClick={() => {
-															const link = `${window.location.origin}/join?refCode=${app.ref_code}`
-															copyToClipboard(link)
-														}}
-													>
-														{copiedRefCode ? '✓ Copied!' : 'Copy Invite Link'}
-													</button>
-												) : null}
-											</td>
-										</tr>
-									))
-								)}
-							</tbody>
-						</table>
+						{statusLoading ? (
+							<div className="table-loader-container">
+								<div className="loader-spinner"></div>
+								<span className="table-loader-text">Loading applications...</span>
+							</div>
+						) : statusApplications.length === 0 ? (
+							<div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+								No applications found.
+							</div>
+						) : (
+							<>
+								{tenancyCertificateRows.length > 0 ? (
+									<div className="status-category-table">
+										<div className="status-category-title">Tenancy Certificate</div>
+										<table className="admin-table status-table">
+											<thead>
+												<tr>
+													<th style={{ width: columnWidths['status_app_no'] }}>
+														<div className="th-content">
+															<span>Application No</span>
+															<div className="header-actions">
+																<button
+																	className={`header-action-btn ${statusSearchAppNo ? 'active' : ''} ${activeSearchColumn === 'application_no' ? 'showing-popup' : ''}`}
+																	onClick={() => setActiveSearchColumn(activeSearchColumn === 'application_no' ? null : 'application_no')}
+																>
+																	<StatusTableSearchIcon
+																		active={activeSearchColumn === 'application_no'}
+																		filtered={!!statusSearchAppNo}
+																	/>
+																</button>
+															</div>
+															{activeSearchColumn === 'application_no' && (
+																<div className="header-search-popup">
+																	<input
+																		type="text"
+																		value={statusSearchAppNo}
+																		onChange={(e) => setStatusSearchAppNo(e.target.value)}
+																		onKeyDown={(e) => {
+																			if (e.key === 'Enter') {
+																				loadStatusApplications(1)
+																				setActiveSearchColumn(null)
+																			}
+																		}}
+																		placeholder="Search App No..."
+																		autoFocus
+																	/>
+																	<div className="popup-actions">
+																		<button className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+																		<button className="btn-clear" onClick={() => {
+																			setStatusSearchAppNo('');
+																			setActiveSearchColumn(null);
+																			loadStatusApplications(1, { application_no: '' });
+																		}}>Clear</button>
+																	</div>
+																</div>
+															)}
+														</div>
+														<span className="resizer" onMouseDown={(e) => startResizing('status_app_no', e)} />
+													</th>
+													<th style={{ width: columnWidths['status_uid'] }}>
+														<div className="th-content">
+															<span>UID</span>
+															<div className="header-actions">
+																<button
+																	className={`header-action-btn ${statusSearchUid ? 'active' : ''} ${activeSearchColumn === 'uid' ? 'showing-popup' : ''}`}
+																	onClick={() => setActiveSearchColumn(activeSearchColumn === 'uid' ? null : 'uid')}
+																>
+																	<StatusTableSearchIcon
+																		active={activeSearchColumn === 'uid'}
+																		filtered={!!statusSearchUid}
+																	/>
+																</button>
+															</div>
+															{activeSearchColumn === 'uid' && (
+																<div className="header-search-popup">
+																	<input
+																		type="text"
+																		value={statusSearchUid}
+																		onChange={(e) => setStatusSearchUid(e.target.value)}
+																		onKeyDown={(e) => {
+																			if (e.key === 'Enter') {
+																				loadStatusApplications(1)
+																				setActiveSearchColumn(null)
+																			}
+																		}}
+																		placeholder="Search UID..."
+																		autoFocus
+																	/>
+																	<div className="popup-actions">
+																		<button className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+																		<button className="btn-clear" onClick={() => {
+																			setStatusSearchUid('');
+																			setActiveSearchColumn(null);
+																			loadStatusApplications(1, { uid: '' });
+																		}}>Clear</button>
+																	</div>
+																</div>
+															)}
+														</div>
+														<span className="resizer" onMouseDown={(e) => startResizing('status_uid', e)} />
+													</th>
+													<th style={{ width: columnWidths['status_date'] }}>
+														<div className="th-content sortable" onClick={() => handleStatusSort('created_at')}>
+															<span>Application Date</span>
+															<div className="header-actions">
+																<StatusTableSortIcon column="created_at" />
+															</div>
+														</div>
+														<span className="resizer" onMouseDown={(e) => startResizing('status_date', e)} />
+													</th>
+													<th style={{ width: columnWidths['status_status'] }}>
+														<span>Status</span>
+														<span className="resizer" onMouseDown={(e) => startResizing('status_status', e)} />
+													</th>
+													<th style={{ width: columnWidths['status_completion'] }}>
+														<span>Completion</span>
+														<span className="resizer" onMouseDown={(e) => startResizing('status_completion', e)} />
+													</th>
+													<th className="table-actions-head">Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{tenancyCertificateRows.map((app) => (
+													<tr key={app.row_key || app.id}>
+														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
+														<td style={{ width: columnWidths['status_uid'] }}>{app.uid || '-'}</td>
+														<td style={{ width: columnWidths['status_date'] }}>
+															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+														</td>
+														<td style={{ width: columnWidths['status_status'] }}>
+															{formatTenancyApplicationStatus(app.status, app.application_type || 'Tenancy Certificate')}
+														</td>
+														<td style={{ width: columnWidths['status_completion'] }}>
+															{app.initiator_completed && app.second_party_completed ? (
+																<span className="completion-badge completion-badge--done">Both Completed</span>
+															) : (
+																<span className="completion-badge completion-badge--partial">
+																	Awaiting {app.initiator_role === 'LANDLORD' ? 'Tenant' : 'Landlord'}
+																</span>
+															)}
+														</td>
+														<td className="table-actions">
+															<button
+																type="button"
+																className="table-icon-btn"
+																title="View details"
+																onClick={() => {
+																	setActivePanel('status-view')
+																	loadStatusApplication(app.id)
+																}}
+															>
+																<EyeIcon />
+															</button>
+															{app.status === 'PARTIAL' && app.ref_code ? (
+																<button
+																	type="button"
+																	className="secondary"
+																	onClick={() => {
+																		const link = `${window.location.origin}/join?refCode=${app.ref_code}`
+																		copyToClipboard(link)
+																	}}
+																>
+																	{copiedRefCode ? '✓ Copied!' : 'Copy Invite Link'}
+																</button>
+															) : null}
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+								) : null}
+
+								{revisionRows.length > 0 ? (
+									<div className="status-category-table">
+										<div className="status-category-title">Revision (Form 1 / 1-A / 1-B)</div>
+										<table className="admin-table status-table">
+											<thead>
+												<tr>
+													<th style={{ width: columnWidths['status_app_no'] }}>Application No</th>
+													<th style={{ width: columnWidths['status_uid'] }}>UID</th>
+													<th style={{ width: columnWidths['status_date'] }}>Application Date</th>
+													<th style={{ width: columnWidths['status_status'] }}>Status</th>
+													<th style={{ width: columnWidths['status_completion'] }}>Completion</th>
+													<th className="table-actions-head">Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{revisionRows.map((app) => (
+													<tr key={app.row_key || app.id}>
+														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
+														<td style={{ width: columnWidths['status_uid'] }}>-</td>
+														<td style={{ width: columnWidths['status_date'] }}>
+															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+														</td>
+														<td style={{ width: columnWidths['status_status'] }}>
+															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
+														</td>
+														<td style={{ width: columnWidths['status_completion'] }}>
+															<span className="completion-badge completion-badge--done">Submitted</span>
+														</td>
+														<td className="table-actions">
+															<button
+																type="button"
+																className="table-icon-btn"
+																title="View form details"
+																onClick={() => {
+																	setActivePanel('form-status-view')
+																	loadFormStatusApplication(app.form_key, app.id)
+																}}
+															>
+																<EyeIcon />
+															</button>
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+								) : null}
+
+								{courtRows.length > 0 ? (
+									<div className="status-category-table">
+										<div className="status-category-title">Rent Court (Form 4 / 5)</div>
+										<table className="admin-table status-table">
+											<thead>
+												<tr>
+													<th style={{ width: columnWidths['status_app_no'] }}>Application No</th>
+													<th style={{ width: columnWidths['status_uid'] }}>UID</th>
+													<th style={{ width: columnWidths['status_date'] }}>Application Date</th>
+													<th style={{ width: columnWidths['status_status'] }}>Status</th>
+													<th style={{ width: columnWidths['status_completion'] }}>Completion</th>
+													<th className="table-actions-head">Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{courtRows.map((app) => (
+													<tr key={app.row_key || app.id}>
+														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
+														<td style={{ width: columnWidths['status_uid'] }}>-</td>
+														<td style={{ width: columnWidths['status_date'] }}>
+															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+														</td>
+														<td style={{ width: columnWidths['status_status'] }}>
+															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
+														</td>
+														<td style={{ width: columnWidths['status_completion'] }}>
+															<span className="completion-badge completion-badge--done">Submitted</span>
+														</td>
+														<td className="table-actions">
+															<button
+																type="button"
+																className="table-icon-btn"
+																title="View form details"
+																onClick={() => {
+																	setActivePanel('form-status-view')
+																	loadFormStatusApplication(app.form_key, app.id)
+																}}
+															>
+																<EyeIcon />
+															</button>
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+								) : null}
+
+								{authorityRows.length > 0 ? (
+									<div className="status-category-table">
+										<div className="status-category-title">Rent Authority (Form 6)</div>
+										<table className="admin-table status-table">
+											<thead>
+												<tr>
+													<th style={{ width: columnWidths['status_app_no'] }}>Application No</th>
+													<th style={{ width: columnWidths['status_uid'] }}>UID</th>
+													<th style={{ width: columnWidths['status_date'] }}>Application Date</th>
+													<th style={{ width: columnWidths['status_status'] }}>Status</th>
+													<th style={{ width: columnWidths['status_completion'] }}>Completion</th>
+													<th className="table-actions-head">Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{authorityRows.map((app) => (
+													<tr key={app.row_key || app.id}>
+														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
+														<td style={{ width: columnWidths['status_uid'] }}>-</td>
+														<td style={{ width: columnWidths['status_date'] }}>
+															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+														</td>
+														<td style={{ width: columnWidths['status_status'] }}>
+															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
+														</td>
+														<td style={{ width: columnWidths['status_completion'] }}>
+															<span className="completion-badge completion-badge--done">Submitted</span>
+														</td>
+														<td className="table-actions">
+															<button
+																type="button"
+																className="table-icon-btn"
+																title="View form details"
+																onClick={() => {
+																	setActivePanel('form-status-view')
+																	loadFormStatusApplication(app.form_key, app.id)
+																}}
+															>
+																<EyeIcon />
+															</button>
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+								) : null}
+
+								{appealsRows.length > 0 ? (
+									<div className="status-category-table">
+										<div className="status-category-title">Appeals (Form 7 / 8)</div>
+										<table className="admin-table status-table">
+											<thead>
+												<tr>
+													<th style={{ width: columnWidths['status_app_no'] }}>Application No</th>
+													<th style={{ width: columnWidths['status_uid'] }}>UID</th>
+													<th style={{ width: columnWidths['status_date'] }}>Application Date</th>
+													<th style={{ width: columnWidths['status_status'] }}>Status</th>
+													<th style={{ width: columnWidths['status_completion'] }}>Completion</th>
+													<th className="table-actions-head">Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{appealsRows.map((app) => (
+													<tr key={app.row_key || app.id}>
+														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
+														<td style={{ width: columnWidths['status_uid'] }}>-</td>
+														<td style={{ width: columnWidths['status_date'] }}>
+															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+														</td>
+														<td style={{ width: columnWidths['status_status'] }}>
+															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
+														</td>
+														<td style={{ width: columnWidths['status_completion'] }}>
+															<span className="completion-badge completion-badge--done">Submitted</span>
+														</td>
+														<td className="table-actions">
+															<button
+																type="button"
+																className="table-icon-btn"
+																title="View form details"
+																onClick={() => {
+																	setActivePanel('form-status-view')
+																	loadFormStatusApplication(app.form_key, app.id)
+																}}
+															>
+																<EyeIcon />
+															</button>
+														</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+									</div>
+								) : null}
+							</>
+						)}
 						<div className="table-pagination">
 							<button
 								type="button"
@@ -2883,6 +3211,794 @@ function Dashboard({ user, onLogout }) {
 					) : null}
 				</div>
 			)
+		}
+
+		if (activePanel === 'form-status-view') {
+			const application = formViewApplication
+			const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+			const formKeyToTitle = {
+				'form-i-rent-revision': 'Form-I (Rent revision/fixation)',
+				'form-i-a-other-charges-revision': 'Form-I-A (Other charges revision/fixation)',
+				'form-i-b-valuers-appointment': 'Form-I-B (Valuer appointment)',
+				'form-4-rent-court-possession': 'Form-IV (Rent Court - recovery of possession)',
+				'form-5-rent-court-filing': 'Form-V (Filled before the Rent Court)',
+				'form-6-rent-authority-filing': 'Form-VI (Filled before the Rent Authority)',
+				'form-7-rent-court-appeal': 'Form-VII (Appeal before the Rent Court)',
+				'form-8-rent-tribunal-appeal': 'Form-VIII (Appeal before the Rent Tribunal)',
+			}
+
+			const formTitle = formKeyToTitle[formViewType] || 'Form Details'
+			const signatureUrl = application?.signature_image_path
+				? `${baseUrl}/storage/${application.signature_image_path}`
+				: ''
+
+			const details = (() => {
+				switch (formViewType) {
+					case 'form-i-rent-revision':
+						return [
+							{ label: 'Rent Authority UID', value: application?.rent_authority_uid },
+							{
+								label: 'Landlord / Tenant',
+								value: `${application?.landlord_name || '-'} / ${application?.tenant_name || '-'}`,
+							},
+							{
+								label: 'Present / Proposed Rent',
+								value: `${application?.present_monthly_rent ?? '-'} / ${application?.proposed_monthly_rent ?? '-'}`,
+							},
+							{ label: 'Reason for Revision', value: application?.reason_for_rent_revision },
+						]
+					case 'form-i-a-other-charges-revision':
+						return [
+							{ label: 'Rent Authority UID', value: application?.rent_authority_uid },
+							{
+								label: 'Landlord / Tenant',
+								value: `${application?.landlord_name || '-'} / ${application?.tenant_name || '-'}`,
+							},
+							{
+								label: 'Existing / Proposed Charges',
+								value: `${application?.existing_other_charges_details ?? '-'} / ${application?.proposed_other_charges_details ?? '-'}`,
+							},
+							{ label: 'Reason for Revision', value: application?.reason_for_other_charges_revision },
+						]
+					case 'form-i-b-valuers-appointment':
+						return [
+							{ label: 'Rent Authority UID', value: application?.rent_authority_uid },
+							{ label: 'Applicant', value: application?.applicant_name },
+							{ label: 'Premises Address', value: application?.premises_situated_address },
+							{ label: 'District', value: application?.district },
+						]
+					case 'form-4-rent-court-possession':
+						return [
+							{ label: 'Before Rent Court', value: application?.before_rent_court },
+							{ label: 'Applicant Name', value: application?.applicant_name },
+							{ label: 'Tenant UID', value: application?.tenant_unique_identification_number },
+							{ label: 'Relief Sought', value: application?.relief_sought },
+						]
+					case 'form-5-rent-court-filing':
+						return [
+							{ label: 'Rent Court At', value: application?.rent_court_at },
+							{
+								label: 'Applicant / Respondent',
+								value: `${application?.applicant_name || '-'} / ${application?.respondent_name || '-'}`,
+							},
+							{ label: 'Tenancy UID', value: application?.tenancy_unique_identification_number },
+							{ label: 'Relief Sought', value: application?.relief_sought },
+						]
+					case 'form-6-rent-authority-filing':
+						return [
+							{ label: 'Rent Authority UID', value: application?.rent_authority_uid },
+							{
+								label: 'Applicant / Opposite Party',
+								value: `${application?.applicant_name || '-'} / ${application?.opposite_party_name || '-'}`,
+							},
+							{ label: 'Particulars of Violation', value: application?.particulars_of_violation },
+							{ label: 'Relief Sought', value: application?.relief_sought },
+						]
+					case 'form-7-rent-court-appeal':
+						return [
+							{ label: 'Rent Court At', value: application?.rent_court_at },
+							{
+								label: 'Appellant / Respondent',
+								value: `${application?.appellant_name || '-'} / ${application?.respondent_name || '-'}`,
+							},
+							{ label: 'Tenancy UID', value: application?.tenancy_unique_identification_number },
+							{ label: 'Relief Sought', value: application?.relief_sought },
+						]
+					case 'form-8-rent-tribunal-appeal':
+						return [
+							{ label: 'Rent Tribunal At', value: application?.rent_tribunal_at },
+							{
+								label: 'Appellant / Respondent',
+								value: `${application?.appellant_name || '-'} / ${application?.respondent_name || '-'}`,
+							},
+							{ label: 'Tenancy UID', value: application?.tenancy_unique_identification_number },
+							{ label: 'Relief Sought', value: application?.relief_sought },
+						]
+					default:
+						return []
+				}
+			})()
+
+			return (
+				<div className="auth-card dashboard-card">
+					<h1>{formTitle}</h1>
+					<p className="muted">Review your submitted form.</p>
+					{error ? <div className="error">{error}</div> : null}
+					{formViewLoading ? <div className="muted">Loading...</div> : null}
+					{!application && !formViewLoading ? (
+						<div className="muted">No form data.</div>
+					) : application ? (
+						<div className="tenancy-preview-section">
+							<div className="tenancy-preview-grid">
+								<div>
+									<span className="label-text">Application No</span>
+									<span>{application?.application_no}</span>
+								</div>
+								<div>
+									<span className="label-text">Status</span>
+									<span>{formatTenancyApplicationStatus(application?.status, '')}</span>
+								</div>
+								<div>
+									<span className="label-text">Submitted At</span>
+									<span>{formatDateTime(application?.created_at)}</span>
+								</div>
+								<div>
+									<span className="label-text">Signed Name</span>
+									<span>{application?.signature_name || '-'}</span>
+								</div>
+
+								{details.map((d, idx) => (
+									<div key={`${idx}-${d.label}`}>
+										<span className="label-text">{d.label}</span>
+										<span>
+											{d.value !== null && d.value !== undefined && d.value !== ''
+												? String(d.value)
+												: '-'}
+										</span>
+									</div>
+								))}
+
+								<div className="preview-media preview-media-left">
+									<span className="label-text">Signature</span>
+									{signatureUrl ? (
+										<img className="signature-preview" src={signatureUrl} alt="Signature preview" />
+									) : (
+										<span>-</span>
+									)}
+								</div>
+							</div>
+							<div className="form-actions">
+								<button
+									type="button"
+									onClick={() => {
+										setActivePanel('status')
+										loadStatusApplications(1)
+									}}
+								>
+									Back to Status
+								</button>
+							</div>
+						</div>
+					) : null}
+				</div>
+			)
+		}
+
+		// Stable components to avoid remounting/resetting local input state while typing.
+		if (activePanel === 'form-i-rent-revision') {
+			return <FormIRentRevisionPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-i-a-other-charges-revision') {
+			return <FormIARentRevisionPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-i-b-valuers-appointment') {
+			return <FormIBValuerAppointmentPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-4-rent-court-possession') {
+			return <Form4RentCourtPossessionPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-5-rent-court-filing') {
+			return <Form5RentCourtFilingPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-6-rent-authority-filing') {
+			return <Form6RentAuthorityFilingPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-7-rent-court-appeal') {
+			return <Form7RentCourtAppealPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-8-rent-tribunal-appeal') {
+			return <Form8RentTribunalAppealPanel onBack={() => setActivePanel('welcome')} />
+		}
+
+		if (activePanel === 'form-i-rent-revision') {
+			const RentRevisionFormPanel = () => {
+				const [submitting, setSubmitting] = useState(false)
+				const [rentAuthorityUid, setRentAuthorityUid] = useState('')
+				const [tenancyAgreementDocumentNo, setTenancyAgreementDocumentNo] = useState('')
+
+				const [landlordName, setLandlordName] = useState('')
+				const [landlordAddress, setLandlordAddress] = useState('')
+
+				const [tenantName, setTenantName] = useState('')
+				const [tenantAddress, setTenantAddress] = useState('')
+
+				const [managerName, setManagerName] = useState('')
+				const [managerAddress, setManagerAddress] = useState('')
+
+				const [rentedPremisesDescription, setRentedPremisesDescription] = useState('')
+				const [presentMonthlyRent, setPresentMonthlyRent] = useState('')
+				const [proposedMonthlyRent, setProposedMonthlyRent] = useState('')
+
+				const [reasonForRentRevision, setReasonForRentRevision] = useState('')
+
+				const [signedBy, setSignedBy] = useState('landlord')
+				const [signatureName, setSignatureName] = useState('')
+				const [signatureImage, setSignatureImage] = useState(null)
+
+				const submit = async () => {
+					setError('')
+					setSuccess('')
+					setSubmitting(true)
+					try {
+						await csrf()
+						const formData = new FormData()
+						// Normalize numeric inputs coming from text fields (e.g. "25,000.50" -> 25000.50)
+						const parseMoney = (value) => {
+							const raw = String(value ?? '')
+							const cleaned = raw.replace(/,/g, '').replace(/[^0-9.]/g, '')
+							const num = Number(cleaned)
+							return Number.isFinite(num) ? num : 0
+						}
+
+						formData.append('rent_authority_uid', rentAuthorityUid.trim())
+						if (tenancyAgreementDocumentNo.trim()) {
+							formData.append(
+								'tenancy_agreement_document_no',
+								tenancyAgreementDocumentNo.trim()
+							)
+						}
+						formData.append('landlord_name', landlordName.trim())
+						formData.append('landlord_address', landlordAddress.trim())
+						formData.append('tenant_name', tenantName.trim())
+						formData.append('tenant_address', tenantAddress.trim())
+						if (managerName.trim()) formData.append('manager_name', managerName.trim())
+						if (managerAddress.trim()) formData.append('manager_address', managerAddress.trim())
+						formData.append(
+							'rented_premises_description',
+							rentedPremisesDescription.trim()
+						)
+						formData.append(
+							'present_monthly_rent',
+							String(parseMoney(presentMonthlyRent))
+						)
+						formData.append(
+							'proposed_monthly_rent',
+							String(parseMoney(proposedMonthlyRent))
+						)
+						formData.append('reason_for_rent_revision', reasonForRentRevision.trim())
+						formData.append('signed_by', signedBy)
+						formData.append('signature_name', signatureName.trim())
+						if (signatureImage) formData.append('signature_image', signatureImage)
+
+						const { data } = await api.post('/api/rent-revision-applications', formData, {
+							headers: { 'Content-Type': 'multipart/form-data' },
+						})
+
+						setSuccess(data?.message || 'Form-I submitted successfully.')
+						// Keep data for now; user can correct if needed.
+					} catch (err) {
+						const msg =
+							err?.response?.data?.message ||
+							(err?.response?.data?.errors
+								? Object.values(err.response.data.errors).flat().join('. ')
+								: 'Failed to submit Form-I')
+						setError(msg)
+					} finally {
+						setSubmitting(false)
+					}
+				}
+
+				return (
+					<div className="auth-card dashboard-card">
+						<h1>Form-I: Rent revision / fixation</h1>
+						<p className="muted">Fill the application details and submit to the system.</p>
+						{error ? <div className="error">{error}</div> : null}
+						{success ? <div className="success">{success}</div> : null}
+
+						<form
+							className="tenancy-form"
+							onSubmit={(e) => {
+								e.preventDefault()
+								submit()
+							}}
+						>
+							<label>
+								<span className="label-text required">Unique Identification Number (UID) issued by Rent Authority</span>
+								<input
+									type="text"
+									value={rentAuthorityUid}
+									onChange={(e) => setRentAuthorityUid(e.target.value)}
+									required
+								/>
+							</label>
+
+							<label>
+								<span className="label-text">Document No. of tenancy agreement (before Sub-Registrar, if any)</span>
+								<input
+									type="text"
+									value={tenancyAgreementDocumentNo}
+									onChange={(e) => setTenancyAgreementDocumentNo(e.target.value)}
+								/>
+							</label>
+
+							<fieldset className="tenancy-fieldset">
+								<legend className="tenancy-legend-italic">Landlord / Tenant Details</legend>
+
+								<label>
+									<span className="label-text required">Landlord name</span>
+									<input type="text" value={landlordName} onChange={(e) => setLandlordName(e.target.value)} required />
+								</label>
+								<label>
+									<span className="label-text required">Landlord address</span>
+									<textarea value={landlordAddress} onChange={(e) => setLandlordAddress(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text required">Tenant name</span>
+									<input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} required />
+								</label>
+								<label>
+									<span className="label-text required">Tenant address</span>
+									<textarea value={tenantAddress} onChange={(e) => setTenantAddress(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text">Property manager name (if any)</span>
+									<input type="text" value={managerName} onChange={(e) => setManagerName(e.target.value)} />
+								</label>
+								<label>
+									<span className="label-text">Property manager address (if any)</span>
+									<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} />
+								</label>
+							</fieldset>
+
+							<label>
+								<span className="label-text required">Description of rented premises</span>
+								<textarea
+									value={rentedPremisesDescription}
+									onChange={(e) => setRentedPremisesDescription(e.target.value)}
+									required
+								/>
+							</label>
+
+							<label>
+								<span className="label-text required">Present monthly rent</span>
+								<input
+									type="text"
+									step="0.01"
+									value={presentMonthlyRent}
+									onChange={(e) => setPresentMonthlyRent(e.target.value)}
+									required
+									inputMode="decimal"
+									placeholder="e.g. 25000 or 25,000.50"
+								/>
+							</label>
+
+							<label>
+								<span className="label-text required">Proposed monthly rent</span>
+								<input
+									type="text"
+									step="0.01"
+									value={proposedMonthlyRent}
+									onChange={(e) => setProposedMonthlyRent(e.target.value)}
+									required
+									inputMode="decimal"
+									placeholder="e.g. 27000 or 27,000.00"
+								/>
+							</label>
+
+							<label>
+								<span className="label-text required">Reason for fixation / revision of rent</span>
+								<textarea
+									value={reasonForRentRevision}
+									onChange={(e) => setReasonForRentRevision(e.target.value)}
+									required
+								/>
+							</label>
+
+							<fieldset className="tenancy-fieldset">
+								<legend className="tenancy-legend-italic">Signature</legend>
+
+								<label>
+									<span className="label-text">Signed by</span>
+									<select value={signedBy} onChange={(e) => setSignedBy(e.target.value)}>
+										<option value="landlord">Landlord</option>
+										<option value="tenant">Tenant</option>
+									</select>
+								</label>
+								<label>
+									<span className="label-text required">Name</span>
+									<input type="text" value={signatureName} onChange={(e) => setSignatureName(e.target.value)} required />
+								</label>
+								<label>
+									<span className="label-text">Signature image (optional)</span>
+									<input
+										type="file"
+										accept="image/*"
+										onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
+									/>
+								</label>
+							</fieldset>
+
+							<div className="form-actions">
+								<button
+									type="button"
+									className="secondary"
+									onClick={() => {
+										setActivePanel('welcome')
+									}}
+									disabled={submitting}
+								>
+									Back
+								</button>
+								<button type="submit" disabled={submitting}>
+									{submitting ? 'Submitting...' : 'Submit Form-I'}
+								</button>
+							</div>
+						</form>
+					</div>
+				)
+			}
+
+			return <RentRevisionFormPanel />
+		}
+
+		if (activePanel === 'form-i-a-other-charges-revision') {
+			const OtherChargesRevisionFormPanel = () => {
+				const [submitting, setSubmitting] = useState(false)
+				const [rentAuthorityUid, setRentAuthorityUid] = useState('')
+				const [tenancyAgreementDocumentNo, setTenancyAgreementDocumentNo] = useState('')
+
+				const [landlordName, setLandlordName] = useState('')
+				const [landlordAddress, setLandlordAddress] = useState('')
+
+				const [tenantName, setTenantName] = useState('')
+				const [tenantAddress, setTenantAddress] = useState('')
+
+				const [managerName, setManagerName] = useState('')
+				const [managerAddress, setManagerAddress] = useState('')
+
+				const [rentedPremisesDescription, setRentedPremisesDescription] = useState('')
+				const [existingOtherChargesDetails, setExistingOtherChargesDetails] = useState('')
+				const [proposedOtherChargesDetails, setProposedOtherChargesDetails] = useState('')
+				const [reasonForOtherChargesRevision, setReasonForOtherChargesRevision] = useState('')
+
+				const [signedBy, setSignedBy] = useState('landlord')
+				const [signatureName, setSignatureName] = useState('')
+				const [signatureImage, setSignatureImage] = useState(null)
+
+				const submit = async () => {
+					setError('')
+					setSuccess('')
+					setSubmitting(true)
+					try {
+						await csrf()
+						const formData = new FormData()
+						formData.append('rent_authority_uid', rentAuthorityUid.trim())
+						if (tenancyAgreementDocumentNo.trim()) {
+							formData.append(
+								'tenancy_agreement_document_no',
+								tenancyAgreementDocumentNo.trim()
+							)
+						}
+						formData.append('landlord_name', landlordName.trim())
+						formData.append('landlord_address', landlordAddress.trim())
+						formData.append('tenant_name', tenantName.trim())
+						formData.append('tenant_address', tenantAddress.trim())
+						if (managerName.trim()) formData.append('manager_name', managerName.trim())
+						if (managerAddress.trim()) formData.append('manager_address', managerAddress.trim())
+						formData.append(
+							'rented_premises_description',
+							rentedPremisesDescription.trim()
+						)
+						formData.append('existing_other_charges_details', existingOtherChargesDetails.trim())
+						formData.append('proposed_other_charges_details', proposedOtherChargesDetails.trim())
+						formData.append('reason_for_other_charges_revision', reasonForOtherChargesRevision.trim())
+						formData.append('signed_by', signedBy)
+						formData.append('signature_name', signatureName.trim())
+						if (signatureImage) formData.append('signature_image', signatureImage)
+
+						const { data } = await api.post('/api/other-charges-revision-applications', formData, {
+							headers: { 'Content-Type': 'multipart/form-data' },
+						})
+
+						setSuccess(data?.message || 'Form-I-A submitted successfully.')
+					} catch (err) {
+						const msg =
+							err?.response?.data?.message ||
+							(err?.response?.data?.errors
+								? Object.values(err.response.data.errors).flat().join('. ')
+								: 'Failed to submit Form-I-A')
+						setError(msg)
+					} finally {
+						setSubmitting(false)
+					}
+				}
+
+				return (
+					<div className="auth-card dashboard-card">
+						<h1>Form-I-A: Other charges revision / fixation</h1>
+						<p className="muted">Fill the application details and submit to the system.</p>
+						{error ? <div className="error">{error}</div> : null}
+						{success ? <div className="success">{success}</div> : null}
+
+						<form
+							className="tenancy-form"
+							onSubmit={(e) => {
+								e.preventDefault()
+								submit()
+							}}
+						>
+							<label>
+								<span className="label-text required">Unique Identification Number (UID) issued by Rent Authority</span>
+								<input type="text" value={rentAuthorityUid} onChange={(e) => setRentAuthorityUid(e.target.value)} required />
+							</label>
+
+							<label>
+								<span className="label-text">Document No. of tenancy agreement (before Sub-Registrar, if any)</span>
+								<input type="text" value={tenancyAgreementDocumentNo} onChange={(e) => setTenancyAgreementDocumentNo(e.target.value)} />
+							</label>
+
+							<fieldset className="tenancy-fieldset">
+								<legend className="tenancy-legend-italic">Landlord / Tenant Details</legend>
+
+								<label>
+									<span className="label-text required">Landlord name</span>
+									<input type="text" value={landlordName} onChange={(e) => setLandlordName(e.target.value)} required />
+								</label>
+								<label>
+									<span className="label-text required">Landlord address</span>
+									<textarea value={landlordAddress} onChange={(e) => setLandlordAddress(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text required">Tenant name</span>
+									<input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} required />
+								</label>
+								<label>
+									<span className="label-text required">Tenant address</span>
+									<textarea value={tenantAddress} onChange={(e) => setTenantAddress(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text">Property manager name (if any)</span>
+									<input type="text" value={managerName} onChange={(e) => setManagerName(e.target.value)} />
+								</label>
+								<label>
+									<span className="label-text">Property manager address (if any)</span>
+									<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} />
+								</label>
+							</fieldset>
+
+							<label>
+								<span className="label-text required">Description of rented premises</span>
+								<textarea value={rentedPremisesDescription} onChange={(e) => setRentedPremisesDescription(e.target.value)} required />
+							</label>
+
+							<label>
+								<span className="label-text required">Existing details of other charges</span>
+								<textarea value={existingOtherChargesDetails} onChange={(e) => setExistingOtherChargesDetails(e.target.value)} required />
+							</label>
+
+							<label>
+								<span className="label-text required">Proposed other charges</span>
+								<textarea value={proposedOtherChargesDetails} onChange={(e) => setProposedOtherChargesDetails(e.target.value)} required />
+							</label>
+
+							<label>
+								<span className="label-text required">Reason for fixation / revision of other charges</span>
+								<textarea value={reasonForOtherChargesRevision} onChange={(e) => setReasonForOtherChargesRevision(e.target.value)} required />
+							</label>
+
+							<fieldset className="tenancy-fieldset">
+								<legend className="tenancy-legend-italic">Signature</legend>
+
+								<label>
+									<span className="label-text">Signed by</span>
+									<select value={signedBy} onChange={(e) => setSignedBy(e.target.value)}>
+										<option value="landlord">Landlord</option>
+										<option value="tenant">Tenant</option>
+									</select>
+								</label>
+								<label>
+									<span className="label-text required">Name</span>
+									<input type="text" value={signatureName} onChange={(e) => setSignatureName(e.target.value)} required />
+								</label>
+								<label>
+									<span className="label-text">Signature image (optional)</span>
+									<input type="file" accept="image/*" onChange={(e) => setSignatureImage(e.target.files?.[0] || null)} />
+								</label>
+							</fieldset>
+
+							<div className="form-actions">
+								<button type="button" className="secondary" onClick={() => setActivePanel('welcome')} disabled={submitting}>
+									Back
+								</button>
+								<button type="submit" disabled={submitting}>
+									{submitting ? 'Submitting...' : 'Submit Form-I-A'}
+								</button>
+							</div>
+						</form>
+					</div>
+				)
+			}
+
+			return <OtherChargesRevisionFormPanel />
+		}
+
+		if (activePanel === 'form-i-b-valuers-appointment') {
+			const ValuerAppointmentFormPanel = () => {
+				const [submitting, setSubmitting] = useState(false)
+				const [rentAuthorityUid, setRentAuthorityUid] = useState('')
+
+				const [applicantName, setApplicantName] = useState('')
+				const [applicantRelationType, setApplicantRelationType] = useState('Son')
+				const [applicantRelationTargetName, setApplicantRelationTargetName] = useState('')
+				const [applicantResidentPlace, setApplicantResidentPlace] = useState('')
+
+				const [applicantLandlordOrTenant, setApplicantLandlordOrTenant] = useState('landlord')
+				const [premisesSituatedAddress, setPremisesSituatedAddress] = useState('')
+				const [district, setDistrict] = useState('')
+
+				const [signedBy, setSignedBy] = useState('landlord')
+				const [signatureName, setSignatureName] = useState('')
+				const [signatureImage, setSignatureImage] = useState(null)
+
+				const submit = async () => {
+					setError('')
+					setSuccess('')
+					setSubmitting(true)
+					try {
+						await csrf()
+						const formData = new FormData()
+						formData.append('rent_authority_uid', rentAuthorityUid.trim())
+						formData.append('applicant_name', applicantName.trim())
+						formData.append('applicant_relation_type', applicantRelationType)
+						formData.append('applicant_relation_target_name', applicantRelationTargetName.trim())
+						formData.append('applicant_resident_place', applicantResidentPlace.trim())
+						formData.append('applicant_landlord_or_tenant', applicantLandlordOrTenant)
+						formData.append('premises_situated_address', premisesSituatedAddress.trim())
+						formData.append('district', district.trim())
+						formData.append('signed_by', signedBy)
+						formData.append('signature_name', signatureName.trim())
+						if (signatureImage) formData.append('signature_image', signatureImage)
+
+						const { data } = await api.post('/api/valuer-appointment-applications', formData, {
+							headers: { 'Content-Type': 'multipart/form-data' },
+						})
+
+						setSuccess(data?.message || 'Form-I-B submitted successfully.')
+					} catch (err) {
+						const msg =
+							err?.response?.data?.message ||
+							(err?.response?.data?.errors
+								? Object.values(err.response.data.errors).flat().join('. ')
+								: 'Failed to submit Form-I-B')
+						setError(msg)
+					} finally {
+						setSubmitting(false)
+					}
+				}
+
+				return (
+					<div className="auth-card dashboard-card">
+						<h1>Form-I-B: Valuer appointment</h1>
+						<p className="muted">Fill the application details and submit to the system.</p>
+						{error ? <div className="error">{error}</div> : null}
+						{success ? <div className="success">{success}</div> : null}
+
+						<form
+							className="tenancy-form"
+							onSubmit={(e) => {
+								e.preventDefault()
+								submit()
+							}}
+						>
+							<label>
+								<span className="label-text required">Unique Identification Number (UID) issued by Rent Authority</span>
+								<input type="text" value={rentAuthorityUid} onChange={(e) => setRentAuthorityUid(e.target.value)} required />
+							</label>
+
+							<fieldset className="tenancy-fieldset">
+								<legend className="tenancy-legend-italic">Applicant details</legend>
+
+								<label>
+									<span className="label-text required">Applicant name (I, ...)</span>
+									<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text required">Relation type (Son / Daughter / Wife)</span>
+									<select value={applicantRelationType} onChange={(e) => setApplicantRelationType(e.target.value)} required>
+										<option value="Son">Son</option>
+										<option value="Daughter">Daughter</option>
+										<option value="Wife">Wife</option>
+									</select>
+								</label>
+
+								<label>
+									<span className="label-text required">Relation target name (of ...)</span>
+									<input type="text" value={applicantRelationTargetName} onChange={(e) => setApplicantRelationTargetName(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text required">Resident of (place)</span>
+									<input type="text" value={applicantResidentPlace} onChange={(e) => setApplicantResidentPlace(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text required">Landlord or tenant</span>
+									<select value={applicantLandlordOrTenant} onChange={(e) => setApplicantLandlordOrTenant(e.target.value)} required>
+										<option value="landlord">Landlord</option>
+										<option value="tenant">Tenant</option>
+									</select>
+								</label>
+							</fieldset>
+
+							<label>
+								<span className="label-text required">Premises situated at</span>
+								<textarea value={premisesSituatedAddress} onChange={(e) => setPremisesSituatedAddress(e.target.value)} required />
+							</label>
+
+							<label>
+								<span className="label-text required">District</span>
+								<input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} required />
+							</label>
+
+							<fieldset className="tenancy-fieldset">
+								<legend className="tenancy-legend-italic">Signature</legend>
+
+								<label>
+									<span className="label-text">Signed by</span>
+									<select value={signedBy} onChange={(e) => setSignedBy(e.target.value)}>
+										<option value="landlord">Landlord</option>
+										<option value="tenant">Tenant</option>
+									</select>
+								</label>
+
+								<label>
+									<span className="label-text required">Name</span>
+									<input type="text" value={signatureName} onChange={(e) => setSignatureName(e.target.value)} required />
+								</label>
+
+								<label>
+									<span className="label-text">Signature image (optional)</span>
+									<input type="file" accept="image/*" onChange={(e) => setSignatureImage(e.target.files?.[0] || null)} />
+								</label>
+							</fieldset>
+
+							<div className="form-actions">
+								<button type="button" className="secondary" onClick={() => setActivePanel('welcome')} disabled={submitting}>
+									Back
+								</button>
+								<button type="submit" disabled={submitting}>
+									{submitting ? 'Submitting...' : 'Submit Form-I-B'}
+								</button>
+							</div>
+						</form>
+					</div>
+				)
+			}
+
+			return <ValuerAppointmentFormPanel />
 		}
 
 		if (activePanel === 'tenancy-certificate') {
@@ -4014,10 +5130,16 @@ function Dashboard({ user, onLogout }) {
 
 		// Tenant owner: full dashboard with dummy overview and flow
 		if (user?.role === 'tenant owner') {
-			const dummyStats = [
-				{ label: 'Total Applications', value: 2, icon: 'documents' },
-				{ label: 'Under Process', value: 1, icon: 'clock' },
-				{ label: 'Approved', value: 1, icon: 'check' },
+			const recentItems = tenantRecentApplications || []
+			const tenancyRecentCount = recentItems.filter((a) =>
+				String(a.application_type || '').toLowerCase().includes('tenancy certificate')
+			).length
+			const formsRecentCount = recentItems.length - tenancyRecentCount
+
+			const statsCards = [
+				{ label: 'Recent Submissions', value: recentItems.length, icon: 'documents' },
+				{ label: 'Tenancy Certificates', value: tenancyRecentCount, icon: 'check' },
+				{ label: 'Assam Tenancy Forms', value: formsRecentCount, icon: 'list' },
 			]
 			const DashboardIcon = ({ name, className = '' }) => {
 				const icons = {
@@ -4082,10 +5204,6 @@ function Dashboard({ user, onLogout }) {
 				}
 				return icons[name] || null
 			}
-			const dummyRecentApplications = [
-				{ id: 'dummy-1', application_no: 'TEN-20250311-001', registration_date: '2025-03-01', status: 'Under process', current_with: 'District Office' },
-				{ id: 'dummy-2', application_no: 'TEN-20250305-002', registration_date: '2025-02-28', status: 'Approved', current_with: '-' },
-			]
 			return (
 				<div className="dashboard-home">
 					<div className="auth-card dashboard-card dashboard-welcome-card">
@@ -4103,7 +5221,7 @@ function Dashboard({ user, onLogout }) {
 						</button>
 					</div>
 					<div className="dashboard-overview-cards">
-						{dummyStats.map((stat) => (
+						{statsCards.map((stat) => (
 							<div key={stat.label} className="dashboard-stat-card">
 								<span className="dashboard-stat-icon-wrap">
 									<DashboardIcon name={stat.icon} className="dashboard-stat-icon" />
@@ -4118,22 +5236,24 @@ function Dashboard({ user, onLogout }) {
 							<DashboardIcon name="status" className="dashboard-section-icon" />
 							Quick actions
 						</h2>
-						<p className="muted">Access your profile and tenancy services.</p>
+						<p className="muted">Fast access to your most used actions.</p>
 						<div className="dashboard-quick-actions">
 							<button
 								type="button"
 								className="dashboard-action-btn"
+								title="Profile"
 								onClick={() => {
 									setActivePanel('profile')
 									loadProfile()
 								}}
 							>
 								<DashboardIcon name="user" className="dashboard-action-icon" />
-								View / Edit Profile
+								<span>Profile</span>
 							</button>
 							<button
 								type="button"
 								className="dashboard-action-btn"
+								title="Apply for Tenancy Certificate"
 								onClick={() => {
 									setActivePanel('tenancy-certificate')
 									loadTenancyOffices()
@@ -4141,18 +5261,58 @@ function Dashboard({ user, onLogout }) {
 								}}
 							>
 								<DashboardIcon name="documentPlus" className="dashboard-action-icon" />
-								Apply for Tenancy Certificate
+								<span>Tenancy Certificate</span>
 							</button>
 							<button
 								type="button"
 								className="dashboard-action-btn"
+								title="Form I - Rent revision / fixation"
+								onClick={() => {
+									setActivePanel('form-i-rent-revision')
+									setError('')
+									setSuccess('')
+								}}
+							>
+								<DashboardIcon name="documents" className="dashboard-action-icon" />
+								<span>Form I</span>
+							</button>
+							<button
+								type="button"
+								className="dashboard-action-btn"
+								title="Form 4 - Rent court submission"
+								onClick={() => {
+									setActivePanel('form-4-rent-court-possession')
+									setError('')
+									setSuccess('')
+								}}
+							>
+								<DashboardIcon name="list" className="dashboard-action-icon" />
+								<span>Form 4</span>
+							</button>
+							<button
+								type="button"
+								className="dashboard-action-btn"
+								title="Form 7 - Appeal before rent court"
+								onClick={() => {
+									setActivePanel('form-7-rent-court-appeal')
+									setError('')
+									setSuccess('')
+								}}
+							>
+								<DashboardIcon name="list" className="dashboard-action-icon" />
+								<span>Form 7</span>
+							</button>
+							<button
+								type="button"
+								className="dashboard-action-btn"
+								title="Status"
 								onClick={() => {
 									setActivePanel('status')
 									loadStatusApplications(1)
 								}}
 							>
-								<DashboardIcon name="list" className="dashboard-action-icon" />
-								View Application Status
+								<DashboardIcon name="status" className="dashboard-action-icon" />
+								<span>Status</span>
 							</button>
 						</div>
 					</div>
@@ -4161,53 +5321,125 @@ function Dashboard({ user, onLogout }) {
 							<DashboardIcon name="list" className="dashboard-section-icon" />
 							Recent applications
 						</h2>
-						<p className="muted">Your latest tenancy certificate applications (demo data).</p>
-						<div className="admin-table-wrapper">
-							<table className="admin-table status-table">
-								<thead>
-									<tr>
-										<th>Application No</th>
-										<th>Registration Date</th>
-										<th>Status</th>
-										<th>Current With</th>
-										<th className="table-actions-head">Actions</th>
-									</tr>
-								</thead>
-								<tbody>
-									{dummyRecentApplications.map((app) => (
-										<tr key={app.id}>
-											<td>{app.application_no}</td>
-											<td>{app.registration_date}</td>
-											<td>
-												<span className="dashboard-status-cell">
-													{app.status === 'Approved' ? (
-														<DashboardIcon name="check" className="dashboard-status-icon dashboard-status-icon--success" />
-													) : (
-														<DashboardIcon name="clock" className="dashboard-status-icon dashboard-status-icon--pending" />
-													)}
-													{app.status}
-												</span>
-											</td>
-											<td>{app.current_with}</td>
-											<td className="table-actions">
-												<button
-													type="button"
-													onClick={() => {
-														setActivePanel('status')
-														loadStatusApplications(1)
-													}}
-												>
-													View
-												</button>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-						<p className="muted" style={{ marginTop: 12, marginBottom: 0 }}>
-							Use <strong>Status</strong> in the menu to see your real applications.
+						<p className="muted">
+							{tenantRecentLoading
+								? 'Loading your latest applications...'
+								: recentItems.length > 0
+									? 'Click a tile to filter and view in Status.'
+									: 'No applications submitted yet.'}
 						</p>
+						{tenantRecentApplications && tenantRecentApplications.length > 0 ? (
+							<div className="dashboard-recent-view-toggle">
+								<button
+									type="button"
+									className={`dashboard-recent-view-btn ${tenantRecentViewMode === 'card' ? 'active' : ''}`}
+									onClick={() => setTenantRecentViewMode('card')}
+								>
+									Card View
+								</button>
+								<button
+									type="button"
+									className={`dashboard-recent-view-btn ${tenantRecentViewMode === 'list' ? 'active' : ''}`}
+									onClick={() => setTenantRecentViewMode('list')}
+								>
+									List View
+								</button>
+							</div>
+						) : null}
+
+						{tenantRecentViewMode === 'card' ? (
+							<div className="dashboard-recent-tiles">
+							{tenantRecentLoading ? (
+								<div className="muted">Loading...</div>
+							) : recentItems.length === 0 ? (
+								<div className="muted">No applications found.</div>
+							) : (
+								recentItems.map((app) => {
+									const statusText = formatTenancyApplicationStatus(app.status, app.application_type || '-')
+									const statusUpper = String(app.status || '').toUpperCase()
+									const isSuccess = statusUpper.includes('APPROVED') || statusUpper.includes('COMPLETED') || statusUpper === 'SUBMITTED'
+									const createdDate = app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'
+									return (
+										<div
+											key={app.row_key || app.id}
+											className="dashboard-recent-tile"
+											role="button"
+											tabIndex={0}
+											onClick={() => {
+												setActivePanel('status')
+												loadStatusApplications(1, { application_no: app.application_no })
+											}}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter') {
+													setActivePanel('status')
+													loadStatusApplications(1, { application_no: app.application_no })
+												}
+											}}
+										>
+											<div className="dashboard-recent-tile-top">
+												<div className="dashboard-recent-tile-title">{app.application_no}</div>
+												<span className={`dashboard-status-pill ${isSuccess ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
+													{statusText}
+												</span>
+											</div>
+											<div className="dashboard-recent-tile-type">{app.application_type || '-'}</div>
+											<div className="dashboard-recent-tile-bottom">
+												<span className="muted">Date: </span>
+												<span>{createdDate}</span>
+											</div>
+										</div>
+									)
+								})
+							)}
+							</div>
+						) : (
+							<div className="dashboard-recent-list">
+								{tenantRecentLoading ? (
+									<div className="muted">Loading...</div>
+								) : recentItems.length === 0 ? (
+									<div className="muted">No applications found.</div>
+								) : (
+									recentItems.map((app) => {
+										const statusText = formatTenancyApplicationStatus(app.status, app.application_type || '-')
+										const statusUpper = String(app.status || '').toUpperCase()
+										const isSuccess =
+											statusUpper.includes('APPROVED') ||
+											statusUpper.includes('COMPLETED') ||
+											statusUpper === 'SUBMITTED'
+										const createdDate = app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'
+										return (
+											<div
+												key={app.row_key || app.id}
+												className="dashboard-recent-list-item"
+												role="button"
+												tabIndex={0}
+												onClick={() => {
+													setActivePanel('status')
+													loadStatusApplications(1, { application_no: app.application_no })
+												}}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter') {
+														setActivePanel('status')
+														loadStatusApplications(1, { application_no: app.application_no })
+													}
+												}}
+											>
+												<div className="dashboard-recent-list-top">
+													<div className="dashboard-recent-list-title">{app.application_no}</div>
+													<span className={`dashboard-status-pill ${isSuccess ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
+														{statusText}
+													</span>
+												</div>
+												<div className="dashboard-recent-list-sub">
+													<div>{app.application_type || '-'}</div>
+													<div className="muted">Date: {createdDate}</div>
+												</div>
+											</div>
+										)
+									})
+								)}
+							</div>
+						)}
 					</div>
 				</div>
 			)
@@ -4665,6 +5897,187 @@ function Dashboard({ user, onLogout }) {
 							</a>
 							{servicesMenuOpen ? (
 								<div className="dashboard-submenu">
+									<button
+										type="button"
+										className="dashboard-submenu-group-title dashboard-submenu-group-toggle"
+										onClick={() =>
+											setServiceGroupsOpen((prev) => ({
+												...prev,
+												revision: !prev.revision,
+											}))
+										}
+									>
+										<span>Revision of rent / charges (Forms 1 / 1-A / 1-B)</span>
+										<span className="dashboard-submenu-group-toggle-indicator">
+											{serviceGroupsOpen.revision ? '-' : '+'}
+										</span>
+									</button>
+									{serviceGroupsOpen.revision ? (
+										<>
+											<a
+												className="dashboard-link"
+												href="#form-i-rent-revision"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-i-rent-revision')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form I - Rent revision/fixation
+											</a>
+											<a
+												className="dashboard-link"
+												href="#form-i-a-other-charges-revision"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-i-a-other-charges-revision')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form I-A - Other charges revision/fixation
+											</a>
+											<a
+												className="dashboard-link"
+												href="#form-i-b-valuers-appointment"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-i-b-valuers-appointment')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form I-B - Valuer appointment
+											</a>
+										</>
+									) : null}
+
+									<button
+										type="button"
+										className="dashboard-submenu-group-title dashboard-submenu-group-toggle"
+										onClick={() =>
+											setServiceGroupsOpen((prev) => ({
+												...prev,
+												court: !prev.court,
+											}))
+										}
+									>
+										<span>Rent Court submissions (Forms 4 / 5)</span>
+										<span className="dashboard-submenu-group-toggle-indicator">
+											{serviceGroupsOpen.court ? '-' : '+'}
+										</span>
+									</button>
+									{serviceGroupsOpen.court ? (
+										<>
+											<a
+												className="dashboard-link"
+												href="#form-4-rent-court-possession"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-4-rent-court-possession')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form 4 - Rent court possession recovery
+											</a>
+											<a
+												className="dashboard-link"
+												href="#form-5-rent-court-filing"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-5-rent-court-filing')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form 5 - Application filed before the Rent Court
+											</a>
+										</>
+									) : null}
+
+									<button
+										type="button"
+										className="dashboard-submenu-group-title dashboard-submenu-group-toggle"
+										onClick={() =>
+											setServiceGroupsOpen((prev) => ({
+												...prev,
+												authority: !prev.authority,
+											}))
+										}
+									>
+										<span>Rent Authority (Form 6)</span>
+										<span className="dashboard-submenu-group-toggle-indicator">
+											{serviceGroupsOpen.authority ? '-' : '+'}
+										</span>
+									</button>
+									{serviceGroupsOpen.authority ? (
+										<a
+											className="dashboard-link"
+											href="#form-6-rent-authority-filing"
+											onClick={(e) => {
+												e.preventDefault()
+												setActivePanel('form-6-rent-authority-filing')
+												setError('')
+												setSuccess('')
+												window.history.replaceState(null, '', '/dashboard')
+											}}
+										>
+											Form 6 - Application filed before the Rent Authority
+										</a>
+									) : null}
+
+									<button
+										type="button"
+										className="dashboard-submenu-group-title dashboard-submenu-group-toggle"
+										onClick={() =>
+											setServiceGroupsOpen((prev) => ({
+												...prev,
+												appeals: !prev.appeals,
+											}))
+										}
+									>
+										<span>Appeals (Forms 7 / 8)</span>
+										<span className="dashboard-submenu-group-toggle-indicator">
+											{serviceGroupsOpen.appeals ? '-' : '+'}
+										</span>
+									</button>
+									{serviceGroupsOpen.appeals ? (
+										<>
+											<a
+												className="dashboard-link"
+												href="#form-7-rent-court-appeal"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-7-rent-court-appeal')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form 7 - Appeal before the Rent Court
+											</a>
+											<a
+												className="dashboard-link"
+												href="#form-8-rent-tribunal-appeal"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-8-rent-tribunal-appeal')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form 8 - Appeal before the Rent Tribunal
+											</a>
+										</>
+									) : null}
 									<a
 										className="dashboard-link"
 										href="#tenancy-certificate"

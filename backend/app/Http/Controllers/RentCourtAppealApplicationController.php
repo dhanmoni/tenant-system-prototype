@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\RentCourtAppealApplication;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class RentCourtAppealApplicationController extends Controller
+{
+    public function store(Request $request)
+    {
+        $user = $request->user();
+        if (!$user || $user->role !== 'tenant owner') {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            // Header
+            'rent_court_at' => ['required', 'string', 'max:255'],
+            'tenancy_unique_identification_number' => ['required', 'string', 'max:64'],
+
+            // Appellant
+            'appellant_name' => ['required', 'string', 'max:255'],
+            'appellant_residential_address' => ['required', 'string'],
+
+            // Respondent
+            'respondent_name' => ['required', 'string', 'max:255'],
+            'respondent_residential_address' => ['required', 'string'],
+
+            // Details of appeal
+            'order_particulars_against_which_appeal_made' => ['nullable', 'string'],
+            'jurisdiction_of_rent_court' => ['nullable', 'string'],
+            'limitation' => ['nullable', 'string'],
+            'memorandum_of_appeal' => ['nullable', 'string'],
+            'matters_not_previously_filed_or_pending' => ['nullable', 'string'],
+            'relief_sought' => ['nullable', 'string'],
+            'interim_order_sought' => ['nullable', 'string'],
+            'list_of_enclosures' => ['nullable', 'string'],
+
+            // Verification / signature
+            'signature_name' => ['required', 'string', 'max:255'],
+            'signature_image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+        ]);
+
+        $signaturePath = null;
+        if ($request->hasFile('signature_image')) {
+            $signaturePath = $request->file('signature_image')
+                ->store('tenancy/signatures/rent-court-appeal', 'public');
+        }
+
+        $application = RentCourtAppealApplication::create([
+            'application_no' => 'RCA-' . Str::uuid()->toString(),
+            'user_id' => $user->id,
+
+            'rent_court_at' => $data['rent_court_at'],
+            'tenancy_unique_identification_number' => $data['tenancy_unique_identification_number'],
+
+            'appellant_name' => $data['appellant_name'],
+            'appellant_residential_address' => $data['appellant_residential_address'],
+
+            'respondent_name' => $data['respondent_name'],
+            'respondent_residential_address' => $data['respondent_residential_address'],
+
+            'order_particulars_against_which_appeal_made' => $data['order_particulars_against_which_appeal_made'] ?? null,
+            'jurisdiction_of_rent_court' => $data['jurisdiction_of_rent_court'] ?? null,
+            'limitation' => $data['limitation'] ?? null,
+            'memorandum_of_appeal' => $data['memorandum_of_appeal'] ?? null,
+            'matters_not_previously_filed_or_pending' => $data['matters_not_previously_filed_or_pending'] ?? null,
+            'relief_sought' => $data['relief_sought'] ?? null,
+            'interim_order_sought' => $data['interim_order_sought'] ?? null,
+            'list_of_enclosures' => $data['list_of_enclosures'] ?? null,
+
+            'signature_name' => $data['signature_name'],
+            'signature_image_path' => $signaturePath,
+            'status' => 'SUBMITTED',
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Form 7 submitted successfully.',
+            'application' => $application,
+            'submitted_at' => Carbon::now()->toDateTimeString(),
+        ], 201);
+    }
+
+    public function show(Request $request, int $id)
+    {
+        $user = $request->user();
+        if (!$user || $user->role !== 'tenant owner') {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $application = RentCourtAppealApplication::where('user_id', $user->id)->findOrFail($id);
+
+        return response()->json([
+            'application' => $application,
+        ]);
+    }
+}
+
