@@ -6022,6 +6022,31 @@ function Dashboard({ user, onLogout }) {
 							</a>
 							{servicesMenuOpen && !sidebarCollapsed ? (
 								<div className="dashboard-submenu">
+									<a
+										className={`dashboard-link ${activePanel === 'tenancy-certificate' ? 'active' : ''}`}
+										href="#tenancy-certificate"
+										onClick={(e) => {
+											e.preventDefault()
+											setActivePanel('tenancy-certificate')
+											loadTenancyOffices()
+											resetTenancyForm()
+											window.history.replaceState(null, '', '/dashboard')
+										}}
+									>
+										Apply for Tenancy Certificate
+									</a>
+									<a
+										className={`dashboard-link ${activePanel === 'status' ? 'active' : ''}`}
+										href="#status"
+										onClick={(e) => {
+											e.preventDefault()
+											setActivePanel('status')
+											loadStatusApplications(1)
+											window.history.replaceState(null, '', '/dashboard')
+										}}
+									>
+										Status
+									</a>
 									<button
 										type="button"
 										className="dashboard-submenu-group-title dashboard-submenu-group-toggle"
@@ -6197,31 +6222,6 @@ function Dashboard({ user, onLogout }) {
 											</a>
 										</div>
 									) : null}
-									<a
-										className={`dashboard-link ${activePanel === 'tenancy-certificate' ? 'active' : ''}`}
-										href="#tenancy-certificate"
-										onClick={(e) => {
-											e.preventDefault()
-											setActivePanel('tenancy-certificate')
-											loadTenancyOffices()
-											resetTenancyForm()
-											window.history.replaceState(null, '', '/dashboard')
-										}}
-									>
-										Apply for Tenancy Certificate
-									</a>
-									<a
-										className={`dashboard-link ${activePanel === 'status' ? 'active' : ''}`}
-										href="#status"
-										onClick={(e) => {
-											e.preventDefault()
-											setActivePanel('status')
-											loadStatusApplications(1)
-											window.history.replaceState(null, '', '/dashboard')
-										}}
-									>
-										Status
-									</a>
 								</div>
 							) : null}
 						</>
