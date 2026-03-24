@@ -211,32 +211,34 @@ function App() {
 				</Routes>
 			</main>
 
-			{/* Footer */}
-			<footer className="footer">
-				<div className="footer-content">
-					<div>
-						<h3>Quick Links</h3>
-						<div className="footer-links">
-							<Link to="/policies">Policies</Link>
-							<Link to="/contact">Contact Us</Link>
-							<Link to="/guidelines">Guidelines</Link>
-							<Link to="/feedback">Feedback</Link>
-							<Link to="/help-centre">Help Centre</Link>
-							<Link to="/about">About Us</Link>
+			{/* Footer – hidden on dashboard */}
+			{!(user && location.pathname === '/dashboard') && (
+				<footer className="footer">
+					<div className="footer-content">
+						<div>
+							<h3>Quick Links</h3>
+							<div className="footer-links">
+								<Link to="/policies">Policies</Link>
+								<Link to="/contact">Contact Us</Link>
+								<Link to="/guidelines">Guidelines</Link>
+								<Link to="/feedback">Feedback</Link>
+								<Link to="/help-centre">Help Centre</Link>
+								<Link to="/about">About Us</Link>
+							</div>
+						</div>
+						<div className="footer-logos">
+							<img src={nicLogo} alt="NIC logo" />
+							<img src={digitalIndiaLogo} alt="Digital India logo" />
 						</div>
 					</div>
-					<div className="footer-logos">
-						<img src={nicLogo} alt="NIC logo" />
-						<img src={digitalIndiaLogo} alt="Digital India logo" />
+					<div className="footer-note">
+						This website belongs to Department of{' '}
+						<a href="#">Housing And Urban Affairs</a>,{' '}
+						<a href="#">Ministry of Housing And Urban Affairs</a>,{' '}
+						<a href="https://www.india.gov.in/">Govt. of India.</a>
 					</div>
-				</div>
-				<div className="footer-note">
-					This website belongs to Department of{' '}
-					<a href="#">Housing And Urban Affairs</a>,{' '}
-					<a href="#">Ministry of Housing And Urban Affairs</a>,{' '}
-					<a href="https://www.india.gov.in/">Govt. of India.</a>
-				</div>
-			</footer>
+				</footer>
+			)}
 		</div>
 	)
 }

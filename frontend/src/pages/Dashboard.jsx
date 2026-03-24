@@ -33,6 +33,11 @@ function Dashboard({ user, onLogout }) {
 		authority: false,
 		appeals: false,
 	})
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+	const toggleSidebar = () => {
+		setSidebarCollapsed((prev) => !prev)
+	}
 	const [stateName, setStateName] = useState('')
 	const [states, setStates] = useState([])
 	const [statePage, setStatePage] = useState(1)
@@ -327,6 +332,16 @@ function Dashboard({ user, onLogout }) {
 		</svg>
 	)
 
+	const formatDate = (value) => {
+		if (!value) return '-'
+		const parsed = new Date(value)
+		if (Number.isNaN(parsed.getTime())) return '-'
+		const day = String(parsed.getDate()).padStart(2, '0')
+		const month = String(parsed.getMonth() + 1).padStart(2, '0')
+		const year = parsed.getFullYear()
+		return `${day}/${month}/${year}`
+	}
+
 	const formatDateTime = (value) => {
 		if (!value) return '-'
 		const normalized =
@@ -337,7 +352,13 @@ function Dashboard({ user, onLogout }) {
 		if (Number.isNaN(parsed.getTime())) {
 			return String(value)
 		}
-		return parsed.toLocaleString()
+		const day = String(parsed.getDate()).padStart(2, '0')
+		const month = String(parsed.getMonth() + 1).padStart(2, '0')
+		const year = parsed.getFullYear()
+		const hours = String(parsed.getHours()).padStart(2, '0')
+		const minutes = String(parsed.getMinutes()).padStart(2, '0')
+		const seconds = String(parsed.getSeconds()).padStart(2, '0')
+		return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
 	}
 
 	const loadStates = async (page = 1) => {
@@ -2830,7 +2851,7 @@ function Dashboard({ user, onLogout }) {
 														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
 														<td style={{ width: columnWidths['status_uid'] }}>{app.uid || '-'}</td>
 														<td style={{ width: columnWidths['status_date'] }}>
-															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+															{formatDate(app.created_at)}
 														</td>
 														<td style={{ width: columnWidths['status_status'] }}>
 															{formatTenancyApplicationStatus(app.status, app.application_type || 'Tenancy Certificate')}
@@ -2896,7 +2917,7 @@ function Dashboard({ user, onLogout }) {
 														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
 														<td style={{ width: columnWidths['status_uid'] }}>-</td>
 														<td style={{ width: columnWidths['status_date'] }}>
-															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+															{formatDate(app.created_at)}
 														</td>
 														<td style={{ width: columnWidths['status_status'] }}>
 															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
@@ -2944,7 +2965,7 @@ function Dashboard({ user, onLogout }) {
 														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
 														<td style={{ width: columnWidths['status_uid'] }}>-</td>
 														<td style={{ width: columnWidths['status_date'] }}>
-															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+															{formatDate(app.created_at)}
 														</td>
 														<td style={{ width: columnWidths['status_status'] }}>
 															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
@@ -2992,7 +3013,7 @@ function Dashboard({ user, onLogout }) {
 														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
 														<td style={{ width: columnWidths['status_uid'] }}>-</td>
 														<td style={{ width: columnWidths['status_date'] }}>
-															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+															{formatDate(app.created_at)}
 														</td>
 														<td style={{ width: columnWidths['status_status'] }}>
 															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
@@ -3040,7 +3061,7 @@ function Dashboard({ user, onLogout }) {
 														<td style={{ width: columnWidths['status_app_no'] }}>{app.application_no}</td>
 														<td style={{ width: columnWidths['status_uid'] }}>-</td>
 														<td style={{ width: columnWidths['status_date'] }}>
-															{app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'}
+															{formatDate(app.created_at)}
 														</td>
 														<td style={{ width: columnWidths['status_status'] }}>
 															{formatTenancyApplicationStatus(app.status, app.application_type || '-')}
@@ -4290,32 +4311,6 @@ function Dashboard({ user, onLogout }) {
 									) : null}
 								</label>
 								<label>
-									<span className="label-text required">Applying office</span>
-									<select
-										value={tenancyOfficeId}
-										onChange={(e) => setTenancyOfficeId(e.target.value)}
-										disabled={formLocked}
-										required
-									>
-										<option value="">---SELECT---</option>
-										{tenancyOffices.map((office) => {
-											const label =
-												office.name ||
-												office.office_name ||
-												office.title ||
-												`Office #${office.id}`
-											return (
-												<option key={office.id} value={office.id}>
-													{label}
-												</option>
-											)
-										})}
-									</select>
-									{tenancyOfficesLoading ? (
-										<span className="muted">Loading offices...</span>
-									) : null}
-								</label>
-								<label>
 									<span className="label-text required">District</span>
 									<select
 										value={tenancyDistrictId}
@@ -4348,6 +4343,32 @@ function Dashboard({ user, onLogout }) {
 										))}
 									</select>
 									{tenancyVillageWardsLoading ? <span className="muted">Loading...</span> : null}
+								</label>
+								<label>
+									<span className="label-text required">Applying office</span>
+									<select
+										value={tenancyOfficeId}
+										onChange={(e) => setTenancyOfficeId(e.target.value)}
+										disabled={formLocked}
+										required
+									>
+										<option value="">---SELECT---</option>
+										{tenancyOffices.map((office) => {
+											const label =
+												office.name ||
+												office.office_name ||
+												office.title ||
+												`Office #${office.id}`
+											return (
+												<option key={office.id} value={office.id}>
+													{label}
+												</option>
+											)
+										})}
+									</select>
+									{tenancyOfficesLoading ? (
+										<span className="muted">Loading offices...</span>
+									) : null}
 								</label>
 								<label>
 									Apply type
@@ -4384,13 +4405,13 @@ function Dashboard({ user, onLogout }) {
 										/>
 									</label>
 									<label>
-										<span className="label-text required">Email</span>
+										<span className={`label-text ${initiatorRole === 'LANDLORD' ? 'required' : ''}`}>Email</span>
 										<input
 											type="email"
 											value={landlordEmail}
 											onChange={(e) => setLandlordEmail(e.target.value)}
 											readOnly={formLocked}
-											required
+											required={initiatorRole === 'LANDLORD'}
 										/>
 									</label>
 									<label>
@@ -4491,13 +4512,13 @@ function Dashboard({ user, onLogout }) {
 										/>
 									</label>
 									<label>
-										<span className="label-text required">Email</span>
+										<span className={`label-text ${initiatorRole === 'TENANT' ? 'required' : ''}`}>Email</span>
 										<input
 											type="email"
 											value={tenantEmail}
 											onChange={(e) => setTenantEmail(e.target.value)}
 											readOnly={formLocked}
-											required
+											required={initiatorRole === 'TENANT'}
 										/>
 									</label>
 									<label>
@@ -4682,94 +4703,102 @@ function Dashboard({ user, onLogout }) {
 											</a>
 										) : null}
 									</label>
-									<label>
-										Upload photograph of Landlord
-										<input
-											type="file"
-											accept="image/*"
-											disabled={formLocked}
-											onChange={(e) => {
-												const file = e.target.files?.[0] || null
-												setLandlordPhotoFile(file)
-												setLandlordPhotoPreview(
-													file ? URL.createObjectURL(file) : ''
-												)
-											}}
-										/>
-										{landlordPhotoPreview ? (
-											<img
-												src={landlordPhotoPreview}
-												alt="Landlord"
-												className="profile-photo-preview"
-											/>
-										) : null}
-									</label>
-									<label>
-										Upload Signature of Landlord
-										<input
-											type="file"
-											accept="image/*"
-											disabled={formLocked}
-											onChange={(e) => {
-												const file = e.target.files?.[0] || null
-												setLandlordSignatureFile(file)
-												setLandlordSignaturePreview(
-													file ? URL.createObjectURL(file) : ''
-												)
-											}}
-										/>
-										{landlordSignaturePreview ? (
-											<img
-												src={landlordSignaturePreview}
-												alt="Landlord signature"
-												className="signature-preview"
-											/>
-										) : null}
-									</label>
-									<label>
-										Upload photograph of Tenant
-										<input
-											type="file"
-											accept="image/*"
-											disabled={formLocked}
-											onChange={(e) => {
-												const file = e.target.files?.[0] || null
-												setTenantPhotoFile(file)
-												setTenantPhotoPreview(
-													file ? URL.createObjectURL(file) : ''
-												)
-											}}
-										/>
-										{tenantPhotoPreview ? (
-											<img
-												src={tenantPhotoPreview}
-												alt="Tenant"
-												className="profile-photo-preview"
-											/>
-										) : null}
-									</label>
-									<label>
-										Upload Signature of Tenant
-										<input
-											type="file"
-											accept="image/*"
-											disabled={formLocked}
-											onChange={(e) => {
-												const file = e.target.files?.[0] || null
-												setTenantSignatureFile(file)
-												setTenantSignaturePreview(
-													file ? URL.createObjectURL(file) : ''
-												)
-											}}
-										/>
-										{tenantSignaturePreview ? (
-											<img
-												src={tenantSignaturePreview}
-												alt="Tenant signature"
-												className="signature-preview"
-											/>
-										) : null}
-									</label>
+									{(initiatorRole === 'LANDLORD' || !initiatorRole) && (
+										<>
+											<label>
+												Upload photograph of Landlord
+												<input
+													type="file"
+													accept="image/*"
+													disabled={formLocked}
+													onChange={(e) => {
+														const file = e.target.files?.[0] || null
+														setLandlordPhotoFile(file)
+														setLandlordPhotoPreview(
+															file ? URL.createObjectURL(file) : ''
+														)
+													}}
+												/>
+												{landlordPhotoPreview ? (
+													<img
+														src={landlordPhotoPreview}
+														alt="Landlord"
+														className="profile-photo-preview"
+													/>
+												) : null}
+											</label>
+											<label>
+												Upload Signature of Landlord
+												<input
+													type="file"
+													accept="image/*"
+													disabled={formLocked}
+													onChange={(e) => {
+														const file = e.target.files?.[0] || null
+														setLandlordSignatureFile(file)
+														setLandlordSignaturePreview(
+															file ? URL.createObjectURL(file) : ''
+														)
+													}}
+												/>
+												{landlordSignaturePreview ? (
+													<img
+														src={landlordSignaturePreview}
+														alt="Landlord signature"
+														className="signature-preview"
+													/>
+												) : null}
+											</label>
+										</>
+									)}
+									{(initiatorRole === 'TENANT' || !initiatorRole) && (
+										<>
+											<label>
+												Upload photograph of Tenant
+												<input
+													type="file"
+													accept="image/*"
+													disabled={formLocked}
+													onChange={(e) => {
+														const file = e.target.files?.[0] || null
+														setTenantPhotoFile(file)
+														setTenantPhotoPreview(
+															file ? URL.createObjectURL(file) : ''
+														)
+													}}
+												/>
+												{tenantPhotoPreview ? (
+													<img
+														src={tenantPhotoPreview}
+														alt="Tenant"
+														className="profile-photo-preview"
+													/>
+												) : null}
+											</label>
+											<label>
+												Upload Signature of Tenant
+												<input
+													type="file"
+													accept="image/*"
+													disabled={formLocked}
+													onChange={(e) => {
+														const file = e.target.files?.[0] || null
+														setTenantSignatureFile(file)
+														setTenantSignaturePreview(
+															file ? URL.createObjectURL(file) : ''
+														)
+													}}
+												/>
+												{tenantSignaturePreview ? (
+													<img
+														src={tenantSignaturePreview}
+														alt="Tenant signature"
+														className="signature-preview"
+													/>
+												) : null}
+											</label>
+										</>
+									)}
 								</fieldset>
 							</>
 						) : null}
@@ -5349,48 +5378,48 @@ function Dashboard({ user, onLogout }) {
 
 						{tenantRecentViewMode === 'card' ? (
 							<div className="dashboard-recent-tiles">
-							{tenantRecentLoading ? (
-								<div className="muted">Loading...</div>
-							) : recentItems.length === 0 ? (
-								<div className="muted">No applications found.</div>
-							) : (
-								recentItems.map((app) => {
-									const statusText = formatTenancyApplicationStatus(app.status, app.application_type || '-')
-									const statusUpper = String(app.status || '').toUpperCase()
-									const isSuccess = statusUpper.includes('APPROVED') || statusUpper.includes('COMPLETED') || statusUpper === 'SUBMITTED'
-									const createdDate = app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'
-									return (
-										<div
-											key={app.row_key || app.id}
-											className="dashboard-recent-tile"
-											role="button"
-											tabIndex={0}
-											onClick={() => {
-												setActivePanel('status')
-												loadStatusApplications(1, { application_no: app.application_no })
-											}}
-											onKeyDown={(e) => {
-												if (e.key === 'Enter') {
+								{tenantRecentLoading ? (
+									<div className="muted">Loading...</div>
+								) : recentItems.length === 0 ? (
+									<div className="muted">No applications found.</div>
+								) : (
+									recentItems.map((app) => {
+										const statusText = formatTenancyApplicationStatus(app.status, app.application_type || '-')
+										const statusUpper = String(app.status || '').toUpperCase()
+										const isSuccess = statusUpper.includes('APPROVED') || statusUpper.includes('COMPLETED') || statusUpper === 'SUBMITTED'
+										const createdDate = formatDate(app.created_at)
+										return (
+											<div
+												key={app.row_key || app.id}
+												className="dashboard-recent-tile"
+												role="button"
+												tabIndex={0}
+												onClick={() => {
 													setActivePanel('status')
 													loadStatusApplications(1, { application_no: app.application_no })
-												}
-											}}
-										>
-											<div className="dashboard-recent-tile-top">
-												<div className="dashboard-recent-tile-title">{app.application_no}</div>
-												<span className={`dashboard-status-pill ${isSuccess ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
-													{statusText}
-												</span>
+												}}
+												onKeyDown={(e) => {
+													if (e.key === 'Enter') {
+														setActivePanel('status')
+														loadStatusApplications(1, { application_no: app.application_no })
+													}
+												}}
+											>
+												<div className="dashboard-recent-tile-top">
+													<div className="dashboard-recent-tile-title">{app.application_no}</div>
+													<span className={`dashboard-status-pill ${isSuccess ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
+														{statusText}
+													</span>
+												</div>
+												<div className="dashboard-recent-tile-type">{app.application_type || '-'}</div>
+												<div className="dashboard-recent-tile-bottom">
+													<span className="muted">Date: </span>
+													<span>{createdDate}</span>
+												</div>
 											</div>
-											<div className="dashboard-recent-tile-type">{app.application_type || '-'}</div>
-											<div className="dashboard-recent-tile-bottom">
-												<span className="muted">Date: </span>
-												<span>{createdDate}</span>
-											</div>
-										</div>
-									)
-								})
-							)}
+										)
+									})
+								)}
 							</div>
 						) : (
 							<div className="dashboard-recent-list">
@@ -5406,7 +5435,7 @@ function Dashboard({ user, onLogout }) {
 											statusUpper.includes('APPROVED') ||
 											statusUpper.includes('COMPLETED') ||
 											statusUpper === 'SUBMITTED'
-										const createdDate = app.created_at ? new Date(app.created_at).toLocaleDateString() : '-'
+										const createdDate = formatDate(app.created_at)
 										return (
 											<div
 												key={app.row_key || app.id}
@@ -5855,25 +5884,108 @@ function Dashboard({ user, onLogout }) {
 		)
 	}
 
+	const SidebarIcon = ({ name, className = '' }) => {
+		const icons = {
+			dashboard: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+				</svg>
+			),
+			user: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+				</svg>
+			),
+			services: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+				</svg>
+			),
+			status: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+				</svg>
+			),
+			settings: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+				</svg>
+			),
+			building: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01" /><path d="M9 12v.01" /><path d="M9 15v.01" /><path d="M9 18v.01" />
+				</svg>
+			),
+			chart: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+				</svg>
+			),
+			activity: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+				</svg>
+			),
+			map: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />
+				</svg>
+			),
+			chevron: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<polyline points="6 9 12 15 18 9" />
+				</svg>
+			),
+			menu: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+				</svg>
+			),
+			collapse: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<polyline points="11 17 6 12 11 7" /><polyline points="18 17 13 12 18 7" />
+				</svg>
+			),
+			expand: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<polyline points="13 17 18 12 13 7" /><polyline points="6 17 11 12 6 7" />
+				</svg>
+			),
+		}
+		return icons[name] || null
+	}
+
 	return (
-		<section className="dashboard-layout">
-			<aside className="dashboard-menu">
-				<h2>Menu</h2>
+		<section className={`dashboard-layout ${sidebarCollapsed ? 'collapsed' : ''}`}>
+			<aside className={`dashboard-menu ${sidebarCollapsed ? 'collapsed' : ''}`}>
+				<div className="dashboard-menu-header">
+					{!sidebarCollapsed && <h2>Menu</h2>}
+					<button
+						type="button"
+						className="sidebar-toggle-btn"
+						onClick={toggleSidebar}
+						title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+					>
+						<SidebarIcon name={sidebarCollapsed ? 'expand' : 'collapse'} className="sidebar-toggle-icon" />
+					</button>
+				</div>
 				<nav className="dashboard-links">
 					<a
-						className="dashboard-link"
+						className={`dashboard-link ${activePanel === 'welcome' ? 'active' : ''}`}
 						href="#dashboard"
 						onClick={(e) => {
 							e.preventDefault()
 							setActivePanel('welcome')
 						}}
+						title="Dashboard"
 					>
-						Dashboard
+						<SidebarIcon name="dashboard" className="dashboard-link-icon" />
+						{!sidebarCollapsed && <span className="dashboard-link-text">Dashboard</span>}
 					</a>
 					{user?.role === 'tenant owner' ? (
 						<>
 							<a
-								className="dashboard-link"
+								className={`dashboard-link ${activePanel === 'profile' ? 'active' : ''}`}
 								href="/dashboard"
 								onClick={(e) => {
 									e.preventDefault()
@@ -5881,21 +5993,34 @@ function Dashboard({ user, onLogout }) {
 									loadProfile()
 									window.history.replaceState(null, '', '/dashboard')
 								}}
+								title="Profile"
 							>
-								Profile
+								<SidebarIcon name="user" className="dashboard-link-icon" />
+								{!sidebarCollapsed && <span className="dashboard-link-text">Profile</span>}
 							</a>
 							<a
-								className="dashboard-link dashboard-link-expandable"
+								className={`dashboard-link dashboard-link-expandable ${servicesMenuOpen ? 'menu-open' : ''}`}
 								href="#services-menu"
 								onClick={(e) => {
 									e.preventDefault()
-									setServicesMenuOpen((prev) => !prev)
+									if (sidebarCollapsed) {
+										setSidebarCollapsed(false)
+										setServicesMenuOpen(true)
+									} else {
+										setServicesMenuOpen((prev) => !prev)
+									}
 								}}
+								title="Services"
 							>
-								<span>Services</span>
-								<span className={`dashboard-link-chevron ${servicesMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
+								<div className="dashboard-link-main">
+									<SidebarIcon name="services" className="dashboard-link-icon" />
+									{!sidebarCollapsed && <span className="dashboard-link-text">Services</span>}
+								</div>
+								{!sidebarCollapsed && (
+									<SidebarIcon name="chevron" className={`dashboard-link-chevron ${servicesMenuOpen ? 'open' : ''}`} />
+								)}
 							</a>
-							{servicesMenuOpen ? (
+							{servicesMenuOpen && !sidebarCollapsed ? (
 								<div className="dashboard-submenu">
 									<button
 										type="button"
@@ -5907,15 +6032,13 @@ function Dashboard({ user, onLogout }) {
 											}))
 										}
 									>
-										<span>Revision of rent / charges (Forms 1 / 1-A / 1-B)</span>
-										<span className="dashboard-submenu-group-toggle-indicator">
-											{serviceGroupsOpen.revision ? '-' : '+'}
-										</span>
+										<span>Revision of rent / charges</span>
+										<SidebarIcon name="chevron" className={`dashboard-submenu-chevron ${serviceGroupsOpen.revision ? 'open' : ''}`} />
 									</button>
 									{serviceGroupsOpen.revision ? (
-										<>
+										<div className="dashboard-submenu-items">
 											<a
-												className="dashboard-link"
+												className={`dashboard-link ${activePanel === 'form-i-rent-revision' ? 'active' : ''}`}
 												href="#form-i-rent-revision"
 												onClick={(e) => {
 													e.preventDefault()
@@ -5928,7 +6051,7 @@ function Dashboard({ user, onLogout }) {
 												Form I - Rent revision/fixation
 											</a>
 											<a
-												className="dashboard-link"
+												className={`dashboard-link ${activePanel === 'form-i-a-other-charges-revision' ? 'active' : ''}`}
 												href="#form-i-a-other-charges-revision"
 												onClick={(e) => {
 													e.preventDefault()
@@ -5938,10 +6061,10 @@ function Dashboard({ user, onLogout }) {
 													window.history.replaceState(null, '', '/dashboard')
 												}}
 											>
-												Form I-A - Other charges revision/fixation
+												Form I-A - Other charges revision
 											</a>
 											<a
-												className="dashboard-link"
+												className={`dashboard-link ${activePanel === 'form-i-b-valuers-appointment' ? 'active' : ''}`}
 												href="#form-i-b-valuers-appointment"
 												onClick={(e) => {
 													e.preventDefault()
@@ -5953,7 +6076,7 @@ function Dashboard({ user, onLogout }) {
 											>
 												Form I-B - Valuer appointment
 											</a>
-										</>
+										</div>
 									) : null}
 
 									<button
@@ -5966,15 +6089,13 @@ function Dashboard({ user, onLogout }) {
 											}))
 										}
 									>
-										<span>Rent Court submissions (Forms 4 / 5)</span>
-										<span className="dashboard-submenu-group-toggle-indicator">
-											{serviceGroupsOpen.court ? '-' : '+'}
-										</span>
+										<span>Rent Court submissions</span>
+										<SidebarIcon name="chevron" className={`dashboard-submenu-chevron ${serviceGroupsOpen.court ? 'open' : ''}`} />
 									</button>
 									{serviceGroupsOpen.court ? (
-										<>
+										<div className="dashboard-submenu-items">
 											<a
-												className="dashboard-link"
+												className={`dashboard-link ${activePanel === 'form-4-rent-court-possession' ? 'active' : ''}`}
 												href="#form-4-rent-court-possession"
 												onClick={(e) => {
 													e.preventDefault()
@@ -5984,10 +6105,10 @@ function Dashboard({ user, onLogout }) {
 													window.history.replaceState(null, '', '/dashboard')
 												}}
 											>
-												Form 4 - Rent court possession recovery
+												Form 4 - Rent court possession
 											</a>
 											<a
-												className="dashboard-link"
+												className={`dashboard-link ${activePanel === 'form-5-rent-court-filing' ? 'active' : ''}`}
 												href="#form-5-rent-court-filing"
 												onClick={(e) => {
 													e.preventDefault()
@@ -5997,9 +6118,9 @@ function Dashboard({ user, onLogout }) {
 													window.history.replaceState(null, '', '/dashboard')
 												}}
 											>
-												Form 5 - Application filed before the Rent Court
+												Form 5 - Application (Rent Court)
 											</a>
-										</>
+										</div>
 									) : null}
 
 									<button
@@ -6012,25 +6133,25 @@ function Dashboard({ user, onLogout }) {
 											}))
 										}
 									>
-										<span>Rent Authority (Form 6)</span>
-										<span className="dashboard-submenu-group-toggle-indicator">
-											{serviceGroupsOpen.authority ? '-' : '+'}
-										</span>
+										<span>Rent Authority</span>
+										<SidebarIcon name="chevron" className={`dashboard-submenu-chevron ${serviceGroupsOpen.authority ? 'open' : ''}`} />
 									</button>
 									{serviceGroupsOpen.authority ? (
-										<a
-											className="dashboard-link"
-											href="#form-6-rent-authority-filing"
-											onClick={(e) => {
-												e.preventDefault()
-												setActivePanel('form-6-rent-authority-filing')
-												setError('')
-												setSuccess('')
-												window.history.replaceState(null, '', '/dashboard')
-											}}
-										>
-											Form 6 - Application filed before the Rent Authority
-										</a>
+										<div className="dashboard-submenu-items">
+											<a
+												className={`dashboard-link ${activePanel === 'form-6-rent-authority-filing' ? 'active' : ''}`}
+												href="#form-6-rent-authority-filing"
+												onClick={(e) => {
+													e.preventDefault()
+													setActivePanel('form-6-rent-authority-filing')
+													setError('')
+													setSuccess('')
+													window.history.replaceState(null, '', '/dashboard')
+												}}
+											>
+												Form 6 - Application (Rent Authority)
+											</a>
+										</div>
 									) : null}
 
 									<button
@@ -6044,14 +6165,12 @@ function Dashboard({ user, onLogout }) {
 										}
 									>
 										<span>Appeals (Forms 7 / 8)</span>
-										<span className="dashboard-submenu-group-toggle-indicator">
-											{serviceGroupsOpen.appeals ? '-' : '+'}
-										</span>
+										<SidebarIcon name="chevron" className={`dashboard-submenu-chevron ${serviceGroupsOpen.appeals ? 'open' : ''}`} />
 									</button>
 									{serviceGroupsOpen.appeals ? (
-										<>
+										<div className="dashboard-submenu-items">
 											<a
-												className="dashboard-link"
+												className={`dashboard-link ${activePanel === 'form-7-rent-court-appeal' ? 'active' : ''}`}
 												href="#form-7-rent-court-appeal"
 												onClick={(e) => {
 													e.preventDefault()
@@ -6061,10 +6180,10 @@ function Dashboard({ user, onLogout }) {
 													window.history.replaceState(null, '', '/dashboard')
 												}}
 											>
-												Form 7 - Appeal before the Rent Court
+												Form 7 - Appeal before Rent Court
 											</a>
 											<a
-												className="dashboard-link"
+												className={`dashboard-link ${activePanel === 'form-8-rent-tribunal-appeal' ? 'active' : ''}`}
 												href="#form-8-rent-tribunal-appeal"
 												onClick={(e) => {
 													e.preventDefault()
@@ -6074,12 +6193,12 @@ function Dashboard({ user, onLogout }) {
 													window.history.replaceState(null, '', '/dashboard')
 												}}
 											>
-												Form 8 - Appeal before the Rent Tribunal
+												Form 8 - Appeal before Rent Tribunal
 											</a>
-										</>
+										</div>
 									) : null}
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'tenancy-certificate' ? 'active' : ''}`}
 										href="#tenancy-certificate"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6092,7 +6211,7 @@ function Dashboard({ user, onLogout }) {
 										Apply for Tenancy Certificate
 									</a>
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'status' ? 'active' : ''}`}
 										href="#status"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6110,7 +6229,7 @@ function Dashboard({ user, onLogout }) {
 					{user?.role !== 'tenant owner' && user?.role !== 'system_admin' ? (
 						<>
 							<a
-								className="dashboard-link"
+								className={`dashboard-link ${activePanel === 'status' ? 'active' : ''}`}
 								href="#status"
 								onClick={(e) => {
 									e.preventDefault()
@@ -6119,22 +6238,26 @@ function Dashboard({ user, onLogout }) {
 									setError('')
 									setSuccess('')
 								}}
+								title="Application Status"
 							>
-								Application Status
+								<SidebarIcon name="status" className="dashboard-link-icon" />
+								{!sidebarCollapsed && <span className="dashboard-link-text">Application Status</span>}
 							</a>
 							<a
-								className="dashboard-link"
+								className={`dashboard-link ${activePanel === 'state' ? 'active' : ''}`}
 								href="#state"
 								onClick={(e) => {
 									e.preventDefault()
 									setActivePanel('state')
 									loadStates(1)
 								}}
+								title="State Management"
 							>
-								State Management
+								<SidebarIcon name="map" className="dashboard-link-icon" />
+								{!sidebarCollapsed && <span className="dashboard-link-text">State Management</span>}
 							</a>
 							<a
-								className="dashboard-link"
+								className={`dashboard-link ${activePanel === 'district' ? 'active' : ''}`}
 								href="#district"
 								onClick={(e) => {
 									e.preventDefault()
@@ -6142,24 +6265,37 @@ function Dashboard({ user, onLogout }) {
 									loadStates(1)
 									loadDistricts(1)
 								}}
+								title="District Management"
 							>
-								District Management
+								<SidebarIcon name="building" className="dashboard-link-icon" />
+								{!sidebarCollapsed && <span className="dashboard-link-text">District Management</span>}
 							</a>
 							<a
-								className="dashboard-link dashboard-link-expandable"
+								className={`dashboard-link dashboard-link-expandable ${userMenuOpen ? 'menu-open' : ''}`}
 								href="#staff-user-menu"
 								onClick={(e) => {
 									e.preventDefault()
-									setUserMenuOpen((prev) => !prev)
+									if (sidebarCollapsed) {
+										setSidebarCollapsed(false)
+										setUserMenuOpen(true)
+									} else {
+										setUserMenuOpen((prev) => !prev)
+									}
 								}}
+								title="User Management"
 							>
-								<span>User Management</span>
-								<span className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
+								<div className="dashboard-link-main">
+									<SidebarIcon name="user" className="dashboard-link-icon" />
+									{!sidebarCollapsed && <span className="dashboard-link-text">User Management</span>}
+								</div>
+								{!sidebarCollapsed && (
+									<SidebarIcon name="chevron" className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} />
+								)}
 							</a>
-							{userMenuOpen ? (
+							{userMenuOpen && !sidebarCollapsed ? (
 								<div className="dashboard-submenu">
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'user' && userListMode === 'office' ? 'active' : ''}`}
 										href="#office-user"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6176,7 +6312,7 @@ function Dashboard({ user, onLogout }) {
 										Office user
 									</a>
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'user' && userListMode === 'tenant' ? 'active' : ''}`}
 										href="#user"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6199,18 +6335,20 @@ function Dashboard({ user, onLogout }) {
 					{user?.role === 'system_admin' ? (
 						<>
 							<a
-								className="dashboard-link"
+								className={`dashboard-link ${activePanel === 'state' ? 'active' : ''}`}
 								href="#state"
 								onClick={(e) => {
 									e.preventDefault()
 									setActivePanel('state')
 									loadStates(1)
 								}}
+								title="State Management"
 							>
-								State Management
+								<SidebarIcon name="map" className="dashboard-link-icon" />
+								{!sidebarCollapsed && <span className="dashboard-link-text">State Management</span>}
 							</a>
 							<a
-								className="dashboard-link"
+								className={`dashboard-link ${activePanel === 'district' ? 'active' : ''}`}
 								href="#district"
 								onClick={(e) => {
 									e.preventDefault()
@@ -6218,24 +6356,37 @@ function Dashboard({ user, onLogout }) {
 									loadStates(1)
 									loadDistricts(1)
 								}}
+								title="District Management"
 							>
-								District Management
+								<SidebarIcon name="building" className="dashboard-link-icon" />
+								{!sidebarCollapsed && <span className="dashboard-link-text">District Management</span>}
 							</a>
 							<a
-								className="dashboard-link dashboard-link-expandable"
+								className={`dashboard-link dashboard-link-expandable ${officeMenuOpen ? 'menu-open' : ''}`}
 								href="#office-menu"
 								onClick={(e) => {
 									e.preventDefault()
-									setOfficeMenuOpen((prev) => !prev)
+									if (sidebarCollapsed) {
+										setSidebarCollapsed(false)
+										setOfficeMenuOpen(true)
+									} else {
+										setOfficeMenuOpen((prev) => !prev)
+									}
 								}}
+								title="Office Management"
 							>
-								<span>Office Management</span>
-								<span className={`dashboard-link-chevron ${officeMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
+								<div className="dashboard-link-main">
+									<SidebarIcon name="building" className="dashboard-link-icon" />
+									{!sidebarCollapsed && <span className="dashboard-link-text">Office Management</span>}
+								</div>
+								{!sidebarCollapsed && (
+									<SidebarIcon name="chevron" className={`dashboard-link-chevron ${officeMenuOpen ? 'open' : ''}`} />
+								)}
 							</a>
-							{officeMenuOpen ? (
+							{officeMenuOpen && !sidebarCollapsed ? (
 								<div className="dashboard-submenu">
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'office' ? 'active' : ''}`}
 										href="#office"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6250,7 +6401,7 @@ function Dashboard({ user, onLogout }) {
 										Office
 									</a>
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'designation' ? 'active' : ''}`}
 										href="#designation"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6265,7 +6416,7 @@ function Dashboard({ user, onLogout }) {
 								</div>
 							) : null}
 							<a
-								className="dashboard-link"
+								className={`dashboard-link ${activePanel === 'role' ? 'active' : ''}`}
 								href="#role"
 								onClick={(e) => {
 									e.preventDefault()
@@ -6274,24 +6425,37 @@ function Dashboard({ user, onLogout }) {
 									setSuccess('')
 									loadRoles(1)
 								}}
+								title="Role Management"
 							>
-								Role Management
+								<SidebarIcon name="settings" className="dashboard-link-icon" />
+								{!sidebarCollapsed && <span className="dashboard-link-text">Role Management</span>}
 							</a>
 							<a
-								className="dashboard-link dashboard-link-expandable"
+								className={`dashboard-link dashboard-link-expandable ${userMenuOpen ? 'menu-open' : ''}`}
 								href="#user-menu"
 								onClick={(e) => {
 									e.preventDefault()
-									setUserMenuOpen((prev) => !prev)
+									if (sidebarCollapsed) {
+										setSidebarCollapsed(false)
+										setUserMenuOpen(true)
+									} else {
+										setUserMenuOpen((prev) => !prev)
+									}
 								}}
+								title="User Management"
 							>
-								<span>User Management</span>
-								<span className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} aria-hidden>▼</span>
+								<div className="dashboard-link-main">
+									<SidebarIcon name="user" className="dashboard-link-icon" />
+									{!sidebarCollapsed && <span className="dashboard-link-text">User Management</span>}
+								</div>
+								{!sidebarCollapsed && (
+									<SidebarIcon name="chevron" className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} />
+								)}
 							</a>
-							{userMenuOpen ? (
+							{userMenuOpen && !sidebarCollapsed ? (
 								<div className="dashboard-submenu">
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'user' && userListMode === 'office' ? 'active' : ''}`}
 										href="#office-user"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6308,7 +6472,7 @@ function Dashboard({ user, onLogout }) {
 										Office user
 									</a>
 									<a
-										className="dashboard-link"
+										className={`dashboard-link ${activePanel === 'user' && userListMode === 'tenant' ? 'active' : ''}`}
 										href="#user"
 										onClick={(e) => {
 											e.preventDefault()
@@ -6328,7 +6492,7 @@ function Dashboard({ user, onLogout }) {
 							) : null}
 							{user?.role === 'system_admin' ? (
 								<a
-									className="dashboard-link"
+									className={`dashboard-link ${activePanel === 'user-activity-log' ? 'active' : ''}`}
 									href="#user-activity-log"
 									onClick={(e) => {
 										e.preventDefault()
@@ -6338,8 +6502,10 @@ function Dashboard({ user, onLogout }) {
 										loadActivityUsers()
 										loadActivityLogs(1)
 									}}
+									title="User Activity Log"
 								>
-									User Activity Log
+									<SidebarIcon name="activity" className="dashboard-link-icon" />
+									{!sidebarCollapsed && <span className="dashboard-link-text">User Activity Log</span>}
 								</a>
 							) : null}
 						</>
@@ -6352,3 +6518,4 @@ function Dashboard({ user, onLogout }) {
 }
 
 export default Dashboard
+
