@@ -4224,8 +4224,8 @@ function Dashboard({ user, onLogout }) {
 								<h3 className="tenancy-docs-title">Required documents</h3>
 								<ul>
 									<li>Registered tenancy agreement (PDF)</li>
-									<li>Passport-size photographs (landlord and tenant)</li>
-									<li>Signatures (landlord and tenant)</li>
+									<li>Passport-size photograph</li>
+									<li>Signature</li>
 								</ul>
 							</div>
 						</>
