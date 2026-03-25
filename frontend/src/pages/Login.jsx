@@ -10,7 +10,9 @@ function Login({ onLogin }) {
 	const [mode, setMode] = useState('login')
 
 	// Login form state
-	const [loginForm, setLoginForm] = useState({ phone: '', password: '' })
+	const [loginForm, setLoginForm] = useState({ phone: '', otp: '' })
+	const [otpSent, setOtpSent] = useState(false)
+	const [otpMessage, setOtpMessage] = useState('')
 	const [loginError, setLoginError] = useState('')
 	const [loginLoading, setLoginLoading] = useState(false)
 
@@ -26,6 +28,11 @@ function Login({ onLogin }) {
 	})
 	const [regError, setRegError] = useState('')
 	const [regLoading, setRegLoading] = useState(false)
+	const [regStep, setRegStep] = useState('details') // 'details' -> 'otp'
+	const [regOtpSent, setRegOtpSent] = useState(false)
+	const [regOtp, setRegOtp] = useState('')
+	const [regPendingPhone, setRegPendingPhone] = useState('')
+	const [regOtpMessage, setRegOtpMessage] = useState('')
 	const [states, setStates] = useState([])
 	const [districts, setDistricts] = useState([])
 
@@ -75,12 +82,33 @@ function Login({ onLogin }) {
 
 	// Handlers
 	const handleLoginChange = (e) => {
-		setLoginForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+		const { name, value } = e.target
+		setLoginForm((prev) => ({ ...prev, [name]: value }))
+		if (name === 'phone') {
+			setOtpSent(false)
+			setOtpMessage('')
+		}
+	}
+
+	const handleSendOtp = () => {
+		setLoginError('')
+		setOtpMessage('')
+		if (!loginForm.phone.trim()) {
+			setLoginError('Please enter phone number first')
+			return
+		}
+		setOtpSent(true)
+		setOtpMessage('OTP sent successfully.')
 	}
 
 	const handleLoginSubmit = async (e) => {
 		e.preventDefault()
 		setLoginError('')
+		setOtpMessage('')
+		if (!otpSent) {
+			setLoginError('Please send OTP first')
+			return
+		}
 		setLoginLoading(true)
 		try {
 			await csrf()
@@ -100,6 +128,48 @@ function Login({ onLogin }) {
 		setRegForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
 	}
 
+	const handleRegSendOtp = () => {
+		setRegError('')
+		setRegOtpMessage('')
+		if (!regPendingPhone?.trim()) {
+			setRegError('Phone number is missing')
+			return
+		}
+		setRegOtpSent(true)
+		setRegOtp('')
+		setRegOtpMessage('OTP sent successfully.')
+	}
+
+	const handleRegVerifyOtp = async (e) => {
+		e.preventDefault()
+		setRegError('')
+		setRegOtpMessage('')
+
+		if (!regOtpSent) {
+			setRegError('Please send OTP first')
+			return
+		}
+
+		if (!regOtp.trim()) {
+			setRegError('Please enter OTP')
+			return
+		}
+
+		setRegLoading(true)
+		try {
+			await csrf()
+			const { data } = await api.post('/api/login', { phone: regPendingPhone, otp: regOtp })
+			onLogin(data.user)
+			const from = location.state?.from?.pathname || '/dashboard'
+			const search = location.state?.from?.search || ''
+			navigate(from + search, { replace: true })
+		} catch (err) {
+			setRegError(err?.response?.data?.message || 'OTP verification failed')
+		} finally {
+			setRegLoading(false)
+		}
+	}
+
 	const handleRegSubmit = async (e) => {
 		e.preventDefault()
 		setRegError('')
@@ -107,10 +177,13 @@ function Login({ onLogin }) {
 		try {
 			await csrf()
 			const { data } = await api.post('/api/register', regForm)
-			onLogin(data.user)
-			const from = location.state?.from?.pathname || '/dashboard'
-			const search = location.state?.from?.search || ''
-			navigate(from + search, { replace: true })
+
+			// After account creation, require OTP verification before login.
+			setRegPendingPhone(regForm.phone)
+			setRegStep('otp')
+			setRegOtpSent(false)
+			setRegOtp('')
+			setRegOtpMessage('')
 		} catch (err) {
 			setRegError(
 				err?.response?.data?.message ||
@@ -125,6 +198,14 @@ function Login({ onLogin }) {
 	const switchMode = (newMode) => {
 		setLoginError('')
 		setRegError('')
+		setOtpSent(false)
+		setOtpMessage('')
+		setLoginForm({ phone: '', otp: '' })
+		setRegStep('details')
+		setRegOtpSent(false)
+		setRegOtp('')
+		setRegPendingPhone('')
+		setRegOtpMessage('')
 		setMode(newMode)
 	}
 
@@ -171,7 +252,8 @@ function Login({ onLogin }) {
 						{mode === 'login' ? (
 							<>
 								<h2>Log In</h2>
-								<p className="muted">Use your account credentials.</p>
+								<p className="muted">Use your phone number and OTP.</p>
+								{otpMessage ? <div className="success">{otpMessage}</div> : null}
 								{loginError ? <div className="error">{loginError}</div> : null}
 								<form onSubmit={handleLoginSubmit}>
 									<label>
@@ -184,16 +266,22 @@ function Login({ onLogin }) {
 											required
 										/>
 									</label>
-									<label>
-										Password
-										<input
-											type="password"
-											name="password"
-											value={loginForm.password}
-											onChange={handleLoginChange}
-											required
-										/>
-									</label>
+									<button type="button" onClick={handleSendOtp} disabled={loginLoading}>
+										Send OTP
+									</button>
+									{otpSent ? (
+										<label>
+											OTP
+											<input
+												type="text"
+												name="otp"
+												value={loginForm.otp}
+												onChange={handleLoginChange}
+												maxLength={6}
+												required
+											/>
+										</label>
+									) : null}
 									<button type="submit" disabled={loginLoading}>
 										{loginLoading ? 'Signing in...' : 'Log In'}
 									</button>
@@ -207,71 +295,120 @@ function Login({ onLogin }) {
 							</>
 						) : (
 							<>
-								<h2>Create Account</h2>
-								<p className="muted">Start your session in seconds.</p>
-								{regError ? <div className="error">{regError}</div> : null}
-								<form onSubmit={handleRegSubmit}>
-									<label>
-										Name
-										<input type="text" name="name" value={regForm.name} onChange={handleRegChange} required />
-									</label>
-									<label>
-										Email (Optional)
-										<input type="email" name="email" value={regForm.email} onChange={handleRegChange} />
-									</label>
-									<label>
-										Password
-										<input type="password" name="password" value={regForm.password} onChange={handleRegChange} required />
-									</label>
-									<label>
-										Confirm Password
-										<input type="password" name="password_confirmation" value={regForm.password_confirmation} onChange={handleRegChange} required />
-									</label>
-									<label>
-										Phone Number
-										<input type="tel" name="phone" value={regForm.phone} onChange={handleRegChange} required />
-									</label>
-									<label>
-										State
-										<select
-											name="state_id"
-											value={regForm.state_id}
-											onChange={(e) => {
-												setRegForm((prev) => ({ ...prev, state_id: e.target.value, district_id: '' }))
-											}}
-											required
-										>
-											<option value="">---SELECT---</option>
-											{states.map((s) => (
-												<option key={s.id} value={s.id}>{s.name}</option>
-											))}
-										</select>
-									</label>
-									<label>
-										District
-										<select
-											name="district_id"
-											value={regForm.district_id}
-											onChange={handleRegChange}
-											required
-											disabled={!regForm.state_id}
-										>
-											<option value="">---SELECT---</option>
-											{filteredDistricts.map((d) => (
-												<option key={d.id} value={d.id}>{d.name}</option>
-											))}
-										</select>
-									</label>
-									<button type="submit" disabled={regLoading}>
-										{regLoading ? 'Creating...' : 'Create account'}
-									</button>
-								</form>
-								<p className="muted">
-									Already registered?{' '}
-									<a href="#" onClick={(e) => { e.preventDefault(); switchMode('login') }}>
-										Sign in
-									</a>
-								</p>
+								{regStep === 'details' ? (
+									<>
+										<h2>Create Account</h2>
+										<p className="muted">Complete your details to receive an OTP.</p>
+										{regError ? <div className="error">{regError}</div> : null}
+										<form onSubmit={handleRegSubmit}>
+											<label>
+												Name
+												<input type="text" name="name" value={regForm.name} onChange={handleRegChange} required />
+											</label>
+											<label>
+												Email (Optional)
+												<input type="email" name="email" value={regForm.email} onChange={handleRegChange} />
+											</label>
+											<label>
+												Password
+												<input
+													type="password"
+													name="password"
+													value={regForm.password}
+													onChange={handleRegChange}
+													required
+												/>
+											</label>
+											<label>
+												Confirm Password
+												<input
+													type="password"
+													name="password_confirmation"
+													value={regForm.password_confirmation}
+													onChange={handleRegChange}
+													required
+												/>
+											</label>
+											<label>
+												Phone Number
+												<input type="tel" name="phone" value={regForm.phone} onChange={handleRegChange} required />
+											</label>
+											<label>
+												State
+												<select
+													name="state_id"
+													value={regForm.state_id}
+													onChange={(e) => {
+														setRegForm((prev) => ({ ...prev, state_id: e.target.value, district_id: '' }))
+													}}
+													required
+												>
+													<option value="">---SELECT---</option>
+													{states.map((s) => (
+														<option key={s.id} value={s.id}>{s.name}</option>
+													))}
+												</select>
+											</label>
+											<label>
+												District
+												<select
+													name="district_id"
+													value={regForm.district_id}
+													onChange={handleRegChange}
+													required
+													disabled={!regForm.state_id}
+												>
+													<option value="">---SELECT---</option>
+													{filteredDistricts.map((d) => (
+														<option key={d.id} value={d.id}>{d.name}</option>
+													))}
+												</select>
+											</label>
+											<button type="submit" disabled={regLoading}>
+												{regLoading ? 'Creating...' : 'Create account'}
+											</button>
+										</form>
+										<p className="muted">
+											Already registered?{' '}
+											<a href="#" onClick={(e) => { e.preventDefault(); switchMode('login') }}>
+												Sign in
+											</a>
+										</p>
+									</>
+								) : (
+									<>
+										<h2>Verify OTP</h2>
+										<p className="muted">Enter the OTP sent to {regPendingPhone}.</p>
+										{regOtpMessage ? <div className="success">{regOtpMessage}</div> : null}
+										{regError ? <div className="error">{regError}</div> : null}
+										<form onSubmit={handleRegVerifyOtp}>
+											<button type="button" onClick={handleRegSendOtp} disabled={regLoading || regOtpSent}>
+												Send OTP
+											</button>
+											{regOtpSent ? (
+												<label>
+													OTP
+													<input
+														type="text"
+														name="regOtp"
+														value={regOtp}
+														onChange={(e) => setRegOtp(e.target.value)}
+														maxLength={6}
+														required
+													/>
+												</label>
+											) : null}
+											<button type="submit" disabled={regLoading}>
+												{regLoading ? 'Verifying...' : 'Verify & Log In'}
+											</button>
+										</form>
+										<p className="muted">
+											<a href="#" onClick={(e) => { e.preventDefault(); switchMode('login') }}>
+												Back to sign in
+											</a>
+										</p>
+									</>
+								)}
 							</>
 						)}
 					</div>

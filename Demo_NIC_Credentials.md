@@ -42,8 +42,8 @@
 
 1. **Public access**
    - **Home (/)** – Login / register on the same page (or redirect to dashboard if already logged in).
-   - **Login (/login)** – Sign in with **phone number** and **password** (same login form as home).
-   - **Register** – From home, use **Register** in the nav or `/#register` to open **Create account** (name, email, password, phone, state, district). New users get role **tenant owner** and are auto-approved. (`/register` may redirect to login depending on routing.)
+   - **Login (/login)** – Sign in with **phone number** and **OTP** (demo OTP: `123456`).
+   - **Register** – From home, use **Register** in the nav or `/#register` to open **Create account** (name, email, password, phone, state, district). After details, verify OTP (demo OTP: `123456`) before login. New users get role **tenant owner** and are auto-approved. (`/register` may redirect to login depending on routing.)
    - **Policies (/policies)** – Public policies page.
    - **Contact (/contact)** – Public contact page.
 
@@ -98,59 +98,61 @@
 
 ## Demo credentials (roles & login)
 
-**Sign-in:** use **phone number** + **password** (API: `POST /api/login` with `phone` and `password`). Email is **not** used for login; it is shown only for reference / profile.
+**Sign-in:** use **phone number** + **OTP** (API: `POST /api/login` with `phone` and `otp`).
+For now, OTP is a **demo value**: `123456`.
 
-All passwords below are: **`password`**
+Note: this prototype also keeps a **password fallback** for backward compatibility.
 
 ### Staff dashboard
 
 To use the **staff dashboard** (Staff, Director, Assistant Director, District Head, District Assistant), log in with:
 
-| Role               | Phone (use to log in) | Email (reference only)     | Password  |
-|--------------------|------------------------|----------------------------|-----------|
-| Staff              | `9111111110`           | staff@nic.in               | password  |
-| Director           | `9888888888`           | director@nic.in            | password  |
-| Assistant Director | `9777777777`           | assistant.director@nic.in  | password  |
-| District Head      | `9666666666`           | district.head@nic.in       | password  |
-| District Assistant | `9555555555`           | district.assistant@nic.in  | password  |
+| Role               | Phone (use to log in) | Email (reference only)     | OTP  |
+|--------------------|------------------------|----------------------------|-------|
+| Staff              | `9111111110`           | staff@nic.in               | `123456`  |
+| Director           | `9888888888`           | director@nic.in            | `123456`  |
+| Assistant Director | `9777777777`           | assistant.director@nic.in  | `123456`  |
+| District Head      | `9666666666`           | district.head@nic.in       | `123456`  |
+| District Assistant | `9555555555`           | district.assistant@nic.in  | `123456`  |
 
 The staff dashboard shows your **staff email** and role, **stat cards and charts** (applications by status, etc.), and **Application Status**, **State Management**, **District Management**, and **User Management** (view, update, delete users).
 
 ### All roles
 
-| Role                  | Phone (use to log in) | Email (reference only)      | Password  |
-|-----------------------|------------------------|-----------------------------|-----------|
-| System Admin          | `9999999999`           | admin@nic.in                | password  |
-| Staff                 | `9111111110`           | staff@nic.in                | password  |
-| Director              | `9888888888`           | director@nic.in             | password  |
-| Assistant Director    | `9777777777`           | assistant.director@nic.in | password  |
-| District Head         | `9666666666`           | district.head@nic.in        | password  |
-| District Assistant    | `9555555555`           | district.assistant@nic.in   | password  |
-| Tenant Owner          | `9444444444`           | tenant@nic.in               | password  |
-| Landlord / Owner      | `9222222221`           | landlord@nic.in             | password  |
-| User (tenant owner)   | `9333333333`           | user1@gmail.com             | password  |
+| Role                  | Phone (use to log in) | Email (reference only)      | OTP  |
+|-----------------------|------------------------|-----------------------------|------|
+| System Admin          | `9999999999`           | admin@nic.in                | `123456`  |
+| Staff                 | `9111111110`           | staff@nic.in                | `123456`  |
+| Director              | `9888888888`           | director@nic.in             | `123456`  |
+| Assistant Director    | `9777777777`           | assistant.director@nic.in | `123456`  |
+| District Head         | `9666666666`           | district.head@nic.in        | `123456`  |
+| District Assistant    | `9555555555`           | district.assistant@nic.in   | `123456`  |
+| Tenant Owner          | `9444444444`           | tenant@nic.in               | `123456`  |
+| Landlord / Owner      | `9222222221`           | landlord@nic.in             | `123456`  |
+| User (tenant owner)   | `9333333333`           | user1@gmail.com             | `123456`  |
 
 ---
 
 ## Quick reference – login table
 
-| Role               | Phone            | Password   |
+| Role               | Phone            | OTP        |
 |--------------------|------------------|------------|
-| System Admin       | `9999999999`     | `password` |
-| Staff              | `9111111110`     | `password` |
-| Director           | `9888888888`     | `password` |
-| Assistant Director | `9777777777`     | `password` |
-| District Head      | `9666666666`     | `password` |
-| District Assistant | `9555555555`     | `password` |
-| Tenant Owner       | `9444444444`     | `password` |
-| Landlord / Owner   | `9222222221`     | `password` |
-| User               | `9333333333`     | `password` |
+| System Admin       | `9999999999`     | `123456`  |
+| Staff              | `9111111110`     | `123456`  |
+| Director           | `9888888888`     | `123456`  |
+| Assistant Director | `9777777777`     | `123456`  |
+| District Head      | `9666666666`     | `123456`  |
+| District Assistant | `9555555555`     | `123456`  |
+| Tenant Owner       | `9444444444`     | `123456`  |
+| Landlord / Owner   | `9222222221`     | `123456`  |
+| User               | `9333333333`     | `123456`  |
 
 ---
 
 ## API flow (simplified)
 
 - **Public:** `POST /api/register`, `POST /api/login`, `GET /api/public/states`, `GET /api/public/districts`, `GET /api/public/offices`, tenancy application submit/receipt/details (as per backend).
+- **Registration + OTP (prototype):** `POST /api/register` creates the account and requires OTP verification; then use `POST /api/login` with `{ phone, otp }` to log in.
 - **Authenticated (Sanctum):** `POST /api/logout`, `GET /api/user`, profile, tenancy “my” list and update.
   - Tenant owner status + form details:
     - `GET /api/tenant-forms/my` (merged status list for Tenancy Certificate + Assam Tenancy Rules forms)

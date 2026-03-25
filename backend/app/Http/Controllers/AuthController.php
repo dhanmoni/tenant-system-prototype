@@ -43,24 +43,46 @@ class AuthController extends Controller
             'remember_token' => Str::random(60),
         ]);
 
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return response()->json(['user' => $user], 201);
+        // In this prototype, registration is a two-step flow:
+        // 1) create account, 2) verify OTP and then login.
+        return response()->json(['user' => $user, 'otp_required' => true], 201);
     }
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $validated = $request->validate([
             'phone' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'password' => ['nullable', 'string', 'required_without:otp'],
+            'otp' => ['nullable', 'string', 'required_without:password'],
         ]);
 
-        if (!Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Invalid credentials'], 422);
+        $user = null;
+        $otp = (string) ($validated['otp'] ?? '');
+
+        if ($otp !== '') {
+            if ($otp !== '123456') {
+                return response()->json(['message' => 'Invalid OTP'], 422);
+            }
+
+            $user = User::where('phone', $validated['phone'])->first();
+            if (!$user) {
+                return response()->json(['message' => 'Invalid credentials'], 422);
+            }
+
+            Auth::login($user);
+        } else {
+            $credentials = [
+                'phone' => $validated['phone'],
+                'password' => $validated['password'],
+            ];
+
+            if (!Auth::attempt($credentials)) {
+                return response()->json(['message' => 'Invalid credentials'], 422);
+            }
+
+            $user = $request->user();
         }
 
-        $user = $request->user();
         if ($user->is_blocked) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
