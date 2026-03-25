@@ -14,22 +14,27 @@ import ProtectedRoute from './components/ProtectedRoute'
 import emblem from './assets/img/emblem-dark.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
-import propertiesImage from './assets/carousel/properties-img.png'
-import tenantOwnerImage from './assets/carousel/tenant-owner.png'
-
 function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const slides = [
 		{
 			title: 'Digital Tenancy Registration',
-			subtitle: 'Apply for tenancy certificates online, track your application status in real-time, and download digitally signed documents — all from one portal.',
-			image: tenantOwnerImage,
+			subtitle:
+				'Apply for tenancy certificates online, track your application status in real-time, and download digitally signed documents — all from one portal.',
+			image: '/TCP-Images/TCP-Office.jpg',
 		},
 		{
-			title: 'Property Management',
-			subtitle: 'Register properties, manage landlord-tenant records, and ensure compliance with the Department of Housing And Urban Affairs regulations.',
-			image: propertiesImage,
+			title: 'Property & tenancy records',
+			subtitle:
+				'Register properties, manage landlord–tenant records, and stay aligned with housing department guidelines — in one place.',
+			image: '/TCP-Images/TCP-Office2.jpg',
+		},
+		{
+			title: 'Transparent, accessible services',
+			subtitle:
+				'Citizen-centric workflows, status tracking, and digital records built for tenants, owners, and public authorities.',
+			image: '/TCP-Images/TCP-Office3.jpg',
 		},
 	]
 	const [slideIndex, setSlideIndex] = useState(0)
@@ -81,7 +86,7 @@ function App() {
 	}
 
 	return (
-		<div className="page">
+		<div className={`page${!user ? ' page-landing' : ''}`}>
 			{/* Accessibility Bar */}
 			<div className="accessibility-bar">
 				<div className="accessibility-bar-inner">
@@ -91,6 +96,13 @@ function App() {
 							Department of Housing And Urban Affairs
 						</span>
 					</div>
+					{!user ? (
+						<div className="accessibility-bar-help" aria-label="Helpdesk contact (demo)">
+							<span>Helpdesk (demo): 1800-000-0000</span>
+							<span className="accessibility-bar-help-sep">|</span>
+							<span>helpdesk.tcms@nic.in</span>
+						</div>
+					) : null}
 				</div>
 			</div>
 
@@ -109,17 +121,21 @@ function App() {
 				</div>
 			</header>
 
-			{/* Green Navigation Bar – hidden on dashboard (welcome & logout are in dashboard) */}
+			{!user ? <div className="landing-accent-stripe" aria-hidden /> : null}
+
+			{/* Main navigation – rent-portal style on landing; hidden on dashboard */}
 			{!(user && location.pathname === '/dashboard') && (
 				<div className="globalnav">
 					<div className="globalnav-inner">
+						{!user ? (
+							<span className="globalnav-portal-title">Tenancy Certificate — Rent Portal</span>
+						) : null}
 						<nav className={user ? 'nav-auth' : undefined}>
 							{!user ? (
 								<>
 									<Link to="/">Home</Link>
 									<Link to="/#login">Login</Link>
-									<Link to="/#register">Register</Link>
-									{/*<Link to="/policies">Policies</Link>*/}
+									<Link to="/#register">Registration</Link>
 									<Link to="/contact">Contact Us</Link>
 								</>
 							) : (
@@ -138,29 +154,41 @@ function App() {
 			)}
 
 			{showCarousel ? (
-				<section className="carousel" aria-label="Tenant and owner highlights">
-					<div className="carousel-card">
-						<div className="carousel-copy">
-							<p className="carousel-eyebrow">Highlights</p>
-							<h2>{slides[slideIndex].title}</h2>
-							<p className="carousel-subtitle">{slides[slideIndex].subtitle}</p>
-							<div className="carousel-nav-row">
-								<div className="carousel-dots" role="tablist">
-									{slides.map((_, index) => (
-										<button
-											key={`dot-${index}`}
-											type="button"
-											className={`carousel-dot ${index === slideIndex ? 'active' : ''}`}
-											onClick={() => setSlideIndex(index)}
-											aria-label={`Go to slide ${index + 1}`}
-										/>
-									))}
+				<section className="carousel carousel--rent-banner" aria-label="Tenant and owner highlights">
+					<div className="carousel-banner">
+						{slides.map((slide, index) => (
+							<div
+								key={slide.title}
+								className={`carousel-banner-slide ${index === slideIndex ? 'is-active' : ''}`}
+								aria-hidden={index !== slideIndex}
+							>
+								<div
+									className="carousel-banner-bg"
+									style={{ backgroundImage: `url(${slide.image})` }}
+								/>
+								<div className="carousel-banner-scrim" />
+								<div className="carousel-banner-inner">
+									<div className="carousel-banner-copy">
+										<p className="carousel-eyebrow">Highlights</p>
+										<h2>{slide.title}</h2>
+										<p className="carousel-subtitle">{slide.subtitle}</p>
+										<div className="carousel-nav-row">
+											<div className="carousel-dots" role="tablist">
+												{slides.map((_, dotIndex) => (
+													<button
+														key={`dot-${dotIndex}`}
+														type="button"
+														className={`carousel-dot ${dotIndex === slideIndex ? 'active' : ''}`}
+														onClick={() => setSlideIndex(dotIndex)}
+														aria-label={`Go to slide ${dotIndex + 1}`}
+													/>
+												))}
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
-						</div>
-						<div className="carousel-image">
-							<img src={slides[slideIndex].image} alt={slides[slideIndex].title} />
-						</div>
+						))}
 					</div>
 				</section>
 			) : null}
@@ -212,7 +240,7 @@ function App() {
 			</main>
 
 			{/* Footer – hidden on dashboard */}
-			{!(user && location.pathname === '/dashboard') && (
+			{/* {!(user && location.pathname === '/dashboard') && (
 				<footer className="footer">
 					<div className="footer-content">
 						<div>
@@ -238,7 +266,7 @@ function App() {
 						<a href="https://www.india.gov.in/">Govt. of India.</a>
 					</div>
 				</footer>
-			)}
+			)} */}
 		</div>
 	)
 }

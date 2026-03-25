@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
 
 function Login({ onLogin }) {
@@ -130,14 +130,14 @@ function Login({ onLogin }) {
 
 	return (
 		<section className="home">
-			<div className="hero">
+			<div className="hero hero--rent-portal">
 				<div className="hero-content">
-					<p className="hero-eyebrow">Government of India Project</p>
+					<p className="hero-eyebrow">Government of India · NIC</p>
 					<h1>Tenancy Certificate Management System</h1>
 					<p className="hero-subtitle">
 						A unified portal for tenancy registration, certificate issuance,
-						and property management. Built by NIC for the Department of
-						Housing And Urban Affairs.
+						and property management — for the Department of Housing And Urban
+						Affairs (prototype).
 					</p>
 					<div className="audience">
 						<div className="audience-card">
@@ -149,25 +149,25 @@ function Login({ onLogin }) {
 							<ul>
 								<li>Digital certificate access</li>
 								<li>Application status tracking</li>
-								<li>24/7 online support</li>
+								<li>Online services round the clock</li>
 							</ul>
 						</div>
 						<div className="audience-card">
 							<h3>For Owners</h3>
 							<p>
-								Register properties, manage tenant records, and stay compliant
-								with government regulations.
+								Register properties, manage tenant records, and stay aligned
+								with tenancy regulations.
 							</p>
 							<ul>
-								<li>Property portfolio dashboard</li>
+								<li>Property and application dashboard</li>
 								<li>Digital record management</li>
-								<li>Compliance tracking</li>
+								<li>Status and compliance visibility</li>
 							</ul>
 						</div>
 					</div>
 				</div>
 				<aside className="hero-card" id="auth-card-section">
-					<div className="auth-card auth-card-compact">
+					<div className="auth-card auth-card-compact auth-card--rent-portal">
 						{mode === 'login' ? (
 							<>
 								<h2>Log In</h2>
@@ -276,6 +276,120 @@ function Login({ onLogin }) {
 						)}
 					</div>
 				</aside>
+			</div>
+
+			<section className="landing-section landing-about" aria-labelledby="landing-about-heading">
+				<div className="landing-container">
+					<h2 id="landing-about-heading">About the portal</h2>
+					<p className="landing-lead">
+						This prototype demonstrates online workflows for tenancy certificates and
+						related services, similar in spirit to state rent-portal sites — with clear
+						navigation, citizen services, and helpdesk information.
+					</p>
+					<Link className="landing-text-link" to="/policies">
+						Read policies &amp; guidelines
+					</Link>
+				</div>
+			</section>
+
+			<section className="landing-section landing-services" aria-labelledby="landing-services-heading">
+				<div className="landing-container">
+					<h2 id="landing-services-heading">Citizen services</h2>
+					<p className="landing-section-intro">
+						Quick access to common actions (demo — links scroll to login or registration).
+					</p>
+					<div className="landing-service-grid">
+						<Link className="landing-service-tile" to="/#register">
+							<span className="landing-service-tile-icon" aria-hidden>
+								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+									<circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" />
+									<path d="M19 8v6M22 11h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+								</svg>
+							</span>
+							<span className="landing-service-tile-title">New registration</span>
+							<span className="landing-service-tile-desc">Create a citizen account</span>
+						</Link>
+						<Link className="landing-service-tile" to="/#login">
+							<span className="landing-service-tile-icon" aria-hidden>
+								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+									<path d="M10 17l5-5-5-5M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+								</svg>
+							</span>
+							<span className="landing-service-tile-title">Login</span>
+							<span className="landing-service-tile-desc">Access your dashboard</span>
+						</Link>
+						<Link className="landing-service-tile" to="/#login">
+							<span className="landing-service-tile-icon" aria-hidden>
+								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+									<path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+								</svg>
+							</span>
+							<span className="landing-service-tile-title">Apply for certificate</span>
+							<span className="landing-service-tile-desc">Sign in to submit applications</span>
+						</Link>
+						<Link className="landing-service-tile" to="/contact">
+							<span className="landing-service-tile-icon" aria-hidden>
+								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" />
+									<path d="m22 6-10 7L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+								</svg>
+							</span>
+							<span className="landing-service-tile-title">Contact &amp; help</span>
+							<span className="landing-service-tile-desc">Reach the helpdesk</span>
+						</Link>
+					</div>
+				</div>
+			</section>
+
+			<section className="landing-section landing-notices" aria-labelledby="landing-notices-heading">
+				<div className="landing-container">
+					<h2 id="landing-notices-heading">Notifications</h2>
+					<ul className="landing-notice-list">
+						<li>
+							<span className="landing-notice-date">Demo</span>
+							<span>Portal content is for demonstration; data and timelines are illustrative.</span>
+						</li>
+						<li>
+							<span className="landing-notice-date">Demo</span>
+							<span>Use official circulars and gazette notifications for legal reference.</span>
+						</li>
+					</ul>
+				</div>
+			</section>
+
+			<section className="landing-section landing-external" aria-labelledby="landing-external-heading">
+				<div className="landing-container">
+					<h2 id="landing-external-heading">Important links</h2>
+					<div className="landing-external-grid">
+						<a className="landing-external-link" href="https://www.india.gov.in/" target="_blank" rel="noopener noreferrer">
+							National portal — india.gov.in
+						</a>
+						<a className="landing-external-link" href="https://www.digitalindia.gov.in/" target="_blank" rel="noopener noreferrer">
+							Digital India
+						</a>
+						<a className="landing-external-link" href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">
+							TCP Assam (reference)
+						</a>
+						<a className="landing-external-link" href="https://www.tenancy.tn.gov.in/" target="_blank" rel="noopener noreferrer">
+							Tamil Nadu tenancy portal (reference)
+						</a>
+					</div>
+				</div>
+			</section>
+
+			<div className="landing-helpdesk" role="region" aria-label="Helpdesk">
+				<div className="landing-container landing-helpdesk-inner">
+					<div>
+						<strong>Helpdesk (demo)</strong>
+						<p>For assistance with this prototype, use the contact details in the top bar or visit Contact Us.</p>
+					</div>
+					<Link className="landing-helpdesk-btn" to="/contact">
+						Contact us
+					</Link>
+				</div>
 			</div>
 		</section>
 	)
