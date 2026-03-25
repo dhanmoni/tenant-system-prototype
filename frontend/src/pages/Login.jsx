@@ -132,7 +132,7 @@ function Login({ onLogin }) {
 		<section className="home">
 			<div className="hero hero--rent-portal">
 				<div className="hero-content">
-					<p className="hero-eyebrow">Government of India · NIC</p>
+					<p className="hero-eyebrow">Government of India · TCP</p>
 					<h1>Tenancy Certificate Management System</h1>
 					<p className="hero-subtitle">
 						A unified portal for tenancy registration, certificate issuance,
