@@ -97,6 +97,8 @@ function Login({ onLogin }) {
 			setLoginError('Please enter phone number first')
 			return
 		}
+		// When resending, clear the previous OTP value so user enters the fresh code.
+		setLoginForm((prev) => ({ ...prev, otp: '' }))
 		setOtpSent(true)
 		setOtpMessage('OTP sent successfully.')
 	}
@@ -267,7 +269,7 @@ function Login({ onLogin }) {
 										/>
 									</label>
 									<button type="button" onClick={handleSendOtp} disabled={loginLoading}>
-										Send OTP
+										{otpSent ? 'Resend OTP' : 'Send OTP'}
 									</button>
 									{otpSent ? (
 										<label>
@@ -382,8 +384,12 @@ function Login({ onLogin }) {
 										{regOtpMessage ? <div className="success">{regOtpMessage}</div> : null}
 										{regError ? <div className="error">{regError}</div> : null}
 										<form onSubmit={handleRegVerifyOtp}>
-											<button type="button" onClick={handleRegSendOtp} disabled={regLoading || regOtpSent}>
-												Send OTP
+											<button
+												type="button"
+												onClick={handleRegSendOtp}
+												disabled={regLoading}
+											>
+												{regOtpSent ? 'Resend OTP' : 'Send OTP'}
 											</button>
 											{regOtpSent ? (
 												<label>
