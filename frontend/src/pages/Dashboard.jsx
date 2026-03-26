@@ -34,6 +34,20 @@ function Dashboard({ user, onLogout }) {
 		appeals: false,
 	})
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+	const [sidebarPhotoUrl, setSidebarPhotoUrl] = useState('')
+	const sidebarDummyAvatarUrl = `data:image/svg+xml;utf8,${encodeURIComponent(
+		`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+			<defs>
+				<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+					<stop offset="0" stop-color="#2b2b2b"/>
+					<stop offset="1" stop-color="#3b3b3f"/>
+				</linearGradient>
+			</defs>
+			<rect x="0" y="0" width="96" height="96" rx="48" fill="url(#g)"/>
+			<circle cx="48" cy="36" r="14" fill="#7a7a80"/>
+			<path d="M20 88c4-18 17-28 28-28s24 10 28 28" fill="#6f6f76"/>
+		</svg>`
+	)}`
 
 	const toggleSidebar = () => {
 		setSidebarCollapsed((prev) => !prev)
@@ -712,6 +726,26 @@ function Dashboard({ user, onLogout }) {
 		}
 	}, [user?.role])
 
+	// Use existing user avatar (if any) in the sidebar header.
+	// Fallback to icon when no photo is available.
+	useEffect(() => {
+		const photoUrl = user?.passport_photo_url || ''
+		const photoPath = user?.passport_photo_path || user?.user_passport_photo_path || ''
+
+		if (photoUrl) {
+			setSidebarPhotoUrl(photoUrl)
+			return
+		}
+
+		if (photoPath) {
+			const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+			setSidebarPhotoUrl(`${baseUrl}/storage/${photoPath}`)
+			return
+		}
+
+		setSidebarPhotoUrl('')
+	}, [user?.id, user?.passport_photo_url, user?.passport_photo_path])
+
 	useEffect(() => {
 		if (profileType === 'landlord') {
 			setLandlordName(profileName)
@@ -1236,6 +1270,21 @@ function Dashboard({ user, onLogout }) {
 									</label>
 									<p className="profile-upload-hint">Passport size. PNG or JPEG.</p>
 								</div>
+							</div>
+							<div className="profile-form-section">
+								<h3 className="profile-section-title">Profile type</h3>
+								<label className="profile-field profile-field-profile-type">
+									Select whether you are a Landlord or Tenant
+									<select
+										value={profileType}
+										onChange={(e) => setProfileType(e.target.value)}
+										required
+									>
+										<option value="">---SELECT---</option>
+										<option value="landlord">Landlord</option>
+										<option value="tenant">Tenant</option>
+									</select>
+								</label>
 							</div>
 							<div className="profile-form-section">
 								<h3 className="profile-section-title">Personal details</h3>
@@ -5235,23 +5284,20 @@ function Dashboard({ user, onLogout }) {
 			}
 			return (
 				<div className="dashboard-home">
-					<div className="auth-card dashboard-card dashboard-welcome-card">
-						<h1 className="dashboard-title-with-icon">
-							<DashboardIcon name="welcome" className="dashboard-heading-icon" />
-							Welcome
-						</h1>
-						<p className="muted">You are signed in as:</p>
-						<div className="user-pill">
-							<strong>{user?.name}</strong>
-							<span>{user?.email}</span>
-						</div>
-						<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
-							Log out
-						</button>
-					</div>
 					<div className="dashboard-overview-cards">
-						{statsCards.map((stat) => (
-							<div key={stat.label} className="dashboard-stat-card">
+							{statsCards.map((stat) => (
+								<div
+									key={stat.label}
+									className={`dashboard-stat-card ${
+										stat.label === 'Recent Submissions'
+											? 'dashboard-stat-card--recent-submissions'
+											: stat.label === 'Tenancy Certificates'
+												? 'dashboard-stat-card--tenancy-certificates'
+												: stat.label === 'Assam Tenancy Forms'
+													? 'dashboard-stat-card--assam-tenancy-forms'
+													: ''
+									}`}
+								>
 								<span className="dashboard-stat-icon-wrap">
 									<DashboardIcon name={stat.icon} className="dashboard-stat-icon" />
 								</span>
@@ -5269,7 +5315,7 @@ function Dashboard({ user, onLogout }) {
 						<div className="dashboard-quick-actions">
 							<button
 								type="button"
-								className="dashboard-action-btn"
+								className="dashboard-action-btn dashboard-action-btn--profile"
 								title="Profile"
 								onClick={() => {
 									setActivePanel('profile')
@@ -5281,7 +5327,7 @@ function Dashboard({ user, onLogout }) {
 							</button>
 							<button
 								type="button"
-								className="dashboard-action-btn"
+								className="dashboard-action-btn dashboard-action-btn--tenancy-certificate"
 								title="Apply for Tenancy Certificate"
 								onClick={() => {
 									setActivePanel('tenancy-certificate')
@@ -5294,7 +5340,7 @@ function Dashboard({ user, onLogout }) {
 							</button>
 							<button
 								type="button"
-								className="dashboard-action-btn"
+								className="dashboard-action-btn dashboard-action-btn--form-i"
 								title="Form I - Rent revision / fixation"
 								onClick={() => {
 									setActivePanel('form-i-rent-revision')
@@ -5307,7 +5353,7 @@ function Dashboard({ user, onLogout }) {
 							</button>
 							<button
 								type="button"
-								className="dashboard-action-btn"
+								className="dashboard-action-btn dashboard-action-btn--form-4"
 								title="Form 4 - Rent court submission"
 								onClick={() => {
 									setActivePanel('form-4-rent-court-possession')
@@ -5320,7 +5366,7 @@ function Dashboard({ user, onLogout }) {
 							</button>
 							<button
 								type="button"
-								className="dashboard-action-btn"
+								className="dashboard-action-btn dashboard-action-btn--form-7"
 								title="Form 7 - Appeal before rent court"
 								onClick={() => {
 									setActivePanel('form-7-rent-court-appeal')
@@ -5333,7 +5379,7 @@ function Dashboard({ user, onLogout }) {
 							</button>
 							<button
 								type="button"
-								className="dashboard-action-btn"
+								className="dashboard-action-btn dashboard-action-btn--status"
 								title="Status"
 								onClick={() => {
 									setActivePanel('status')
@@ -5454,14 +5500,24 @@ function Dashboard({ user, onLogout }) {
 												}}
 											>
 												<div className="dashboard-recent-list-top">
-													<div className="dashboard-recent-list-title">{app.application_no}</div>
+													<div className="dashboard-recent-list-title-wrap">
+														<div className="dashboard-recent-list-title">{app.application_no}</div>
+														<div className="dashboard-recent-list-hint">View in Status</div>
+													</div>
 													<span className={`dashboard-status-pill ${isSuccess ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
 														{statusText}
 													</span>
 												</div>
 												<div className="dashboard-recent-list-sub">
-													<div>{app.application_type || '-'}</div>
-													<div className="muted">Date: {createdDate}</div>
+													<span className="dashboard-recent-list-chip dashboard-recent-list-chip--type">
+														{app.application_type || '-'}
+													</span>
+													<span className="dashboard-recent-list-chip dashboard-recent-list-chip--date">
+														{createdDate}
+													</span>
+													<span className="dashboard-recent-list-open" aria-hidden>
+														Open
+													</span>
 												</div>
 											</div>
 										)
@@ -5512,20 +5568,6 @@ function Dashboard({ user, onLogout }) {
 			]
 			return (
 				<div className="dashboard-home staff-dashboard-home">
-					<div className="auth-card dashboard-card dashboard-welcome-card">
-						<h1 className="dashboard-title-with-icon">Staff dashboard</h1>
-						<p className="muted">You are signed in as:</p>
-						<div className="user-pill">
-							<strong>{user?.name}</strong>
-							<span className="staff-email-row">
-								<span className="muted">Staff email:</span> {user?.email}
-							</span>
-							{user?.role && <span className="user-pill-role">{user.role.replace(/_/g, ' ')}</span>}
-						</div>
-						<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
-							Log out
-						</button>
-					</div>
 					{staffStatsLoading ? (
 						<div className="dashboard-stats-loading">Loading dashboard…</div>
 					) : (
@@ -5698,21 +5740,6 @@ function Dashboard({ user, onLogout }) {
 		}
 		return (
 			<div className="dashboard-home admin-dashboard-home">
-				<div className="auth-card dashboard-card dashboard-welcome-card">
-					<h1 className="dashboard-title-with-icon">
-						<AdminIcon name="chart" className="dashboard-heading-icon" />
-						Admin dashboard
-					</h1>
-					<p className="muted">You are signed in as:</p>
-					<div className="user-pill">
-						<strong>{user?.name}</strong>
-						<span>{user?.email}</span>
-						{user?.role && <span className="user-pill-role">{user.role.replace(/_/g, ' ')}</span>}
-					</div>
-					<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
-						Log out
-					</button>
-				</div>
 				{adminStatsLoading ? (
 					<div className="dashboard-stats-loading">Loading dashboard…</div>
 				) : (
@@ -5951,6 +5978,13 @@ function Dashboard({ user, onLogout }) {
 					<polyline points="13 17 18 12 13 7" /><polyline points="6 17 11 12 6 7" />
 				</svg>
 			),
+			logout: (
+				<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+					<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+					<polyline points="16 17 21 12 16 7" />
+					<line x1="21" y1="12" x2="9" y2="12" />
+				</svg>
+			),
 		}
 		return icons[name] || null
 	}
@@ -5959,7 +5993,27 @@ function Dashboard({ user, onLogout }) {
 		<section className={`dashboard-layout ${sidebarCollapsed ? 'collapsed' : ''}`}>
 			<aside className={`dashboard-menu ${sidebarCollapsed ? 'collapsed' : ''}`}>
 				<div className="dashboard-menu-header">
-					{!sidebarCollapsed && <h2>Menu</h2>}
+					{sidebarCollapsed ? (
+						<img
+							src={sidebarPhotoUrl || sidebarDummyAvatarUrl}
+							alt={`${user?.name || 'User'} profile`}
+							className="dashboard-menu-user-photo dashboard-menu-user-photo--collapsed"
+						/>
+					) : (
+						<div className="dashboard-menu-user">
+							<img
+								src={sidebarPhotoUrl || sidebarDummyAvatarUrl}
+								alt={`${user?.name || 'User'} profile`}
+								className="dashboard-menu-user-photo"
+							/>
+							<div className="dashboard-menu-user-text">
+								<div className="dashboard-menu-user-name">{user?.name || 'User'}</div>
+								<div className="dashboard-menu-user-role">
+									{user?.role ? user.role.replace(/_/g, ' ') : ''}
+								</div>
+							</div>
+						</div>
+					)}
 					<button
 						type="button"
 						className="sidebar-toggle-btn"
@@ -6511,6 +6565,17 @@ function Dashboard({ user, onLogout }) {
 						</>
 					) : null}
 				</nav>
+				<div className="dashboard-menu-footer">
+					<button
+						type="button"
+						className="dashboard-link dashboard-link-logout"
+						onClick={onLogout}
+						title="Logout"
+					>
+						<SidebarIcon name="logout" className="dashboard-link-icon" />
+						{!sidebarCollapsed && <span className="dashboard-link-text">Logout</span>}
+					</button>
+				</div>
 			</aside>
 			{renderPanel()}
 		</section>
