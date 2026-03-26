@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from '../../components/dashboard/Sidebar'
 
-function DashboardLayout({ user, onLogout }) {
+function DashboardLayout({ user, onLogout, onUserUpdate }) {
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
 	const toggleSidebar = () => {
@@ -18,7 +18,7 @@ function DashboardLayout({ user, onLogout }) {
 				onLogout={onLogout}
 			/>
 			<main className="dashboard-content">
-				<Outlet context={{ user, onLogout }} />
+				<Outlet context={{ user, onLogout, onUserUpdate }} />
 			</main>
 		</section>
 	)

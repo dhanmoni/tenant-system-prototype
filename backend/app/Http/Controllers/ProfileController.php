@@ -35,7 +35,7 @@ class ProfileController extends Controller
         }
 
         $data = $request->validate([
-            'profile_type' => ['required', 'string', 'in:landlord,tenant'],
+            'profile_type' => ['nullable', 'string', 'in:landlord,tenant'],
             'address' => ['required', 'string', 'max:500'],
             'pin_code' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
             'pan_card' => ['required', 'string', 'size:10', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/i'],
@@ -48,7 +48,6 @@ class ProfileController extends Controller
                 'max:2048',
             ],
         ], [
-            'profile_type.required' => 'Please select whether you are a Landlord or Tenant.',
             'profile_type.in' => 'Profile type must be Landlord or Tenant.',
             'address.required' => 'Address is required.',
             'address.max' => 'Address must not exceed 500 characters.',
@@ -64,7 +63,9 @@ class ProfileController extends Controller
             'passport_photo.max' => 'Passport photo must not exceed 2 MB.',
         ]);
 
-        $user->profile_type = $data['profile_type'];
+        if (array_key_exists('profile_type', $data) && !is_null($data['profile_type'])) {
+            $user->profile_type = $data['profile_type'];
+        }
         $user->address = $data['address'];
         $user->pin_code = $data['pin_code'];
         $user->pan_card = strtoupper($data['pan_card']);

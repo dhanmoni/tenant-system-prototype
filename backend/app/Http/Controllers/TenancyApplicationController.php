@@ -41,7 +41,7 @@ class TenancyApplicationController extends Controller
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
             'apply_type' => ['required', 'string', 'max:32'],
-            'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT'],
+            'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT,PROPERTY_MANAGER'],
             'landlord_name' => ['required', 'string', 'max:255'],
             'landlord_address' => ['nullable', 'string'],
             'landlord_email' => [$request->input('initiator_role') === 'LANDLORD' ? 'required' : 'nullable', 'email'],
@@ -49,7 +49,7 @@ class TenancyApplicationController extends Controller
             'landlord_pan' => ['nullable', 'string', 'max:30'],
             'manager_name' => ['nullable', 'string', 'max:255'],
             'manager_address' => ['nullable', 'string'],
-            'manager_email' => ['nullable', 'string', 'max:255'],
+            'manager_email' => [$request->input('initiator_role') === 'PROPERTY_MANAGER' ? 'required' : 'nullable', 'email'],
             'manager_phone' => ['nullable', 'string', 'max:30'],
             'manager_pan' => ['nullable', 'string', 'max:30'],
             'tenant_name' => ['required', 'string', 'max:255'],
@@ -199,7 +199,7 @@ class TenancyApplicationController extends Controller
         }
 
         // Determine the role needed for second party
-        $secondPartyRole = $application->initiator_role === 'LANDLORD' ? 'TENANT' : 'LANDLORD';
+        $secondPartyRole = $this->getSecondPartyRole($application->initiator_role);
 
         // Check if already completed
         if ($application->second_party_completed) {
@@ -211,7 +211,7 @@ class TenancyApplicationController extends Controller
 
         // Check if user is trying to join as same role
         $userRole = strtoupper($user->profile_type ?? '');
-        if ($userRole === $application->initiator_role) {
+        if ($application->initiator_role !== 'PROPERTY_MANAGER' && $userRole === $application->initiator_role) {
             return response()->json([
                 'message' => 'You cannot join as the same role as the initiator. A ' . $secondPartyRole . ' is needed.',
             ], 403);
@@ -283,10 +283,16 @@ class TenancyApplicationController extends Controller
             return response()->json(['message' => 'This application has already been completed by both parties.'], 400);
         }
 
-        $secondPartyRole = $application->initiator_role === 'LANDLORD' ? 'TENANT' : 'LANDLORD';
+        $secondPartyRole = $this->getSecondPartyRole($application->initiator_role);
         $userRole = strtoupper($user->profile_type ?? '');
 
-        if ($userRole === $application->initiator_role) {
+        if ($userRole !== $secondPartyRole) {
+            return response()->json([
+                'message' => 'This join link requires a ' . $secondPartyRole . ' profile.',
+            ], 403);
+        }
+
+        if ($application->initiator_role !== 'PROPERTY_MANAGER' && $userRole === $application->initiator_role) {
             return response()->json([
                 'message' => 'You cannot join as the same role as the initiator.',
             ], 403);
@@ -728,5 +734,16 @@ class TenancyApplicationController extends Controller
         }
 
         return false;
+    }
+
+    private function getSecondPartyRole(?string $initiatorRole): string
+    {
+        $normalized = strtoupper((string) $initiatorRole);
+        if ($normalized === 'LANDLORD') {
+            return 'TENANT';
+        }
+
+        // For tenant and property manager initiated applications, landlord confirms.
+        return 'LANDLORD';
     }
 }

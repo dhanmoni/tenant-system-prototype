@@ -63,6 +63,126 @@
 	padding-left: 10px;
 }
 
+.accessibility-bar-help {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.accessibility-control-btn {
+	border: 1px solid #9ca3af;
+	background: #f8fafc;
+	color: #1f2937;
+	border-radius: 4px;
+	padding: 2px 8px;
+	font-size: 12px;
+	line-height: 1.4;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.accessibility-skip-btn {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid #9ca3af;
+	background: #f8fafc;
+	color: #1f2937;
+	border-radius: 4px;
+	padding: 2px 8px;
+	font-size: 12px;
+	line-height: 1.4;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.accessibility-skip-btn:hover {
+	background: #e2e8f0;
+	text-decoration: none;
+}
+
+.accessibility-skip-btn:focus-visible {
+	outline: 2px solid #0d47a1;
+	outline-offset: 2px;
+}
+
+.accessibility-control-btn:hover {
+	background: #e2e8f0;
+}
+
+.accessibility-control-btn.active {
+	background: #111827;
+	color: #fff;
+	border-color: #111827;
+}
+
+.skip-link {
+	position: absolute;
+	left: 12px;
+	top: -44px;
+	background: #111827;
+	color: #fff;
+	padding: 8px 10px;
+	border-radius: 6px;
+	text-decoration: none;
+	font-weight: 700;
+	font-size: 13px;
+	z-index: 9999;
+}
+
+.skip-link:focus {
+	top: 10px;
+}
+
+body.a11y-contrast-high {
+	background: #000 !important;
+	color: #fff;
+	--nic-bg: #000;
+	--nic-text: #fff;
+	--nic-text-light: #f3f4f6;
+	--nic-link: #ffeb3b;
+	--nic-border: #f3f4f6;
+	--gov-bg: #000;
+	--gov-border: #f3f4f6;
+	--gov-blue: #ffeb3b;
+	--gov-blue-dark: #facc15;
+	--gov-blue-light: #111827;
+	--gov-heading: #ffeb3b;
+	--form-field-bg: #111827;
+	--form-field-border: #f3f4f6;
+}
+
+body.a11y-contrast-high .accessibility-bar,
+body.a11y-contrast-high .topbar,
+body.a11y-contrast-high .globalnav,
+body.a11y-contrast-high .auth-card,
+body.a11y-contrast-high .dashboard-card {
+	background-color: #000 !important;
+	color: #fff !important;
+	border-color: #f3f4f6 !important;
+}
+
+body.a11y-contrast-high .globalnav .topbar a,
+body.a11y-contrast-high .globalnav .nav-link,
+body.a11y-contrast-high .globalnav-inner nav a,
+body.a11y-contrast-high .globalnav-inner nav button {
+	color: #fff !important;
+	border-color: #f3f4f6 !important;
+}
+
+body.a11y-contrast-high input,
+body.a11y-contrast-high textarea,
+body.a11y-contrast-high select {
+	background: #111827 !important;
+	color: #fff !important;
+	border-color: #f3f4f6 !important;
+}
+
+body.a11y-contrast-high *:focus-visible {
+	outline: 3px solid #facc15 !important;
+	outline-offset: 2px;
+}
+
 /* ── Header (Topbar) ── */
 .topbar {
 	display: flex;
@@ -755,6 +875,31 @@
 	background: #fff;
 }
 
+.landing-notices {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.landing-notices::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background-image: url('./assets/img/bg.jpg');
+	background-size: cover;
+	background-position: center;
+	filter: blur(8px);
+	opacity: 0.25;
+	transform: scale(1.06);
+	z-index: 0;
+	pointer-events: none;
+}
+
+.landing-notices .landing-container {
+	position: relative;
+	z-index: 1;
+}
+
 .landing-section h2 {
 	margin: 0 0 12px;
 	font-size: 1.35rem;
@@ -777,6 +922,26 @@
 
 .landing-text-link:hover {
 	text-decoration: underline;
+}
+
+/* Combined About + Citizen services block */
+.landing-section.landing-about.landing-services .landing-text-link {
+	display: inline-block;
+	margin-bottom: 18px;
+}
+
+.landing-section.landing-about.landing-services #landing-services-heading {
+	margin-top: 6px;
+	padding-top: 18px;
+	border-top: 1px dashed #d4dde5;
+}
+
+.landing-section.landing-about.landing-services .landing-section-intro {
+	margin-bottom: 14px;
+}
+
+.landing-section.landing-about.landing-services .landing-service-grid {
+	margin-top: 0;
 }
 
 .landing-service-grid {
@@ -880,6 +1045,29 @@
 	min-width: 3.5rem;
 }
 
+.landing-sitemap-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+	margin-top: 8px;
+}
+
+.landing-sitemap-grid a {
+	display: block;
+	padding: 12px 14px;
+	border-radius: 6px;
+	border: 1px solid #d4dde5;
+	background: #f8fbff;
+	color: #0d3b66;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.landing-sitemap-grid a:hover {
+	background: #e8f1fb;
+	border-color: #0d47a1;
+}
+
 .landing-external-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -908,55 +1096,133 @@
 .landing-helpdesk {
 	background: linear-gradient(90deg, #0d3b66 0%, #1565c0 100%);
 	color: #fff;
-	padding: 28px 0;
+	padding: 22px 0 18px;
 	margin-top: 0;
 }
 
 .landing-helpdesk-inner {
+	display: grid;
+	justify-items: center;
+	gap: 14px;
+	text-align: center;
+}
+
+.landing-helpdesk-content {
+	display: grid;
+	gap: 6px;
+	justify-items: center;
+}
+
+.landing-helpdesk-toplinks {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 24px;
 	flex-wrap: wrap;
+	justify-content: center;
+	gap: 14px;
+	margin-bottom: 4px;
+}
+
+.landing-helpdesk-toplinks a {
+	color: rgba(255, 255, 255, 0.9);
+	font-size: 0.76rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	text-decoration: none;
+}
+
+.landing-helpdesk-toplinks a:hover {
+	color: #fff;
+	text-decoration: underline;
 }
 
 .landing-helpdesk p {
-	margin: 6px 0 0;
+	margin: 2px 0 0;
 	opacity: 0.92;
-	font-size: 0.95rem;
-	max-width: 560px;
+	font-size: 0.9rem;
+	max-width: 760px;
+}
+
+.landing-helpdesk-meta {
+	font-size: 0.8rem;
+	opacity: 0.85;
+}
+
+.landing-helpdesk-updated {
+	font-size: 0.82rem;
+	font-weight: 700;
+	opacity: 0.95;
+}
+
+.landing-helpdesk-branding {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	flex-wrap: wrap;
+	padding-top: 4px;
 }
 
 .landing-helpdesk-nic-logo {
-	height: 44px;
+	height: 34px;
 	width: auto;
 	object-fit: contain;
 }
 
 .landing-helpdesk-digital-india-logo {
-	height: 44px;
+	height: 34px;
 	width: auto;
 	object-fit: contain;
 }
 
-.landing-helpdesk-btn {
+.landing-back-to-top {
+	position: fixed;
+	right: 22px;
+	bottom: 22px;
+	width: 50px;
+	height: 50px;
+	border-radius: 999px;
+	border: 1px solid #94a3b8;
+	background: #1f2937;
+	color: #f8fafc;
+	font-size: 1.5rem;
+	line-height: 1;
 	display: inline-flex;
 	align-items: center;
-	padding: 12px 22px;
-	background: #fff;
-	color: #0d3b66;
-	font-weight: 800;
-	border-radius: 6px;
-	text-decoration: none;
-	border: 2px solid rgba(255, 255, 255, 0.5);
-	transition: background 0.2s ease, color 0.2s ease;
+	justify-content: center;
+	cursor: pointer;
+	box-shadow: none;
+	z-index: 1200;
+	transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.landing-helpdesk-btn:hover {
-	background: #ffc107;
-	color: #1a1a1a;
-	border-color: #ffc107;
-	text-decoration: none;
+.landing-back-to-top:hover {
+	background: #111827;
+	border-color: #cbd5e1;
+}
+
+@media (max-width: 720px) {
+	.landing-helpdesk-inner {
+		justify-items: start;
+		text-align: left;
+	}
+	.landing-helpdesk-toplinks {
+		gap: 10px;
+		justify-content: flex-start;
+	}
+	.landing-helpdesk-content {
+		justify-items: start;
+	}
+	.landing-helpdesk-branding {
+		justify-content: flex-start;
+	}
+
+	.landing-back-to-top {
+		right: 14px;
+		bottom: 14px;
+		width: 46px;
+		height: 46px;
+		font-size: 1.35rem;
+	}
 }
 
 .page-landing .footer {
@@ -1965,6 +2231,101 @@ main.main-fluid {
 	padding: 0 4px;
 }
 
+/* ── Sitemap Page ── */
+.sitemap-page {
+	width: 100%;
+	background: linear-gradient(180deg, #f0f4f8 0%, #fff 140px);
+}
+
+.sitemap-page-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 28px 24px 48px;
+	display: grid;
+	gap: 14px;
+}
+
+.sitemap-breadcrumb {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	font-size: 0.88rem;
+	color: var(--nic-text-light);
+}
+
+.sitemap-breadcrumb a {
+	color: #0d47a1;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.sitemap-breadcrumb a:hover {
+	text-decoration: underline;
+}
+
+.sitemap-breadcrumb-current {
+	color: var(--nic-text);
+	font-weight: 600;
+}
+
+.sitemap-header h1 {
+	margin: 0 0 6px;
+	font-size: clamp(1.65rem, 3.5vw, 2.1rem);
+	color: #0d3b66;
+}
+
+.sitemap-eyebrow {
+	margin: 0 0 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.14em;
+	font-size: 0.72rem;
+	font-weight: 800;
+	color: #b71c1c;
+}
+
+.sitemap-lead {
+	margin: 0;
+	color: var(--nic-text-light);
+}
+
+.sitemap-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.sitemap-group {
+	background: #fff;
+	border: 1px solid #cfd8dc;
+	border-radius: 8px;
+	padding: 16px 18px;
+}
+
+.sitemap-group h3 {
+	margin: 0 0 10px;
+	font-size: 1rem;
+	color: #0d3b66;
+}
+
+.sitemap-group ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	gap: 8px;
+}
+
+.sitemap-group a {
+	color: #0d47a1;
+	text-decoration: none;
+	font-weight: 700;
+}
+
+.sitemap-group a:hover {
+	text-decoration: underline;
+}
+
 /* ── Register Layout ── */
 .register-layout {
 	width: 100%;
@@ -2438,9 +2799,8 @@ main.main-fluid {
 
 .dashboard-recent-view-toggle {
 	display: flex;
-	gap: 10px;
-	margin-top: 10px;
-	margin-bottom: 8px;
+	gap: 8px;
+	margin-left: auto;
 }
 
 .dashboard-recent-view-btn {
@@ -2454,6 +2814,13 @@ main.main-fluid {
 	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
+.dashboard-section-head {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	justify-content: space-between;
+}
+
 .dashboard-recent-view-btn.active {
 	background: var(--gov-blue);
 	border-color: var(--gov-blue-dark);
@@ -2463,6 +2830,20 @@ main.main-fluid {
 .dashboard-recent-view-btn:hover {
 	background: var(--gov-blue-light);
 	border-color: var(--gov-blue-dark);
+}
+
+.dashboard-recent-view-btn--icon {
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.dashboard-recent-view-icon {
+	width: 16px;
+	height: 16px;
 }
 
 .dashboard-recent-list {
@@ -4286,6 +4667,10 @@ button.secondary:hover {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
+	.landing-sitemap-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
 	.landing-external-grid {
 		grid-template-columns: 1fr;
 	}
@@ -4319,6 +4704,10 @@ button.secondary:hover {
 	}
 
 	.contact-layout {
+		grid-template-columns: 1fr;
+	}
+
+	.sitemap-grid {
 		grid-template-columns: 1fr;
 	}
 

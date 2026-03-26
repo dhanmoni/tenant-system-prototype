@@ -115,7 +115,7 @@ function TenancyCertificate() {
 		} else if (initiatorRole === 'TENANT') {
 			setTenantName(profileName); setTenantAddress(profileAddress); setTenantEmail(profileEmail); setTenantPhone(profilePhone); setTenantPan(profilePan);
 			if (profilePhotoPreview) setTenantPhotoPreview(profilePhotoPreview);
-		} else if (initiatorRole === 'Property Manager') {
+		} else if (initiatorRole === 'PROPERTY_MANAGER') {
 			setManagerName(profileName); setManagerAddress(profileAddress); setManagerEmail(profileEmail); setManagerPhone(profilePhone); setManagerPan(profilePan);
 		}
 	}, [initiatorRole, profileName, profileAddress, profileEmail, profilePhone, profilePan, profilePhotoPreview])
@@ -310,9 +310,9 @@ function TenancyCertificate() {
 								<span className="label-text required">Initiating as</span>
 								<select value={initiatorRole} onChange={e => setInitiatorRole(e.target.value)} required disabled={formLocked}>
 									<option value="">Select Role</option>
-									<option value="Landlord">Landlord</option>
-									<option value="Tenant">Tenant</option>
-									<option value="Property Manager">Property Manager</option>
+									<option value="LANDLORD">Landlord</option>
+									<option value="TENANT">Tenant</option>
+									<option value="PROPERTY_MANAGER">Property Manager</option>
 								</select>
 							</label>
 
@@ -395,7 +395,7 @@ function TenancyCertificate() {
 						<section className="tenancy-section">
 							<div className="section-header">
 								<h2>3. Property Manager Details (Optional)</h2>
-								{initiatorRole === 'Property Manager' && <span className="initiator-badge">Initiator</span>}
+								{initiatorRole === 'PROPERTY_MANAGER' && <span className="initiator-badge">Initiator</span>}
 							</div>
 							<div className="form-grid">
 								<label><span className="label-text">Manager Name</span><input type="text" value={managerName} onChange={e => setManagerName(e.target.value)} disabled={formLocked} /></label>

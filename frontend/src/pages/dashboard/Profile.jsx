@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom'
 import api, { csrf } from '../../api'
 
 function Profile() {
-	const { user } = useOutletContext()
+	const { user, onUserUpdate } = useOutletContext()
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [profileLoading, setProfileLoading] = useState(false)
@@ -55,7 +55,6 @@ function Profile() {
 			}
 
 			const hasFullProfile = 
-				profileUser.profile_type &&
 				profileUser.address &&
 				profileUser.pin_code &&
 				profileUser.pan_card &&
@@ -78,7 +77,6 @@ function Profile() {
 			await csrf()
 			const formData = new FormData()
 			formData.append('_method', 'PUT')
-			formData.append('profile_type', (profileType || '').trim())
 			formData.append('address', (profileAddress || '').trim())
 			formData.append('pin_code', (profilePin || '').trim().slice(0, 6))
 			formData.append('pan_card', (profilePan || '').trim().toUpperCase().slice(0, 10))
@@ -103,6 +101,10 @@ function Profile() {
 				const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 				setProfilePhotoPreview(`${baseUrl}/storage/${photoPath}`)
 			}
+
+			if (typeof onUserUpdate === 'function') {
+				onUserUpdate((prev) => ({ ...(prev || {}), ...profileUser }))
+			}
 			
 			setProfilePhoto(null)
 			setSuccess('Profile saved successfully.')
@@ -111,7 +113,7 @@ function Profile() {
 			const data = err?.response?.data
 			const errors = data?.errors || {}
 			const firstError =
-				errors.profile_type?.[0] || errors.address?.[0] || errors.pin_code?.[0] ||
+				errors.address?.[0] || errors.pin_code?.[0] ||
 				errors.pan_card?.[0] || errors.passport_photo?.[0]
 			setError(firstError || data?.message || 'Failed to save profile')
 		} finally {
@@ -120,7 +122,6 @@ function Profile() {
 	}
 
 	const hasProfile =
-		!!profileType &&
 		!!profileAddress &&
 		!!profilePin &&
 		!!profilePan &&

@@ -24,6 +24,7 @@ import UserDetail from './pages/UserDetail'
 import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
 import Contact from './pages/Contact'
+import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
 import emblem from './assets/img/emblem-dark.png'
@@ -33,6 +34,8 @@ import digitalIndiaLogo from './assets/img/digital-india.png'
 function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
+	const [fontScale, setFontScale] = useState('normal')
+	const [highContrast, setHighContrast] = useState(false)
 	const slides = [
 		{
 			title: 'Digital Tenancy Registration',
@@ -84,6 +87,65 @@ function App() {
 	const location = useLocation()
 	const showCarousel = !user
 
+	useEffect(() => {
+		try {
+			const savedScale = localStorage.getItem('a11y-font-scale')
+			const savedContrast = localStorage.getItem('a11y-high-contrast')
+			if (savedScale === 'normal' || savedScale === 'large' || savedScale === 'xlarge') {
+				setFontScale(savedScale)
+			}
+			if (savedContrast === '1') {
+				setHighContrast(true)
+			}
+		} catch {
+			// Ignore localStorage access errors.
+		}
+	}, [])
+
+	useEffect(() => {
+		try {
+			localStorage.setItem('a11y-font-scale', fontScale)
+			localStorage.setItem('a11y-high-contrast', highContrast ? '1' : '0')
+		} catch {
+			// Ignore localStorage access errors.
+		}
+	}, [fontScale, highContrast])
+
+	useEffect(() => {
+		const root = document.documentElement
+		if (!root) return
+		const nextSize = fontScale === 'xlarge' ? '20px' : fontScale === 'large' ? '18px' : '16px'
+		root.style.fontSize = nextSize
+		return () => {
+			root.style.fontSize = ''
+		}
+	}, [fontScale])
+
+	useEffect(() => {
+		const body = document.body
+		if (!body) return
+		body.classList.toggle('a11y-contrast-high', highContrast)
+		return () => {
+			body.classList.remove('a11y-contrast-high')
+		}
+	}, [highContrast])
+
+	const increaseFontScale = () => {
+		setFontScale((prev) => {
+			if (prev === 'normal') return 'large'
+			if (prev === 'large') return 'xlarge'
+			return 'xlarge'
+		})
+	}
+
+	const decreaseFontScale = () => {
+		setFontScale((prev) => {
+			if (prev === 'xlarge') return 'large'
+			if (prev === 'large') return 'normal'
+			return 'normal'
+		})
+	}
+
 	const handleLogout = async () => {
 		await api.post('/api/logout')
 		setUser(null)
@@ -102,7 +164,11 @@ function App() {
 	}
 
 	return (
-		<div className={`page${!user ? ' page-landing' : location.pathname.startsWith('/dashboard') ? ' page-dashboard' : ''}`}>
+		<div
+			className={`page${!user ? ' page-landing' : location.pathname.startsWith('/dashboard') ? ' page-dashboard' : ''}`}
+		>
+			<a className="skip-link" href="#main-content">Skip to main content</a>
+			<a className="skip-link" href="#primary-nav">Skip to navigation</a>
 			{/* Accessibility Bar */}
 			<div className="accessibility-bar">
 				<div className="accessibility-bar-inner">
@@ -112,7 +178,47 @@ function App() {
 							Department of Housing And Urban Affairs
 						</span>
 					</div>
-					<div className="accessibility-bar-help" aria-label="Helpdesk contact (demo)">
+					<div className="accessibility-bar-help" aria-label="Accessibility and help controls">
+						<a className="accessibility-skip-btn" href="#main-content">
+							Skip to main content
+						</a>
+						<button
+							type="button"
+							className="accessibility-control-btn"
+							onClick={decreaseFontScale}
+							title="Decrease text size"
+							aria-label="Decrease text size"
+						>
+							A-
+						</button>
+						<button
+							type="button"
+							className="accessibility-control-btn"
+							onClick={() => setFontScale('normal')}
+							title="Reset text size"
+							aria-label="Reset text size"
+						>
+							A
+						</button>
+						<button
+							type="button"
+							className="accessibility-control-btn"
+							onClick={increaseFontScale}
+							title="Increase text size"
+							aria-label="Increase text size"
+						>
+							A+
+						</button>
+						<button
+							type="button"
+							className={`accessibility-control-btn ${highContrast ? 'active' : ''}`}
+							onClick={() => setHighContrast((prev) => !prev)}
+							title="Toggle high contrast"
+							aria-pressed={highContrast}
+							aria-label="Toggle high contrast mode"
+						>
+							High Contrast
+						</button>
 						<span>Helpdesk (demo): 1800-000-0000</span>
 						<span className="accessibility-bar-help-sep">|</span>
 						<span>helpdesk.tcms@nic.in</span>
@@ -149,7 +255,7 @@ function App() {
 						{!user ? (
 							<span className="globalnav-portal-title">Tenancy Certificate — Rent Portal</span>
 						) : null}
-						<nav className={user ? 'nav-auth' : undefined}>
+						<nav id="primary-nav" className={user ? 'nav-auth' : undefined}>
 							{!user ? (
 								<>
 									<Link to="/">Home</Link>
@@ -214,7 +320,7 @@ function App() {
 					</div>
 				</section>
 			) : null}
-			<main>
+			<main id="main-content">
 				<Routes>
 					<Route
 						path="/"
@@ -226,6 +332,7 @@ function App() {
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
 					<Route path="/contact" element={<Contact />} />
+					<Route path="/sitemap" element={<Sitemap />} />
 					<Route
 						path="/admin"
 						element={
@@ -238,7 +345,7 @@ function App() {
 						path="/dashboard"
 						element={
 							<ProtectedRoute user={user}>
-								<DashboardLayout user={user} onLogout={handleLogout} />
+								<DashboardLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
 							</ProtectedRoute>
 						}
 					>

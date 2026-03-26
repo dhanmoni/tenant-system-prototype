@@ -18,6 +18,7 @@ function Login({ onLogin }) {
 	const [loginError, setLoginError] = useState('')
 	const [loginLoading, setLoginLoading] = useState(false)
 	const [resendTimer, setResendTimer] = useState(0)
+	const [showBackToTop, setShowBackToTop] = useState(false)
 
 	// Timer effect
 	useEffect(() => {
@@ -84,6 +85,15 @@ function Login({ onLogin }) {
 			}, 100)
 		}
 	}, [location.hash])
+
+	useEffect(() => {
+		const handleScroll = () => {
+			setShowBackToTop(window.scrollY > 420)
+		}
+		handleScroll()
+		window.addEventListener('scroll', handleScroll, { passive: true })
+		return () => window.removeEventListener('scroll', handleScroll)
+	}, [])
 
 	const filteredDistricts = regForm.state_id
 		? districts.filter((d) => String(d.state_id ?? d.state?.id) === String(regForm.state_id))
@@ -235,11 +245,11 @@ function Login({ onLogin }) {
 			<div className="hero hero--rent-portal">
 				<div className="hero-content">
 					<p className="hero-eyebrow">Government of India · TCP</p>
-					<h1>Tenancy Certificate Management System</h1>
+					<h1>Tenancy Registration & Management System</h1>
 					<p className="hero-subtitle">
 						A unified portal for tenancy registration, certificate issuance,
 						and property management — for the Department of Housing And Urban
-						Affairs (prototype).
+						Affairs.
 					</p>
 					<div className="audience">
 						<div className="audience-card">
@@ -449,7 +459,7 @@ function Login({ onLogin }) {
 				</aside>
 			</div>
 
-			<section className="landing-section landing-about" aria-labelledby="landing-about-heading">
+			<section className="landing-section landing-about landing-services" aria-labelledby="landing-about-heading">
 				<div className="landing-container">
 					<h2 id="landing-about-heading">About the portal</h2>
 					<p className="landing-lead">
@@ -460,11 +470,6 @@ function Login({ onLogin }) {
 					<Link className="landing-text-link" to="/policies">
 						Read policies &amp; guidelines
 					</Link>
-				</div>
-			</section>
-
-			<section className="landing-section landing-services" aria-labelledby="landing-services-heading">
-				<div className="landing-container">
 					<h2 id="landing-services-heading">Citizen services</h2>
 					<p className="landing-section-intro">
 						Quick access to common actions (demo — links scroll to login or registration).
@@ -531,39 +536,40 @@ function Login({ onLogin }) {
 				</div>
 			</section>
 
-			<section className="landing-section landing-external" aria-labelledby="landing-external-heading">
-				<div className="landing-container">
-					<h2 id="landing-external-heading">Important links</h2>
-					<div className="landing-external-grid">
-						<a className="landing-external-link" href="https://www.india.gov.in/" target="_blank" rel="noopener noreferrer">
-							National portal — india.gov.in
-						</a>
-						<a className="landing-external-link" href="https://www.digitalindia.gov.in/" target="_blank" rel="noopener noreferrer">
-							Digital India
-						</a>
-						<a className="landing-external-link" href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">
-							TCP Assam (reference)
-						</a>
-						<a className="landing-external-link" href="https://www.tenancy.tn.gov.in/" target="_blank" rel="noopener noreferrer">
-							Tamil Nadu tenancy portal (reference)
-						</a>
-					</div>
-				</div>
-			</section>
-
 			<div className="landing-helpdesk" role="region" aria-label="Helpdesk">
 				<div className="landing-container landing-helpdesk-inner">
-					<div>
+					<div className="landing-helpdesk-content">
+						<div className="landing-helpdesk-toplinks">
+							<a href="https://www.india.gov.in/" target="_blank" rel="noopener noreferrer">WEBSITE POLICIES</a>
+							<Link to="/contact">HELP</Link>
+							<Link to="/contact">CONTACT US</Link>
+							<a href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">TCP ASSAM</a>
+							<a href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">FEEDBACK</a>
+							<Link to="/sitemap">SITEMAP</Link>
+						</div>
 						<strong>Helpdesk (demo)</strong>
-						<p>For assistance with this prototype, use the contact details in the top bar or visit Contact Us.</p>
+						<p>For assistance with this prototype, use the contact details in the top bar or visit Contact Us section.</p>
+						<p className="landing-helpdesk-meta">
+							Content owned by Directorate of Town and Country Planning, Assam.
+						</p>
+						<p className="landing-helpdesk-updated">Last updated: Mar 20, 2026</p>
 					</div>
-					<img className="landing-helpdesk-nic-logo" src={nicLogo} alt="NIC" />
-					<img className="landing-helpdesk-digital-india-logo" src={digitalIndiaLogo} alt="Digital India" />
-					<Link className="landing-helpdesk-btn" to="/contact">
-						Contact us
-					</Link>
+					<div className="landing-helpdesk-branding">
+						<img className="landing-helpdesk-nic-logo" src={nicLogo} alt="NIC" />
+						<img className="landing-helpdesk-digital-india-logo" src={digitalIndiaLogo} alt="Digital India" />
+					</div>
 				</div>
 			</div>
+			{showBackToTop ? (
+				<button
+					type="button"
+					className="landing-back-to-top"
+					aria-label="Back to top"
+					onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+				>
+					↑
+				</button>
+			) : null}
 		</section>
 	)
 }

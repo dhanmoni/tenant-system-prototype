@@ -102,13 +102,56 @@ class TenancyApplicationSeeder extends Seeder
             ]
         );
 
+        // Application 3: Partial (initiated by property manager, awaiting landlord)
+        $refCode3 = TenancyApplication::generateRefCode('9555555511', '9666666611', now()->subDays(3)->format('Y-m-d'), $villageWard->id);
+        TenancyApplication::firstOrCreate(
+            ['application_no' => 'APP-' . now()->format('Ym') . '-000003'],
+            [
+                'ref_code' => $refCode3,
+                'user_id' => $tenantUser->id,
+                'initiator_role' => 'PROPERTY_MANAGER',
+                'initiator_completed' => true,
+                'second_party_completed' => false,
+                'landlord_user_id' => null,
+                'tenant_user_id' => null,
+                'registration_date' => now()->subDays(3),
+                'office_id' => $office->id,
+                'village_ward_id' => $villageWard->id,
+                'apply_type' => 'Joint',
+                'status' => 'PARTIAL',
+                'current_with' => null,
+                'application_type' => 'Tenancy Certificate',
+                'landlord_name' => $landlordUser ? $landlordUser->name : 'Property Owner',
+                'landlord_address' => '11 River View, Sample City',
+                'landlord_email' => $landlordUser ? $landlordUser->email : 'landlord3@nic.in',
+                'landlord_phone' => '9555555511',
+                'landlord_pan' => 'LMNOP1234Q',
+                'manager_name' => $tenantUser->name,
+                'manager_address' => '22 Manager Road, Sample City',
+                'manager_email' => $tenantUser->email,
+                'manager_phone' => $tenantUser->phone ?? '9666666611',
+                'manager_pan' => 'MNGRP1234M',
+                'tenant_name' => 'Managed Tenant',
+                'tenant_address' => '33 Tenant Avenue, Sample City',
+                'tenant_email' => 'managed.tenant@nic.in',
+                'tenant_phone' => '9666666611',
+                'tenant_pan' => 'TENPM1234T',
+                'property_possession_date' => now()->subDays(35),
+                'property_rent_payable' => 22000.00,
+                'property_premises_description' => 'Manager-initiated tenancy case',
+                'property_furniture_description' => 'Semi furnished',
+                'property_tenancy_duration' => '11 months',
+                'movement_history' => [['status' => 'PARTIAL', 'current_with' => null, 'moved_at' => now()->toDateTimeString()]],
+            ]
+        );
+
         // Application 3: Staff-visible application
         if ($staffUser) {
-            $refCode3 = TenancyApplication::generateRefCode('9777777700', '9888888800', now()->subDays(2)->format('Y-m-d'), $villageWard->id);
+            $refCode4 = TenancyApplication::generateRefCode('9777777700', '9888888800', now()->subDays(2)->format('Y-m-d'), $villageWard->id);
             TenancyApplication::firstOrCreate(
                 ['application_no' => 'APP-' . now()->format('Ym') . '-STAFF0'],
                 [
-                    'ref_code' => $refCode3,
+                    'ref_code' => $refCode4,
                     'user_id' => $staffUser->id,
                     'initiator_role' => 'LANDLORD',
                     'initiator_completed' => true,

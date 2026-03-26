@@ -184,10 +184,36 @@ function DashboardHome() {
 					</div>
 				</div>
 				<div className="auth-card dashboard-card">
-					<h2 className="dashboard-section-title">
-						<Icon name="list" className="dashboard-section-icon" />
-						Recent applications
-					</h2>
+					<div className="dashboard-section-head">
+						<h2 className="dashboard-section-title">
+							<Icon name="list" className="dashboard-section-icon" />
+							Recent applications
+						</h2>
+						{recentItems.length > 0 && (
+							<div className="dashboard-recent-view-toggle" role="group" aria-label="Recent applications view">
+								<button
+									type="button"
+									className={`dashboard-recent-view-btn dashboard-recent-view-btn--icon ${tenantRecentViewMode === 'card' ? 'active' : ''}`}
+									onClick={() => setTenantRecentViewMode('card')}
+									title="Card view"
+									aria-label="Card view"
+								>
+									<Icon name="dashboard" className="dashboard-recent-view-icon" />
+									<span className="sr-only">Card view</span>
+								</button>
+								<button
+									type="button"
+									className={`dashboard-recent-view-btn dashboard-recent-view-btn--icon ${tenantRecentViewMode === 'list' ? 'active' : ''}`}
+									onClick={() => setTenantRecentViewMode('list')}
+									title="List view"
+									aria-label="List view"
+								>
+									<Icon name="list" className="dashboard-recent-view-icon" />
+									<span className="sr-only">List view</span>
+								</button>
+							</div>
+						)}
+					</div>
 					<p className="muted">
 						{tenantRecentLoading
 							? 'Loading your latest applications...'
@@ -195,24 +221,6 @@ function DashboardHome() {
 								? 'Click a tile to filter and view in Status.'
 								: 'No applications submitted yet.'}
 					</p>
-					{recentItems.length > 0 && (
-						<div className="dashboard-recent-view-toggle">
-							<button
-								type="button"
-								className={`dashboard-recent-view-btn ${tenantRecentViewMode === 'card' ? 'active' : ''}`}
-								onClick={() => setTenantRecentViewMode('card')}
-							>
-								Card View
-							</button>
-							<button
-								type="button"
-								className={`dashboard-recent-view-btn ${tenantRecentViewMode === 'list' ? 'active' : ''}`}
-								onClick={() => setTenantRecentViewMode('list')}
-							>
-								List View
-							</button>
-						</div>
-					)}
 
 					{tenantRecentViewMode === 'card' ? (
 						<div className="dashboard-recent-tiles">

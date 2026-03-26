@@ -123,6 +123,11 @@ function ApplicationStatus() {
 		return <Icon name="chevron" className={`sort-icon-svg active ${statusSortOrder === 'asc' ? 'rev' : ''}`} />
 	}
 
+	const getAwaitingPartyLabel = (initiatorRole) => {
+		if (initiatorRole === 'LANDLORD') return 'Tenant'
+		return 'Landlord'
+	}
+
 	const tenancyCertificateRows = statusApplications.filter((app) =>
 		String(app.application_type || '').toLowerCase().includes('tenancy certificate')
 	)
@@ -262,7 +267,7 @@ function ApplicationStatus() {
 														<span className="completion-badge completion-badge--done">Both Completed</span>
 													) : (
 														<span className="completion-badge completion-badge--partial">
-															Awaiting {app.initiator_role === 'LANDLORD' ? 'Tenant' : 'Landlord'}
+															Awaiting {getAwaitingPartyLabel(app.initiator_role)}
 														</span>
 													)
 												) : (
