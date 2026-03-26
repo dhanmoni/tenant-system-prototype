@@ -96,13 +96,11 @@ function App() {
 							Department of Housing And Urban Affairs
 						</span>
 					</div>
-					{!user ? (
-						<div className="accessibility-bar-help" aria-label="Helpdesk contact (demo)">
-							<span>Helpdesk (demo): 1800-000-0000</span>
-							<span className="accessibility-bar-help-sep">|</span>
-							<span>helpdesk.tcms@nic.in</span>
-						</div>
-					) : null}
+					<div className="accessibility-bar-help" aria-label="Helpdesk contact (demo)">
+						<span>Helpdesk (demo): 1800-000-0000</span>
+						<span className="accessibility-bar-help-sep">|</span>
+						<span>helpdesk.tcms@nic.in</span>
+					</div>
 				</div>
 			</div>
 
