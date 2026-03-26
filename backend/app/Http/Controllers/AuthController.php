@@ -17,7 +17,7 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
             'state_id' => ['required', 'integer', 'exists:states,id'],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
@@ -38,7 +38,7 @@ class AuthController extends Controller
             'district_id' => $data['district_id'],
             'phone' => $data['phone'],
             'approved_at' => now(),
-            'password' => Hash::make($data['password']),
+            'password' => Hash::make($data['password'] ?? Str::random(16)),
             'email_verified_at' => now(),
             'remember_token' => Str::random(60),
         ]);

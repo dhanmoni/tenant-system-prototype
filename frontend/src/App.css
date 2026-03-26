@@ -12,15 +12,13 @@
 	background-color: #fff;
 }
 
-/* Dashboard Full Height Layout */
-.page:has(.dashboard-layout) {
-	height: 100vh;
-	overflow: hidden;
+/* Dashboard Full Height Layout - REMOVED fixed height to allow page scroll */
+.page.page-dashboard {
+	min-height: 100vh;
 }
 
-.page:has(.dashboard-layout) main {
+.page.page-dashboard>main {
 	flex: 1;
-	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 }
@@ -601,6 +599,81 @@
 	color: var(--nic-text);
 }
 
+/* -- OTP Flow Refinements -- */
+.otp-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	margin-top: 8px;
+}
+
+.phone-display {
+	background: #f1f5f9;
+	padding: 12px 16px;
+	border-radius: 8px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border: 1px solid #e2e8f0;
+}
+
+.phone-val {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.phone-val span {
+	font-size: 0.75rem;
+}
+
+.btn-edit-phone {
+	background: transparent;
+	border: none;
+	color: var(--gov-blue);
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+	padding: 4px 8px;
+}
+
+.btn-edit-phone:hover {
+	text-decoration: underline;
+}
+
+.otp-label input {
+	font-size: 1.5rem !important;
+	text-align: center;
+	letter-spacing: 0.5rem;
+	font-weight: 700;
+	color: var(--gov-blue);
+}
+
+.otp-resend {
+	text-align: center;
+	font-size: 0.85rem;
+}
+
+.timer {
+	color: #64748b;
+}
+
+.link-resend {
+	background: transparent;
+	border: none;
+	color: var(--gov-blue);
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.link-resend:hover {
+	text-decoration: underline;
+}
+
+.btn-login-submit {
+	margin-top: 0.5rem;
+}
+
 .auth-card--rent-portal form input,
 .auth-card--rent-portal form select {
 	background: #fff;
@@ -670,6 +743,32 @@
 	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: 16px;
 	margin-top: 8px;
+}
+
+.upload-rows-container {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+}
+
+.upload-row h3 {
+	margin-bottom: 1.5rem;
+	font-size: 1.2rem;
+	color: var(--gov-blue);
+	font-weight: 600;
+}
+
+.upload-item-full {
+	background: #f8fafc;
+	padding: 1.5rem;
+	border-radius: 8px;
+	border: 1px dashed #cbd5e1;
+}
+
+.upload-item-full label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
 }
 
 .landing-service-tile {
@@ -822,10 +921,23 @@ main {
 	flex: 1;
 }
 
-main:has(.dashboard-layout),
-main:has(.home) {
-	max-width: 100%;
+.page.page-dashboard>main,
+.dashboard-content,
+main.main-fluid {
+	max-width: none !important;
 	padding: 0;
+	margin: 0;
+	display: block;
+}
+
+.dashboard-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+	padding-bottom: 40px;
+	width: 100%;
 }
 
 main.main-fluid {
@@ -2406,11 +2518,10 @@ main.main-fluid {
 	width: 100%;
 	display: grid;
 	grid-template-columns: 280px minmax(0, 1fr);
-	gap: 0;
 	align-items: start;
+	gap: 0;
 	padding: 0;
 	flex: 1;
-	height: 100%;
 	background: #f8fafc;
 	transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -2421,8 +2532,6 @@ main.main-fluid {
 
 .dashboard-layout>*:last-child {
 	padding: 20px 24px 32px;
-	height: 100%;
-	overflow-y: auto;
 }
 
 .dashboard-layout .dashboard-card button.secondary,
@@ -2443,7 +2552,7 @@ main.main-fluid {
 	top: 0;
 	width: 280px;
 	min-width: 280px;
-	height: 100%;
+	height: 100vh;
 	overflow-y: auto;
 	overflow-x: hidden;
 	background: #ffffff;
@@ -2739,6 +2848,103 @@ main.main-fluid {
 	margin-bottom: 20px;
 }
 
+.tenancy-certificate-page .tenancy-sub-section {
+	margin-top: 24px;
+	padding-top: 24px;
+	border-top: 1px solid #e2e8f0;
+}
+
+.tenancy-sub-section h3 {
+	font-size: 1rem;
+	color: var(--gov-blue);
+	margin-bottom: 16px;
+}
+
+.charges-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px;
+}
+
+@media (max-width: 600px) {
+	.charges-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.upload-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 24px;
+	margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+	.upload-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.upload-item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.tenancy-preview-img {
+	width: 100%;
+	max-width: 150px;
+	max-height: 150px;
+	object-fit: contain;
+	border: 1px solid #cbd5e1;
+	border-radius: 4px;
+	margin-top: 8px;
+}
+
+.tenancy-preview-container {
+	background: #fff;
+	padding: 24px;
+	border-radius: 8px;
+}
+
+.tenancy-preview-section {
+	margin-bottom: 32px;
+}
+
+.tenancy-preview-section h3 {
+	border-bottom: 2px solid var(--gov-blue);
+	padding-bottom: 8px;
+	margin-bottom: 16px;
+	font-size: 1.1rem;
+}
+
+.tenancy-preview-section h4 {
+	margin: 16px 0 8px;
+	color: #475569;
+	font-size: 0.95rem;
+}
+
+.charges-summary {
+	background: #f8fafc;
+	padding: 16px;
+	border-radius: 4px;
+}
+
+.preview-images-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-top: 16px;
+}
+
+.preview-images-row img {
+	height: 100px;
+	width: 100px;
+	object-fit: cover;
+	border: 1px solid #e2e8f0;
+	border-radius: 4px;
+}
+
 .tenancy-certificate-page .tenancy-page-header h1 {
 	margin-bottom: 6px;
 }
@@ -2902,7 +3108,13 @@ main.main-fluid {
 	background: var(--gov-blue);
 }
 
-/* Tenancy certificate page: primary actions use gov blue (not green) */
+.tenancy-certificate-page .form-actions {
+	display: flex;
+	gap: 12px;
+	margin-top: 32px;
+	justify-content: flex-end;
+}
+
 .tenancy-certificate-page .tenancy-form .form-actions button:not(.secondary) {
 	background: var(--gov-blue);
 	color: #fff;
@@ -3565,6 +3777,22 @@ fieldset {
 .tenancy-fieldset {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 12px 16px;
+	width: 100%;
+}
+
+.tenancy-fieldset .form-grid {
+	grid-column: span 2;
+}
+
+.tenancy-certificate-page .form-grid {
+	row-gap: 32px;
+	column-gap: 24px;
+}
+
+.tenancy-certificate-page .form-grid input,
+.tenancy-certificate-page .form-grid select,
+.tenancy-certificate-page .form-grid textarea {
+	width: 100%;
 }
 
 .tenancy-fieldset legend {
@@ -4186,6 +4414,8 @@ button.secondary:hover {
 .sort-icon-svg,
 .search-icon-svg {
 	display: block;
+	width: 14px;
+	height: 14px;
 	color: #fff;
 	transition: stroke 0.2s, color 0.2s;
 }
@@ -4234,4 +4464,115 @@ button.secondary:hover {
 
 .tenancy-duration-display strong {
 	font-size: 1rem;
+}
+
+.upload-group {
+	background: #f8fafc;
+	padding: 20px;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
+.upload-group h3 {
+	font-size: 0.95rem;
+	color: var(--gov-blue);
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.initiator-tag {
+	font-size: 0.7rem;
+	background: var(--gov-blue);
+	color: #fff;
+	padding: 2px 6px;
+	border-radius: 4px;
+	text-transform: uppercase;
+}
+
+.upload-item-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 12px;
+}
+
+.upload-item-row label {
+	flex: 1;
+	margin-bottom: 0 !important;
+}
+
+.tenancy-thumb {
+	width: 60px;
+	height: 60px;
+	object-fit: cover;
+	border: 1px solid #cbd5e1;
+	border-radius: 4px;
+	flex-shrink: 0;
+}
+
+
+.readonly-input {
+	background-color: #f1f5f9 !important;
+	color: #475569 !important;
+	cursor: not-allowed;
+	border-color: #e2e8f0 !important;
+}
+
+.section-divider {
+	border: none;
+	border-top: 1px solid #e2e8f0;
+	margin: 32px 0;
+}
+
+.tenancy-section {
+	margin-bottom: 24px;
+}
+
+.section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 20px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.section-header h2 {
+	font-size: 1.1rem;
+	color: var(--gov-blue);
+	margin: 0;
+	font-weight: 700;
+}
+
+.initiator-badge {
+	background: var(--gov-blue);
+	color: #fff;
+	font-size: 0.7rem;
+	font-weight: 600;
+	padding: 4px 10px;
+	border-radius: 4px;
+	text-transform: uppercase;
+}
+
+
+.preview-grid.party-details {
+	grid-template-columns: repeat(2, 1fr);
+	gap: 12px;
+}
+
+.preview-full-row {
+	margin-top: 8px;
+	font-size: 0.95rem;
+	color: #475569;
+}
+
+.preview-party-info h4 {
+	border-left: 4px solid var(--gov-blue);
+	padding-left: 12px;
+	margin-bottom: 12px;
+	color: #1e293b;
+	font-weight: 600;
 }

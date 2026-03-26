@@ -2,9 +2,24 @@ import './App.css'
 import { useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import api from './api'
+import DashboardLayout from './pages/dashboard/DashboardLayout'
+import DashboardHome from './pages/dashboard/DashboardHome'
+import Profile from './pages/dashboard/Profile'
+import ApplicationStatus from './pages/dashboard/ApplicationStatus'
+import ApplicationDetails from './pages/dashboard/ApplicationDetails'
+import TenancyCertificate from './pages/dashboard/TenancyCertificate'
+import FormPortal from './pages/dashboard/FormPortal'
+
+import StateManagement from './pages/dashboard/admin/StateManagement'
+import DistrictManagement from './pages/dashboard/admin/DistrictManagement'
+import OfficeManagement from './pages/dashboard/admin/OfficeManagement'
+import UserManagement from './pages/dashboard/admin/UserManagement'
+import RoleManagement from './pages/dashboard/admin/RoleManagement'
+import DesignationManagement from './pages/dashboard/admin/DesignationManagement'
+import ActivityLog from './pages/dashboard/admin/ActivityLog'
+
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
 import UserDetail from './pages/UserDetail'
 import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
@@ -14,6 +29,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import emblem from './assets/img/emblem-dark.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
+
 function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
@@ -86,7 +102,7 @@ function App() {
 	}
 
 	return (
-		<div className={`page${!user ? ' page-landing' : ''}`}>
+		<div className={`page${!user ? ' page-landing' : location.pathname.startsWith('/dashboard') ? ' page-dashboard' : ''}`}>
 			{/* Accessibility Bar */}
 			<div className="accessibility-bar">
 				<div className="accessibility-bar-inner">
@@ -124,7 +140,7 @@ function App() {
 			{!user ? <div className="landing-accent-stripe" aria-hidden /> : null}
 
 			{/* Main navigation – rent-portal style on landing; hidden on dashboard */}
-			{!(user && location.pathname === '/dashboard') && (
+			{!(user && location.pathname.startsWith('/dashboard')) && (
 				<div className="globalnav">
 					<div className="globalnav-inner">
 						{!user ? (
@@ -216,10 +232,25 @@ function App() {
 						path="/dashboard"
 						element={
 							<ProtectedRoute user={user}>
-								<Dashboard user={user} onLogout={handleLogout} />
+								<DashboardLayout user={user} onLogout={handleLogout} />
 							</ProtectedRoute>
 						}
-					/>
+					>
+						<Route index element={<DashboardHome />} />
+						<Route path="profile" element={<Profile />} />
+						<Route path="tenancy-certificate" element={<TenancyCertificate />} />
+						<Route path="status" element={<ApplicationStatus />} />
+						<Route path="status/:type/:id" element={<ApplicationDetails />} />
+						<Route path=":formType" element={<FormPortal />} />
+						{/* Admin Routes */}
+						<Route path="admin/state" element={<StateManagement />} />
+						<Route path="admin/district" element={<DistrictManagement />} />
+						<Route path="admin/office" element={<OfficeManagement />} />
+						<Route path="admin/users" element={<UserManagement />} />
+						<Route path="admin/role" element={<RoleManagement />} />
+						<Route path="admin/designation" element={<DesignationManagement />} />
+						<Route path="admin/activity-log" element={<ActivityLog />} />
+					</Route>
 					<Route
 						path="/users/:id"
 						element={

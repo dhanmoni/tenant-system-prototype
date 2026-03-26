@@ -15,13 +15,20 @@ function Login({ onLogin }) {
 	const [otpMessage, setOtpMessage] = useState('')
 	const [loginError, setLoginError] = useState('')
 	const [loginLoading, setLoginLoading] = useState(false)
+	const [resendTimer, setResendTimer] = useState(0)
+
+	// Timer effect
+	useEffect(() => {
+		if (resendTimer > 0) {
+			const interval = setInterval(() => setResendTimer(t => t - 1), 1000)
+			return () => clearInterval(interval)
+		}
+	}, [resendTimer])
 
 	// Register form state
 	const [regForm, setRegForm] = useState({
 		name: '',
 		email: '',
-		password: '',
-		password_confirmation: '',
 		phone: '',
 		state_id: '',
 		district_id: '',
@@ -97,10 +104,17 @@ function Login({ onLogin }) {
 			setLoginError('Please enter phone number first')
 			return
 		}
-		// When resending, clear the previous OTP value so user enters the fresh code.
+		// Reset OTP and start timer
 		setLoginForm((prev) => ({ ...prev, otp: '' }))
 		setOtpSent(true)
+		setResendTimer(60)
 		setOtpMessage('OTP sent successfully.')
+	}
+
+	const handleEditPhone = () => {
+		setOtpSent(false)
+		setOtpMessage('')
+		setResendTimer(0)
 	}
 
 	const handleLoginSubmit = async (e) => {
@@ -139,6 +153,7 @@ function Login({ onLogin }) {
 		}
 		setRegOtpSent(true)
 		setRegOtp('')
+		setResendTimer(60) // Reuse the same timer
 		setRegOtpMessage('OTP sent successfully.')
 	}
 
@@ -183,9 +198,10 @@ function Login({ onLogin }) {
 			// After account creation, require OTP verification before login.
 			setRegPendingPhone(regForm.phone)
 			setRegStep('otp')
-			setRegOtpSent(false)
+			setRegOtpSent(true)
+			setResendTimer(60)
 			setRegOtp('')
-			setRegOtpMessage('')
+			setRegOtpMessage('Account created! OTP sent successfully.')
 		} catch (err) {
 			setRegError(
 				err?.response?.data?.message ||
@@ -208,6 +224,7 @@ function Login({ onLogin }) {
 		setRegOtp('')
 		setRegPendingPhone('')
 		setRegOtpMessage('')
+		setResendTimer(0)
 		setMode(newMode)
 	}
 
@@ -257,36 +274,57 @@ function Login({ onLogin }) {
 								<p className="muted">Use your phone number and OTP.</p>
 								{otpMessage ? <div className="success">{otpMessage}</div> : null}
 								{loginError ? <div className="error">{loginError}</div> : null}
-								<form onSubmit={handleLoginSubmit}>
-									<label>
-										Phone Number
-										<input
-											type="tel"
-											name="phone"
-											value={loginForm.phone}
-											onChange={handleLoginChange}
-											required
-										/>
-									</label>
-									<button type="button" onClick={handleSendOtp} disabled={loginLoading}>
-										{otpSent ? 'Resend OTP' : 'Send OTP'}
-									</button>
-									{otpSent ? (
-										<label>
-											OTP
-											<input
-												type="text"
-												name="otp"
-												value={loginForm.otp}
-												onChange={handleLoginChange}
-												maxLength={6}
-												required
-											/>
-										</label>
-									) : null}
-									<button type="submit" disabled={loginLoading}>
-										{loginLoading ? 'Signing in...' : 'Log In'}
-									</button>
+								<form onSubmit={handleLoginSubmit} className="otp-form">
+									{!otpSent ? (
+										<>
+											<label>
+												Phone Number
+												<input
+													type="tel"
+													name="phone"
+													value={loginForm.phone}
+													onChange={handleLoginChange}
+													placeholder="Enter your registered phone"
+													required
+												/>
+											</label>
+											<button type="button" className="btn-send-otp" onClick={handleSendOtp} disabled={loginLoading}>
+												Send OTP
+											</button>
+										</>
+									) : (
+										<>
+											<div className="phone-display">
+												<div className="phone-val">
+													<strong>{loginForm.phone}</strong>
+												</div>
+												<button type="button" className="btn-edit-phone" onClick={handleEditPhone}>Change</button>
+											</div>
+											<label className="otp-label">
+												Enter 6-digit OTP
+												<input
+													type="text"
+													name="otp"
+													value={loginForm.otp}
+													onChange={handleLoginChange}
+													maxLength={6}
+													placeholder="······"
+													autoFocus
+													required
+												/>
+											</label>
+											<div className="otp-resend">
+												{resendTimer > 0 ? (
+													<span className="timer">Resend in {resendTimer}s</span>
+												) : (
+													<button type="button" className="link-resend" onClick={handleSendOtp}>Resend OTP</button>
+												)}
+											</div>
+											<button type="submit" className="btn-login-submit" disabled={loginLoading}>
+												{loginLoading ? 'Signing in...' : 'Log In'}
+											</button>
+										</>
+									)}
 								</form>
 								<p className="muted">
 									No account?{' '}
@@ -305,31 +343,11 @@ function Login({ onLogin }) {
 										<form onSubmit={handleRegSubmit}>
 											<label>
 												Name
-												<input type="text" name="name" value={regForm.name} onChange={handleRegChange} required />
+												<input type="text" name="name" value={regForm.name} onChange={handleRegChange} placeholder="Enter full name" required />
 											</label>
 											<label>
 												Email (Optional)
-												<input type="email" name="email" value={regForm.email} onChange={handleRegChange} />
-											</label>
-											<label>
-												Password
-												<input
-													type="password"
-													name="password"
-													value={regForm.password}
-													onChange={handleRegChange}
-													required
-												/>
-											</label>
-											<label>
-												Confirm Password
-												<input
-													type="password"
-													name="password_confirmation"
-													value={regForm.password_confirmation}
-													onChange={handleRegChange}
-													required
-												/>
+												<input type="email" name="email" value={regForm.email} onChange={handleRegChange} placeholder="Email address" />
 											</label>
 											<label>
 												Phone Number
@@ -367,7 +385,7 @@ function Login({ onLogin }) {
 												</select>
 											</label>
 											<button type="submit" disabled={regLoading}>
-												{regLoading ? 'Creating...' : 'Create account'}
+												{regLoading ? 'Processing...' : 'Create Account & Send OTP'}
 											</button>
 										</form>
 										<p className="muted">
@@ -383,28 +401,36 @@ function Login({ onLogin }) {
 										<p className="muted">Enter the OTP sent to {regPendingPhone}.</p>
 										{regOtpMessage ? <div className="success">{regOtpMessage}</div> : null}
 										{regError ? <div className="error">{regError}</div> : null}
-										<form onSubmit={handleRegVerifyOtp}>
-											<button
-												type="button"
-												onClick={handleRegSendOtp}
-												disabled={regLoading}
-											>
-												{regOtpSent ? 'Resend OTP' : 'Send OTP'}
-											</button>
-											{regOtpSent ? (
-												<label>
-													OTP
-													<input
-														type="text"
-														name="regOtp"
-														value={regOtp}
-														onChange={(e) => setRegOtp(e.target.value)}
-														maxLength={6}
-														required
-													/>
-												</label>
-											) : null}
-											<button type="submit" disabled={regLoading}>
+										<form onSubmit={handleRegVerifyOtp} className="otp-form">
+											<div className="phone-display">
+												<div className="phone-val">
+													<strong>{regPendingPhone}</strong>
+												</div>
+												<button type="button" className="btn-edit-phone" onClick={() => setRegStep('details')}>Change</button>
+											</div>
+
+											<label className="otp-label">
+												Enter 6-digit OTP
+												<input
+													type="text"
+													name="regOtp"
+													value={regOtp}
+													onChange={(e) => setRegOtp(e.target.value)}
+													maxLength={6}
+													placeholder="······"
+													autoFocus
+													required
+												/>
+											</label>
+											<div className="otp-resend">
+												{resendTimer > 0 ? (
+													<span className="timer">Resend in {resendTimer}s</span>
+												) : (
+													<button type="button" className="link-resend" onClick={handleRegSendOtp}>Resend OTP</button>
+												)}
+											</div>
+
+											<button type="submit" className="btn-login-submit" disabled={regLoading}>
 												{regLoading ? 'Verifying...' : 'Verify & Log In'}
 											</button>
 										</form>
