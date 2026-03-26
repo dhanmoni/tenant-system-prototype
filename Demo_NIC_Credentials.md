@@ -51,13 +51,14 @@
   - Dashboard content depends on **role** (see Role-based access below).
 3. **Tenant owner (dashboard)**
   - **Dashboard** – Overview stat cards, quick actions (icons + text), and recent submissions tiles (real data). Logged-in user info + logout are shown in the **sidebar**.
-  - Recent submissions tiles support **Card View** and **List View**; clicking a tile opens **Status** filtered by the selected `application_no`.
-  - **Profile** – View and edit profile.
+  - Recent submissions support **Card/List icon toggle** (top-right of the section); clicking a tile opens **Status** filtered by the selected `application_no`.
+  - **Profile** – View and edit profile. Saving profile does **not** require selecting Landlord/Tenant in profile form.
   - **Services**
-    - **Apply for Tenancy Certificate** – Multi-step tenancy application form.
+    - **Apply for Tenancy Certificate** – Multi-step tenancy application form. Initiator role supports **Landlord**, **Tenant**, and **Property Manager**.
     - **Assam Tenancy Rules forms (Services)** – Form 1 / 1-A / 1-B, Form 4 / 5, Form 6, Form 7 / 8 (grouped in collapsible sidebar sections).
   - **Status** – List and view status of own submissions (Tenancy Certificate + all Assam Tenancy Rules forms).
     - UI shows **separate tables per category** and uses **icon “View details”** for form submissions.
+    - For Property Manager initiated tenancy applications, join flow currently awaits **Landlord** as second-party confirmation.
 4. **Staff roles (Staff, Director, Assistant Director, District Head, District Assistant)**
   - **Dashboard** – **Statistics** (states, districts, users, applications), **charts** (overview bar chart, applications by status), and **quick actions** to open other panels. Logged-in user info + logout are shown in the **sidebar**.
   - **Application Status** – View tenancy applications (scoped by your office / district / user, per backend rules).
@@ -73,6 +74,9 @@
   - **Admin (/admin)** – Admin-specific UI (if used).
 6. **Other routes**
   - **User detail (/users/:id)** – View/edit user (protected, by permission).
+7. **Accessibility (global)**
+  - Top accessibility controls are available across pages: **A-**, **A**, **A+**, and **High Contrast**.
+  - Skip links are available for keyboard users: **Skip to main content** and **Skip to navigation**.
 
 ---
 
@@ -174,7 +178,7 @@ php artisan migrate:fresh --seed
 
 Seeder order includes **states → districts → village/wards → offices → designations → users → tenancy applications**.  
 **Users:** each demo user must have a **unique phone** (required by DB).  
-**Tenancy applications** may reference **village/ward**, joint-tenancy fields (`ref_code`, `uid`, etc.) per current migrations.
+**Tenancy applications** may reference **village/ward**, joint-tenancy fields (`ref_code`, `uid`, etc.) per current migrations, and include a seeded example with **Property Manager** as initiator.
 
 To reseed only users:
 
