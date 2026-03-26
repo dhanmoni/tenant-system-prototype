@@ -112,30 +112,33 @@ function App() {
 							Department of Housing And Urban Affairs
 						</span>
 					</div>
-					{!user ? (
-						<div className="accessibility-bar-help" aria-label="Helpdesk contact (demo)">
-							<span>Helpdesk (demo): 1800-000-0000</span>
-							<span className="accessibility-bar-help-sep">|</span>
-							<span>helpdesk.tcms@nic.in</span>
-						</div>
-					) : null}
+					<div className="accessibility-bar-help" aria-label="Helpdesk contact (demo)">
+						<span>Helpdesk (demo): 1800-000-0000</span>
+						<span className="accessibility-bar-help-sep">|</span>
+						<span>helpdesk.tcms@nic.in</span>
+					</div>
 				</div>
 			</div>
 
-			{/* Header */}
-			<header className="topbar">
-				<div className="brand">
-					<img className="emblem" src={emblem} alt="Indian national emblem" />
-					<div className="brand-text">
-						<span className="brand-title">
-							DIRECTORATE OF TOWN AND COUNTRY PLANNING
-						</span>
-						<span className="brand-subtitle">
-							Department of Housing And Urban Affairs
-						</span>
+			{/* Header (emblem + directorate title) — public only; hidden after login */}
+			{!user ? (
+				<header className="topbar">
+					<div className="brand">
+						<img className="emblem" src={emblem} alt="Indian national emblem" />
+						<div className="brand-text">
+							<span className="brand-title">
+								DIRECTORATE OF TOWN AND COUNTRY PLANNING
+							</span>
+							<span className="brand-subtitle">
+								Department of Housing And Urban Affairs
+							</span>
+						</div>
 					</div>
-				</div>
-			</header>
+					<div className="topbar-right-logo">
+						<img src={digitalIndiaLogo} alt="Digital India" />
+					</div>
+				</header>
+			) : null}
 
 			{!user ? <div className="landing-accent-stripe" aria-hidden /> : null}
 
@@ -152,7 +155,10 @@ function App() {
 									<Link to="/">Home</Link>
 									<Link to="/#login">Login</Link>
 									<Link to="/#register">Registration</Link>
-									<Link to="/contact">Contact Us</Link>
+									<div className="contact-link-with-logo">
+										<Link to="/contact">Contact Us</Link>
+										<img className="contact-link-logo" src={nicLogo} alt="NIC" />
+									</div>
 								</>
 							) : (
 								<>
