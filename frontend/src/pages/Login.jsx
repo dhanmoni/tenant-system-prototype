@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import nicLogo from '../assets/img/NIC.png'
 
 function Login({ onLogin }) {
 	const navigate = useNavigate()
@@ -529,6 +530,7 @@ function Login({ onLogin }) {
 						<strong>Helpdesk (demo)</strong>
 						<p>For assistance with this prototype, use the contact details in the top bar or visit Contact Us.</p>
 					</div>
+					<img className="landing-helpdesk-nic-logo" src={nicLogo} alt="NIC" />
 					<Link className="landing-helpdesk-btn" to="/contact">
 						Contact us
 					</Link>

@@ -91,6 +91,18 @@
 	object-fit: contain;
 }
 
+.topbar-right-logo {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.topbar-right-logo img {
+	height: 44px;
+	width: auto;
+	object-fit: contain;
+}
+
 .brand-text {
 	display: flex;
 	flex-direction: column;
@@ -149,6 +161,18 @@
 	border: none;
 	line-height: 1;
 	cursor: pointer;
+}
+
+.contact-link-with-logo {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.contact-link-logo {
+	height: 26px;
+	width: auto;
+	object-fit: contain;
 }
 
 .globalnav-inner nav a:hover,
@@ -785,6 +809,12 @@
 	opacity: 0.92;
 	font-size: 0.95rem;
 	max-width: 560px;
+}
+
+.landing-helpdesk-nic-logo {
+	height: 44px;
+	width: auto;
+	object-fit: contain;
 }
 
 .landing-helpdesk-btn {

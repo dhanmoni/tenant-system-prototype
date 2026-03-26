@@ -118,6 +118,9 @@ function App() {
 							</span>
 						</div>
 					</div>
+					<div className="topbar-right-logo">
+						<img src={digitalIndiaLogo} alt="Digital India" />
+					</div>
 				</header>
 			) : null}
 
@@ -136,7 +139,10 @@ function App() {
 									<Link to="/">Home</Link>
 									<Link to="/#login">Login</Link>
 									<Link to="/#register">Registration</Link>
-									<Link to="/contact">Contact Us</Link>
+									<div className="contact-link-with-logo">
+										<Link to="/contact">Contact Us</Link>
+										<img className="contact-link-logo" src={nicLogo} alt="NIC" />
+									</div>
 								</>
 							) : (
 								<>
