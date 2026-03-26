@@ -256,20 +256,17 @@ function App() {
 						<Route path="admin/role" element={<RoleManagement />} />
 						<Route path="admin/designation" element={<DesignationManagement />} />
 						<Route path="admin/activity-log" element={<ActivityLog />} />
+						<Route path="join" element={<JoinApplication user={user} />} />
 					</Route>
+					<Route
+						path="/join"
+						element={<Navigate to={`/dashboard/join${location.search}`} replace />}
+					/>
 					<Route
 						path="/users/:id"
 						element={
 							<ProtectedRoute user={user}>
 								<UserDetail user={user} />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/join"
-						element={
-							<ProtectedRoute user={user}>
-								<JoinApplication user={user} />
 							</ProtectedRoute>
 						}
 					/>

@@ -4022,6 +4022,10 @@ fieldset {
 	grid-column: span 2;
 }
 
+.form-grid label {
+	margin-bottom: 8px;
+}
+
 .tenancy-certificate-page .form-grid {
 	row-gap: 32px;
 	column-gap: 24px;
