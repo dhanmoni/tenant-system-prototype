@@ -15,6 +15,7 @@ function DashboardLayout({ user, onLogout }) {
 				user={user} 
 				sidebarCollapsed={sidebarCollapsed} 
 				toggleSidebar={toggleSidebar} 
+				onLogout={onLogout}
 			/>
 			<main className="dashboard-content">
 				<Outlet context={{ user, onLogout }} />

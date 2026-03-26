@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
 import nicLogo from '../assets/img/NIC.png'
+import digitalIndiaLogo from '../assets/img/digital-india.png'
 
 function Login({ onLogin }) {
 	const navigate = useNavigate()
@@ -244,25 +245,25 @@ function Login({ onLogin }) {
 						<div className="audience-card">
 							<h3>For Tenants</h3>
 							<p>
-								Apply for tenancy certificates, track application status, and
-								manage your property records digitally.
+									Apply for tenancy certificates, track application status, and
+									keep your property records digitally.
 							</p>
 							<ul>
-								<li>Digital certificate access</li>
-								<li>Application status tracking</li>
-								<li>Online services round the clock</li>
+									<li>Digital certificate access</li>
+									<li>Application status tracking</li>
+									<li>Online services 24x7</li>
 							</ul>
 						</div>
 						<div className="audience-card">
 							<h3>For Owners</h3>
 							<p>
-								Register properties, manage tenant records, and stay aligned
-								with tenancy regulations.
+									Register properties, manage tenant records, and stay aligned
+									with tenancy regulations.
 							</p>
 							<ul>
-								<li>Property and application dashboard</li>
-								<li>Digital record management</li>
-								<li>Status and compliance visibility</li>
+									<li>Property and application dashboard</li>
+									<li>Digital record management</li>
+									<li>Status and compliance visibility</li>
 							</ul>
 						</div>
 					</div>
@@ -557,6 +558,7 @@ function Login({ onLogin }) {
 						<p>For assistance with this prototype, use the contact details in the top bar or visit Contact Us.</p>
 					</div>
 					<img className="landing-helpdesk-nic-logo" src={nicLogo} alt="NIC" />
+					<img className="landing-helpdesk-digital-india-logo" src={digitalIndiaLogo} alt="Digital India" />
 					<Link className="landing-helpdesk-btn" to="/contact">
 						Contact us
 					</Link>

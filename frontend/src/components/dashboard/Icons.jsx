@@ -105,6 +105,13 @@ export const Icon = ({ name, className = '' }) => {
 				<circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
 			</svg>
 		),
+		logout: (
+			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+				<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+				<path d="M16 17l5-5-5-5" />
+				<path d="M21 12H9" />
+			</svg>
+		),
 	}
 	return icons[name] || null
 }

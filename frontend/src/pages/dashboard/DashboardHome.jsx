@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useOutletContext, useNavigate, Link } from 'react-router-dom'
+import { useOutletContext, useNavigate } from 'react-router-dom'
 import {
 	Chart as ChartJS,
 	CategoryScale,
@@ -26,7 +26,7 @@ ChartJS.register(
 )
 
 function DashboardHome() {
-	const { user, onLogout } = useOutletContext()
+	const { user } = useOutletContext()
 	const navigate = useNavigate()
 	const [error, setError] = useState('')
 	
@@ -120,23 +120,20 @@ function DashboardHome() {
 
 		return (
 			<div className="dashboard-home">
-				<div className="auth-card dashboard-card dashboard-welcome-card">
-					<h1 className="dashboard-title-with-icon">
-						<Icon name="dashboard" className="dashboard-heading-icon" />
-						Welcome
-					</h1>
-					<p className="muted">You are signed in as:</p>
-					<div className="user-pill">
-						<strong>{user?.name}</strong>
-						<span>{user?.email}</span>
-					</div>
-					<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
-						Log out
-					</button>
-				</div>
 				<div className="dashboard-overview-cards">
 					{statsCards.map((stat) => (
-						<div key={stat.label} className="dashboard-stat-card">
+						<div
+							key={stat.label}
+							className={`dashboard-stat-card ${
+								stat.label === 'Recent Submissions'
+									? 'dashboard-stat-card--recent-submissions'
+									: stat.label === 'Tenancy Certificates'
+										? 'dashboard-stat-card--tenancy-certificates'
+										: stat.label === 'Assam Tenancy Forms'
+											? 'dashboard-stat-card--assam-tenancy-forms'
+											: ''
+							}`}
+						>
 							<span className="dashboard-stat-icon-wrap">
 								<Icon name={stat.icon} className="dashboard-stat-icon" />
 							</span>
@@ -272,14 +269,22 @@ function DashboardHome() {
 											onClick={() => navigate(`/dashboard/status?app_no=${app.application_no}`)}
 										>
 											<div className="dashboard-recent-list-top">
-												<div className="dashboard-recent-list-title">{app.application_no}</div>
+												<div className="dashboard-recent-list-title-wrap">
+													<div className="dashboard-recent-list-title">{app.application_no}</div>
+													<div className="dashboard-recent-list-hint">View details in Status</div>
+												</div>
 												<span className={`dashboard-status-pill ${isSuccess ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
 													{statusText}
 												</span>
 											</div>
 											<div className="dashboard-recent-list-sub">
-												<div>{app.application_type || '-'}</div>
-												<div className="muted">Date: {formatDate(app.created_at)}</div>
+												<span className="dashboard-recent-list-chip dashboard-recent-list-chip--type">
+													{app.application_type || '-'}
+												</span>
+												<span className="dashboard-recent-list-chip dashboard-recent-list-chip--date">
+													{formatDate(app.created_at)}
+												</span>
+												<span className="dashboard-recent-list-open">Open</span>
 											</div>
 										</div>
 									)
@@ -313,24 +318,6 @@ function DashboardHome() {
 
 	return (
 		<div className={`dashboard-home ${isStaff ? 'staff-dashboard-home' : 'admin-dashboard-home'}`}>
-			<div className="auth-card dashboard-card dashboard-welcome-card">
-				<h1 className="dashboard-title-with-icon">
-					<Icon name="chart" className="dashboard-heading-icon" />
-					{isStaff ? 'Staff dashboard' : 'Admin dashboard'}
-				</h1>
-				<p className="muted">You are signed in as:</p>
-				<div className="user-pill">
-					<strong>{user?.name}</strong>
-					<span className={isStaff ? 'staff-email-row' : ''}>
-						{isStaff && <span className="muted">Staff email:</span>} {user?.email}
-					</span>
-					{user?.role && <span className="user-pill-role">{user.role.replace(/_/g, ' ')}</span>}
-				</div>
-				<button onClick={onLogout} className="secondary" style={{ marginTop: 12 }}>
-					Log out
-				</button>
-			</div>
-
 			{statsLoading ? (
 				<div className="dashboard-stats-loading">Loading dashboard…</div>
 			) : (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Icon } from './Icons'
 
-function Sidebar({ user, sidebarCollapsed, toggleSidebar }) {
+function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 	const [officeMenuOpen, setOfficeMenuOpen] = useState(false)
 	const [userMenuOpen, setUserMenuOpen] = useState(false)
 	const [servicesMenuOpen, setServicesMenuOpen] = useState(false)
@@ -13,10 +13,43 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar }) {
 		appeals: false,
 	})
 
+	const sidebarDummyAvatarUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1f2937" offset="0"/>
+      <stop stop-color="#111827" offset="1"/>
+    </linearGradient>
+  </defs>
+  <rect width="80" height="80" rx="40" fill="url(#g)"/>
+  <circle cx="40" cy="32" r="14" fill="#7eb8ff" opacity="0.9"/>
+  <path d="M14 78c3.5-16 14.5-26 26-26s22.5 10 26 26" fill="#7eb8ff" opacity="0.25"/>
+</svg>
+`)}`;
+
+	const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+	const photoUrl = user?.passport_photo_url
+	const photoPath = user?.passport_photo_path || user?.user_passport_photo_path
+	const sidebarPhotoUrl = photoUrl
+		? photoUrl
+		: photoPath
+			? `${apiBaseUrl}/storage/${photoPath}`
+			: sidebarDummyAvatarUrl
+
 	return (
 		<aside className={`dashboard-menu ${sidebarCollapsed ? 'collapsed' : ''}`}>
 			<div className="dashboard-menu-header">
-				{!sidebarCollapsed && <h2>Menu</h2>}
+				<div className="dashboard-menu-user" aria-label="Logged in user">
+					<img className="dashboard-menu-user-photo" src={sidebarPhotoUrl} alt="Profile" />
+					{!sidebarCollapsed && (
+						<div className="dashboard-menu-user-text">
+							<div className="dashboard-menu-user-name">{user?.name || 'User'}</div>
+							<div className="dashboard-menu-user-role">
+								{(user?.role || '').replace(/_/g, ' ') || ''}
+							</div>
+						</div>
+					)}
+				</div>
 				<button
 					type="button"
 					className="sidebar-toggle-btn"
@@ -388,6 +421,17 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar }) {
 					</>
 				) : null}
 			</nav>
+			<div className="dashboard-menu-footer">
+				<button
+					type="button"
+					className="dashboard-link dashboard-link-logout"
+					onClick={onLogout}
+					title="Logout"
+				>
+					<Icon name="logout" className="dashboard-link-icon" />
+					<span className="dashboard-link-text">Logout</span>
+				</button>
+			</div>
 		</aside>
 	)
 }
