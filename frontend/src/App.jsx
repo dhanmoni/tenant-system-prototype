@@ -106,20 +106,22 @@ function App() {
 				</div>
 			</div>
 
-			{/* Header */}
-			<header className="topbar">
-				<div className="brand">
-					<img className="emblem" src={emblem} alt="Indian national emblem" />
-					<div className="brand-text">
-						<span className="brand-title">
-							DIRECTORATE OF TOWN AND COUNTRY PLANNING
-						</span>
-						<span className="brand-subtitle">
-							Department of Housing And Urban Affairs
-						</span>
+			{/* Header (emblem + directorate title) — public only; hidden after login */}
+			{!user ? (
+				<header className="topbar">
+					<div className="brand">
+						<img className="emblem" src={emblem} alt="Indian national emblem" />
+						<div className="brand-text">
+							<span className="brand-title">
+								DIRECTORATE OF TOWN AND COUNTRY PLANNING
+							</span>
+							<span className="brand-subtitle">
+								Department of Housing And Urban Affairs
+							</span>
+						</div>
 					</div>
-				</div>
-			</header>
+				</header>
+			) : null}
 
 			{!user ? <div className="landing-accent-stripe" aria-hidden /> : null}
 

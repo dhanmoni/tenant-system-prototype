@@ -2446,9 +2446,31 @@ main.main-fluid {
 	height: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
-	background: #ffffff;
-	border-right: 1px solid #e2e8f0;
-	box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+	--dashboard-sidebar-bg: #1e1e1e;
+	--dashboard-sidebar-surface: #262626;
+	--dashboard-sidebar-border: rgba(255, 255, 255, 0.08);
+	--dashboard-sidebar-text: #e8e8e8;
+	--dashboard-sidebar-muted: #a3a3a3;
+	--dashboard-sidebar-hover: rgba(255, 255, 255, 0.08);
+	--dashboard-sidebar-active: rgba(255, 255, 255, 0.12);
+	--dashboard-sidebar-accent: #7eb8ff;
+	/* Inner dropdown / submenu */
+	--dashboard-submenu-bg: #262c36;
+	/* Form category row (Revision / Court / …) — darker band */
+	--dashboard-form-category-bg: #1c1c21;
+	--dashboard-form-category-hover: #25252b;
+	--dashboard-form-category-border: rgba(0, 0, 0, 0.35);
+	/* Nested form links panel (dropdown items) */
+	--dashboard-submenu-items-bg: #262c36;
+	--dashboard-submenu-items-hover: rgba(255, 255, 255, 0.07);
+	--dashboard-submenu-items-active: rgba(255, 255, 255, 0.11);
+	--dashboard-submenu-item-hover: rgba(255, 255, 255, 0.1);
+	--dashboard-submenu-item-active: rgba(0, 0, 0, 0.18);
+	--dashboard-submenu-border-inner: rgba(255, 255, 255, 0.07);
+	background: var(--dashboard-sidebar-bg);
+	color: var(--dashboard-sidebar-text);
+	border-right: 1px solid var(--dashboard-sidebar-border);
+	box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
 	display: flex;
 	flex-direction: column;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2465,8 +2487,8 @@ main.main-fluid {
 	align-items: center;
 	justify-content: space-between;
 	padding: 20px 16px;
-	border-bottom: 1px solid #f1f5f9;
-	background: #fff;
+	border-bottom: 1px solid var(--dashboard-sidebar-border, rgba(255, 255, 255, 0.08));
+	background: var(--dashboard-sidebar-surface, #262626);
 	min-height: 64px;
 }
 
@@ -2480,7 +2502,7 @@ main.main-fluid {
 	font-size: 0.75rem;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
-	color: #64748b;
+	color: var(--dashboard-sidebar-muted, #a3a3a3);
 	font-weight: 700;
 	padding: 0;
 	background: transparent;
@@ -2488,8 +2510,8 @@ main.main-fluid {
 }
 
 .sidebar-toggle-btn {
-	background: #f1f5f9;
-	border: none;
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid var(--dashboard-sidebar-border, rgba(255, 255, 255, 0.12));
 	width: 32px;
 	height: 32px;
 	border-radius: 8px;
@@ -2497,15 +2519,15 @@ main.main-fluid {
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
-	color: #475569;
+	color: var(--dashboard-sidebar-text, #e8e8e8);
 	transition: all 0.2s ease;
 	padding: 0;
 	margin: 0;
 }
 
 .sidebar-toggle-btn:hover {
-	background: #e2e8f0;
-	color: var(--gov-blue);
+	background: rgba(255, 255, 255, 0.16);
+	color: var(--dashboard-sidebar-accent, #7eb8ff);
 	box-shadow: none;
 }
 
@@ -2519,16 +2541,16 @@ main.main-fluid {
 }
 
 .dashboard-menu::-webkit-scrollbar-track {
-	background: #e0e0e0;
+	background: #2a2a2a;
 }
 
 .dashboard-menu::-webkit-scrollbar-thumb {
-	background: #90a4ae;
+	background: #555;
 	border-radius: 3px;
 }
 
 .dashboard-menu::-webkit-scrollbar-thumb:hover {
-	background: #546e7a;
+	background: #6e6e6e;
 }
 
 /* Unified Sidebar Styles */
@@ -2544,7 +2566,7 @@ main.main-fluid {
 	align-items: center;
 	padding: 12px 16px;
 	text-decoration: none;
-	color: #475569;
+	color: var(--dashboard-sidebar-text, #e8e8e8);
 	font-size: 0.925rem;
 	font-weight: 500;
 	transition: all 0.2s ease;
@@ -2556,32 +2578,32 @@ main.main-fluid {
 }
 
 .dashboard-link:hover {
-	background: #f8fafc;
-	color: var(--gov-blue);
+	background: var(--dashboard-sidebar-hover, rgba(255, 255, 255, 0.08));
+	color: #fff;
 	text-decoration: none;
 }
 
 .dashboard-link.active {
-	background: #eff6ff;
-	color: var(--gov-blue);
-	border-left-color: var(--gov-blue);
+	background: var(--dashboard-sidebar-active, rgba(255, 255, 255, 0.12));
+	color: #fff;
+	border-left-color: var(--dashboard-sidebar-accent, #7eb8ff);
 	font-weight: 600;
 }
 
 .dashboard-link.active .dashboard-link-icon {
-	color: var(--gov-blue);
+	color: var(--dashboard-sidebar-accent, #7eb8ff);
 }
 
 .dashboard-link-icon {
 	width: 20px;
 	height: 20px;
 	flex-shrink: 0;
-	color: #94a3b8;
+	color: var(--dashboard-sidebar-muted, #a3a3a3);
 	transition: color 0.2s ease;
 }
 
 .dashboard-link:hover .dashboard-link-icon {
-	color: var(--gov-blue);
+	color: var(--dashboard-sidebar-accent, #7eb8ff);
 }
 
 .dashboard-menu.collapsed .dashboard-link {
@@ -2609,7 +2631,8 @@ main.main-fluid {
 	width: 14px;
 	height: 14px;
 	transition: transform 0.3s ease;
-	opacity: 0.6;
+	opacity: 0.75;
+	color: var(--dashboard-sidebar-muted, #a3a3a3);
 }
 
 .dashboard-link-chevron.open {
@@ -2618,7 +2641,9 @@ main.main-fluid {
 
 /* Submenus */
 .dashboard-submenu {
-	background: #fcfdfe;
+	background: var(--dashboard-submenu-bg, #262c36);
+	border-top: 1px solid var(--dashboard-submenu-border-inner, rgba(255, 255, 255, 0.07));
+	border-bottom: 1px solid var(--dashboard-submenu-border-inner, rgba(255, 255, 255, 0.07));
 	overflow: hidden;
 	transition: max-height 0.3s ease-out;
 }
@@ -2626,47 +2651,28 @@ main.main-fluid {
 .dashboard-submenu .dashboard-link {
 	padding-left: 48px;
 	font-size: 0.85rem;
-	color: #64748b;
+	color: var(--dashboard-sidebar-text, #e8e8e8);
+	opacity: 0.92;
 }
 
 .dashboard-submenu .dashboard-link:hover {
-	background: #f1f5f9;
-	color: #1e293b;
+	background: var(--dashboard-submenu-item-hover, rgba(255, 255, 255, 0.1));
+	color: #fff;
+	opacity: 1;
 }
 
 .dashboard-submenu .dashboard-link.active {
-	background: #f1f5f9;
-	color: var(--gov-blue);
+	background: var(--dashboard-submenu-item-active, rgba(0, 0, 0, 0.18));
+	color: #fff;
 	border-left-width: 0;
-}
-
-.dashboard-submenu-group-toggle {
-	width: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 10px 16px 10px 48px;
-	background: transparent;
-	border: none;
-	font-size: 0.8rem;
-	font-weight: 600;
-	color: #475569;
-	text-transform: uppercase;
-	letter-spacing: 0.025em;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	text-align: left;
-}
-
-.dashboard-submenu-group-toggle:hover {
-	background: #f1f5f9;
-	color: var(--gov-blue);
+	opacity: 1;
 }
 
 .dashboard-submenu-chevron {
 	width: 12px;
 	height: 12px;
 	transition: transform 0.2s ease;
+	color: var(--dashboard-sidebar-muted, #a3a3a3);
 }
 
 .dashboard-submenu-chevron.open {
@@ -2674,21 +2680,13 @@ main.main-fluid {
 }
 
 .dashboard-submenu-items {
-	background: #fff;
+	background: var(--dashboard-submenu-items-bg, #262c36);
+	border-top: 1px solid var(--dashboard-submenu-border-inner, rgba(255, 255, 255, 0.07));
+	border-bottom: 1px solid var(--dashboard-submenu-border-inner, rgba(255, 255, 255, 0.07));
 }
 
-.dashboard-submenu-group-title {
-	padding: 10px 16px;
-	background: #f4f6f8;
-	border-bottom: 1px solid var(--gov-border);
-	font-size: 0.78rem;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: #334155;
-	font-weight: 800;
-}
-
-.dashboard-submenu-group-toggle {
+/* Form category collapsible headers only (not the nested form links) */
+.dashboard-submenu-group-title.dashboard-submenu-group-toggle {
 	border: none;
 	width: 100%;
 	display: flex;
@@ -2697,23 +2695,52 @@ main.main-fluid {
 	cursor: pointer;
 	font-family: inherit;
 	text-align: left;
-	background: #ebebeb;
+	background: var(--dashboard-form-category-bg, #1c1c21);
+	border-top: 1px solid var(--dashboard-form-category-border, rgba(0, 0, 0, 0.35));
+	border-bottom: 1px solid var(--dashboard-form-category-border, rgba(0, 0, 0, 0.35));
 	border-left: 4px solid transparent;
+	border-right: none;
 	padding: 10px 16px 10px 28px;
 	transition: all 0.15s ease;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--dashboard-sidebar-text, #e8e8e8);
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
 }
 
 .dashboard-submenu-group-toggle-indicator {
 	font-size: 1rem;
 	letter-spacing: 0;
-	color: var(--gov-blue);
+	color: var(--dashboard-sidebar-accent, #7eb8ff);
 	font-weight: 900;
 }
 
-.dashboard-submenu-group-toggle:hover {
-	background: var(--gov-blue-light);
-	border-left: 4px solid var(--gov-blue);
-	color: var(--gov-heading);
+.dashboard-submenu-group-title.dashboard-submenu-group-toggle:hover {
+	background: var(--dashboard-form-category-hover, #25252b);
+	border-left: 4px solid var(--dashboard-sidebar-accent, #7eb8ff);
+	color: #fff;
+}
+
+/* Nested form links: lighter row treatment (do not match dark category band) */
+.dashboard-submenu-items .dashboard-link {
+	padding-left: 48px;
+	font-size: 0.85rem;
+	color: var(--dashboard-sidebar-text, #e8e8e8);
+	opacity: 0.95;
+}
+
+.dashboard-submenu-items .dashboard-link:hover {
+	background: var(--dashboard-submenu-items-hover, rgba(255, 255, 255, 0.07));
+	color: #fff;
+	opacity: 1;
+}
+
+.dashboard-submenu-items .dashboard-link.active {
+	background: var(--dashboard-submenu-items-active, rgba(255, 255, 255, 0.11));
+	color: #fff;
+	border-left-width: 0;
+	opacity: 1;
 }
 
 .status-category-table {
