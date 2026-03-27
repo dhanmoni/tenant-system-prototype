@@ -286,12 +286,6 @@ class TenancyApplicationController extends Controller
         $secondPartyRole = $this->getSecondPartyRole($application->initiator_role);
         $userRole = strtoupper($user->profile_type ?? '');
 
-        if ($userRole !== $secondPartyRole) {
-            return response()->json([
-                'message' => 'This join link requires a ' . $secondPartyRole . ' profile.',
-            ], 403);
-        }
-
         if ($application->initiator_role !== 'PROPERTY_MANAGER' && $userRole === $application->initiator_role) {
             return response()->json([
                 'message' => 'You cannot join as the same role as the initiator.',

@@ -430,7 +430,7 @@ function TenancyCertificate() {
 							<div className="section-header">
 								<h2>2. Premises Description</h2>
 							</div>
-							<label><span className="label-text required">Full Description of Premises</span><textarea value={propertyPremisesDescription} onChange={e => setPropertyPremisesDescription(e.target.value)} required disabled={formLocked} placeholder="Enter detailed description of the property premises..." /></label>
+							<label><span className="label-text">Full Description of Premises, if any</span><textarea value={propertyPremisesDescription} onChange={e => setPropertyPremisesDescription(e.target.value)} required disabled={formLocked} placeholder="Enter detailed description of the property premises..." /></label>
 						</section>
 
 						<hr className="section-divider" />

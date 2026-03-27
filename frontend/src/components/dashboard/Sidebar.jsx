@@ -44,9 +44,6 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 					{!sidebarCollapsed && (
 						<div className="dashboard-menu-user-text">
 							<div className="dashboard-menu-user-name">{user?.name || 'User'}</div>
-							<div className="dashboard-menu-user-role">
-								{(user?.role || '').replace(/_/g, ' ') || ''}
-							</div>
 						</div>
 					)}
 				</div>
@@ -116,7 +113,7 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 								>
 									Status
 								</NavLink>
-								
+
 								<button
 									type="button"
 									className="dashboard-submenu-group-title dashboard-submenu-group-toggle"
