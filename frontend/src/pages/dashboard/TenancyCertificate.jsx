@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react'
 import { useOutletContext, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { formatDateTime } from '../../utils/formatters'
+import emblemDark from '../../assets/img/emblem-dark.png'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
+	const PASSPORT_WIDTH = 350
+	const PASSPORT_HEIGHT = 450
+	const PASSPORT_TOP_BIAS = 0.18
 
 	const [tenancyStep, setTenancyStep] = useState(1)
 	const [error, setError] = useState('')
@@ -193,6 +197,77 @@ function TenancyCertificate() {
 		const monthsDiff = (now.getFullYear() - regDate.getFullYear()) * 12 + (now.getMonth() - regDate.getMonth())
 		return monthsDiff > 3
 	})()
+
+	const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+		const reader = new FileReader()
+		reader.onload = () => resolve(reader.result)
+		reader.onerror = () => reject(new Error('Failed to read image file'))
+		reader.readAsDataURL(file)
+	})
+
+	const loadImage = (src) => new Promise((resolve, reject) => {
+		const img = new Image()
+		img.onload = () => resolve(img)
+		img.onerror = () => reject(new Error('Invalid image'))
+		img.src = src
+	})
+
+	const canvasToBlob = (canvas, type = 'image/jpeg', quality = 0.92) =>
+		new Promise((resolve, reject) => {
+			canvas.toBlob((blob) => {
+				if (!blob) {
+					reject(new Error('Image processing failed'))
+					return
+				}
+				resolve(blob)
+			}, type, quality)
+		})
+
+	const processPassportPhoto = async (file) => {
+		const dataUrl = await fileToDataUrl(file)
+		const img = await loadImage(dataUrl)
+		const targetRatio = PASSPORT_WIDTH / PASSPORT_HEIGHT
+		const sourceRatio = img.width / img.height
+
+		let sx = 0
+		let sy = 0
+		let sWidth = img.width
+		let sHeight = img.height
+
+		// Crop to passport ratio. Use slight top bias to keep face area prominent.
+		if (sourceRatio > targetRatio) {
+			sWidth = Math.round(img.height * targetRatio)
+			sx = Math.round((img.width - sWidth) / 2)
+		} else if (sourceRatio < targetRatio) {
+			sHeight = Math.round(img.width / targetRatio)
+			const maxShift = Math.max(0, img.height - sHeight)
+			sy = Math.round(maxShift * PASSPORT_TOP_BIAS)
+		}
+
+		const canvas = document.createElement('canvas')
+		canvas.width = PASSPORT_WIDTH
+		canvas.height = PASSPORT_HEIGHT
+		const ctx = canvas.getContext('2d')
+		if (!ctx) throw new Error('Canvas not supported')
+		ctx.imageSmoothingEnabled = true
+		ctx.imageSmoothingQuality = 'high'
+		ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, PASSPORT_WIDTH, PASSPORT_HEIGHT)
+
+		const blob = await canvasToBlob(canvas, 'image/jpeg', 0.9)
+		const safeName = (file.name || 'passport-photo').replace(/\.[^.]+$/, '')
+		return new File([blob], `${safeName}-passport.jpg`, { type: 'image/jpeg' })
+	}
+
+	const handlePassportPhotoUpload = async (file, setFile, setPreview, who) => {
+		if (!file) return
+		try {
+			const processed = await processPassportPhoto(file)
+			setFile(processed)
+			setPreview(URL.createObjectURL(processed))
+		} catch (err) {
+			setError(`Failed to process ${who} photo. Please try another image.`)
+		}
+	}
 
 	const submitTenancyApplication = async () => {
 		setError(''); setSuccess(''); setTenancySubmitting(true)
@@ -476,7 +551,17 @@ function TenancyCertificate() {
 											<div className="upload-item-row">
 												<label>
 													<span className="label-text required">Tenant Passport Photo</span>
-													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setTenantPhotoFile(f); if (f) setTenantPhotoPreview(URL.createObjectURL(f)) }} disabled={formLocked} required />
+													<input
+														type="file"
+														accept="image/*"
+														onChange={async (e) => {
+															const f = e.target.files[0]
+															await handlePassportPhotoUpload(f, setTenantPhotoFile, setTenantPhotoPreview, 'tenant')
+														}}
+														disabled={formLocked}
+														required
+													/>
+													<p className="muted">Auto-cropped to passport ratio.</p>
 												</label>
 												{tenantPhotoPreview && <img src={tenantPhotoPreview} alt="T Photo" className="tenancy-thumb" />}
 											</div>
@@ -493,7 +578,17 @@ function TenancyCertificate() {
 											<div className="upload-item-row">
 												<label>
 													<span className="label-text required">Landlord Passport Photo</span>
-													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setLandlordPhotoFile(f); if (f) setLandlordPhotoPreview(URL.createObjectURL(f)) }} disabled={formLocked} required />
+													<input
+														type="file"
+														accept="image/*"
+														onChange={async (e) => {
+															const f = e.target.files[0]
+															await handlePassportPhotoUpload(f, setLandlordPhotoFile, setLandlordPhotoPreview, 'landlord')
+														}}
+														disabled={formLocked}
+														required
+													/>
+													<p className="muted">Auto-cropped to passport ratio.</p>
 												</label>
 												{landlordPhotoPreview && <img src={landlordPhotoPreview} alt="L Photo" className="tenancy-thumb" />}
 											</div>
@@ -519,11 +614,11 @@ function TenancyCertificate() {
 
 							<div className="govt-form-header">
 								<div className="govt-form-seal-container">
-									<div className="govt-form-seal">Government<br />Seal</div>
+									<img src={emblemDark} alt="Government of India Emblem" className="govt-form-seal-image" />
 								</div>
 								<h2>Government of Assam</h2>
 								<h3>Department of Housing And Urban Affairs</h3>
-								<div className="govt-form-title">FORM I - APPLICATION FOR TENANCY CERTIFICATE</div>
+								<div className="govt-form-title">APPLICATION FOR TENANCY CERTIFICATE</div>
 							</div>
 
 							<section className="govt-form-section">

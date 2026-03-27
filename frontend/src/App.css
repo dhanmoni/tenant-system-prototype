@@ -1266,6 +1266,31 @@ main.main-fluid {
 	width: 100%;
 }
 
+/* Keep certificate "View" page centered within dashboard area */
+.application-details-page {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+}
+
+.application-details-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.application-details-actions .application-back-btn {
+	background: #e2e8f0;
+	border-color: #cbd5e1;
+	color: #0f172a;
+}
+
+.application-details-actions .application-back-btn:hover {
+	background: #cbd5e1;
+	border-color: #94a3b8;
+}
+
 main.main-fluid {
 	max-width: 100%;
 	padding: 0;
@@ -3651,6 +3676,13 @@ main.main-fluid {
 	text-align: center;
 }
 
+.govt-form-seal-image {
+	width: 62px;
+	height: 74px;
+	object-fit: contain;
+	display: inline-block;
+}
+
 .govt-form-header h2 {
 	margin: 5px 0;
 	font-size: 1.4rem;
@@ -3765,6 +3797,57 @@ main.main-fluid {
 	height: 80px;
 }
 
+/* Fixed affixed-document frames in Application Details view */
+.govt-doc-affix-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 16px;
+	margin-top: 16px;
+}
+
+.govt-doc-affix-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.govt-doc-affix-label {
+	font-size: 0.86rem;
+	font-weight: 700;
+	margin-bottom: 8px;
+	color: #334155;
+	text-align: center;
+}
+
+.govt-doc-affix-area {
+	width: 130px;
+	height: 160px;
+	border: 1px solid #94a3b8;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+}
+
+.govt-doc-affix-area--sig {
+	height: 80px;
+}
+
+.govt-doc-affix-area img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+}
+
+.govt-doc-affix-area .affix-placeholder {
+	font-size: 0.78rem;
+	color: #64748b;
+	text-align: center;
+	padding: 0 8px;
+}
+
 .govt-form-declaration {
 	margin-top: 40px;
 	padding: 20px;
@@ -3772,6 +3855,16 @@ main.main-fluid {
 	font-style: italic;
 	font-size: 0.9rem;
 	text-align: justify;
+}
+
+.govt-form-row--submission-date {
+	grid-template-columns: auto auto;
+	justify-content: start;
+	column-gap: 10px;
+}
+
+.govt-form-value--submission-date {
+	font-weight: 700;
 }
 
 .govt-form-watermark {
@@ -3799,6 +3892,86 @@ main.main-fluid {
 	background: #f1f5f9; /* Subtle grey background for the outer wrapper */
 	padding: 40px 20px;
 	border-radius: 12px;
+}
+
+
+@media print {
+	@page {
+		size: A4 portrait;
+		margin: 10mm;
+	}
+
+	/* Print only the formal preview document, not whole dashboard UI */
+	body * {
+		visibility: hidden !important;
+	}
+
+	.tenancy-preview-container,
+	.tenancy-preview-container * {
+		visibility: visible !important;
+	}
+
+	.tenancy-preview-container {
+		position: absolute !important;
+		left: 0 !important;
+		top: 0 !important;
+		width: 100% !important;
+		background: #fff !important;
+		padding: 0 !important;
+		margin: 0 !important;
+		border-radius: 0 !important;
+	}
+
+	.govt-form-document {
+		max-width: none !important;
+		width: 100% !important;
+		margin: 0 !important;
+		border: none !important;
+		box-shadow: none !important;
+		padding: 0 !important;
+		line-height: 1.35 !important;
+		font-size: 12pt !important;
+		overflow: visible !important;
+	}
+
+	.govt-form-watermark {
+		display: none !important;
+	}
+
+	.govt-form-header,
+	.govt-form-section,
+	.govt-form-declaration,
+	.govt-doc-affix-grid,
+	.govt-doc-affix-item,
+	.govt-form-row,
+	.govt-form-full-row {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+
+	.govt-form-section {
+		margin-bottom: 10px !important;
+	}
+
+	.govt-form-section-title {
+		margin-bottom: 8px !important;
+		padding-bottom: 3px !important;
+	}
+
+	.govt-form-row {
+		gap: 8px !important;
+		margin-bottom: 6px !important;
+		padding-bottom: 3px !important;
+	}
+
+	.govt-doc-affix-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+		gap: 10px !important;
+	}
+
+	.no-print {
+		display: none !important;
+	}
 }
 
 .tenancy-preview-section {

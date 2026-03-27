@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useOutletContext, useParams, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import { formatDateTime, formatDate } from '../../utils/formatters'
+import emblemDark from '../../assets/img/emblem-dark.png'
 
 function ApplicationDetails() {
 	const { user } = useOutletContext()
@@ -54,16 +55,24 @@ function ApplicationDetails() {
 	
 	const renderTenancyDetails = () => (
 		<div className="tenancy-preview-container">
+			<div className="form-actions no-print application-details-actions">
+				<button className="secondary application-back-btn" onClick={() => navigate(-1)}>Back</button>
+				<button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
+				{application.agreement_pdf_path && (
+					<button className="secondary" onClick={() => window.open(`${baseUrl}/storage/${application.agreement_pdf_path}`, '_blank')}>View Agreement</button>
+				)}
+			</div>
+
 			<div className="govt-form-document">
 				<div className="govt-form-watermark">OFFICIAL</div>
 
 				<div className="govt-form-header">
 					<div className="govt-form-seal-container">
-						<div className="govt-form-seal">Government<br />Seal</div>
+						<img src={emblemDark} alt="Government of India Emblem" className="govt-form-seal-image" />
 					</div>
 					<h2>Government of Assam</h2>
 					<h3>Department of Housing And Urban Affairs</h3>
-					<div className="govt-form-title">FORM I - APPLICATION FOR TENANCY CERTIFICATE</div>
+					<div className="govt-form-title">APPLICATION FOR TENANCY CERTIFICATE</div>
 				</div>
 
 				<section className="govt-form-section">
@@ -194,34 +203,34 @@ function ApplicationDetails() {
 
 				<section className="govt-form-section">
 					<h4 className="govt-form-section-title"><span className="govt-form-section-num">5</span> Affixed Documents</h4>
-					<div className="govt-form-affix-grid">
-						<div className="govt-form-affix-item">
-							<div className="govt-form-affix-label">Landlord Photograph</div>
-							<div className="govt-form-affix-area">
+					<div className="govt-doc-affix-grid">
+						<div className="govt-doc-affix-item">
+							<div className="govt-doc-affix-label">Landlord Photograph</div>
+							<div className="govt-doc-affix-area">
 								{application.landlord_photo_path ? (
 									<img src={`${baseUrl}/storage/${application.landlord_photo_path}`} alt="Landlord" />
 								) : <div className="affix-placeholder">Affix Photo Here</div>}
 							</div>
 						</div>
-						<div className="govt-form-affix-item">
-							<div className="govt-form-affix-label">Tenant Photograph</div>
-							<div className="govt-form-affix-area">
-								{application.tenant_photo_path ? (
-									<img src={`${baseUrl}/storage/${application.tenant_photo_path}`} alt="Tenant" />
-								) : <div className="affix-placeholder">Affix Photo Here</div>}
-							</div>
-						</div>
-						<div className="govt-form-affix-item">
-							<div className="govt-form-affix-label">Landlord Signature</div>
-							<div className="govt-form-affix-area govt-form-affix-area--sig">
+						<div className="govt-doc-affix-item">
+							<div className="govt-doc-affix-label">Landlord Signature</div>
+							<div className="govt-doc-affix-area govt-doc-affix-area--sig">
 								{application.landlord_signature_path ? (
 									<img src={`${baseUrl}/storage/${application.landlord_signature_path}`} alt="Landlord Sign" />
 								) : <div className="affix-placeholder">Sign Here</div>}
 							</div>
 						</div>
-						<div className="govt-form-affix-item">
-							<div className="govt-form-affix-label">Tenant Signature</div>
-							<div className="govt-form-affix-area govt-form-affix-area--sig">
+						<div className="govt-doc-affix-item">
+							<div className="govt-doc-affix-label">Tenant Photograph</div>
+							<div className="govt-doc-affix-area">
+								{application.tenant_photo_path ? (
+									<img src={`${baseUrl}/storage/${application.tenant_photo_path}`} alt="Tenant" />
+								) : <div className="affix-placeholder">Affix Photo Here</div>}
+							</div>
+						</div>
+						<div className="govt-doc-affix-item">
+							<div className="govt-doc-affix-label">Tenant Signature</div>
+							<div className="govt-doc-affix-area govt-doc-affix-area--sig">
 								{application.tenant_signature_path ? (
 									<img src={`${baseUrl}/storage/${application.tenant_signature_path}`} alt="Tenant Sign" />
 								) : <div className="affix-placeholder">Sign Here</div>}
@@ -232,19 +241,11 @@ function ApplicationDetails() {
 
 				<section className="govt-form-declaration">
 					<p><strong>Declaration:</strong> I/We hereby declare that the particulars given above are true and correct to the best of my/our knowledge and belief. We understand that any false statement or suppression of facts may lead to rejection of application or cancellation of certificate.</p>
-					<div className="govt-form-row" style={{ marginTop: '1rem' }}>
+					<div className="govt-form-row govt-form-row--submission-date" style={{ marginTop: '1rem' }}>
 						<span className="govt-form-label">Date of Submission:</span>
-						<span className="govt-form-value">{formatDate(application.created_at)}</span>
+						<span className="govt-form-value govt-form-value--submission-date">{formatDate(application.created_at)}</span>
 					</div>
 				</section>
-			</div>
-
-			<div className="form-actions no-print" style={{ marginTop: '2rem' }}>
-				<button onClick={() => navigate(-1)}>Back</button>
-				<button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
-				{application.agreement_pdf_path && (
-					<button className="secondary" onClick={() => window.open(`${baseUrl}/storage/${application.agreement_pdf_path}`, '_blank')}>View Agreement</button>
-				)}
 			</div>
 		</div>
 	)
