@@ -24,7 +24,7 @@ class TenancyApplicationController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $tenancyApplication->load('office', 'villageWard');
+        $tenancyApplication->load('office.district', 'villageWard');
 
         return response()->json(['application' => $tenancyApplication]);
     }

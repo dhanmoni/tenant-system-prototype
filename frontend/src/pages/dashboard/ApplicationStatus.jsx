@@ -109,10 +109,12 @@ function ApplicationStatus() {
 		return status || '-'
 	}
 
-	const copyToClipboard = (text) => {
+	const copyToClipboard = (text, identifier) => {
 		navigator.clipboard.writeText(text).then(() => {
-			setCopiedRefCode(text)
-			setTimeout(() => setCopiedRefCode(''), 2000)
+			setCopiedRefCode(identifier)
+			setTimeout(() => {
+				setCopiedRefCode(prev => prev === identifier ? '' : prev)
+			}, 2000)
 		})
 	}
 
@@ -174,8 +176,10 @@ function ApplicationStatus() {
 						No applications found.
 					</div>
 				) : (
-					categories.map((cat, idx) => cat.items.length > 0 && (
-						<div key={idx} className="status-category-table">
+					categories.map((cat, idx) => {
+						const isTenancyType = cat.title === 'Tenancy Certificate'
+						return cat.items.length > 0 && (
+							<div key={idx} className="status-category-table">
 							<div className="status-category-title">{cat.title}</div>
 							<table className="admin-table status-table">
 								<thead>
@@ -208,34 +212,36 @@ function ApplicationStatus() {
 											</div>
 											<span className="resizer" onMouseDown={(e) => startResizing('status_app_no', e)} />
 										</th>
-										<th style={{ width: columnWidths['status_uid'] }}>
-											<div className="th-content">
-												<span>UID</span>
-												<button
-													className={`header-action-btn ${statusSearchUid ? 'active' : ''}`}
-													onClick={() => setActiveSearchColumn(activeSearchColumn === `cat-${idx}-uid` ? null : `cat-${idx}-uid`)}
-												>
-													<Icon name="search" className={`search-icon-svg ${activeSearchColumn === `cat-${idx}-uid` ? 'active' : ''}`} />
-												</button>
-												{activeSearchColumn === `cat-${idx}-uid` && (
-													<div className="header-search-popup">
-														<input
-															type="text"
-															value={statusSearchUid}
-															onChange={(e) => setStatusSearchUid(e.target.value)}
-															onKeyDown={(e) => e.key === 'Enter' && (loadStatusApplications(1), setActiveSearchColumn(null))}
-															placeholder="Search UID..."
-															autoFocus
-														/>
-														<div className="popup-actions">
-															<button onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
-															<button className="btn-clear" onClick={() => { setStatusSearchUid(''); loadStatusApplications(1, { uid: '' }); setActiveSearchColumn(null); }}>Clear</button>
+										{isTenancyType && (
+											<th style={{ width: columnWidths['status_uid'] }}>
+												<div className="th-content">
+													<span>UID</span>
+													<button
+														className={`header-action-btn ${statusSearchUid ? 'active' : ''}`}
+														onClick={() => setActiveSearchColumn(activeSearchColumn === `cat-${idx}-uid` ? null : `cat-${idx}-uid`)}
+													>
+														<Icon name="search" className={`search-icon-svg ${activeSearchColumn === `cat-${idx}-uid` ? 'active' : ''}`} />
+													</button>
+													{activeSearchColumn === `cat-${idx}-uid` && (
+														<div className="header-search-popup">
+															<input
+																type="text"
+																value={statusSearchUid}
+																onChange={(e) => setStatusSearchUid(e.target.value)}
+																onKeyDown={(e) => e.key === 'Enter' && (loadStatusApplications(1), setActiveSearchColumn(null))}
+																placeholder="Search UID..."
+																autoFocus
+															/>
+															<div className="popup-actions">
+																<button onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+																<button className="btn-clear" onClick={() => { setStatusSearchUid(''); loadStatusApplications(1, { uid: '' }); setActiveSearchColumn(null); }}>Clear</button>
+															</div>
 														</div>
-													</div>
-												)}
-											</div>
-											<span className="resizer" onMouseDown={(e) => startResizing('status_uid', e)} />
-										</th>
+													)}
+												</div>
+												<span className="resizer" onMouseDown={(e) => startResizing('status_uid', e)} />
+											</th>
+										)}
 										<th style={{ width: columnWidths['status_date'] }}>
 											<div className="th-content sortable" onClick={() => handleStatusSort('created_at')}>
 												<span>Application Date</span>
@@ -247,10 +253,12 @@ function ApplicationStatus() {
 											<span>Status</span>
 											<span className="resizer" onMouseDown={(e) => startResizing('status_status', e)} />
 										</th>
-										<th style={{ width: columnWidths['status_completion'] }}>
-											<span>Completion</span>
-											<span className="resizer" onMouseDown={(e) => startResizing('status_completion', e)} />
-										</th>
+										{isTenancyType && (
+											<th style={{ width: columnWidths['status_completion'] }}>
+												<span>Completion</span>
+												<span className="resizer" onMouseDown={(e) => startResizing('status_completion', e)} />
+											</th>
+										)}
 										<th className="table-actions-head">Actions</th>
 									</tr>
 								</thead>
@@ -258,30 +266,31 @@ function ApplicationStatus() {
 									{cat.items.map((app) => (
 										<tr key={app.row_key || app.id}>
 											<td>{app.application_no}</td>
-											<td>{app.uid || '-'}</td>
+											{isTenancyType && <td>{app.uid || '-'}</td>}
 											<td>{formatDate(app.created_at)}</td>
 											<td>{formatStatusText(app.status, app.application_type)}</td>
-											<td>
-												{app.application_type?.toLowerCase().includes('tenancy certificate') ? (
-													app.initiator_completed && app.second_party_completed ? (
+											{isTenancyType && (
+												<td>
+													{app.initiator_completed && app.second_party_completed ? (
 														<span className="completion-badge completion-badge--done">Both Completed</span>
 													) : (
 														<span className="completion-badge completion-badge--partial">
 															Awaiting {getAwaitingPartyLabel(app.initiator_role)}
 														</span>
 													)
-												) : (
-													<span className="completion-badge completion-badge--done">Submitted</span>
-												)}
-											</td>
+												}
+												</td>
+											)}
 											<td className="table-actions">
 												<button
 													type="button"
 													className="table-icon-btn"
 													title="View details"
 													onClick={() => {
-														const type = app.form_key ? 'form' : 'tenancy'
-														navigate(`/dashboard/status/${type}/${app.id}`)
+														const isTenancy = app.application_type?.toLowerCase().includes('tenancy certificate')
+														const type = isTenancy ? 'tenancy' : (app.form_key || 'form')
+														const identifier = app.application_no
+														navigate(`/dashboard/status/${type}/${identifier}`)
 													}}
 												>
 													<Icon name="eye" />
@@ -290,9 +299,9 @@ function ApplicationStatus() {
 													<button
 														type="button"
 														className="secondary"
-														onClick={() => copyToClipboard(`${window.location.origin}/join?refCode=${app.ref_code}`)}
+														onClick={() => copyToClipboard(`${window.location.origin}/join?refCode=${app.ref_code}`, app.ref_code)}
 													>
-														{copiedRefCode ? '✓ Copied!' : 'Copy Invite Link'}
+														{copiedRefCode === app.ref_code ? '✓ Copied!' : 'Copy Invite Link'}
 													</button>
 												)}
 											</td>
@@ -300,8 +309,9 @@ function ApplicationStatus() {
 									))}
 								</tbody>
 							</table>
-						</div>
-					))
+							</div>
+						)
+					})
 				)}
 
 				<div className="table-pagination">

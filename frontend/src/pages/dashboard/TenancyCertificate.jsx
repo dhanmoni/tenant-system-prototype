@@ -312,7 +312,6 @@ function TenancyCertificate() {
 									<option value="">Select Role</option>
 									<option value="LANDLORD">Landlord</option>
 									<option value="TENANT">Tenant</option>
-									<option value="PROPERTY_MANAGER">Property Manager</option>
 								</select>
 							</label>
 
@@ -515,91 +514,158 @@ function TenancyCertificate() {
 
 				{tenancyStep === 5 && (
 					<div className="tenancy-preview-container">
-						<h2>Preview Application Details</h2>
-						<div className="tenancy-preview-section">
-							<h3>Parties</h3>
-							<div className="preview-grid">
-								<div><strong>Initiator:</strong> {initiatorRole}</div>
-								<div><strong>Office:</strong> {tenancyOffices.find(o => String(o.id) === tenancyOfficeId)?.name}</div>
-								<div><strong>District:</strong> {tenancyDistricts.find(d => String(d.id) === tenancyDistrictId)?.name}</div>
-								<div><strong>Village/Ward:</strong> {tenancyVillageWards.find(vw => String(vw.id) === tenancyVillageWardId)?.name}</div>
-							</div>
+						<div className="govt-form-document">
+							<div className="govt-form-watermark">PREVIEW</div>
 
-							<div className="preview-party-info">
-								<h4>Landlord</h4>
-								<div className="preview-grid party-details">
-									<div><strong>Name:</strong> {landlordName}</div>
-									<div><strong>Phone:</strong> {landlordPhone}</div>
-									<div><strong>Email:</strong> {landlordEmail || 'N/A'}</div>
-									<div><strong>PAN:</strong> {landlordPan}</div>
+							<div className="govt-form-header">
+								<div className="govt-form-seal-container">
+									<div className="govt-form-seal">Government<br />Seal</div>
 								</div>
-								<div className="preview-full-row"><strong>Address:</strong> {landlordAddress}</div>
+								<h2>Government of Assam</h2>
+								<h3>Department of Housing And Urban Affairs</h3>
+								<div className="govt-form-title">FORM I - APPLICATION FOR TENANCY CERTIFICATE</div>
 							</div>
 
-							{managerName && managerName !== 'NA' && (
-								<div className="preview-party-info" style={{ marginTop: '1.5rem' }}>
-									<h4>Manager</h4>
-									<div className="preview-grid party-details">
-										<div><strong>Name:</strong> {managerName}</div>
-										<div><strong>Phone:</strong> {managerPhone}</div>
-										<div><strong>Email:</strong> {managerEmail || 'N/A'}</div>
-										<div><strong>PAN:</strong> {managerPan}</div>
-									</div>
-									<div className="preview-full-row"><strong>Address:</strong> {managerAddress}</div>
+							<section className="govt-form-section">
+								<h4 className="govt-form-section-title"><span className="govt-form-section-num">1</span> Application Details</h4>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Initiator Role:</span>
+									<span className="govt-form-value">{initiatorRole}</span>
 								</div>
-							)}
-
-							<div className="preview-party-info" style={{ marginTop: '1.5rem' }}>
-								<h4>Tenant</h4>
-								<div className="preview-grid party-details">
-									<div><strong>Name:</strong> {tenantName}</div>
-									<div><strong>Phone:</strong> {tenantPhone}</div>
-									<div><strong>Email:</strong> {tenantEmail || 'N/A'}</div>
-									<div><strong>PAN:</strong> {tenantPan}</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Application Type:</span>
+									<span className="govt-form-value">{applyType}</span>
 								</div>
-								<div className="preview-full-row"><strong>Address:</strong> {tenantAddress}</div>
-								{tenantPreviousTenancy && <div className="preview-full-row"><strong>Previous Tenancy:</strong> {tenantPreviousTenancy}</div>}
-							</div>
-						</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Date of Agreement:</span>
+									<span className="govt-form-value">{tenancyRegistrationDate}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Applying Office:</span>
+									<span className="govt-form-value">{tenancyOffices.find(o => String(o.id) === tenancyOfficeId)?.name}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Location:</span>
+									<span className="govt-form-value">
+										{tenancyVillageWards.find(vw => String(vw.id) === tenancyVillageWardId)?.name}, {tenancyDistricts.find(d => String(d.id) === tenancyDistrictId)?.name}
+									</span>
+								</div>
+							</section>
 
-						<div className="tenancy-preview-section">
-							<h3>Property Details</h3>
-							<div className="preview-grid">
-								<div><strong>Possession Date:</strong> {propertyPossessionDate}</div>
-								<div><strong>Tenancy End Date:</strong> {propertyTenancyEndDate}</div>
-								<div><strong>Monthly Rent:</strong> ₹{propertyRentPayable}</div>
-								<div><strong>Duration:</strong> {propertyTenancyDuration || '-'}</div>
-							</div>
-							<div style={{ marginTop: '1rem' }}>
-								<strong>Premises Description:</strong>
-								<p style={{ marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>{propertyPremisesDescription}</p>
-							</div>
+							<section className="govt-form-section">
+								<h4 className="govt-form-section-title"><span className="govt-form-section-num">2</span> Landlord Details</h4>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Name:</span>
+									<span className="govt-form-value">{landlordName}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Phone:</span>
+									<span className="govt-form-value">{landlordPhone}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Email:</span>
+									<span className="govt-form-value">{landlordEmail || 'N/A'}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">PAN:</span>
+									<span className="govt-form-value">{landlordPan}</span>
+								</div>
+								<div className="govt-form-full-row">
+									<div className="govt-form-label">Full Address:</div>
+									<div className="govt-form-value">{landlordAddress}</div>
+								</div>
+							</section>
 
-							<div className="charges-summary-box" style={{ marginTop: '1.5rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
-								<h5 style={{ marginBottom: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>Additional Charges & Furnishing</h5>
-								{propertyFurnitureDescription && (
-									<div style={{ marginBottom: '1rem' }}>
-										<strong>Furniture:</strong> {propertyFurnitureDescription}
+							<section className="govt-form-section">
+								<h4 className="govt-form-section-title"><span className="govt-form-section-num">3</span> Tenant Details</h4>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Name:</span>
+									<span className="govt-form-value">{tenantName}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Phone:</span>
+									<span className="govt-form-value">{tenantPhone}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Email:</span>
+									<span className="govt-form-value">{tenantEmail || 'N/A'}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">PAN:</span>
+									<span className="govt-form-value">{tenantPan}</span>
+								</div>
+								<div className="govt-form-full-row">
+									<div className="govt-form-label">Full Address:</div>
+									<div className="govt-form-value">{tenantAddress}</div>
+								</div>
+								{tenantPreviousTenancy && (
+									<div className="govt-form-full-row">
+										<div className="govt-form-label">Previous Tenancy Details:</div>
+										<div className="govt-form-value">{tenantPreviousTenancy}</div>
 									</div>
 								)}
-								<div className="preview-grid charges-summary">
-									<div><strong>Electricity:</strong> {propertyChargeElectricity || '-'}</div>
-									<div><strong>Water:</strong> {propertyChargeWater || '-'}</div>
-									<div><strong>Furnishing:</strong> {propertyChargeFurnishing || '-'}</div>
-									<div><strong>Other Services:</strong> {propertyChargeOtherServices || '-'}</div>
+							</section>
+
+							<section className="govt-form-section">
+								<h4 className="govt-form-section-title"><span className="govt-form-section-num">4</span> Property & Financials</h4>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Possession Date:</span>
+									<span className="govt-form-value">{propertyPossessionDate}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Tenancy End Date:</span>
+									<span className="govt-form-value">{propertyTenancyEndDate}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Duration:</span>
+									<span className="govt-form-value">{propertyTenancyDuration}</span>
+								</div>
+								<div className="govt-form-row">
+									<span className="govt-form-label">Monthly Rent:</span>
+									<span className="govt-form-value">₹{propertyRentPayable}</span>
+								</div>
+								<div className="govt-form-full-row">
+									<div className="govt-form-label">Premises Description:</div>
+									<div className="govt-form-value">{propertyPremisesDescription}</div>
+								</div>
+								<div className="govt-form-full-row">
+									<div className="govt-form-label">Additional Charges:</div>
+									<div className="govt-form-value" style={{ fontSize: '0.9rem' }}>
+										Electricity: {propertyChargeElectricity || 0}, Water: {propertyChargeWater || 0},
+										Furnishing: {propertyChargeFurnishing || 0}, Other: {propertyChargeOtherServices || 0}
+									</div>
+								</div>
+							</section>
+
+							<div className="govt-form-affix-area">
+								<div className="affix-box">
+									<div className="affix-frame">
+										{initiatorRole === 'LANDLORD' ? (
+											landlordPhotoPreview ? <img src={landlordPhotoPreview} alt="L Photo" /> : 'Photo here'
+										) : (
+											tenantPhotoPreview ? <img src={tenantPhotoPreview} alt="T Photo" /> : 'Photo here'
+										)}
+									</div>
+									<div className="affix-label">Photograph</div>
+								</div>
+								<div className="affix-box">
+									<div className="affix-frame signature-frame">
+										{initiatorRole === 'LANDLORD' ? (
+											landlordSignaturePreview ? <img src={landlordSignaturePreview} alt="L Sign" /> : 'Signature here'
+										) : (
+											tenantSignaturePreview ? <img src={tenantSignaturePreview} alt="T Sign" /> : 'Signature here'
+										)}
+									</div>
+									<div className="affix-label">Signature</div>
 								</div>
 							</div>
-						</div>
 
-						<div className="tenancy-preview-section">
-							<h3>Documents</h3>
-							<p>{agreementFile ? `✓ Agreement: ${agreementFile.name}` : '✗ Agreement not uploaded'}</p>
-							<div className="preview-images-row">
-								{landlordPhotoPreview && <img src={landlordPhotoPreview} alt="L" />}
-								{landlordSignaturePreview && <img src={landlordSignaturePreview} alt="LS" />}
-								{tenantPhotoPreview && <img src={tenantPhotoPreview} alt="T" />}
-								{tenantSignaturePreview && <img src={tenantSignaturePreview} alt="TS" />}
+							<div className="govt-form-declaration">
+								<strong>DECLARATION:</strong> I hereby declare that the information provided above is true to the best of my knowledge and belief. I understand that any false statement or suppression of material facts will lead to the rejection of my application or cancellation of any certificate issued based on this application.
 							</div>
+						</div>
+						<div className="preview-actions-hint">
+							Please review all details carefully before final submission.
 						</div>
 					</div>
 				)}

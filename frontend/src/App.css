@@ -3609,48 +3609,200 @@ main.main-fluid {
 	margin-top: 8px;
 }
 
-.tenancy-preview-container {
+/* Formal Govt Form Preview Styles */
+.govt-form-document {
 	background: #fff;
-	padding: 24px;
-	border-radius: 8px;
+	color: #000;
+	padding: 40px 60px;
+	border: 1px solid #d1d5db;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+	max-width: 900px;
+	margin: 0 auto;
+	font-family: 'Times New Roman', Times, serif; /* Traditional serif for govt forms */
+	position: relative;
+	overflow: hidden;
+	line-height: 1.6;
+}
+
+.govt-form-header {
+	text-align: center;
+	margin-bottom: 30px;
+	border-bottom: 2px solid #000;
+	padding-bottom: 20px;
+	position: relative;
+}
+
+.govt-form-seal-container {
+	margin-bottom: 10px;
+}
+
+.govt-form-seal {
+	width: 80px;
+	height: 80px;
+	border: 2px solid #000;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 10px;
+	font-weight: bold;
+	text-transform: uppercase;
+	padding: 5px;
+	text-align: center;
+}
+
+.govt-form-header h2 {
+	margin: 5px 0;
+	font-size: 1.4rem;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	color: #000;
+}
+
+.govt-form-header h3 {
+	margin: 5px 0;
+	font-size: 1.1rem;
+	font-weight: normal;
+	color: #333;
+}
+
+.govt-form-title {
+	margin-top: 15px;
+	font-size: 1.25rem;
+	font-weight: bold;
+	text-decoration: underline;
+	text-underline-offset: 4px;
+}
+
+.govt-form-section {
+	margin-bottom: 25px;
+}
+
+.govt-form-section-title {
+	font-size: 1.1rem;
+	font-weight: bold;
+	text-transform: uppercase;
+	border-bottom: 1px solid #ccc;
+	margin-bottom: 15px;
+	padding-bottom: 5px;
+	display: flex;
+	align-items: center;
+}
+
+.govt-form-section-num {
+	margin-right: 10px;
+	background: #000;
+	color: #fff;
+	padding: 0 8px;
+	border-radius: 2px;
+	font-family: sans-serif;
+	font-size: 0.9rem;
+}
+
+.govt-form-row {
+	display: grid;
+	grid-template-columns: 1fr 1.5fr;
+	gap: 15px;
+	margin-bottom: 10px;
+	border-bottom: 1px dotted #eee;
+	padding-bottom: 5px;
+}
+
+.govt-form-label {
+	font-weight: bold;
+	font-size: 0.95rem;
+	color: #444;
+}
+
+.govt-form-value {
+	font-size: 1rem;
+	color: #000;
+}
+
+.govt-form-full-row {
+	margin-bottom: 15px;
+}
+
+.govt-form-affix-area {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 30px;
+	margin-top: 30px;
+	padding: 20px;
+	background: #fcfcfc;
+	border: 1px dashed #ccc;
+}
+
+.affix-box {
+	text-align: center;
+}
+
+.affix-frame {
+	width: 130px;
+	height: 160px;
+	border: 1px solid #999;
+	margin: 0 auto 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+	position: relative;
+}
+
+.affix-frame img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+.affix-label {
+	font-size: 0.85rem;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+.signature-frame {
+	height: 80px;
+}
+
+.govt-form-declaration {
+	margin-top: 40px;
+	padding: 20px;
+	border: 1px solid #eee;
+	font-style: italic;
+	font-size: 0.9rem;
+	text-align: justify;
+}
+
+.govt-form-watermark {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) rotate(-45deg);
+	font-size: 8rem;
+	color: rgba(0, 0, 0, 0.03);
+	font-weight: 900;
+	pointer-events: none;
+	white-space: nowrap;
+	text-transform: uppercase;
+}
+
+.preview-actions-hint {
+	text-align: center;
+	margin-top: 20px;
+	font-size: 0.9rem;
+	color: #64748b;
+	font-style: italic;
+}
+
+.tenancy-preview-container {
+	background: #f1f5f9; /* Subtle grey background for the outer wrapper */
+	padding: 40px 20px;
+	border-radius: 12px;
 }
 
 .tenancy-preview-section {
 	margin-bottom: 32px;
-}
-
-.tenancy-preview-section h3 {
-	border-bottom: 2px solid var(--gov-blue);
-	padding-bottom: 8px;
-	margin-bottom: 16px;
-	font-size: 1.1rem;
-}
-
-.tenancy-preview-section h4 {
-	margin: 16px 0 8px;
-	color: #475569;
-	font-size: 0.95rem;
-}
-
-.charges-summary {
-	background: #f8fafc;
-	padding: 16px;
-	border-radius: 4px;
-}
-
-.preview-images-row {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 16px;
-	margin-top: 16px;
-}
-
-.preview-images-row img {
-	height: 100px;
-	width: 100px;
-	object-fit: cover;
-	border: 1px solid #e2e8f0;
-	border-radius: 4px;
 }
 
 .tenancy-certificate-page .tenancy-page-header h1 {

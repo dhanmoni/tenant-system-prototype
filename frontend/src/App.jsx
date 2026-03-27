@@ -353,7 +353,7 @@ function App() {
 						<Route path="profile" element={<Profile />} />
 						<Route path="tenancy-certificate" element={<TenancyCertificate />} />
 						<Route path="status" element={<ApplicationStatus />} />
-						<Route path="status/:type/:id" element={<ApplicationDetails />} />
+						<Route path="status/:type/:applicationNo" element={<ApplicationDetails />} />
 						<Route path=":formType" element={<FormPortal />} />
 						{/* Admin Routes */}
 						<Route path="admin/state" element={<StateManagement />} />

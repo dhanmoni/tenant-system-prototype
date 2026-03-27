@@ -54,21 +54,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:tenant owner')->group(function () {
         Route::get('/tenant-forms/my', [TenantFormsStatusController::class, 'my']);
         Route::post('/rent-revision-applications', [RentRevisionApplicationController::class, 'store']);
-        Route::get('/rent-revision-applications/{id}', [RentRevisionApplicationController::class, 'show']);
+        Route::get('/rent-revision-applications/{application}', [RentRevisionApplicationController::class, 'show']);
         Route::post('/other-charges-revision-applications', [OtherChargesRevisionApplicationController::class, 'store']);
-        Route::get('/other-charges-revision-applications/{id}', [OtherChargesRevisionApplicationController::class, 'show']);
+        Route::get('/other-charges-revision-applications/{application}', [OtherChargesRevisionApplicationController::class, 'show']);
         Route::post('/valuer-appointment-applications', [ValuerAppointmentApplicationController::class, 'store']);
-        Route::get('/valuer-appointment-applications/{id}', [ValuerAppointmentApplicationController::class, 'show']);
+        Route::get('/valuer-appointment-applications/{application}', [ValuerAppointmentApplicationController::class, 'show']);
         Route::post('/rent-court-possession-applications', [RentCourtPossessionApplicationController::class, 'store']);
-        Route::get('/rent-court-possession-applications/{id}', [RentCourtPossessionApplicationController::class, 'show']);
+        Route::get('/rent-court-possession-applications/{application}', [RentCourtPossessionApplicationController::class, 'show']);
         Route::post('/rent-court-filing-applications', [RentCourtFilingApplicationController::class, 'store']);
-        Route::get('/rent-court-filing-applications/{id}', [RentCourtFilingApplicationController::class, 'show']);
+        Route::get('/rent-court-filing-applications/{application}', [RentCourtFilingApplicationController::class, 'show']);
         Route::post('/rent-authority-filing-applications', [RentAuthorityFilingApplicationController::class, 'store']);
-        Route::get('/rent-authority-filing-applications/{id}', [RentAuthorityFilingApplicationController::class, 'show']);
+        Route::get('/rent-authority-filing-applications/{application}', [RentAuthorityFilingApplicationController::class, 'show']);
         Route::post('/rent-court-appeal-applications', [RentCourtAppealApplicationController::class, 'store']);
-        Route::get('/rent-court-appeal-applications/{id}', [RentCourtAppealApplicationController::class, 'show']);
+        Route::get('/rent-court-appeal-applications/{application}', [RentCourtAppealApplicationController::class, 'show']);
         Route::post('/rent-tribunal-appeal-applications', [RentTribunalAppealApplicationController::class, 'store']);
-        Route::get('/rent-tribunal-appeal-applications/{id}', [RentTribunalAppealApplicationController::class, 'show']);
+        Route::get('/rent-tribunal-appeal-applications/{application}', [RentTribunalAppealApplicationController::class, 'show']);
     });
 });
 

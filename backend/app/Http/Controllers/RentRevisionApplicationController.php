@@ -75,14 +75,16 @@ class RentRevisionApplicationController extends Controller
         ], 201);
     }
 
-    public function show(Request $request, int $id)
+    public function show(Request $request, RentRevisionApplication $application)
     {
         $user = $request->user();
         if (!$user || $user->role !== 'tenant owner') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $application = RentRevisionApplication::where('user_id', $user->id)->findOrFail($id);
+        if ($application->user_id !== $user->id) {
+            return response()->json(['message' => 'Not Found'], 404);
+        }
 
         return response()->json([
             'application' => $application,

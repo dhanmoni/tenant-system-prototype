@@ -13,6 +13,11 @@ class TenancyApplication extends Model
         'second_party_completed' => 'boolean',
     ];
 
+    public function getRouteKeyName()
+    {
+        return 'application_no';
+    }
+
     protected $fillable = [
         'application_no',
         'ref_code',

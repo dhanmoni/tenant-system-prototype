@@ -142,9 +142,10 @@ function Login({ onLogin }) {
 			await csrf()
 			const { data } = await api.post('/api/login', loginForm)
 			onLogin(data.user)
-			const from = location.state?.from?.pathname || '/dashboard'
-			const search = location.state?.from?.search || ''
-			navigate(from + search, { replace: true })
+			const fromPath = location.state?.from?.pathname || '/dashboard'
+			const fromSearch = location.state?.from?.search || ''
+			const finalTarget = (fromPath.includes('/join') || fromPath.includes('/dashboard/join')) ? (fromPath + fromSearch) : '/dashboard'
+			navigate(finalTarget, { replace: true })
 		} catch (err) {
 			setLoginError(err?.response?.data?.message || 'Login failed')
 		} finally {
@@ -189,9 +190,10 @@ function Login({ onLogin }) {
 			await csrf()
 			const { data } = await api.post('/api/login', { phone: regPendingPhone, otp: regOtp })
 			onLogin(data.user)
-			const from = location.state?.from?.pathname || '/dashboard'
-			const search = location.state?.from?.search || ''
-			navigate(from + search, { replace: true })
+			const fromPath = location.state?.from?.pathname || '/dashboard'
+			const fromSearch = location.state?.from?.search || ''
+			const finalTarget = (fromPath.includes('/join') || fromPath.includes('/dashboard/join')) ? (fromPath + fromSearch) : '/dashboard'
+			navigate(finalTarget, { replace: true })
 		} catch (err) {
 			setRegError(err?.response?.data?.message || 'OTP verification failed')
 		} finally {
