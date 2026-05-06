@@ -114,7 +114,7 @@ function JoinApplication() {
 		return (
 			<div className="dashboard-card">
 				<h1>Join Application</h1>
-				<div className="error">{error}</div>
+				<div className="error" style={{ marginBottom: '20px', marginTop: '20px' }}>{error}</div>
 				<button type="button" onClick={() => navigate('/dashboard')}>
 					Go to Dashboard
 				</button>

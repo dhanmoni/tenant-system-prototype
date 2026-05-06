@@ -217,6 +217,14 @@ class TenancyApplicationController extends Controller
             ], 403);
         }
 
+        // Validate that the logged-in user's phone matches the second party's phone
+        $expectedPhone = $secondPartyRole === 'LANDLORD' ? $application->landlord_phone : $application->tenant_phone;
+        if ($user->phone !== $expectedPhone) {
+            return response()->json([
+                'message' => 'Unauthorized. Your registered phone number (' . ($user->phone ?? 'N/A') . ') does not match the ' . strtolower($secondPartyRole) . ' phone number provided in this application.',
+            ], 403);
+        }
+
         return response()->json([
             'application' => [
                 'id' => $application->id,
@@ -289,6 +297,14 @@ class TenancyApplicationController extends Controller
         if ($application->initiator_role !== 'PROPERTY_MANAGER' && $userRole === $application->initiator_role) {
             return response()->json([
                 'message' => 'You cannot join as the same role as the initiator.',
+            ], 403);
+        }
+
+        // Validate that the logged-in user's phone matches the second party's phone
+        $expectedPhone = $secondPartyRole === 'LANDLORD' ? $application->landlord_phone : $application->tenant_phone;
+        if ($user->phone !== $expectedPhone) {
+            return response()->json([
+                'message' => 'Unauthorized. Your registered phone number (' . ($user->phone ?? 'N/A') . ') does not match the ' . strtolower($secondPartyRole) . ' phone number provided in this application.',
             ], 403);
         }
 
