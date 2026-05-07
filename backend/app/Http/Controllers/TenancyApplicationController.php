@@ -591,6 +591,8 @@ class TenancyApplicationController extends Controller
             'uid',
             'landlord_user_id',
             'tenant_user_id',
+            'landlord_phone',
+            'tenant_phone',
         ]);
 
         return response()->json($applications);

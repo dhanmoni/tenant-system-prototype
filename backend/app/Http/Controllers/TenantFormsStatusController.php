@@ -82,6 +82,8 @@ class TenantFormsStatusController extends Controller
                 'initiator_completed',
                 'second_party_completed',
                 'uid',
+                'landlord_phone',
+                'tenant_phone',
             ]);
 
         $items = [];
@@ -100,6 +102,8 @@ class TenantFormsStatusController extends Controller
                 'initiator_completed' => (bool) $app->initiator_completed,
                 'second_party_completed' => (bool) $app->second_party_completed,
                 'ref_code' => $app->ref_code ?? null,
+                'landlord_phone' => $app->landlord_phone ?? null,
+                'tenant_phone' => $app->tenant_phone ?? null,
             ];
         }
 
