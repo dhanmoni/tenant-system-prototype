@@ -9,13 +9,16 @@ use Illuminate\Http\Request;
 
 class DistrictController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $districts = District::with(['state', 'assistantDirector', 'districtHead'])
-            ->orderBy('name')
-            ->paginate(5);
+        $query = District::with(['state', 'assistantDirector', 'districtHead'])
+            ->orderBy('name');
 
-        return response()->json($districts);
+        if ($request->boolean('all')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate(5));
     }
 
     public function publicIndex()

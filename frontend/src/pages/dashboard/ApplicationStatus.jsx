@@ -53,7 +53,7 @@ function ApplicationStatus() {
 				sort_by: overrides.sort_by || statusSortBy,
 				sort_order: overrides.sort_order || statusSortOrder,
 			}
-			const endpoint = user?.role === 'tenant owner' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
+			const endpoint = user?.role === 'user' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
 			const { data } = await api.get(endpoint, { params })
 			const list = Array.isArray(data) ? data : (data?.data ?? [])
 			setStatusApplications(list)
@@ -372,3 +372,4 @@ function ApplicationStatus() {
 }
 
 export default ApplicationStatus
+

@@ -23,7 +23,7 @@ class TenantFormsStatusController extends Controller
         }
 
         // This endpoint is only used by the tenant user status page.
-        if (($user->role ?? null) !== 'tenant owner') {
+        if (($user->role ?? null) !== 'user') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -107,7 +107,7 @@ class TenantFormsStatusController extends Controller
             ];
         }
 
-        // Other Assam Tenancy Rules draft forms (tenant owner only)
+        // Other Assam Tenancy Rules draft forms (user only)
         $formTables = [
             'form-i-rent-revision' => [
                 'model' => RentRevisionApplication::class,
@@ -213,4 +213,5 @@ class TenantFormsStatusController extends Controller
         ]);
     }
 }
+
 

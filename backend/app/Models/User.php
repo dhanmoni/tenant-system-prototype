@@ -17,6 +17,7 @@ class User extends Authenticatable
     public const ROLE_ASSISTANT_DIRECTOR = 'assistant_director';
     public const ROLE_DISTRICT_HEAD = 'district_head';
     public const ROLE_DISTRICT_ASSISTANT = 'district_assistant';
+    public const ROLE_USER = 'user';
 
     /**
      * The attributes that are mass assignable.
@@ -74,6 +75,7 @@ class User extends Authenticatable
             self::ROLE_ASSISTANT_DIRECTOR,
             self::ROLE_DISTRICT_HEAD,
             self::ROLE_DISTRICT_ASSISTANT,
+            self::ROLE_USER,
         ];
     }
 

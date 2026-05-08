@@ -27,7 +27,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'] ?? null,
-            'role' => 'tenant owner',
+            'role' => 'user',
             'district_id' => $data['district_id'],
             'phone' => $data['phone'],
             'approved_at' => now(),
@@ -86,7 +86,7 @@ class AuthController extends Controller
         if (
             !$user->approved_at &&
             $user->role !== User::ROLE_SYSTEM_ADMIN &&
-            $user->role !== 'tenant owner'
+            $user->role !== 'user'
         ) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
@@ -139,3 +139,4 @@ class AuthController extends Controller
         return response()->json(['user' => $request->user()]);
     }
 }
+

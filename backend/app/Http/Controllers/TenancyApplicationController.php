@@ -533,7 +533,7 @@ class TenancyApplicationController extends Controller
 
         $query = TenancyApplication::query();
 
-        if ($user->profile_type === 'landlord' || $user->profile_type === 'tenant' || $user->role === 'tenant owner') {
+        if ($user->profile_type === 'landlord' || $user->profile_type === 'tenant' || $user->role === 'user') {
             $query->where(function ($q) use ($user) {
                 $q->where('landlord_user_id', $user->id)
                   ->orWhere('tenant_user_id', $user->id)
@@ -759,3 +759,4 @@ class TenancyApplicationController extends Controller
         return 'LANDLORD';
     }
 }
+

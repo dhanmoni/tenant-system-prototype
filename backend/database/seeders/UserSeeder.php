@@ -88,10 +88,10 @@ class UserSeeder extends Seeder
                 'approved_at' => now(),
             ],
             [
-                'name' => 'Tenant Owner',
+                'name' => 'user',
                 'email' => 'tenant@nic.in',
                 'password' => 'password',
-                'role' => 'tenant owner',
+                'role' => User::ROLE_USER,
                 'district_id' => $district?->id,
                 'office_id' => null,
                 'designation_id' => null,
@@ -102,7 +102,7 @@ class UserSeeder extends Seeder
                 'name' => 'User One',
                 'email' => 'user1@gmail.com',
                 'password' => 'password',
-                'role' => 'tenant owner',
+                'role' => User::ROLE_USER,
                 'district_id' => $district?->id,
                 'office_id' => null,
                 'designation_id' => null,
@@ -113,7 +113,7 @@ class UserSeeder extends Seeder
                 'name' => 'Landlord / Owner',
                 'email' => 'landlord@nic.in',
                 'password' => 'password',
-                'role' => 'tenant owner',
+                'role' => User::ROLE_USER,
                 'district_id' => $district?->id,
                 'office_id' => null,
                 'designation_id' => null,
@@ -151,3 +151,4 @@ class UserSeeder extends Seeder
         }
     }
 }
+

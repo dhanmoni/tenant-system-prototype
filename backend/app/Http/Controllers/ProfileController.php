@@ -12,7 +12,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'tenant owner') {
+        if (!$user || $user->role !== 'user') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -30,7 +30,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'tenant owner') {
+        if (!$user || $user->role !== 'user') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -90,3 +90,4 @@ class ProfileController extends Controller
         return response()->json(['user' => $userData]);
     }
 }
+

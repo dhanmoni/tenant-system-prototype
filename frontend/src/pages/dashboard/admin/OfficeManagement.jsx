@@ -3,14 +3,12 @@ import api, { csrf } from '../../../api'
 
 function OfficeManagement() {
 	const [offices, setOffices] = useState([])
-	const [states, setStates] = useState([])
 	const [districts, setDistricts] = useState([])
 	const [officePage, setOfficePage] = useState(1)
 	const [officeTotalPages, setOfficeTotalPages] = useState(1)
 	
 	const [officeName, setOfficeName] = useState('')
 	const [officeAddress, setOfficeAddress] = useState('')
-	const [officeStateId, setOfficeStateId] = useState('')
 	const [officeDistrictId, setOfficeDistrictId] = useState('')
 	
 	const [error, setError] = useState('')
@@ -32,12 +30,8 @@ function OfficeManagement() {
 
 	const loadMetadata = async () => {
 		try {
-			const [s, d] = await Promise.all([
-				api.get('/api/states', { params: { all: true } }),
-				api.get('/api/districts', { params: { all: true } })
-			])
-			setStates(s.data?.data || s.data || [])
-			setDistricts(d.data?.data || d.data || [])
+			const { data } = await api.get('/api/districts', { params: { all: true } })
+			setDistricts(data.data || data || [])
 		} catch (err) { }
 	}
 
@@ -48,14 +42,13 @@ function OfficeManagement() {
 			await api.post('/api/offices', {
 				name: officeName,
 				address: officeAddress,
-				state_id: officeStateId,
 				district_id: officeDistrictId
 			})
 			setOfficeName(''); setOfficeAddress(''); setSuccess('Office added'); loadOffices(officePage)
 		} catch (err) { setError('Failed to add office') }
 	}
 
-	const filteredDistricts = districts.filter(d => String(d.state_id) === String(officeStateId))
+	const filteredDistricts = districts
 
 	return (
 		<div className="auth-card dashboard-card">
@@ -66,12 +59,8 @@ function OfficeManagement() {
 			<form onSubmit={handleAddOffice} className="admin-form-inline">
 				<input type="text" value={officeName} onChange={e => setOfficeName(e.target.value)} placeholder="Office Name" required />
 				<input type="text" value={officeAddress} onChange={e => setOfficeAddress(e.target.value)} placeholder="Address" required />
-				<select value={officeStateId} onChange={e => setOfficeStateId(e.target.value)} required>
-					<option value="">State</option>
-					{states.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-				</select>
-				<select value={officeDistrictId} onChange={e => setOfficeDistrictId(e.target.value)} required disabled={!officeStateId}>
-					<option value="">District</option>
+				<select value={officeDistrictId} onChange={e => setOfficeDistrictId(e.target.value)} required>
+					<option value="">Select District</option>
 					{filteredDistricts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
 				</select>
 				<button type="submit">Add Office</button>

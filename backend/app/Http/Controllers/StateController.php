@@ -8,11 +8,15 @@ use Illuminate\Validation\Rule;
 
 class StateController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $states = State::orderBy('name')->paginate(5);
+        $query = State::orderBy('name');
 
-        return response()->json($states);
+        if ($request->boolean('all')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate(5));
     }
 
     public function publicIndex()

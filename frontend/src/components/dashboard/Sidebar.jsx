@@ -67,7 +67,7 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 					{!sidebarCollapsed && <span className="dashboard-link-text">Dashboard</span>}
 				</NavLink>
 
-				{user?.role === 'tenant owner' ? (
+				{user?.role === 'user' ? (
 					<>
 						<NavLink
 							to="/dashboard/profile"
@@ -238,7 +238,7 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 					</>
 				) : null}
 
-				{user?.role !== 'tenant owner' && user?.role !== 'system_admin' ? (
+				{user?.role !== 'user' && user?.role !== 'system_admin' ? (
 					<>
 						<NavLink
 							to="/dashboard/status"
@@ -420,3 +420,4 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 }
 
 export default Sidebar
+

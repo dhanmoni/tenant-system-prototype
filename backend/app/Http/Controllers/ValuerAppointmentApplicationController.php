@@ -12,7 +12,7 @@ class ValuerAppointmentApplicationController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'tenant owner') {
+        if (!$user || $user->role !== 'user') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -68,7 +68,7 @@ class ValuerAppointmentApplicationController extends Controller
     public function show(Request $request, ValuerAppointmentApplication $application)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'tenant owner') {
+        if (!$user || $user->role !== 'user') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -81,4 +81,5 @@ class ValuerAppointmentApplicationController extends Controller
         ]);
     }
 }
+
 

@@ -12,7 +12,7 @@ class RentAuthorityFilingApplicationController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'tenant owner') {
+        if (!$user || $user->role !== 'user') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -85,7 +85,7 @@ class RentAuthorityFilingApplicationController extends Controller
     public function show(Request $request, RentAuthorityFilingApplication $application)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'tenant owner') {
+        if (!$user || $user->role !== 'user') {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -98,4 +98,5 @@ class RentAuthorityFilingApplicationController extends Controller
         ]);
     }
 }
+
 

@@ -2542,7 +2542,7 @@ main.main-fluid {
 	gap: 6px;
 }
 
-/* Tenant owner dashboard home (dummy overview + flow) */
+/* user dashboard home (dummy overview + flow) */
 .dashboard-home {
 	display: flex;
 	flex-direction: column;

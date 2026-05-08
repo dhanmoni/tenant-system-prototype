@@ -37,11 +37,11 @@ function UserManagement() {
 		} catch (err) { }
 	}
 
-	const filteredUsers = users.filter(u => mode === 'tenant' ? u.role === 'tenant owner' : u.role !== 'tenant owner')
+	const filteredUsers = users.filter(u => mode === 'tenant' ? u.role === 'user' : u.role !== 'user')
 
 	return (
 		<div className="auth-card dashboard-card">
-			<h1>User Management ({mode === 'tenant' ? 'Tenants' : 'Staff'})</h1>
+			<h1>User Management {mode === 'tenant' ? '' : '(Staff)'}</h1>
 			{error ? <div className="error">{error}</div> : null}
 			{success ? <div className="admin-success">{success}</div> : null}
 
@@ -68,3 +68,4 @@ function UserManagement() {
 }
 
 export default UserManagement
+

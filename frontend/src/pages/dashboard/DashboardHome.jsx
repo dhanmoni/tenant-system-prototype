@@ -29,7 +29,7 @@ function DashboardHome() {
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
 	const [error, setError] = useState('')
-	
+
 	// Tenant specific state
 	const [tenantRecentApplications, setTenantRecentApplications] = useState([])
 	const [tenantRecentLoading, setTenantRecentLoading] = useState(false)
@@ -41,7 +41,7 @@ function DashboardHome() {
 	const [recentActivity, setRecentActivity] = useState([])
 
 	useEffect(() => {
-		if (user?.role === 'tenant owner') {
+		if (user?.role === 'user') {
 			loadTenantRecentApplications()
 		} else if (user?.role === 'system_admin') {
 			loadAdminDashboard()
@@ -105,7 +105,7 @@ function DashboardHome() {
 		return status || '-'
 	}
 
-	if (user?.role === 'tenant owner') {
+	if (user?.role === 'user') {
 		const recentItems = tenantRecentApplications || []
 		const tenancyRecentCount = recentItems.filter((a) =>
 			String(a.application_type || '').toLowerCase().includes('tenancy certificate')
@@ -124,15 +124,14 @@ function DashboardHome() {
 					{statsCards.map((stat) => (
 						<div
 							key={stat.label}
-							className={`dashboard-stat-card ${
-								stat.label === 'Recent Submissions'
+							className={`dashboard-stat-card ${stat.label === 'Recent Submissions'
 									? 'dashboard-stat-card--recent-submissions'
 									: stat.label === 'Tenancy Certificates'
 										? 'dashboard-stat-card--tenancy-certificates'
 										: stat.label === 'Assam Tenancy Forms'
 											? 'dashboard-stat-card--assam-tenancy-forms'
 											: ''
-							}`}
+								}`}
 						>
 							<span className="dashboard-stat-icon-wrap">
 								<Icon name={stat.icon} className="dashboard-stat-icon" />
@@ -305,17 +304,15 @@ function DashboardHome() {
 		)
 	}
 
-	const isStaff = user?.role !== 'tenant owner' && user?.role !== 'system_admin'
+	const isStaff = user?.role !== 'user' && user?.role !== 'system_admin'
 	const s = stats || {}
-	const statCards = isStaff 
+	const statCards = isStaff
 		? [
-			{ label: 'States', value: s.states_count, icon: 'chart' },
 			{ label: 'Districts', value: s.districts_count, icon: 'chart' },
 			{ label: 'Users', value: s.users_count, icon: 'users' },
 			{ label: 'Applications', value: s.applications_count, icon: 'file' },
 		]
 		: [
-			{ label: 'States', value: s.states_count, icon: 'chart' },
 			{ label: 'Districts', value: s.districts_count, icon: 'chart' },
 			{ label: 'Offices', value: s.offices_count, icon: 'building' },
 			{ label: 'Users', value: s.users_count, icon: 'users' },
@@ -349,12 +346,12 @@ function DashboardHome() {
 								<div className="dashboard-chart-wrap">
 									<Bar
 										data={{
-											labels: isStaff ? ['States', 'Districts', 'Users'] : ['States', 'Districts', 'Offices', 'Users', 'Roles', 'Designations'],
+											labels: isStaff ? ['Districts', 'Users'] : ['Districts', 'Offices', 'Users', 'Roles', 'Designations'],
 											datasets: [{
 												label: 'Count',
-												data: isStaff 
-													? [s.states_count ?? 0, s.districts_count ?? 0, s.users_count ?? 0]
-													: [s.states_count ?? 0, s.districts_count ?? 0, s.offices_count ?? 0, s.users_count ?? 0, s.roles_count ?? 0, s.designations_count ?? 0],
+												data: isStaff
+													? [s.districts_count ?? 0, s.users_count ?? 0]
+													: [s.districts_count ?? 0, s.offices_count ?? 0, s.users_count ?? 0, s.roles_count ?? 0, s.designations_count ?? 0],
 												backgroundColor: 'rgba(13, 71, 161, 0.75)',
 												borderColor: '#0d47a1',
 												borderWidth: 1,
@@ -401,15 +398,14 @@ function DashboardHome() {
 							</div>
 						</div>
 					)}
-					
+
 					<div className="auth-card dashboard-card staff-info-card">
 						<h2 className="dashboard-section-title">Quick actions</h2>
 						<div className="staff-quick-actions-grid">
 							<button onClick={() => navigate('/dashboard/status')} className="dashboard-action-btn">Application Status</button>
-							<button onClick={() => navigate('/dashboard/admin/state')} className="dashboard-action-btn">State Management</button>
 							<button onClick={() => navigate('/dashboard/admin/district')} className="dashboard-action-btn">District Management</button>
-							<button onClick={() => navigate('/dashboard/admin/users?mode=office')} className="dashboard-action-btn">Office Users</button>
-							<button onClick={() => navigate('/dashboard/admin/users?mode=tenant')} className="dashboard-action-btn">Tenant Users</button>
+							<button onClick={() => navigate('/dashboard/admin/users?mode=office')} className="dashboard-action-btn">Staff</button>
+							<button onClick={() => navigate('/dashboard/admin/users?mode=tenant')} className="dashboard-action-btn">Users</button>
 							{!isStaff && (
 								<>
 									<button onClick={() => navigate('/dashboard/admin/office')} className="dashboard-action-btn">Office Management</button>
@@ -427,3 +423,4 @@ function DashboardHome() {
 }
 
 export default DashboardHome
+

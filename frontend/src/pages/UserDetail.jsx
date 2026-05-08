@@ -123,7 +123,7 @@ function UserDetail({ user: currentUser }) {
           <Link className="dashboard-link" to="/dashboard">
             Dashboard
           </Link>
-          {currentUser?.role !== 'tenant owner' ? (
+          {currentUser?.role !== 'user' ? (
             <>
               <Link className="dashboard-link" to="/dashboard">
                 State Managment
@@ -190,7 +190,7 @@ function UserDetail({ user: currentUser }) {
             <div className="muted">{user.phone || '-'}</div>
           )}
         </label>
-        {String(user.role || '').toLowerCase().trim() === 'tenant owner' ||
+        {String(user.role || '').toLowerCase().trim() === 'user' ||
         String(user.role || '').toLowerCase().trim() === 'tenant_owner' ? null : (
           <>
             <label>
@@ -237,7 +237,7 @@ function UserDetail({ user: currentUser }) {
             </label>
           </>
         )}
-        {String(user.role || '').toLowerCase().trim() === 'tenant owner' ||
+        {String(user.role || '').toLowerCase().trim() === 'user' ||
         String(user.role || '').toLowerCase().trim() === 'tenant_owner' ? null : (
           <label>
             Role
@@ -277,7 +277,7 @@ function UserDetail({ user: currentUser }) {
           </div>
         </label>
         {currentUser?.role === 'system_admin' &&
-        (String(user.role || '').toLowerCase().trim() === 'tenant owner' ||
+        (String(user.role || '').toLowerCase().trim() === 'user' ||
           String(user.role || '').toLowerCase().trim() === 'tenant_owner') ? (
           <label>
             Block user
@@ -305,7 +305,7 @@ function UserDetail({ user: currentUser }) {
         ) : null}
       </div>
       <div className="nav-actions user-detail-actions">
-        {String(user.role || '').toLowerCase().trim() === 'tenant owner' ||
+        {String(user.role || '').toLowerCase().trim() === 'user' ||
         String(user.role || '').toLowerCase().trim() === 'tenant_owner' ? null : editMode ? (
           <>
             <button type="button" onClick={handleUpdate}>
@@ -341,3 +341,4 @@ function UserDetail({ user: currentUser }) {
 }
 
 export default UserDetail
+

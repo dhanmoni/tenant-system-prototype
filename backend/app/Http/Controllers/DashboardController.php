@@ -30,7 +30,6 @@ class DashboardController extends Controller
             ->toArray();
 
         return response()->json([
-            'states_count' => State::count(),
             'districts_count' => District::count(),
             'offices_count' => Office::count(),
             'users_count' => User::count(),
@@ -73,7 +72,6 @@ class DashboardController extends Controller
             ->toArray();
 
         return response()->json([
-            'states_count' => State::count(),
             'districts_count' => District::count(),
             'users_count' => User::count(),
             'applications_count' => (clone $appQuery)->count(),

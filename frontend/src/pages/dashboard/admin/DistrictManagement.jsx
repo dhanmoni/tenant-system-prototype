@@ -8,6 +8,8 @@ function DistrictManagement() {
 	const [districtEditName, setDistrictEditName] = useState('')
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
+	const [districtPage, setDistrictPage] = useState(1)
+	const [districtTotalPages, setDistrictTotalPages] = useState(1)
 
 	useEffect(() => {
 		loadDistricts(1)
@@ -60,6 +62,13 @@ function DistrictManagement() {
 					</tbody>
 				</table>
 			</div>
+			{districtTotalPages > 1 && (
+				<div className="pagination">
+					<button disabled={districtPage === 1} onClick={() => loadDistricts(districtPage - 1)}>Prev</button>
+					<span>Page {districtPage} of {districtTotalPages}</span>
+					<button disabled={districtPage === districtTotalPages} onClick={() => loadDistricts(districtPage + 1)}>Next</button>
+				</div>
+			)}
 		</div>
 	)
 }

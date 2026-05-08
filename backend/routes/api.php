@@ -49,9 +49,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
 });
 
-// Tenant Forms (Assam Tenancy Rules draft) - tenant owner only
+// Tenant Forms (Assam Tenancy Rules draft) - user only
 Route::middleware('auth:sanctum')->group(function () {
-    Route::middleware('role:tenant owner')->group(function () {
+    Route::middleware('role:user')->group(function () {
         Route::get('/tenant-forms/my', [TenantFormsStatusController::class, 'my']);
         Route::post('/rent-revision-applications', [RentRevisionApplicationController::class, 'store']);
         Route::get('/rent-revision-applications/{application}', [RentRevisionApplicationController::class, 'show']);
@@ -125,3 +125,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/offices/{office}', [OfficeController::class, 'destroy']);
     });
 });
+

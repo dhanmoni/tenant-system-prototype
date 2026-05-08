@@ -29,18 +29,14 @@ class OfficeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'state_id' => ['required', 'integer', 'exists:states,id'],
+            'state_id' => ['nullable', 'integer', 'exists:states,id'],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
             'name' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
         ]);
 
-        $districtMatchesState = District::where('id', $data['district_id'])
-            ->where('state_id', $data['state_id'])
-            ->exists();
-
-        if (!$districtMatchesState) {
-            return response()->json(['message' => 'Selected district does not belong to the state'], 422);
+        if (empty($data['state_id'])) {
+            $data['state_id'] = \App\Models\State::value('id');
         }
 
         $office = Office::create($data);
@@ -51,18 +47,14 @@ class OfficeController extends Controller
     public function update(Request $request, Office $office)
     {
         $data = $request->validate([
-            'state_id' => ['required', 'integer', 'exists:states,id'],
+            'state_id' => ['nullable', 'integer', 'exists:states,id'],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
             'name' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
         ]);
 
-        $districtMatchesState = District::where('id', $data['district_id'])
-            ->where('state_id', $data['state_id'])
-            ->exists();
-
-        if (!$districtMatchesState) {
-            return response()->json(['message' => 'Selected district does not belong to the state'], 422);
+        if (empty($data['state_id'])) {
+            $data['state_id'] = \App\Models\State::value('id');
         }
 
         $office->update($data);
