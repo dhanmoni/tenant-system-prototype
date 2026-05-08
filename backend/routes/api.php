@@ -80,10 +80,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // State and District: allowed for system_admin and staff
     Route::middleware('role:system_admin,director,assistant_director,district_head,district_assistant')->group(function () {
-        Route::get('/states', [StateController::class, 'index']);
-        Route::post('/states', [StateController::class, 'store']);
-        Route::put('/states/{state}', [StateController::class, 'update']);
-        Route::delete('/states/{state}', [StateController::class, 'destroy']);
+        // Route::get('/states', [StateController::class, 'index']);
+        // Route::post('/states', [StateController::class, 'store']);
+        // Route::put('/states/{state}', [StateController::class, 'update']);
+        // Route::delete('/states/{state}', [StateController::class, 'destroy']);
         Route::get('/districts', [DistrictController::class, 'index']);
         Route::post('/districts', [DistrictController::class, 'store']);
         Route::put('/districts/{district}', [DistrictController::class, 'update']);

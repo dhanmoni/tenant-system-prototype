@@ -179,7 +179,7 @@ function JoinApplication() {
 					</div>
 					<div>
 						<span className="label-text">Property Description</span>
-						<span>{application.property_premises_description}</span>
+						<span>{application.property_premises_description || '-'}</span>
 					</div>
 					<div>
 						<span className="label-text">Rent Payable</span>

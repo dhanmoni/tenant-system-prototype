@@ -248,14 +248,7 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 							<Icon name="status" className="dashboard-link-icon" />
 							{!sidebarCollapsed && <span className="dashboard-link-text">Application Status</span>}
 						</NavLink>
-						<NavLink
-							to="/dashboard/admin/state"
-							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-							title="State Management"
-						>
-							<Icon name="map" className="dashboard-link-icon" />
-							{!sidebarCollapsed && <span className="dashboard-link-text">State Management</span>}
-						</NavLink>
+
 						<NavLink
 							to="/dashboard/admin/district"
 							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
@@ -307,14 +300,7 @@ function Sidebar({ user, sidebarCollapsed, toggleSidebar, onLogout }) {
 
 				{user?.role === 'system_admin' ? (
 					<>
-						<NavLink
-							to="/dashboard/admin/state"
-							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-							title="State Management"
-						>
-							<Icon name="map" className="dashboard-link-icon" />
-							{!sidebarCollapsed && <span className="dashboard-link-text">State Management</span>}
-						</NavLink>
+
 						<NavLink
 							to="/dashboard/admin/district"
 							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}

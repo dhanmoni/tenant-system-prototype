@@ -19,17 +19,10 @@ class AuthController extends Controller
             'email' => ['nullable', 'string', 'email', 'max:255'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
-            'state_id' => ['required', 'integer', 'exists:states,id'],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
         ]);
 
-        $districtMatchesState = District::where('id', $data['district_id'])
-            ->where('state_id', $data['state_id'])
-            ->exists();
 
-        if (!$districtMatchesState) {
-            return response()->json(['message' => 'Selected district does not belong to the state'], 422);
-        }
 
         $user = User::create([
             'name' => $data['name'],

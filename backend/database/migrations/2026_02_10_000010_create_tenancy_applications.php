@@ -32,7 +32,7 @@ return new class extends Migration
             $table->text('tenant_previous_tenancy')->nullable();
             $table->date('property_possession_date');
             $table->decimal('property_rent_payable', 12, 2);
-            $table->text('property_premises_description');
+            $table->text('property_premises_description')->nullable();
             $table->text('property_furniture_description')->nullable();
             $table->string('property_charge_electricity')->nullable();
             $table->string('property_charge_water')->nullable();

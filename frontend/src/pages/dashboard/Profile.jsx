@@ -15,7 +15,6 @@ function Profile() {
 	const [profilePhone, setProfilePhone] = useState('')
 	const [profileAddress, setProfileAddress] = useState('')
 	const [profileDistrict, setProfileDistrict] = useState('')
-	const [profileState, setProfileState] = useState('')
 	const [profilePin, setProfilePin] = useState('')
 	const [profilePan, setProfilePan] = useState('')
 	const [profilePhoto, setProfilePhoto] = useState(null)
@@ -36,7 +35,6 @@ function Profile() {
 			setProfileEmail(profileUser.email || '')
 			setProfilePhone(profileUser.phone || '')
 			setProfileDistrict(profileUser.district?.name || '')
-			setProfileState(profileUser.district?.state?.name || '')
 			setProfileType(profileUser.profile_type || '')
 			setProfileAddress(profileUser.address || '')
 			setProfilePin(profileUser.pin_code || '')
@@ -196,10 +194,7 @@ function Profile() {
 								<span className="profile-summary-label">District</span>
 								<span className="profile-summary-value">{profileDistrict || '—'}</span>
 							</div>
-							<div className="profile-summary-item">
-								<span className="profile-summary-label">State</span>
-								<span className="profile-summary-value">{profileState || '—'}</span>
-							</div>
+
 							<div className="profile-summary-item">
 								<span className="profile-summary-label">PIN Code</span>
 								<span className="profile-summary-value">{profilePin}</span>
@@ -288,10 +283,7 @@ function Profile() {
 							Phone
 							<input type="text" value={profilePhone} readOnly required />
 						</label>
-						<label className="profile-field profile-field-state">
-							State
-							<input type="text" value={profileState} readOnly required />
-						</label>
+
 						<label className="profile-field profile-field-district">
 							District
 							<input type="text" value={profileDistrict} readOnly required />

@@ -10,7 +10,7 @@ import ApplicationDetails from './pages/dashboard/ApplicationDetails'
 import TenancyCertificate from './pages/dashboard/TenancyCertificate'
 import FormPortal from './pages/dashboard/FormPortal'
 
-import StateManagement from './pages/dashboard/admin/StateManagement'
+// import StateManagement from './pages/dashboard/admin/StateManagement'
 import DistrictManagement from './pages/dashboard/admin/DistrictManagement'
 import OfficeManagement from './pages/dashboard/admin/OfficeManagement'
 import UserManagement from './pages/dashboard/admin/UserManagement'
@@ -356,7 +356,7 @@ function App() {
 						<Route path="status/:type/:applicationNo" element={<ApplicationDetails />} />
 						<Route path=":formType" element={<FormPortal />} />
 						{/* Admin Routes */}
-						<Route path="admin/state" element={<StateManagement />} />
+						{/* <Route path="admin/state" element={<StateManagement />} /> */}
 						<Route path="admin/district" element={<DistrictManagement />} />
 						<Route path="admin/office" element={<OfficeManagement />} />
 						<Route path="admin/users" element={<UserManagement />} />

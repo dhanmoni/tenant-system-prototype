@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\District;
+use App\Models\State;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -32,6 +33,10 @@ class DistrictController extends Controller
             'assistant_director_id' => ['nullable', 'integer', 'exists:users,id'],
             'district_head_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
+
+        if (empty($data['state_id'])) {
+            $data['state_id'] = State::value('id');
+        }
 
         $district = District::create($data);
 

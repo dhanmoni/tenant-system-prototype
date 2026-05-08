@@ -11,11 +11,6 @@ class StateSeeder extends Seeder
     {
         $states = [
             'Assam',
-            'Delhi',
-            'Maharashtra',
-            'Karnataka',
-            'Tamil Nadu',
-            'Uttar Pradesh',
         ];
 
         foreach ($states as $name) {

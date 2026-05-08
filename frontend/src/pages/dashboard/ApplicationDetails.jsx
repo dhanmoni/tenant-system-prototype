@@ -191,7 +191,7 @@ function ApplicationDetails() {
 					</div>
 					<div className="govt-form-full-row">
 						<div className="govt-form-label">Premises Description:</div>
-						<div className="govt-form-value">{application.property_premises_description}</div>
+						<div className="govt-form-value">{application.property_premises_description || '-'}</div>
 					</div>
 					<div className="govt-form-full-row">
 						<div className="govt-form-label">Additional Charges (Elec/Water/Misc):</div>

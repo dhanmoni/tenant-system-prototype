@@ -33,7 +33,6 @@ function Login({ onLogin }) {
 		name: '',
 		email: '',
 		phone: '',
-		state_id: '',
 		district_id: '',
 	})
 	const [regError, setRegError] = useState('')
@@ -43,22 +42,13 @@ function Login({ onLogin }) {
 	const [regOtp, setRegOtp] = useState('')
 	const [regPendingPhone, setRegPendingPhone] = useState('')
 	const [regOtpMessage, setRegOtpMessage] = useState('')
-	const [states, setStates] = useState([])
 	const [districts, setDistricts] = useState([])
 
 	// Load states & districts when register mode is active
 	useEffect(() => {
 		if (mode !== 'register') return
-		if (states.length > 0) return // already loaded
+		if (districts.length > 0) return
 
-		const loadStates = async () => {
-			try {
-				const { data } = await api.get('/api/public/states')
-				setStates(data.states || [])
-			} catch (err) {
-				console.error('Failed to load states', err)
-			}
-		}
 		const loadDistricts = async () => {
 			try {
 				const { data } = await api.get('/api/public/districts')
@@ -67,9 +57,8 @@ function Login({ onLogin }) {
 				console.error('Failed to load districts', err)
 			}
 		}
-		loadStates()
 		loadDistricts()
-	}, [mode, states.length])
+	}, [mode, districts.length])
 
 	// Listen to URL hash to switch modes and scroll
 	useEffect(() => {
@@ -95,9 +84,7 @@ function Login({ onLogin }) {
 		return () => window.removeEventListener('scroll', handleScroll)
 	}, [])
 
-	const filteredDistricts = regForm.state_id
-		? districts.filter((d) => String(d.state_id ?? d.state?.id) === String(regForm.state_id))
-		: []
+	const filteredDistricts = districts
 
 	// Handlers
 	const handleLoginChange = (e) => {
@@ -368,29 +355,12 @@ function Login({ onLogin }) {
 												<input type="tel" name="phone" value={regForm.phone} onChange={handleRegChange} required />
 											</label>
 											<label>
-												State
-												<select
-													name="state_id"
-													value={regForm.state_id}
-													onChange={(e) => {
-														setRegForm((prev) => ({ ...prev, state_id: e.target.value, district_id: '' }))
-													}}
-													required
-												>
-													<option value="">---SELECT---</option>
-													{states.map((s) => (
-														<option key={s.id} value={s.id}>{s.name}</option>
-													))}
-												</select>
-											</label>
-											<label>
 												District
 												<select
 													name="district_id"
 													value={regForm.district_id}
 													onChange={handleRegChange}
 													required
-													disabled={!regForm.state_id}
 												>
 													<option value="">---SELECT---</option>
 													{filteredDistricts.map((d) => (
