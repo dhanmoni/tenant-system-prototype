@@ -5132,18 +5132,97 @@ button.secondary:hover {
 	padding-bottom: 10px;
 }
 
-/* ── Ref Code Badge ── */
-.ref-code-badge {
-	display: inline-block;
+.ref-code-plain {
 	font-family: 'Courier New', Courier, monospace;
-	font-size: 0.85rem;
+	font-size: 0.95rem;
 	font-weight: 700;
-	background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-	color: #2e7d32;
-	padding: 4px 10px;
-	border-radius: 6px;
-	border: 1px solid #a5d6a7;
+	color: #334155;
 	letter-spacing: 0.05em;
+}
+
+.join-app-summary {
+	background: #fdfdfd;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 24px;
+	margin-bottom: 30px;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.summary-section h3 {
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: #64748b;
+	margin: 0 0 12px 0;
+	border-bottom: 1px solid #f1f5f9;
+	padding-bottom: 6px;
+}
+
+.tenancy-preview-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 16px;
+}
+
+.tenancy-preview-grid .full-row {
+	grid-column: 1 / -1;
+}
+
+.initiator-badge-small {
+	font-size: 0.7rem;
+	background: #f1f5f9;
+	color: #475569;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.rent-amount {
+	font-weight: 800;
+	color: #0f172a;
+}
+
+.conflict-notice-box {
+	background: #fff8e1;
+	border: 1px solid #ffca28;
+	border-radius: 8px;
+	padding: 16px 20px;
+	margin: 20px 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.conflict-notice-box p {
+	margin: 0;
+	color: #795548;
+	font-weight: 600;
+	font-size: 0.95rem;
+}
+
+.conflict-actions {
+	display: flex;
+	gap: 12px;
+}
+
+.conflict-actions button {
+	padding: 8px 16px;
+	font-size: 0.85rem;
+}
+
+.conflict-actions button.danger {
+	background: #d32f2f;
+	color: #fff;
+	border: none;
+}
+
+.conflict-actions button.danger:hover {
+	background: #b71c1c;
 }
 
 /* ── Status Badges ── */

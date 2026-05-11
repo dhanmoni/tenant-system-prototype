@@ -320,7 +320,7 @@ function ApplicationStatus() {
 																<button
 																	type="button"
 																	className="secondary"
-																	onClick={() => navigate(`/join?refCode=${app.ref_code}`)}
+																	onClick={() => navigate(`/join?ref=${app.ref_code}`)}
 																>
 																	Join Now
 																</button>
@@ -328,7 +328,7 @@ function ApplicationStatus() {
 																<button
 																	type="button"
 																	className="secondary"
-																	onClick={() => copyToClipboard(`${window.location.origin}/join?refCode=${app.ref_code}`, app.ref_code)}
+																	onClick={() => copyToClipboard(`${window.location.origin}/join?ref=${app.ref_code}`, app.ref_code)}
 																>
 																	{copiedRefCode === app.ref_code ? '✓ Copied!' : 'Copy Invite Link'}
 																</button>

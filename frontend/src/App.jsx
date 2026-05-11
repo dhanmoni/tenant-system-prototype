@@ -253,7 +253,7 @@ function App() {
 				<div className="globalnav">
 					<div className="globalnav-inner">
 						{!user ? (
-							<span className="globalnav-portal-title">Tenancy Certificate — Rent Portal</span>
+							<span className="globalnav-portal-title"></span>
 						) : null}
 						<nav id="primary-nav" className={user ? 'nav-auth' : undefined}>
 							{!user ? (

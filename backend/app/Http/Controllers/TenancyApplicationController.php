@@ -74,6 +74,7 @@ class TenancyApplicationController extends Controller
             'tenant_signature' => ['nullable', 'image'],
             'landlord_photo_path' => ['nullable', 'string', 'max:255'],
             'tenant_photo_path' => ['nullable', 'string', 'max:255'],
+            'force_new' => ['nullable', 'boolean'],
         ]);
 
         // Government criteria: registration must be within 3 months
@@ -85,17 +86,24 @@ class TenancyApplicationController extends Controller
             ]);
         }
 
+        // Handle salt for unique ref code if requested
+        $salt = null;
+        if ($request->boolean('force_new')) {
+            $salt = (string) Carbon::now()->timestamp;
+        }
+
         // Generate deterministic ref code
         $refCode = TenancyApplication::generateRefCode(
             $data['landlord_phone'],
             $data['tenant_phone'],
             $data['registration_date'],
-            $data['village_ward_id']
+            $data['village_ward_id'],
+            $salt
         );
 
         // Check for existing application with same ref code
         $existing = TenancyApplication::where('ref_code', $refCode)->first();
-        if ($existing) {
+        if ($existing && !$request->boolean('force_new')) {
             return response()->json([
                 'conflict' => true,
                 'message' => 'An application with the same details already exists.',
@@ -164,7 +172,7 @@ class TenancyApplicationController extends Controller
         });
 
         $frontendUrl = config('app.frontend_url', $request->getSchemeAndHttpHost());
-        $joinLink = $frontendUrl . '/join?refCode=' . $application->ref_code;
+        $joinLink = $frontendUrl . '/join?ref=' . $application->ref_code;
 
         return response()->json([
             'id' => $application->id,

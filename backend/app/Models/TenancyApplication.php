@@ -101,7 +101,8 @@ class TenancyApplication extends Model
         string $landlordPhone,
         string $tenantPhone,
         string $registrationDate,
-        $villageWardId
+        $villageWardId,
+        ?string $salt = null
     ): string {
         // Normalize inputs
         $landlordPhone = preg_replace('/[^0-9]/', '', $landlordPhone);
@@ -117,7 +118,11 @@ class TenancyApplication extends Model
         $registrationDate = date('Y-m-d', strtotime($registrationDate));
         $villageWardId = (string) $villageWardId;
 
-        $input = implode('|', [$landlordPhone, $tenantPhone, $registrationDate, $villageWardId]);
+        $parts = [$landlordPhone, $tenantPhone, $registrationDate, $villageWardId];
+        if ($salt) {
+            $parts[] = $salt;
+        }
+        $input = implode('|', $parts);
 
         $hashBytes = hash('sha256', $input, true);
         $alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';

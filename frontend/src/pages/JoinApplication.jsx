@@ -6,7 +6,7 @@ function JoinApplication() {
 	const { user } = useOutletContext()
 	const [searchParams] = useSearchParams()
 	const navigate = useNavigate()
-	const refCode = searchParams.get('refCode') || ''
+	const refCode = searchParams.get('ref') || ''
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
@@ -151,47 +151,84 @@ function JoinApplication() {
 
 			{/* Application summary */}
 			<div className="join-app-summary">
-				<h2>Application Summary</h2>
-				<div className="tenancy-preview-grid">
-					<div>
-						<span className="label-text">Application No</span>
-						<span>{application.application_no}</span>
+				<div className="summary-section">
+					<h3>Application Details</h3>
+					<div className="tenancy-preview-grid">
+						<div>
+							<span className="label-text">Application No</span>
+							<span>{application.application_no}</span>
+						</div>
+						<div>
+							<span className="label-text">Registration Date</span>
+							<span>{application.registration_date}</span>
+						</div>
+						<div>
+							<span className="label-text">Apply Type</span>
+							<span>{application.apply_type}</span>
+						</div>
+						<div>
+							<span className="label-text">Office</span>
+							<span>{application.office?.name || '-'}</span>
+						</div>
+						<div>
+							<span className="label-text">Village / Ward</span>
+							<span>{application.village_ward?.name || '-'}</span>
+						</div>
 					</div>
-					<div>
-						<span className="label-text">Reference Code</span>
-						<span className="ref-code-badge">{application.ref_code}</span>
+				</div>
+
+				<div className="summary-section">
+					<h3>Participant Details</h3>
+					<div className="tenancy-preview-grid">
+						<div>
+							<span className="label-text">Initiator</span>
+							<span >{application.initiator_role}</span>
+						</div>
+						{application.initiator_role === 'LANDLORD' ? (
+							<>
+								<div>
+									<span className="label-text">Landlord Name</span>
+									<span>{application.landlord_name}</span>
+								</div>
+								<div>
+									<span className="label-text">Landlord Phone</span>
+									<span>{application.landlord_phone}</span>
+								</div>
+							</>
+						) : (
+							<>
+								<div>
+									<span className="label-text">Tenant Name</span>
+									<span>{application.tenant_name}</span>
+								</div>
+								<div>
+									<span className="label-text">Tenant Phone</span>
+									<span>{application.tenant_phone}</span>
+								</div>
+							</>
+						)}
 					</div>
-					<div>
-						<span className="label-text">Registration Date</span>
-						<span>{application.registration_date}</span>
-					</div>
-					<div>
-						<span className="label-text">Office</span>
-						<span>{application.office?.name || '-'}</span>
-					</div>
-					<div>
-						<span className="label-text">Village / Ward</span>
-						<span>{application.village_ward?.name || '-'}</span>
-					</div>
-					<div>
-						<span className="label-text">Apply Type</span>
-						<span>{application.apply_type}</span>
-					</div>
-					<div>
-						<span className="label-text">Property Description</span>
-						<span>{application.property_premises_description || '-'}</span>
-					</div>
-					<div>
-						<span className="label-text">Rent Payable</span>
-						<span>₹{application.property_rent_payable}</span>
-					</div>
-					<div>
-						<span className="label-text">Tenancy Duration</span>
-						<span>{application.property_tenancy_duration}</span>
-					</div>
-					<div>
-						<span className="label-text">Initiated By</span>
-						<span>{application.initiator_role}</span>
+				</div>
+
+				<div className="summary-section">
+					<h3>Property & Rent</h3>
+					<div className="tenancy-preview-grid">
+						<div className="full-row">
+							<span className="label-text">Description</span>
+							<span>{application.property_premises_description || '-'}</span>
+						</div>
+						<div>
+							<span className="label-text">Monthly Rent</span>
+							<span className="rent-amount">₹{application.property_rent_payable}</span>
+						</div>
+						<div>
+							<span className="label-text">Duration</span>
+							<span>{application.property_tenancy_duration}</span>
+						</div>
+						<div>
+							<span className="label-text">Possession Date</span>
+							<span>{application.property_possession_date}</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -322,7 +359,7 @@ function JoinApplication() {
 					</button>
 				</div>
 			</form>
-		</div>
+		</div >
 	)
 }
 

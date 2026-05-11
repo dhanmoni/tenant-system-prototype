@@ -17,6 +17,7 @@ function TenancyCertificate() {
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
 	const [tenancyReceipt, setTenancyReceipt] = useState(null)
 	const [editingApplicationId, setEditingApplicationId] = useState(null)
+	const [conflictData, setConflictData] = useState(null)
 
 	// Step 1: Office/Registration
 	const [tenancyRegistrationDate, setTenancyRegistrationDate] = useState('')
@@ -269,8 +270,10 @@ function TenancyCertificate() {
 		}
 	}
 
-	const submitTenancyApplication = async () => {
+	const submitTenancyApplication = async (forceNew = false) => {
 		setError(''); setSuccess(''); setTenancySubmitting(true)
+		if (!forceNew) setConflictData(null)
+
 		try {
 			await csrf()
 			const formData = new FormData()
@@ -279,6 +282,8 @@ function TenancyCertificate() {
 			if (tenancyVillageWardId) formData.append('village_ward_id', tenancyVillageWardId)
 			if (initiatorRole) formData.append('initiator_role', initiatorRole)
 			formData.append('apply_type', applyType || 'Individual')
+			if (forceNew) formData.append('force_new', '1')
+
 			formData.append('landlord_name', landlordName); formData.append('landlord_address', landlordAddress); formData.append('landlord_email', landlordEmail); formData.append('landlord_phone', landlordPhone); formData.append('landlord_pan', landlordPan);
 			formData.append('manager_name', managerName); formData.append('manager_address', managerAddress); formData.append('manager_email', managerEmail); formData.append('manager_phone', managerPhone); formData.append('manager_pan', managerPan);
 			formData.append('tenant_name', tenantName); formData.append('tenant_address', tenantAddress); formData.append('tenant_email', tenantEmail); formData.append('tenant_phone', tenantPhone); formData.append('tenant_pan', tenantPan);
@@ -297,8 +302,15 @@ function TenancyCertificate() {
 			setTenancyReceipt(data)
 			setSuccess('Application submitted successfully.')
 			setTenancyStep(6)
+			setConflictData(null)
 		} catch (err) {
 			const data = err?.response?.data
+			if (err?.response?.status === 409 && data?.conflict) {
+				setConflictData(data)
+				setError(data.message)
+				return
+			}
+
 			const errors = data?.errors
 			let msg = data?.message || 'Failed to submit application'
 			if (errors && typeof errors === 'object') {
@@ -365,6 +377,17 @@ function TenancyCertificate() {
 			</div>
 
 			{error ? <div className="error">{error}</div> : null}
+
+			{conflictData && (
+				<div className="conflict-notice-box">
+					<p>An application with these details already exists (Application No: <strong>{conflictData.existing_application?.application_no}</strong>).</p>
+					<div className="conflict-actions">
+						<button type="button" className="secondary" onClick={() => navigate(`/dashboard/status?app_no=${conflictData.existing_application?.application_no}`)}>View Existing Application</button>
+						<button type="button" className="danger" onClick={() => submitTenancyApplication(true)}>Start Fresh Application Anyway</button>
+					</div>
+				</div>
+			)}
+
 			{success ? <div className="admin-success">{success}</div> : null}
 
 			<form className="tenancy-form" onSubmit={(e) => {

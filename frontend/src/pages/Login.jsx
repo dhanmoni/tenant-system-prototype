@@ -244,25 +244,25 @@ function Login({ onLogin }) {
 						<div className="audience-card">
 							<h3>For Tenants</h3>
 							<p>
-									Apply for tenancy certificates, track application status, and
-									keep your property records digitally.
+								Apply for tenancy certificates, track application status, and
+								keep your property records digitally.
 							</p>
 							<ul>
-									<li>Digital certificate access</li>
-									<li>Application status tracking</li>
-									<li>Online services 24x7</li>
+								<li>Digital certificate access</li>
+								<li>Application status tracking</li>
+								<li>Online services 24x7</li>
 							</ul>
 						</div>
 						<div className="audience-card">
 							<h3>For Owners</h3>
 							<p>
-									Register properties, manage tenant records, and stay aligned
-									with tenancy regulations.
+								Register properties, manage tenant records, and stay aligned
+								with tenancy regulations.
 							</p>
 							<ul>
-									<li>Property and application dashboard</li>
-									<li>Digital record management</li>
-									<li>Status and compliance visibility</li>
+								<li>Property and application dashboard</li>
+								<li>Digital record management</li>
+								<li>Status and compliance visibility</li>
 							</ul>
 						</div>
 					</div>
@@ -444,7 +444,7 @@ function Login({ onLogin }) {
 					</Link>
 					<h2 id="landing-services-heading">Citizen services</h2>
 					<p className="landing-section-intro">
-						Quick access to common actions (demo — links scroll to login or registration).
+						Quick access to common actions.
 					</p>
 					<div className="landing-service-grid">
 						<Link className="landing-service-tile" to="/#register">
