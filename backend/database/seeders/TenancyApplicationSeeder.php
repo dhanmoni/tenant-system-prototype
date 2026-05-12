@@ -48,11 +48,13 @@ class TenancyApplicationSeeder extends Seeder
                 'landlord_email' => $landlordUser ? $landlordUser->email : 'landlord1@nic.in',
                 'landlord_phone' => '9222222221',
                 'landlord_pan' => 'ABCDE1234F',
+                'landlord_aadhar' => '123456789012',
                 'tenant_name' => $tenantUser->name,
                 'tenant_address' => '456 Tenant Lane, Sample City',
                 'tenant_email' => $tenantUser->email,
                 'tenant_phone' => $tenantUser->phone ?? '9444444444',
                 'tenant_pan' => 'TENAN1234T',
+                'tenant_aadhar' => '987654321098',
                 'property_possession_date' => now()->subDays(30),
                 'property_rent_payable' => 25000.00,
                 'property_premises_description' => '3 BHK Apartment, 1200 sq ft',
@@ -141,11 +143,12 @@ class TenancyApplicationSeeder extends Seeder
                 'property_premises_description' => 'Manager-initiated tenancy case',
                 'property_furniture_description' => 'Semi furnished',
                 'property_tenancy_duration' => '11 months',
+                'uid' => TenancyApplication::generateUid($villageWard, $office->id),
                 'movement_history' => [['status' => 'PARTIAL', 'current_with' => null, 'moved_at' => now()->toDateTimeString()]],
             ]
         );
 
-        // Application 3: Staff-visible application
+        // Application 4: Staff-visible application
         if ($staffUser) {
             $refCode4 = TenancyApplication::generateRefCode('9777777700', '9888888800', now()->subDays(2)->format('Y-m-d'), $villageWard->id);
             TenancyApplication::firstOrCreate(

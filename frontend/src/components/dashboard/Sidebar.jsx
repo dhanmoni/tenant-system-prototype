@@ -33,13 +33,9 @@ function Sidebar({ user, onLogout }) {
 	const [servicesHoveredGroupId, setServicesHoveredGroupId] = useState(null)
 
 	const servicesGroupHoverTimerRef = useRef(null)
-
 	const [userDropdownOpen, setUserDropdownOpen] = useState(false)
-
 	const userDropdownRef = useRef(null)
-
 	const userDropdownLeaveTimerRef = useRef(null)
-
 	const profilePathActive = location.pathname.startsWith('/dashboard/profile')
 
 	const servicesNavActive =
@@ -308,137 +304,72 @@ function Sidebar({ user, onLogout }) {
 		<aside className="dashboard-menu">
 
 			<div className="dashboard-menu-header">
-
 				<div
-
 					ref={userDropdownRef}
-
 					className={`dashboard-user-dropdown${userDropdownOpen ? ' is-open' : ''}${profilePathActive ? ' is-profile-route' : ''}`}
-
 					onMouseEnter={openUserDropdown}
-
 					onMouseLeave={scheduleCloseUserDropdown}
-
 				>
-
 					<button
-
 						type="button"
-
 						className="dashboard-user-dropdown-trigger"
-
 						onClick={toggleUserDropdown}
-
 						aria-expanded={userDropdownOpen}
-
 						aria-haspopup="menu"
-
 						aria-controls="dashboard-user-dropdown-menu"
-
 						id="dashboard-user-dropdown-button"
-
 					>
-
 						<img className="dashboard-menu-user-photo" src={sidebarPhotoUrl} alt="" />
-
 						<div className="dashboard-menu-user-text">
-
 							<div className="dashboard-menu-user-name">{user?.name || 'User'}</div>
-
 							{user?.email ? (
-
 								<div className="dashboard-user-dropdown-hint" title={user.email}>
-
 									{user.email}
-
 								</div>
-
 							) : (
-
 								<div className="dashboard-user-dropdown-hint">Account</div>
-
 							)}
-
 						</div>
-
 						<Icon
-
 							name="chevron"
-
 							className={`dashboard-user-dropdown-chevron ${userDropdownOpen ? 'open' : ''}`}
-
 						/>
-
 					</button>
 
 					{userDropdownOpen ? (
-
 						<div
-
 							id="dashboard-user-dropdown-menu"
-
 							className="dashboard-user-dropdown-panel"
-
 							role="menu"
-
 							aria-labelledby="dashboard-user-dropdown-button"
-
 							onMouseEnter={clearUserDropdownLeaveTimer}
-
 						>
-
 							<NavLink
-
 								to="/dashboard/profile"
-
 								role="menuitem"
-
 								className={({ isActive }) =>
-
 									`dashboard-user-dropdown-item${isActive ? ' active' : ''}`
-
 								}
-
 								onClick={() => setUserDropdownOpen(false)}
-
 							>
-
 								<Icon name="user" className="dashboard-user-dropdown-item-icon" />
-
 								<span>Profile</span>
-
 							</NavLink>
-
 							<button
-
 								type="button"
-
 								role="menuitem"
-
 								className="dashboard-user-dropdown-item dashboard-user-dropdown-item--logout"
-
 								onClick={() => {
-
 									setUserDropdownOpen(false)
-
 									onLogout()
-
 								}}
-
 							>
-
 								<Icon name="logout" className="dashboard-user-dropdown-item-icon" />
-
 								<span>Logout</span>
-
 							</button>
-
 						</div>
-
 					) : null}
-
 				</div>
-
 			</div>
 
 			<nav className="dashboard-links">

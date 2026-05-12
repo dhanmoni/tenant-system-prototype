@@ -2687,6 +2687,54 @@ main.main-fluid {
 	gap: 8px;
 }
 
+.tenant-profile-prompt {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid #fbbf24;
+	background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+	border-radius: 8px;
+	box-shadow: 0 3px 12px rgba(245, 158, 11, 0.16);
+}
+
+.tenant-profile-prompt-text {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: #92400e;
+	font-size: 0.9rem;
+	font-weight: 600;
+}
+
+.tenant-profile-prompt-icon {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.tenant-profile-prompt-btn {
+	border: 1px solid #60a5fa;
+	background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+	color: #1d4ed8;
+	border-radius: 6px;
+	padding: 8px 12px;
+	font-size: 0.82rem;
+	font-weight: 700;
+	cursor: pointer;
+	box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tenant-profile-prompt-btn:hover {
+	background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+	border-color: #1d4ed8;
+	color: #fff;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 10px rgba(37, 99, 235, 0.24);
+}
+
 .tenant-toolbar-link {
 	display: inline-flex;
 	align-items: center;
@@ -2703,8 +2751,21 @@ main.main-fluid {
 }
 
 .tenant-toolbar-link:hover {
-	background: var(--gov-blue-light, #e3f2fd);
-	border-color: var(--gov-blue, #0d47a1);
+	background: #fff;
+	border-color: var(--gov-border, #cfd8dc);
+	color: var(--gov-blue, #0d47a1);
+	box-shadow: none;
+}
+
+/* Override global button:hover for dashboard toolbar buttons */
+.tenant-dashboard-toolbar-actions button.tenant-toolbar-link:hover:not(:disabled),
+.tenant-dashboard-toolbar-actions button.tenant-toolbar-link:focus-visible,
+.tenant-dashboard-toolbar-actions button.tenant-toolbar-link:active {
+	background: #fff;
+	border-color: var(--gov-border, #cfd8dc);
+	color: var(--gov-blue, #0d47a1);
+	box-shadow: none;
+	transform: none;
 }
 
 .tenant-toolbar-link-icon {
@@ -2814,9 +2875,9 @@ main.main-fluid {
 
 .tenant-hero-tile--services-cta:hover {
 	transform: translateY(-1px);
-	box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
-	border-color: #cbd5e1;
-	background: linear-gradient(180deg, #f1f5f9 0%, #fff 50%);
+	box-shadow: 0 5px 14px rgba(15, 23, 42, 0.05);
+	border-color: #dbe3ec;
+	background: linear-gradient(180deg, #f8fafc 0%, #fff 46%);
 }
 
 .tenant-hero-tile--services-cta:focus-visible {
@@ -2847,9 +2908,9 @@ main.main-fluid {
 }
 
 .tenant-hero-tile--services-cta:hover .tenant-hero-tile-cta--outline {
-	background: #f8fafc;
-	border-color: #cbd5e1;
-	color: #1e293b;
+	background: #ffffff;
+	border-color: #d6deea;
+	color: #334155;
 }
 
 .tenant-hero-tile-cta-icon--blue {
@@ -2857,7 +2918,21 @@ main.main-fluid {
 }
 
 .tenant-hero-tile--services-cta:hover .tenant-hero-tile-cta-icon--blue {
-	color: #334155;
+	color: #3f5268;
+}
+
+/* Hard override for tenant dashboard card hover state */
+.tenant-dashboard-home .tenant-hero-tile--services-cta:hover,
+.tenant-dashboard-home .tenant-hero-tile--services-cta:focus-visible,
+.tenant-dashboard-home .tenant-hero-tile--services-cta:active {
+	background: linear-gradient(180deg, #f8fafc 0%, #fff 46%) !important;
+	border-color: #dbe3ec !important;
+}
+
+.tenant-dashboard-home .tenant-hero-tile--services-cta:hover .tenant-hero-tile-kicker--on-light,
+.tenant-dashboard-home .tenant-hero-tile--services-cta:hover .tenant-hero-tile-title--on-light,
+.tenant-dashboard-home .tenant-hero-tile--services-cta:hover .tenant-hero-tile-desc--on-light {
+	color: #0f172a !important;
 }
 
 /* Dedicated tenant Services page (/dashboard/services) */
@@ -3676,11 +3751,6 @@ main.main-fluid {
 	z-index: 100;
 }
 
-.dashboard-menu:has(.dashboard-user-dropdown.is-open) {
-	overflow-y: visible;
-	overflow-x: hidden;
-}
-
 .dashboard-menu-header {
 	display: flex;
 	flex-direction: column;
@@ -3691,6 +3761,11 @@ main.main-fluid {
 	min-height: 0;
 	position: relative;
 	z-index: 20;
+}
+
+.dashboard-menu:has(.dashboard-user-dropdown.is-open) {
+	overflow-y: visible;
+	overflow-x: hidden;
 }
 
 .dashboard-user-dropdown {
@@ -3705,20 +3780,21 @@ main.main-fluid {
 	gap: 10px;
 	width: 100%;
 	min-width: 0;
-	padding: 8px 10px;
+	padding: 8px 10px 8px 8px;
 	border-radius: 10px;
 	border: 1px solid transparent;
 	background: rgba(255, 255, 255, 0.05);
-	color: inherit;
+	color: var(--dashboard-sidebar-text, #e8e8e8);
 	font: inherit;
 	text-align: left;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .dashboard-user-dropdown-trigger:hover {
 	background: var(--dashboard-sidebar-hover, rgba(255, 255, 255, 0.08));
-	border-color: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.12);
+	color: #fff;
 }
 
 .dashboard-user-dropdown-trigger:focus-visible {
