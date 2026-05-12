@@ -1205,13 +1205,16 @@ body.a11y-contrast-high *:focus-visible {
 		justify-items: start;
 		text-align: left;
 	}
+
 	.landing-helpdesk-toplinks {
 		gap: 10px;
 		justify-content: flex-start;
 	}
+
 	.landing-helpdesk-content {
 		justify-items: start;
 	}
+
 	.landing-helpdesk-branding {
 		justify-content: flex-start;
 	}
@@ -1964,6 +1967,32 @@ main.main-fluid {
 	font-size: 0.85rem;
 }
 
+.action-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px !important;
+	border-radius: 6px !important;
+	min-width: unset !important;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.action-icon-btn .btn-icon-svg {
+	width: 14px;
+	height: 14px;
+	stroke-width: 2.5;
+}
+
+.action-icon-btn .btn-text {
+	font-weight: 600;
+}
+
+.action-icon-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 .table-icon-btn {
 	padding: 6px;
 	min-width: 40px !important;
@@ -1972,6 +2001,58 @@ main.main-fluid {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+}
+
+/* ── Custom Tooltips ── */
+[data-tooltip] {
+	position: relative;
+}
+
+[data-tooltip]::after {
+	content: attr(data-tooltip);
+	position: absolute;
+	bottom: 125%;
+	left: 50%;
+	transform: translateX(-50%) scale(0.9);
+	background: #1e293b;
+	color: #fff;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 500;
+	white-space: nowrap;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.2s ease;
+	pointer-events: none;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	z-index: 100;
+}
+
+[data-tooltip]::before {
+	content: '';
+	position: absolute;
+	bottom: 105%;
+	left: 50%;
+	transform: translateX(-50%);
+	border: 5px solid transparent;
+	border-top-color: #1e293b;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.2s ease;
+	pointer-events: none;
+	z-index: 100;
+}
+
+[data-tooltip]:hover::after {
+	opacity: 1;
+	visibility: visible;
+	transform: translateX(-50%) scale(1);
+}
+
+[data-tooltip]:hover::before {
+	opacity: 1;
+	visibility: visible;
 }
 
 .table-pagination {
@@ -3643,7 +3724,8 @@ main.main-fluid {
 	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 	max-width: 900px;
 	margin: 0 auto;
-	font-family: 'Times New Roman', Times, serif; /* Traditional serif for govt forms */
+	font-family: 'Times New Roman', Times, serif;
+	/* Traditional serif for govt forms */
 	position: relative;
 	overflow: hidden;
 	line-height: 1.6;
@@ -3889,7 +3971,8 @@ main.main-fluid {
 }
 
 .tenancy-preview-container {
-	background: #f1f5f9; /* Subtle grey background for the outer wrapper */
+	background: #f1f5f9;
+	/* Subtle grey background for the outer wrapper */
 	padding: 40px 20px;
 	border-radius: 12px;
 }
@@ -4155,6 +4238,14 @@ main.main-fluid {
 
 .tenancy-certificate-page .tenancy-form .form-actions button:not(.secondary):hover:not(:disabled) {
 	background: var(--gov-blue-dark);
+}
+
+.tenancy-certificate-page .tenancy-form .form-actions button:disabled,
+.form-actions button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	background: #ccc !important;
+	color: #666 !important;
 }
 
 .tenancy-step-heading {
@@ -4826,8 +4917,16 @@ fieldset {
 }
 
 .tenancy-certificate-page .form-grid {
-	row-gap: 32px;
-	column-gap: 24px;
+	display: grid;
+	gap: 12px;
+}
+
+.tenancy-certificate-page .form-group-row {
+	margin-bottom: 32px;
+}
+
+.tenancy-certificate-page .form-group-row>label:first-child {
+	margin-bottom: 12px;
 }
 
 .tenancy-certificate-page .form-grid input,
@@ -4903,10 +5002,17 @@ button {
 	transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:hover {
+button:hover:not(:disabled) {
 	background: var(--nic-green-dark);
 	box-shadow: var(--nic-card-shadow);
 	transform: none;
+}
+
+button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	background: #ccc;
+	color: #666;
 }
 
 button.secondary {
@@ -5195,7 +5301,7 @@ button.secondary:hover {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .conflict-notice-box p {
@@ -5205,21 +5311,6 @@ button.secondary:hover {
 	font-size: 0.95rem;
 }
 
-.conflict-actions {
-	display: flex;
-	gap: 12px;
-}
-
-.conflict-actions button {
-	padding: 8px 16px;
-	font-size: 0.85rem;
-}
-
-.conflict-actions button.danger {
-	background: #d32f2f;
-	color: #fff;
-	border: none;
-}
 
 .conflict-actions button.danger:hover {
 	background: #b71c1c;

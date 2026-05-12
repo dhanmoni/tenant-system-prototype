@@ -303,7 +303,7 @@ function ApplicationStatus() {
 												<td className="table-actions">
 													<button
 														type="button"
-														className="secondary"
+														className="action-icon-btn secondary"
 														title="View details"
 														onClick={() => {
 															const isTenancy = app.application_type?.toLowerCase().includes('tenancy certificate')
@@ -312,25 +312,47 @@ function ApplicationStatus() {
 															navigate(`/dashboard/status/${type}/${identifier}`)
 														}}
 													>
-														View
+														<Icon name="eye" className="btn-icon-svg" />
 													</button>
+													{app.application_type?.toLowerCase().includes('tenancy certificate') && (
+														<button
+															type="button"
+															className="action-icon-btn secondary"
+															title="Download Acknowledgement"
+															onClick={async () => {
+																try {
+																	const response = await api.get(`/api/tenancy-applications/${app.application_no}/acknowledgement?print=1`);
+																	const printWindow = window.open('', '_blank');
+																	printWindow.document.write(response.data);
+																	printWindow.document.close();
+																} catch (err) {
+																	const message = err?.response?.data?.message || 'Failed to open acknowledgement';
+																	setError(message);
+																}
+															}}
+														>
+															<Icon name="download" className="btn-icon-svg" />
+														</button>
+													)}
 													{app.status === 'PARTIAL' && app.ref_code && (
 														<>
 															{canJoin(app) ? (
 																<button
 																	type="button"
-																	className="secondary"
+																	className="action-icon-btn secondary"
+																	title="Join Now"
 																	onClick={() => navigate(`/join?ref=${app.ref_code}`)}
 																>
-																	Join Now
+																	<Icon name="check" className="btn-icon-svg" />
 																</button>
 															) : (
 																<button
 																	type="button"
-																	className="secondary"
+																	className="action-icon-btn secondary"
+																	title={copiedRefCode === app.ref_code ? 'Copied!' : 'Invite (Copy Link)'}
 																	onClick={() => copyToClipboard(`${window.location.origin}/join?ref=${app.ref_code}`, app.ref_code)}
 																>
-																	{copiedRefCode === app.ref_code ? '✓ Copied!' : 'Copy Invite Link'}
+																	<Icon name="logout" className="btn-icon-svg" style={{ transform: 'rotate(180deg)' }} />
 																</button>
 															)}
 														</>

@@ -57,6 +57,9 @@ class TenancyApplicationController extends Controller
             'tenant_email' => [$request->input('initiator_role') === 'TENANT' ? 'required' : 'nullable', 'email'],
             'tenant_phone' => ['required', 'string', 'max:30'],
             'tenant_pan' => ['nullable', 'string', 'max:30'],
+            'landlord_aadhar' => ['nullable', 'string', 'max:20'],
+            'manager_aadhar' => ['nullable', 'string', 'max:20'],
+            'tenant_aadhar' => ['nullable', 'string', 'max:20'],
             'tenant_previous_tenancy' => ['nullable', 'string'],
             'property_possession_date' => ['required', 'date'],
             'property_rent_payable' => ['required', 'numeric', 'min:0'],
@@ -74,6 +77,9 @@ class TenancyApplicationController extends Controller
             'tenant_signature' => ['nullable', 'image'],
             'landlord_photo_path' => ['nullable', 'string', 'max:255'],
             'tenant_photo_path' => ['nullable', 'string', 'max:255'],
+            'landlord_pan_file' => ['nullable', 'file'],
+            'tenant_pan_file' => ['nullable', 'file'],
+            'manager_pan_file' => ['nullable', 'file'],
             'force_new' => ['nullable', 'boolean'],
         ]);
 
@@ -144,9 +150,12 @@ class TenancyApplicationController extends Controller
                 'landlord_photo_path' => $this->storeUpload($request, 'landlord_photo', 'tenancy/photos')
                     ?: ($data['landlord_photo_path'] ?? null),
                 'landlord_signature_path' => $this->storeUpload($request, 'landlord_signature', 'tenancy/signatures'),
+                'landlord_pan_path' => $this->storeUpload($request, 'landlord_pan_file', 'tenancy/documents'),
                 'tenant_photo_path' => $this->storeUpload($request, 'tenant_photo', 'tenancy/photos')
                     ?: ($data['tenant_photo_path'] ?? null),
                 'tenant_signature_path' => $this->storeUpload($request, 'tenant_signature', 'tenancy/signatures'),
+                'tenant_pan_path' => $this->storeUpload($request, 'tenant_pan_file', 'tenancy/documents'),
+                'manager_pan_path' => $this->storeUpload($request, 'manager_pan_file', 'tenancy/documents'),
             ];
 
             $movement = [[
@@ -283,9 +292,11 @@ class TenancyApplicationController extends Controller
             'email' => ['required', 'email'],
             'phone' => ['required', 'string', 'max:30'],
             'pan' => ['required', 'string', 'max:30'],
+            'aadhar' => ['nullable', 'string', 'max:20'],
             'previous_tenancy' => ['nullable', 'string'],
             'photo' => ['nullable', 'image'],
             'signature' => ['nullable', 'image'],
+            'pan_document' => ['nullable', 'file'],
             'photo_path' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -322,6 +333,7 @@ class TenancyApplicationController extends Controller
         $photoPath = $this->storeUpload($request, 'photo', 'tenancy/photos')
             ?: ($data['photo_path'] ?? null);
         $signaturePath = $this->storeUpload($request, 'signature', 'tenancy/signatures');
+        $panDocumentPath = $this->storeUpload($request, 'pan_document', 'tenancy/documents');
 
         // Update fields based on role
         $updateData = [];
@@ -333,9 +345,11 @@ class TenancyApplicationController extends Controller
                 'tenant_email' => $data['email'],
                 'tenant_phone' => $data['phone'],
                 'tenant_pan' => $data['pan'],
+                'tenant_aadhar' => $data['aadhar'] ?? null,
                 'tenant_previous_tenancy' => $data['previous_tenancy'] ?? null,
                 'tenant_photo_path' => $photoPath,
                 'tenant_signature_path' => $signaturePath,
+                'tenant_pan_path' => $panDocumentPath,
             ];
         } else {
             $updateData = [
@@ -345,8 +359,10 @@ class TenancyApplicationController extends Controller
                 'landlord_email' => $data['email'],
                 'landlord_phone' => $data['phone'],
                 'landlord_pan' => $data['pan'],
+                'landlord_aadhar' => $data['aadhar'] ?? null,
                 'landlord_photo_path' => $photoPath,
                 'landlord_signature_path' => $signaturePath,
+                'landlord_pan_path' => $panDocumentPath,
             ];
         }
 
@@ -357,7 +373,7 @@ class TenancyApplicationController extends Controller
             $status = 'PARTIAL';
             if ($application->initiator_completed) {
                 // Pass the villageWard to get the correct state code for the UID
-                $uid = TenancyApplication::generateUid($application->villageWard);
+                $uid = TenancyApplication::generateUid($application->villageWard, $application->office_id);
                 $status = 'COMPLETED';
                 $updateData['uid'] = $uid;
                 $updateData['status'] = $status;
@@ -624,6 +640,27 @@ class TenancyApplicationController extends Controller
                 ->header('Content-Type', 'application/pdf')
                 ->header('Content-Disposition', $disposition . '; filename="receipt-' . $tenancyApplication->application_no . '.pdf"');
         }
+
+        return response($html, 200)->header('Content-Type', 'text/html');
+    }
+
+    public function downloadAcknowledgement(Request $request, TenancyApplication $tenancyApplication)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!$this->userCanAccess($user, $tenancyApplication)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $tenancyApplication->load('office');
+
+        $html = view('tenancy.acknowledgement', [
+            'application' => $tenancyApplication,
+            'print' => $request->boolean('print'),
+        ])->render();
 
         return response($html, 200)->header('Content-Type', 'text/html');
     }

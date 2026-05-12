@@ -40,16 +40,19 @@ class TenancyApplication extends Model
         'landlord_email',
         'landlord_phone',
         'landlord_pan',
+        'landlord_aadhar',
         'manager_name',
         'manager_address',
         'manager_email',
         'manager_phone',
         'manager_pan',
+        'manager_aadhar',
         'tenant_name',
         'tenant_address',
         'tenant_email',
         'tenant_phone',
         'tenant_pan',
+        'tenant_aadhar',
         'tenant_previous_tenancy',
         'property_possession_date',
         'property_rent_payable',
@@ -63,8 +66,11 @@ class TenancyApplication extends Model
         'agreement_pdf_path',
         'landlord_photo_path',
         'landlord_signature_path',
+        'landlord_pan_path',
         'tenant_photo_path',
         'tenant_signature_path',
+        'tenant_pan_path',
+        'manager_pan_path',
         'uid',
     ];
 
@@ -140,10 +146,13 @@ class TenancyApplication extends Model
     /**
      * Generate a unique incremental tenancy UID when both parties have completed.
      */
-    public static function generateUid($villageWard = null): string
+    public static function generateUid($villageWard = null, $officeId = null): string
     {
-        $stateCode = $villageWard?->district?->state?->code ?? 'AS';
-        $prefix = 'TC-' . strtoupper(substr($stateCode, 0, 2)) . '-' . date('ym');
+        $districtCode = str_pad((string)($villageWard?->district_id ?? 0), 2, '0', STR_PAD_LEFT);
+        $circleCode = str_pad((string)($officeId ?? 0), 2, '0', STR_PAD_LEFT);
+        $year = date('Y');
+        
+        $prefix = "ATRMS-{$districtCode}-{$circleCode}-{$year}";
         
         $latest = self::where('uid', 'like', $prefix . '-%')
             ->orderByDesc('uid')
@@ -157,6 +166,6 @@ class TenancyApplication extends Model
             $count = $lastNumber + 1;
         }
 
-        return $prefix . '-' . str_pad($count, 6, '0', STR_PAD_LEFT);
+        return $prefix . '-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -233,8 +233,8 @@ function Login({ onLogin }) {
 		<section className="home">
 			<div className="hero hero--rent-portal">
 				<div className="hero-content">
-					<p className="hero-eyebrow">Government of India · TCP</p>
-					<h1>Tenancy Registration & Management System</h1>
+					<p className="hero-eyebrow">Government of Assam</p>
+					<h1>Assam Tenancy Registration & Management System</h1>
 					<p className="hero-subtitle">
 						A unified portal for tenancy registration, certificate issuance,
 						and property management — for the Department of Housing And Urban

@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tenancy-applications/my', [TenancyApplicationController::class, 'myApplications']);
     Route::post('/tenancy-applications', [TenancyApplicationController::class, 'store']);
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);
+    Route::get('/tenancy-applications/{tenancyApplication}/acknowledgement', [TenancyApplicationController::class, 'downloadAcknowledgement']);
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
 });
 

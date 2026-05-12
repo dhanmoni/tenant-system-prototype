@@ -58,7 +58,7 @@ class TenancyApplicationSeeder extends Seeder
                 'property_premises_description' => '3 BHK Apartment, 1200 sq ft',
                 'property_furniture_description' => 'Fully furnished',
                 'property_tenancy_duration' => '11 months',
-                'uid' => TenancyApplication::generateUid($villageWard),
+                'uid' => TenancyApplication::generateUid($villageWard, $office->id),
                 'movement_history' => [['status' => 'COMPLETED', 'current_with' => 'Rent Authority', 'moved_at' => now()->toDateTimeString()]],
             ]
         );
@@ -97,7 +97,7 @@ class TenancyApplicationSeeder extends Seeder
                 'property_premises_description' => '2 BHK Apartment, 900 sq ft',
                 'property_furniture_description' => 'Semi furnished',
                 'property_tenancy_duration' => '11 months',
-                'uid' => TenancyApplication::generateUid($villageWard),
+                'uid' => TenancyApplication::generateUid($villageWard, $office->id),
                 'movement_history' => [['status' => 'PARTIAL', 'current_with' => null, 'moved_at' => now()->toDateTimeString()]],
             ]
         );
@@ -180,7 +180,7 @@ class TenancyApplicationSeeder extends Seeder
                     'property_premises_description' => 'Office-linked application',
                     'property_furniture_description' => '',
                     'property_tenancy_duration' => '11 months',
-                    'uid' => TenancyApplication::generateUid($villageWard),
+                    'uid' => TenancyApplication::generateUid($villageWard, $office->id),
                     'movement_history' => [['status' => 'COMPLETED', 'current_with' => 'NIC Office', 'moved_at' => now()->toDateTimeString()]],
                 ]
             );

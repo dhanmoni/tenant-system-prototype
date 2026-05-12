@@ -19,11 +19,14 @@ function JoinApplication() {
 	const [email, setEmail] = useState('')
 	const [phone, setPhone] = useState('')
 	const [pan, setPan] = useState('')
+	const [aadhar, setAadhar] = useState('')
 	const [previousTenancy, setPreviousTenancy] = useState('')
 	const [photoFile, setPhotoFile] = useState(null)
 	const [photoPreview, setPhotoPreview] = useState('')
 	const [signatureFile, setSignatureFile] = useState(null)
 	const [signaturePreview, setSignaturePreview] = useState('')
+	const [panDocumentFile, setPanDocumentFile] = useState(null)
+	const [declarationChecked, setDeclarationChecked] = useState(false)
 
 	useEffect(() => {
 		if (!refCode) {
@@ -46,6 +49,7 @@ function JoinApplication() {
 				setEmail(appData[`${rolePrefix}_email`] || '')
 				setPhone(appData[`${rolePrefix}_phone`] || '')
 				setPan(appData[`${rolePrefix}_pan`] || '')
+				setAadhar(appData[`${rolePrefix}_aadhar`] || '')
 			} catch (err) {
 				setError(err?.response?.data?.message || 'Failed to load application.')
 			} finally {
@@ -57,6 +61,10 @@ function JoinApplication() {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault()
+		if (!declarationChecked) {
+			setError('You must accept the declaration to submit.')
+			return
+		}
 		setError('')
 		setSuccess('')
 		setSubmitting(true)
@@ -69,6 +77,7 @@ function JoinApplication() {
 			formData.append('email', email)
 			formData.append('phone', phone)
 			formData.append('pan', pan)
+			if (aadhar) formData.append('aadhar', aadhar)
 			if (application?.second_party_role === 'TENANT') {
 				formData.append('previous_tenancy', previousTenancy || '')
 			}
@@ -77,6 +86,9 @@ function JoinApplication() {
 			}
 			if (signatureFile) {
 				formData.append('signature', signatureFile)
+			}
+			if (panDocumentFile) {
+				formData.append('pan_document', panDocumentFile)
 			}
 			const { data } = await api.post('/api/tenancy-applications/join', formData, {
 				headers: { 'Content-Type': 'multipart/form-data' },
@@ -289,6 +301,15 @@ function JoinApplication() {
 							required
 						/>
 					</label>
+					<label>
+						<span className="label-text">Aadhar No (Optional)</span>
+						<input
+							type="text"
+							value={aadhar}
+							onChange={(e) => setAadhar(e.target.value.replace(/\D/g, ''))}
+							maxLength={12}
+						/>
+					</label>
 					{!isLandlord ? (
 						<label className="tenancy-field-full">
 							Description of Previous Tenancy
@@ -344,10 +365,38 @@ function JoinApplication() {
 							<img src={signaturePreview} alt="Preview" className="tenancy-preview-img" />
 						) : null}
 					</label>
+					<label className="tenancy-field-full">
+						PAN Card Document
+						<input
+							type="file"
+							accept=".pdf, image/png, image/jpeg"
+							onChange={(e) => {
+								const file = e.target.files?.[0] || null
+								setPanDocumentFile(file)
+							}}
+							required
+						/>
+						{panDocumentFile && <span className="muted" style={{fontSize: '12px', marginTop: '4px'}}>{panDocumentFile.name}</span>}
+					</label>
 				</fieldset>
 
+				<div className="tenancy-declaration-section" style={{ marginTop: '32px', padding: '16px', background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '4px' }}>
+					<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', margin: 0, flexDirection: 'row' }}>
+						<input 
+							type="checkbox" 
+							checked={declarationChecked} 
+							onChange={(e) => setDeclarationChecked(e.target.checked)} 
+							disabled={submitting}
+							style={{ marginTop: '4px', width: 'auto' }}
+						/>
+						<span style={{ fontSize: '0.9rem', lineHeight: '1.5' }}>
+							I/we hereby declare that the particulars given above are true and correct to the best of my/our knowledge and belief and no material fact has been concealed.
+						</span>
+					</label>
+				</div>
+
 				<div className="form-actions">
-					<button type="submit" disabled={submitting}>
+					<button type="submit" disabled={submitting || !declarationChecked}>
 						{submitting ? 'Submitting...' : 'Submit & Complete Application'}
 					</button>
 					<button
