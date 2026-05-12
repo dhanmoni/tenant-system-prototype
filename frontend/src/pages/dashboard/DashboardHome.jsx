@@ -114,73 +114,67 @@ function DashboardHome() {
 
 		const statsCards = [
 			{ label: 'Recent Submissions', value: recentItems.length, icon: 'file' },
-			{ label: 'Tenancy Certificates', value: tenancyRecentCount, icon: 'check' },
+			{ label: 'UIN', value: tenancyRecentCount, icon: 'check' },
 			{ label: 'Assam Tenancy Forms', value: formsRecentCount, icon: 'list' },
 		]
 
 		return (
-			<div className="dashboard-home">
-				<div className="dashboard-overview-cards">
-					{statsCards.map((stat) => (
-						<div
-							key={stat.label}
-							className={`dashboard-stat-card ${stat.label === 'Recent Submissions'
-									? 'dashboard-stat-card--recent-submissions'
-									: stat.label === 'Tenancy Certificates'
-										? 'dashboard-stat-card--tenancy-certificates'
-										: stat.label === 'Assam Tenancy Forms'
-											? 'dashboard-stat-card--assam-tenancy-forms'
-											: ''
-								}`}
-						>
-							<span className="dashboard-stat-icon-wrap">
-								<Icon name={stat.icon} className="dashboard-stat-icon" />
+			<div className="dashboard-home tenant-dashboard-home">
+				<div className="tenant-dashboard-toolbar">
+					<div className="tenant-dashboard-summary">
+						{statsCards.map((stat) => (
+							<span key={stat.label} className="tenant-dashboard-summary-pill" title={stat.label}>
+								<Icon name={stat.icon} className="tenant-dashboard-summary-pill-icon" />
+								<span className="tenant-dashboard-summary-pill-value">{stat.value}</span>
+								<span className="tenant-dashboard-summary-pill-label">{stat.label}</span>
 							</span>
-							<span className="dashboard-stat-value">{stat.value}</span>
-							<span className="dashboard-stat-label">{stat.label}</span>
-						</div>
-					))}
-				</div>
-				<div className="auth-card dashboard-card">
-					<h2 className="dashboard-section-title">
-						<Icon name="status" className="dashboard-section-icon" />
-						Quick actions
-					</h2>
-					<p className="muted">Fast access to your most used actions.</p>
-					<div className="dashboard-quick-actions">
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/profile')}>
-							<Icon name="user" className="dashboard-action-icon" />
-							<span>Profile</span>
+						))}
+					</div>
+					<div className="tenant-dashboard-toolbar-actions">
+						<button type="button" className="tenant-toolbar-link" onClick={() => navigate('/dashboard/profile')}>
+							<Icon name="user" className="tenant-toolbar-link-icon" />
+							Profile
 						</button>
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/tenancy-certificate')}>
-							<Icon name="documentPlus" className="dashboard-action-icon" />
-							<span>Tenancy Certificate</span>
-						</button>
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/form-i-rent-revision')}>
-							<Icon name="file" className="dashboard-action-icon" />
-							<span>Form I</span>
-						</button>
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/form-i-a-other-charges-revision')}>
-							<Icon name="file" className="dashboard-action-icon" />
-							<span>Form I-A</span>
-						</button>
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/form-i-b-valuer-appointment')}>
-							<Icon name="file" className="dashboard-action-icon" />
-							<span>Form I-B</span>
-						</button>
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/form-4-rent-court-possession')}>
-							<Icon name="list" className="dashboard-action-icon" />
-							<span>Form 4</span>
-						</button>
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/form-7-rent-court-appeal')}>
-							<Icon name="list" className="dashboard-action-icon" />
-							<span>Form 7</span>
-						</button>
-						<button type="button" className="dashboard-action-btn" onClick={() => navigate('/dashboard/status')}>
-							<Icon name="status" className="dashboard-action-icon" />
-							<span>Status</span>
+						<button type="button" className="tenant-toolbar-link" onClick={() => navigate('/dashboard/status')}>
+							<Icon name="status" className="tenant-toolbar-link-icon" />
+							UIN Status
 						</button>
 					</div>
+				</div>
+
+				<div className="tenant-dashboard-hero">
+					<button
+						type="button"
+						className="tenant-hero-tile tenant-hero-tile--certificate"
+						onClick={() => navigate('/dashboard/tenancy-certificate')}
+					>
+						<span className="tenant-hero-tile-kicker">Application</span>
+						<span className="tenant-hero-tile-title">Apply for UIN</span>
+						<p className="tenant-hero-tile-desc">
+							Start a new Unique Identification Number (UIN) application and track it from your dashboard.
+						</p>
+						<span className="tenant-hero-tile-cta">
+							<Icon name="documentPlus" className="tenant-hero-tile-cta-icon" />
+							Open application
+						</span>
+					</button>
+
+					<button
+						type="button"
+						className="tenant-hero-tile tenant-hero-tile--services-cta"
+						onClick={() => navigate('/dashboard/services')}
+					>
+						<span className="tenant-hero-tile-kicker tenant-hero-tile-kicker--on-light">Services</span>
+						<span className="tenant-hero-tile-title tenant-hero-tile-title--on-light">Assam Tenancy forms</span>
+						<p className="tenant-hero-tile-desc tenant-hero-tile-desc--on-light">
+							Open the services page to browse Rent Court, Rent Authority, appeals, and revision forms—then
+							apply for the one you need.
+						</p>
+						<span className="tenant-hero-tile-cta tenant-hero-tile-cta--outline">
+							<Icon name="services" className="tenant-hero-tile-cta-icon tenant-hero-tile-cta-icon--blue" />
+							View services
+						</span>
+					</button>
 				</div>
 				<div className="auth-card dashboard-card">
 					<div className="dashboard-section-head">
@@ -217,7 +211,7 @@ function DashboardHome() {
 						{tenantRecentLoading
 							? 'Loading your latest applications...'
 							: recentItems.length > 0
-								? 'Click a tile to filter and view in Status.'
+								? 'Click a tile to filter and view in UIN Status.'
 								: 'No applications submitted yet.'}
 					</p>
 
@@ -278,7 +272,7 @@ function DashboardHome() {
 											<div className="dashboard-recent-list-top">
 												<div className="dashboard-recent-list-title-wrap">
 													<div className="dashboard-recent-list-title">{app.application_no}</div>
-													<div className="dashboard-recent-list-hint">View details in Status</div>
+													<div className="dashboard-recent-list-hint">View details in UIN Status</div>
 												</div>
 												<span className={`dashboard-status-pill ${isSuccess ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
 													{statusText}
