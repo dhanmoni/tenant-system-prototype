@@ -357,7 +357,7 @@ function TenancyCertificate() {
 							</li>
 							<li className={tenancyOfficeId ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
 								<span className="tenancy-criteria-icon">{tenancyOfficeId ? '✓' : '○'}</span>
-								<span>Applying office must be selected.</span>
+								<span>Circle office must be selected.</span>
 							</li>
 						</ul>
 						{tenancyRegistrationDate && (
@@ -451,7 +451,7 @@ function TenancyCertificate() {
 							</label>
 
 							<label>
-								<span className="label-text required">Applying Office:</span>
+								<span className="label-text required">Circle Office:</span>
 								<select value={tenancyOfficeId} onChange={e => setTenancyOfficeId(e.target.value)} required disabled={formLocked}>
 									<option value="">Select Office</option>
 									{tenancyOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -489,7 +489,7 @@ function TenancyCertificate() {
 							</div>
 
 							<div className="form-group-row">
-								<label><span className="label-text required">3. Name(s) and address of the tenant, including email and contact details,</span></label>
+								<label><span className="label-text required">3. Name and address of the tenant, including email and contact details</span></label>
 								<div className="form-grid">
 									<input type="text" placeholder="Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required disabled={formLocked} />
 									<textarea placeholder="Address" value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required disabled={formLocked} />
@@ -557,7 +557,7 @@ function TenancyCertificate() {
 							</div>
 
 							<div className="form-group-row">
-								<label><span className="label-text">13. Aadhaar of landlord (Optional)</span>
+								<label><span className="label-text">13. Aadhaar number of landlord (Optional)</span>
 									<input type="text" value={landlordAadhar} onChange={e => setLandlordAadhar(e.target.value.replace(/\D/g, ''))} disabled={formLocked} maxLength={12} />
 								</label>
 							</div>
@@ -577,7 +577,7 @@ function TenancyCertificate() {
 							</div>
 
 							<div className="form-group-row">
-								<label><span className="label-text">16. Aadhaar of tenant (Optional)</span>
+								<label><span className="label-text">16. Aadhaar number of tenant (Optional)</span>
 									<input type="text" value={tenantAadhar} onChange={e => setTenantAadhar(e.target.value.replace(/\D/g, ''))} disabled={formLocked} maxLength={12} />
 								</label>
 							</div>
@@ -597,7 +597,7 @@ function TenancyCertificate() {
 							</div>
 
 							<div className="form-group-row">
-								<label><span className="label-text">19. Aadhaar of Property Manager (if any) (Optional)</span>
+								<label><span className="label-text">19. Aadhaar number of Property Manager (if any) (Optional)</span>
 									<input type="text" value={managerAadhar} onChange={e => setManagerAadhar(e.target.value.replace(/\D/g, ''))} disabled={formLocked} maxLength={12} />
 								</label>
 							</div>
@@ -738,7 +738,7 @@ function TenancyCertificate() {
 									<span className="govt-form-value">{tenancyRegistrationDate}</span>
 								</div>
 								<div className="govt-form-row">
-									<span className="govt-form-label">Applying Office:</span>
+									<span className="govt-form-label">Circle Office:</span>
 									<span className="govt-form-value">{tenancyOffices.find(o => String(o.id) === tenancyOfficeId)?.name}</span>
 								</div>
 								<div className="govt-form-row">

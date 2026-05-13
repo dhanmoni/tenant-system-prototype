@@ -126,40 +126,9 @@ function DashboardHome() {
 
 	if (user?.role === 'user') {
 		const recentItems = tenantRecentApplications || []
-		const tenancyRecentCount = recentItems.filter((a) =>
-			String(a.application_type || '').toLowerCase().includes('tenancy certificate')
-		).length
-		const formsRecentCount = recentItems.length - tenancyRecentCount
-
-		const statsCards = [
-			{ label: 'Recent Submissions', value: recentItems.length, icon: 'file' },
-			{ label: 'UIN', value: tenancyRecentCount, icon: 'check' },
-			{ label: 'Assam Tenancy Forms', value: formsRecentCount, icon: 'list' },
-		]
 
 		return (
 			<div className="dashboard-home tenant-dashboard-home">
-				<div className="tenant-dashboard-toolbar">
-					<div className="tenant-dashboard-summary">
-						{statsCards.map((stat) => (
-							<span key={stat.label} className="tenant-dashboard-summary-pill" title={stat.label}>
-								<Icon name={stat.icon} className="tenant-dashboard-summary-pill-icon" />
-								<span className="tenant-dashboard-summary-pill-value">{stat.value}</span>
-								<span className="tenant-dashboard-summary-pill-label">{stat.label}</span>
-							</span>
-						))}
-					</div>
-					<div className="tenant-dashboard-toolbar-actions">
-						<button type="button" className="tenant-toolbar-link" onClick={() => navigate('/dashboard/profile')}>
-							<Icon name="user" className="tenant-toolbar-link-icon" />
-							Profile
-						</button>
-						<button type="button" className="tenant-toolbar-link" onClick={() => navigate('/dashboard/status')}>
-							<Icon name="status" className="tenant-toolbar-link-icon" />
-							UIN Status
-						</button>
-					</div>
-				</div>
 				{showProfilePrompt ? (
 					<div className="tenant-profile-prompt" role="status" aria-live="polite">
 						<div className="tenant-profile-prompt-text">

@@ -118,12 +118,12 @@
         <div class="certificate-border">
             <div class="header">
                 <p class="gov-title">Government of Assam</p>
-                <p class="dept-title">Revenue & Disaster Management Department</p>
-                <p class="cert-type">Acknowledgement of Tenancy Registration</p>
+                <p class="dept-title">Department of Housing And Urban Affairs</p>
+                <p class="cert-type">Acknowledgement of Tenancy UIN</p>
             </div>
 
             <div class="content">
-                <p>This is to acknowledge the receipt of an application for registration of tenancy under the <strong>Assam Tenancy Act, 2021</strong>.</p>
+                <p>This is to acknowledge the receipt of an application for UIN of tenancy certificate under the <strong>Assam Tenancy Act, 2021</strong>.</p>
                 
                 <table class="details-table">
                     <tr>
