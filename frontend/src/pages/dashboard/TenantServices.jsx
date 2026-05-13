@@ -17,8 +17,8 @@ function TenantServices() {
 					<div>
 						<h1 className="tenant-services-page-title">Services</h1>
 						<p className="tenant-services-page-lead muted">
-							Choose a service category below, then select a form to apply. Assam Tenancy Act forms and
-							filings.
+							Choose a category, then a form. Each listing shows the matter, rule under the Assam
+							Tenancy Act, and the competent authority (section in brackets).
 						</p>
 					</div>
 				</div>
@@ -31,17 +31,24 @@ function TenantServices() {
 						className={`tenant-service-tile tenant-service-tile--${group.id} auth-card dashboard-card`}
 					>
 						<h2 className="tenant-service-tile-title">{group.title}</h2>
+						<p className="tenant-service-tile-authority">{group.authority}</p>
 						<p className="tenant-service-tile-desc muted">{group.description}</p>
 						<ul className="tenant-service-tile-forms">
 							{group.forms.map((f) => (
 								<li key={f.to}>
 									<NavLink
 										to={f.to}
+										title={`${f.formName}: ${f.matter} (${f.rule})`}
 										className={({ isActive }) =>
 											`tenant-service-form-link${isActive ? ' tenant-service-form-link--active' : ''}`
 										}
 									>
-										<span className="tenant-service-form-link-label">{f.label}</span>
+										<span className="tenant-service-form-link-main">
+											<span className="tenant-service-form-link-name">{f.formName}</span>
+											<span className="tenant-service-form-link-label">{f.label}</span>
+											<span className="tenant-service-form-link-matter">{f.matter}</span>
+											<span className="tenant-service-form-link-rule">{f.rule}</span>
+										</span>
 										<span className="tenant-service-form-link-action">Apply</span>
 									</NavLink>
 								</li>

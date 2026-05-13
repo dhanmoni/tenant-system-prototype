@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import api, { csrf } from '../api'
+import FormPageLegalContext from './FormPageLegalContext'
 
-export default function FormIBValuerAppointmentPanel({ onBack }) {
+export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
@@ -68,6 +69,7 @@ export default function FormIBValuerAppointmentPanel({ onBack }) {
 
 	return (
 		<div className="auth-card dashboard-card">
+			<FormPageLegalContext serviceMeta={serviceMeta} />
 			<h1>Form-I-B: Valuer appointment</h1>
 			<p className="muted">Fill the application details and submit to the system.</p>
 			{error ? <div className="error">{error}</div> : null}

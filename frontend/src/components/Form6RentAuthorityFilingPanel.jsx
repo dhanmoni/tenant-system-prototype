@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import api, { csrf } from '../api'
+import FormPageLegalContext from './FormPageLegalContext'
 
-export default function Form6RentAuthorityFilingPanel({ onBack }) {
+export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
@@ -91,6 +92,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack }) {
 
 	return (
 		<div className="auth-card dashboard-card">
+			<FormPageLegalContext serviceMeta={serviceMeta} />
 			<h1>Form IV: Application filed before the Rent Authority</h1>
 			<p className="muted">Fill the application details and submit to the system.</p>
 			{error ? <div className="error">{error}</div> : null}

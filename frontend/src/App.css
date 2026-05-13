@@ -3035,8 +3035,16 @@ main.main-fluid {
 	padding-bottom: 0;
 }
 
+.tenant-service-tile-authority {
+	margin: 6px 0 0;
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--gov-heading, #1a237e);
+	line-height: 1.35;
+}
+
 .tenant-service-tile-desc {
-	margin: 0;
+	margin: 8px 0 0;
 	font-size: 0.85rem;
 	line-height: 1.4;
 }
@@ -3052,7 +3060,7 @@ main.main-fluid {
 
 .tenant-service-form-link {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
 	gap: 12px;
 	padding: 11px 14px;
@@ -3079,9 +3087,40 @@ main.main-fluid {
 	color: var(--gov-blue-dark, #0d47a1);
 }
 
-.tenant-service-form-link-label {
+.tenant-service-form-link-main {
 	flex: 1;
 	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.tenant-service-form-link-name {
+	font-size: 0.72rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--gov-blue, #0d47a1);
+}
+
+.tenant-service-form-link-label {
+	font-size: 0.88rem;
+	font-weight: 700;
+	color: inherit;
+	line-height: 1.3;
+}
+
+.tenant-service-form-link-matter {
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: #64748b;
+	line-height: 1.35;
+}
+
+.tenant-service-form-link-rule {
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: #334155;
 }
 
 .tenant-service-form-link-action {
@@ -3090,6 +3129,48 @@ main.main-fluid {
 	font-weight: 800;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
+	color: var(--gov-blue, #0d47a1);
+}
+
+.form-page-legal-context {
+	margin: 0 0 16px;
+	padding: 14px 16px;
+	border-radius: 8px;
+	border: 1px solid var(--gov-border, #cfd8dc);
+	background: #f5f9fc;
+	border-left: 4px solid var(--gov-blue, #0d47a1);
+}
+
+.form-page-legal-context__authority {
+	margin: 0 0 8px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: var(--gov-heading, #1a237e);
+	line-height: 1.35;
+}
+
+.form-page-legal-context__matter {
+	margin: 0 0 10px;
+	font-size: 0.875rem;
+	color: #334155;
+	line-height: 1.45;
+}
+
+.form-page-legal-context__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 16px;
+	font-size: 0.8rem;
+}
+
+.form-page-legal-context__rule {
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.form-page-legal-context__form-name {
+	font-weight: 800;
 	color: var(--gov-blue, #0d47a1);
 }
 
@@ -4259,6 +4340,31 @@ main.main-fluid {
 .dashboard-services-flyout--minimal .dashboard-services-flyout-link.active {
 	background: #0f0f0f;
 	color: #7eb8ff;
+}
+
+.dashboard-services-flyout-link-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.dashboard-services-flyout-link-name {
+	font-weight: 800;
+	font-size: 11px;
+	color: #94a3b8;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.dashboard-services-flyout-link-line {
+	font-size: 12px;
+	line-height: 1.35;
+}
+
+.dashboard-services-flyout-link-rule {
+	font-size: 10px;
+	font-weight: 700;
+	color: #a3a3a3;
 }
 
 .dashboard-services-flyout--minimal .dashboard-services-flyout-all {

@@ -572,13 +572,23 @@ function Sidebar({ user, onLogout }) {
 
 																.find((g) => g.id === servicesHoveredGroupId)
 
-																?.forms?.map((f) => (
+																?.forms?.map((f) => {
+
+																	const hoveredGrp = tenantServiceGroups.find(
+
+																		(g) => g.id === servicesHoveredGroupId
+
+																	)
+
+																	return (
 
 																	<li key={f.to}>
 
 																		<NavLink
 
 																			to={f.to}
+
+																			title={`${f.formName}: ${f.matter} · ${f.rule} · ${hoveredGrp?.authority ?? ''}`}
 
 																			className={({ isActive }) =>
 
@@ -590,13 +600,23 @@ function Sidebar({ user, onLogout }) {
 
 																		>
 
-																			{f.label}
+																			<span className="dashboard-services-flyout-link-stack">
+
+																				<span className="dashboard-services-flyout-link-name">{f.formName}</span>
+
+																				<span className="dashboard-services-flyout-link-line">{f.label}</span>
+
+																				<span className="dashboard-services-flyout-link-rule">{f.rule}</span>
+
+																			</span>
 
 																		</NavLink>
 
 																	</li>
 
-																))}
+																	)
+
+																})}
 
 														</ul>
 
