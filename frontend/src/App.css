@@ -3132,48 +3132,6 @@ main.main-fluid {
 	color: var(--gov-blue, #0d47a1);
 }
 
-.form-page-legal-context {
-	margin: 0 0 16px;
-	padding: 14px 16px;
-	border-radius: 8px;
-	border: 1px solid var(--gov-border, #cfd8dc);
-	background: #f5f9fc;
-	border-left: 4px solid var(--gov-blue, #0d47a1);
-}
-
-.form-page-legal-context__authority {
-	margin: 0 0 8px;
-	font-size: 0.8rem;
-	font-weight: 700;
-	color: var(--gov-heading, #1a237e);
-	line-height: 1.35;
-}
-
-.form-page-legal-context__matter {
-	margin: 0 0 10px;
-	font-size: 0.875rem;
-	color: #334155;
-	line-height: 1.45;
-}
-
-.form-page-legal-context__row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 10px 16px;
-	font-size: 0.8rem;
-}
-
-.form-page-legal-context__rule {
-	font-weight: 700;
-	color: #0f172a;
-}
-
-.form-page-legal-context__form-name {
-	font-weight: 800;
-	color: var(--gov-blue, #0d47a1);
-}
-
 @media (max-width: 900px) {
 	.tenant-services-tiles-grid {
 		grid-template-columns: 1fr;
@@ -4214,20 +4172,20 @@ main.main-fluid {
 
 .dashboard-services-flyout.dashboard-services-flyout--minimal {
 	width: max-content;
-	max-width: min(400px, calc(100vw - 20px));
+	max-width: min(720px, calc(100vw - 16px));
 	background: #2a2a2a;
 	border: 1px solid #404040;
 	border-radius: 10px;
 	overflow: hidden;
 	color: #e8e8e8;
-	font-size: 13px;
+	font-size: 15px;
 	pointer-events: auto;
 }
 
 .dashboard-services-flyout--minimal .dashboard-services-flyout-inner {
-	max-height: min(70vh, 480px);
+	max-height: min(85vh, 680px);
 	overflow: auto;
-	padding: 6px 8px 8px;
+	padding: 12px 14px 14px;
 }
 
 .dashboard-services-flyout--minimal .dashboard-services-flyout-row {
@@ -4235,7 +4193,7 @@ main.main-fluid {
 	flex-direction: row;
 	align-items: stretch;
 	gap: 0;
-	min-height: 80px;
+	min-height: 120px;
 	border: 1px solid #3d3d3d;
 	border-radius: 8px;
 	overflow: hidden;
@@ -4244,11 +4202,11 @@ main.main-fluid {
 .dashboard-services-flyout--minimal .dashboard-services-flyout-cats {
 	list-style: none;
 	margin: 0;
-	padding: 4px 0;
+	padding: 8px 0;
 	border: none;
 	flex: 0 0 auto;
-	min-width: 148px;
-	max-width: 200px;
+	min-width: 200px;
+	max-width: 260px;
 	border-right: 1px solid #3d3d3d;
 }
 
@@ -4261,8 +4219,8 @@ main.main-fluid {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 6px;
-	padding: 7px 10px;
+	gap: 8px;
+	padding: 11px 14px;
 	border: none;
 	border-radius: 6px;
 	background: none;
@@ -4303,10 +4261,10 @@ main.main-fluid {
 }
 
 .dashboard-services-flyout--minimal .dashboard-services-flyout-forms-col {
-	flex: 0 0 auto;
-	min-width: 200px;
-	max-width: 260px;
-	padding: 4px 0;
+	flex: 1 1 auto;
+	min-width: 320px;
+	max-width: 460px;
+	padding: 8px 0;
 	border: none;
 	background: #222;
 	align-self: stretch;
@@ -4324,12 +4282,12 @@ main.main-fluid {
 
 .dashboard-services-flyout--minimal .dashboard-services-flyout-link {
 	display: block;
-	padding: 6px 10px;
+	padding: 10px 14px;
 	border-radius: 6px;
 	color: #ddd;
 	text-decoration: none;
-	font-size: 12px;
-	line-height: 1.35;
+	font-size: 14px;
+	line-height: 1.45;
 }
 
 .dashboard-services-flyout--minimal .dashboard-services-flyout-link:hover {
@@ -4345,34 +4303,34 @@ main.main-fluid {
 .dashboard-services-flyout-link-stack {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 5px;
 }
 
 .dashboard-services-flyout-link-name {
 	font-weight: 800;
-	font-size: 11px;
+	font-size: 13px;
 	color: #94a3b8;
 	text-transform: uppercase;
 	letter-spacing: 0.03em;
 }
 
 .dashboard-services-flyout-link-line {
-	font-size: 12px;
-	line-height: 1.35;
+	font-size: 14px;
+	line-height: 1.45;
 }
 
 .dashboard-services-flyout-link-rule {
-	font-size: 10px;
+	font-size: 12px;
 	font-weight: 700;
 	color: #a3a3a3;
 }
 
 .dashboard-services-flyout--minimal .dashboard-services-flyout-all {
 	display: block;
-	margin-top: 8px;
-	padding: 6px 0;
+	margin-top: 12px;
+	padding: 10px 0;
 	text-align: center;
-	font-size: 12px;
+	font-size: 14px;
 	color: #a3a3a3;
 	text-decoration: underline;
 	border: none;

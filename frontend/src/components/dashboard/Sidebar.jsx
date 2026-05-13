@@ -119,7 +119,7 @@ function Sidebar({ user, onLogout }) {
 
 		const r = el.getBoundingClientRect()
 
-		const panelW = 400
+		const panelW = 720
 
 		const gap = 8
 
