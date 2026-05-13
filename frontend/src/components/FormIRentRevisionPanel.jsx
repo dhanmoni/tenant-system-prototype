@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import api, { csrf } from '../api'
+import FormPageLegalContext from './FormPageLegalContext'
 
 const parseMoney = (value) => {
 	// Accept inputs like "25,000.50" and normalize to a number
@@ -9,7 +10,7 @@ const parseMoney = (value) => {
 	return Number.isFinite(num) ? num : 0
 }
 
-export default function FormIRentRevisionPanel({ onBack }) {
+export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
@@ -82,6 +83,7 @@ export default function FormIRentRevisionPanel({ onBack }) {
 
 	return (
 		<div className="auth-card dashboard-card">
+			<FormPageLegalContext serviceMeta={serviceMeta} />
 			<h1>Form-I: Rent revision / fixation</h1>
 			<p className="muted">Fill the application details and submit to the system.</p>
 			{error ? <div className="error">{error}</div> : null}
