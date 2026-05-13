@@ -333,7 +333,7 @@ function TenancyCertificate() {
 	}
 
 	const tenancySteps = [
-		{ id: 1, label: 'Registration' }, { id: 2, label: 'Information of tenancy' }, { id: 3, label: 'Uploads' }, { id: 4, label: 'Preview' }, { id: 5, label: 'Submit' }
+		{ id: 1, label: 'Registration' }, { id: 2, label: 'Information of Tenancy' }, { id: 3, label: 'Uploads' }, { id: 4, label: 'Preview' }, { id: 5, label: 'Submit' }
 	]
 
 	const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
@@ -469,7 +469,7 @@ function TenancyCertificate() {
 					<div className="parties-container">
 						<section className="tenancy-section">
 							<div className="section-header">
-								<h2>Information of tenancy</h2>
+								<h2>Information of Tenancy</h2>
 							</div>
 
 							<div className="form-group-row" style={{ marginTop: '20px' }}>
