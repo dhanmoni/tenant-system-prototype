@@ -7,29 +7,31 @@ import Form5RentCourtFilingPanel from '../../components/Form5RentCourtFilingPane
 import Form6RentAuthorityFilingPanel from '../../components/Form6RentAuthorityFilingPanel'
 import Form7RentCourtAppealPanel from '../../components/Form7RentCourtAppealPanel'
 import Form8RentTribunalAppealPanel from '../../components/Form8RentTribunalAppealPanel'
+import { getFormServiceMeta } from '../../data/tenantServices'
 
 function FormPortal() {
 	const { user } = useOutletContext()
 	const { formType } = useParams()
+	const serviceMeta = getFormServiceMeta(formType)
 
 	const renderForm = () => {
 		switch (formType) {
 			case 'form-i-rent-revision':
-				return <FormIRentRevisionPanel user={user} />
+				return <FormIRentRevisionPanel user={user} serviceMeta={serviceMeta} />
 			case 'form-i-a-other-charges-revision':
-				return <FormIARentRevisionPanel user={user} />
+				return <FormIARentRevisionPanel user={user} serviceMeta={serviceMeta} />
 			case 'form-i-b-valuer-appointment':
-				return <FormIBValuerAppointmentPanel user={user} />
+				return <FormIBValuerAppointmentPanel user={user} serviceMeta={serviceMeta} />
 			case 'form-4-rent-court-possession':
-				return <Form4RentCourtPossessionPanel user={user} />
+				return <Form4RentCourtPossessionPanel user={user} serviceMeta={serviceMeta} />
 			case 'form-5-rent-court-filing':
-				return <Form5RentCourtFilingPanel user={user} />
+				return <Form5RentCourtFilingPanel user={user} serviceMeta={serviceMeta} />
 			case 'form-6-rent-authority-filing':
-				return <Form6RentAuthorityFilingPanel user={user} />
+				return <Form6RentAuthorityFilingPanel user={user} serviceMeta={serviceMeta} />
 			case 'form-7-rent-court-appeal':
-				return <Form7RentCourtAppealPanel user={user} />
+				return <Form7RentCourtAppealPanel user={user} serviceMeta={serviceMeta} />
 			case 'form-8-rent-tribunal-appeal':
-				return <Form8RentTribunalAppealPanel user={user} />
+				return <Form8RentTribunalAppealPanel user={user} serviceMeta={serviceMeta} />
 			default:
 				return <div>Form not found</div>
 		}

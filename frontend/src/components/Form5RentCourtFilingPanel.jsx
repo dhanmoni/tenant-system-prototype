@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import api, { csrf } from '../api'
+import FormPageLegalContext from './FormPageLegalContext'
 
-export default function Form5RentCourtFilingPanel({ onBack }) {
+export default function Form5RentCourtFilingPanel({ onBack, serviceMeta }) {
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
@@ -95,6 +96,7 @@ export default function Form5RentCourtFilingPanel({ onBack }) {
 
 	return (
 		<div className="auth-card dashboard-card">
+			<FormPageLegalContext serviceMeta={serviceMeta} />
 			<h1>Form III: Application filed before the Rent Court</h1>
 			<p className="muted">
 				Fill the application details and submit to the system.
