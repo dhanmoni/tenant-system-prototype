@@ -141,27 +141,21 @@ function ApplicationStatus() {
 	const categories = [
 		{ title: 'Tenancy Certificate', items: tenancyCertificateRows },
 		{
-			title: 'Revision (Form 1 / 1-A / 1-B)', items: formRows.filter(a => {
+			title: 'Rent Authority (Form I / I-A / I-B / IV)', items: formRows.filter(a => {
 				const t = String(a.application_type || '').toLowerCase()
-				return t.includes('form-i:') || t.includes('form-i-a:') || t.includes('form-i-b:')
+				return t.includes('form-i:') || t.includes('form-i-a:') || t.includes('form-i-b:') || t.includes('form-iv:')
 			})
 		},
 		{
-			title: 'Rent Court (Form 4 / 5)', items: formRows.filter(a => {
+			title: 'Rent Court (Form II / III / V)', items: formRows.filter(a => {
 				const t = String(a.application_type || '').toLowerCase()
-				return t.includes('form-iv:') || t.includes('form-v:')
+				return t.includes('form-ii:') || t.includes('form-iii:') || t.includes('form-v:')
 			})
 		},
 		{
-			title: 'Rent Authority (Form 6)', items: formRows.filter(a => {
+			title: 'Rent Tribunal (Form VI)', items: formRows.filter(a => {
 				const t = String(a.application_type || '').toLowerCase()
 				return t.includes('form-vi:')
-			})
-		},
-		{
-			title: 'Appeals (Form 7 / 8)', items: formRows.filter(a => {
-				const t = String(a.application_type || '').toLowerCase()
-				return t.includes('form-vii:') || t.includes('form-viii:')
 			})
 		},
 	]

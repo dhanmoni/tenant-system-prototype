@@ -203,7 +203,7 @@ function DashboardHome() {
 						<span className="tenant-hero-tile-kicker tenant-hero-tile-kicker--on-light">Services</span>
 						<span className="tenant-hero-tile-title tenant-hero-tile-title--on-light">Assam Tenancy forms</span>
 						<p className="tenant-hero-tile-desc tenant-hero-tile-desc--on-light">
-							Open the services page to browse Rent Court, Rent Authority, appeals, and revision forms—then
+							Open the services page to browse Rent Authority, Rent Court, and Rent Tribunal forms, then
 							apply for the one you need.
 						</p>
 						<span className="tenant-hero-tile-cta tenant-hero-tile-cta--outline">

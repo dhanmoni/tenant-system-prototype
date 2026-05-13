@@ -76,13 +76,13 @@ export default function Form6RentAuthorityFilingPanel({ onBack }) {
 				headers: { 'Content-Type': 'multipart/form-data' },
 			})
 
-			setSuccess(data?.message || 'Form 6 submitted successfully.')
+			setSuccess(data?.message || 'Form IV submitted successfully.')
 		} catch (err) {
 			const msg =
 				err?.response?.data?.message ||
 				(err?.response?.data?.errors
 					? Object.values(err.response.data.errors).flat().join('. ')
-					: 'Failed to submit Form 6')
+					: 'Failed to submit Form IV')
 			setError(msg)
 		} finally {
 			setSubmitting(false)
@@ -91,7 +91,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack }) {
 
 	return (
 		<div className="auth-card dashboard-card">
-			<h1>Form 6: Application filed before the Rent Authority</h1>
+			<h1>Form IV: Application filed before the Rent Authority</h1>
 			<p className="muted">Fill the application details and submit to the system.</p>
 			{error ? <div className="error">{error}</div> : null}
 			{success ? <div className="success">{success}</div> : null}
@@ -195,7 +195,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack }) {
 						Back
 					</button>
 					<button type="submit" disabled={submitting}>
-						{submitting ? 'Submitting...' : 'Submit Form 6'}
+						{submitting ? 'Submitting...' : 'Submit Form IV'}
 					</button>
 				</div>
 			</form>

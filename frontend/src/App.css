@@ -3005,13 +3005,6 @@ main.main-fluid {
 		inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Revision / charges — teal */
-.tenant-service-tile--revision {
-	--tenant-tile-accent: #0d9488;
-	--tenant-tile-accent-strong: #0f766e;
-	--tenant-tile-tint: rgba(204, 251, 241, 0.42);
-}
-
 /* Rent Court — royal blue */
 .tenant-service-tile--rent-court {
 	--tenant-tile-accent: #2563eb;
@@ -3026,8 +3019,8 @@ main.main-fluid {
 	--tenant-tile-tint: rgba(237, 233, 254, 0.55);
 }
 
-/* Rent appellant — amber / appeals */
-.tenant-service-tile--rent-appellant {
+/* Rent Tribunal — amber / appeals */
+.tenant-service-tile--rent-tribunal {
 	--tenant-tile-accent: #d97706;
 	--tenant-tile-accent-strong: #b45309;
 	--tenant-tile-tint: rgba(254, 243, 199, 0.45);

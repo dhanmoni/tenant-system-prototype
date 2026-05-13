@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('application_no')->unique();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 
-            // Form 5 (Form-III): Application filed before the Rent Court
+            // Form-III: Application filed before the Rent Court
             $table->string('rent_court_at', 255);
             $table->string('tenancy_unique_identification_number', 64);
 

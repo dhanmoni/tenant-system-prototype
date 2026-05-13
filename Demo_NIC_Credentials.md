@@ -55,7 +55,7 @@
   - **Profile** – View and edit profile. Saving profile does **not** require selecting Landlord/Tenant in profile form.
   - **Services**
     - **Apply for Tenancy Certificate** – Multi-step tenancy application form. Initiator role supports **Landlord**, **Tenant**, and **Property Manager**.
-    - **Assam Tenancy Rules forms (Services)** – Form 1 / 1-A / 1-B, Form 4 / 5, Form 6, Form 7 / 8 (grouped in collapsible sidebar sections).
+    - **Assam Tenancy Rules forms (Services)** – Rent Authority: Form I / I-A / I-B / IV; Rent Court: Form II / III / V; Rent Tribunal: Form VI.
   - **Status** – List and view status of own submissions (Tenancy Certificate + all Assam Tenancy Rules forms).
     - UI shows **separate tables per category** and uses **icon “View details”** for form submissions.
     - For Property Manager initiated tenancy applications, join flow currently awaits **Landlord** as second-party confirmation.
