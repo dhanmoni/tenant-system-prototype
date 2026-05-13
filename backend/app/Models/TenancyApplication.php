@@ -152,7 +152,7 @@ class TenancyApplication extends Model
         $circleCode = str_pad((string)($officeId ?? 0), 2, '0', STR_PAD_LEFT);
         $year = date('Y');
         
-        $prefix = "ATRMS-{$districtCode}-{$circleCode}-{$year}";
+        $prefix = "ATRMS-{$districtCode}{$circleCode}{$year}";
         
         $latest = self::where('uid', 'like', $prefix . '-%')
             ->orderByDesc('uid')
