@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import api, { csrf } from '../api'
-import FormPageLegalContext from './FormPageLegalContext'
 
 export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 	const [submitting, setSubmitting] = useState(false)
@@ -26,6 +25,16 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 
 	const [signatureName, setSignatureName] = useState('')
 	const [signatureImage, setSignatureImage] = useState(null)
+	const [verificationDate, setVerificationDate] = useState('')
+	const [verificationPlace, setVerificationPlace] = useState('')
+	const [verificationRelation, setVerificationRelation] = useState('S/o.')
+	const [verificationRelativeName, setVerificationRelativeName] = useState('')
+	const [verificationAge, setVerificationAge] = useState('')
+	const [verificationAddress, setVerificationAddress] = useState('')
+	const [verificationParasFrom, setVerificationParasFrom] = useState('')
+	const [verificationParasTo, setVerificationParasTo] = useState('')
+	const [verificationBeliefParasFrom, setVerificationBeliefParasFrom] = useState('')
+	const [verificationBeliefParasTo, setVerificationBeliefParasTo] = useState('')
 
 	const submit = async () => {
 		setError('')
@@ -92,9 +101,12 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 
 	return (
 		<div className="auth-card dashboard-card">
-			<FormPageLegalContext serviceMeta={serviceMeta} />
-			<h1>Form IV: Application filed before the Rent Authority</h1>
-			<p className="muted">Fill the application details and submit to the system.</p>
+			<h1>{serviceMeta?.label || 'Form IV - Matters under Rule 11'}</h1>
+			<p className="muted">
+				{serviceMeta
+					? `${serviceMeta.matter} (${serviceMeta.rule}) - ${serviceMeta.authority}`
+					: 'Fill the application details and submit to the system.'}
+			</p>
 			{error ? <div className="error">{error}</div> : null}
 			{success ? <div className="success">{success}</div> : null}
 
@@ -183,8 +195,109 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 				<fieldset className="tenancy-fieldset">
 					<legend className="tenancy-legend-italic">Verification / Signature</legend>
 					<label>
-						<span className="label-text required">Signature name</span>
-						<input type="text" value={signatureName} onChange={(e) => setSignatureName(e.target.value)} required />
+						<span className="label-text required">Applicant name (for verification)</span>
+						<input
+							type="text"
+							value={signatureName}
+							onChange={(e) => setSignatureName(e.target.value)}
+							required
+						/>
+					</label>
+					<label>
+						<span className="label-text">Relation</span>
+						<select
+							value={verificationRelation}
+							onChange={(e) => setVerificationRelation(e.target.value)}
+						>
+							<option value="S/o.">S/o.</option>
+							<option value="W/o.">W/o.</option>
+							<option value="D/o.">D/o.</option>
+						</select>
+					</label>
+					<label>
+						<span className="label-text">Relative name</span>
+						<input
+							type="text"
+							value={verificationRelativeName}
+							onChange={(e) => setVerificationRelativeName(e.target.value)}
+						/>
+					</label>
+					<label>
+						<span className="label-text">Age</span>
+						<input
+							type="number"
+							min="0"
+							value={verificationAge}
+							onChange={(e) => setVerificationAge(e.target.value)}
+						/>
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Address for verification</span>
+						<textarea
+							value={verificationAddress}
+							onChange={(e) => setVerificationAddress(e.target.value)}
+						/>
+					</label>
+					<label>
+						<span className="label-text">Paras true to personal knowledge - from</span>
+						<input
+							type="text"
+							value={verificationParasFrom}
+							onChange={(e) => setVerificationParasFrom(e.target.value)}
+						/>
+					</label>
+					<label>
+						<span className="label-text">Paras true to personal knowledge - to</span>
+						<input
+							type="text"
+							value={verificationParasTo}
+							onChange={(e) => setVerificationParasTo(e.target.value)}
+						/>
+					</label>
+					<label>
+						<span className="label-text">Paras true on legal advice - from</span>
+						<input
+							type="text"
+							value={verificationBeliefParasFrom}
+							onChange={(e) => setVerificationBeliefParasFrom(e.target.value)}
+						/>
+					</label>
+					<label>
+						<span className="label-text">Paras true on legal advice - to</span>
+						<input
+							type="text"
+							value={verificationBeliefParasTo}
+							onChange={(e) => setVerificationBeliefParasTo(e.target.value)}
+						/>
+					</label>
+					<div className="tenancy-field-full">
+						<p className="muted" style={{ marginTop: 0 }}>
+							I, {signatureName || '________________'} {verificationRelation}{' '}
+							{verificationRelativeName || '________________'}, aged{' '}
+							{verificationAge || '____'}, residing at{' '}
+							{verificationAddress || '________________________'}, do hereby verify that the
+							contents of paras {verificationParasFrom || '____'} to{' '}
+							{verificationParasTo || '____'} are true to my personal knowledge and paras{' '}
+							{verificationBeliefParasFrom || '____'} to{' '}
+							{verificationBeliefParasTo || '____'} are believed to be true on legal advice
+							received and I hereby declare that I have not suppressed any material facts.
+						</p>
+					</div>
+					<label>
+						<span className="label-text">Date</span>
+						<input
+							type="date"
+							value={verificationDate}
+							onChange={(e) => setVerificationDate(e.target.value)}
+						/>
+					</label>
+					<label>
+						<span className="label-text">Place</span>
+						<input
+							type="text"
+							value={verificationPlace}
+							onChange={(e) => setVerificationPlace(e.target.value)}
+						/>
 					</label>
 					<label>
 						<span className="label-text">Signature image (optional)</span>
@@ -204,4 +317,6 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 		</div>
 	)
 }
+
+
 

@@ -1,4 +1,5 @@
-import { useOutletContext, useParams } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import FormIRentRevisionPanel from '../../components/FormIRentRevisionPanel'
 import FormIARentRevisionPanel from '../../components/FormIARentRevisionPanel'
 import FormIBValuerAppointmentPanel from '../../components/FormIBValuerAppointmentPanel'
@@ -12,26 +13,32 @@ import { getFormServiceMeta } from '../../data/tenantServices'
 function FormPortal() {
 	const { user } = useOutletContext()
 	const { formType } = useParams()
+	const navigate = useNavigate()
 	const serviceMeta = getFormServiceMeta(formType)
+	const onBack = () => navigate('/dashboard/services')
+
+	useEffect(() => {
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+	}, [formType])
 
 	const renderForm = () => {
 		switch (formType) {
 			case 'form-i-rent-revision':
-				return <FormIRentRevisionPanel user={user} serviceMeta={serviceMeta} />
+				return <FormIRentRevisionPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			case 'form-i-a-other-charges-revision':
-				return <FormIARentRevisionPanel user={user} serviceMeta={serviceMeta} />
+				return <FormIARentRevisionPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			case 'form-i-b-valuer-appointment':
-				return <FormIBValuerAppointmentPanel user={user} serviceMeta={serviceMeta} />
+				return <FormIBValuerAppointmentPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			case 'form-4-rent-court-possession':
-				return <Form4RentCourtPossessionPanel user={user} serviceMeta={serviceMeta} />
+				return <Form4RentCourtPossessionPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			case 'form-5-rent-court-filing':
-				return <Form5RentCourtFilingPanel user={user} serviceMeta={serviceMeta} />
+				return <Form5RentCourtFilingPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			case 'form-6-rent-authority-filing':
-				return <Form6RentAuthorityFilingPanel user={user} serviceMeta={serviceMeta} />
+				return <Form6RentAuthorityFilingPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			case 'form-7-rent-court-appeal':
-				return <Form7RentCourtAppealPanel user={user} serviceMeta={serviceMeta} />
+				return <Form7RentCourtAppealPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			case 'form-8-rent-tribunal-appeal':
-				return <Form8RentTribunalAppealPanel user={user} serviceMeta={serviceMeta} />
+				return <Form8RentTribunalAppealPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			default:
 				return <div>Form not found</div>
 		}
