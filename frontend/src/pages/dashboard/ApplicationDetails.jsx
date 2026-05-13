@@ -51,7 +51,7 @@ function ApplicationDetails() {
 	if (error) return <div className="auth-card dashboard-card"><p className="error">{error}</p><button onClick={() => navigate(-1)}>Back</button></div>
 	if (!application) return <div className="auth-card dashboard-card"><p>No application data found.</p><button onClick={() => navigate(-1)}>Back</button></div>
 
-	const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+	const baseUrl = (api.defaults.baseURL || 'http://localhost:8000').replace(/\/$/, '')
 	
 	const renderTenancyDetails = () => (
 		<div className="tenancy-preview-container">
@@ -66,186 +66,162 @@ function ApplicationDetails() {
 			<div className="govt-form-document">
 				<div className="govt-form-watermark">OFFICIAL</div>
 
-				<div className="govt-form-header">
-					<div className="govt-form-seal-container">
-						<img src={emblemDark} alt="Government of India Emblem" className="govt-form-seal-image" />
-					</div>
-					<h2>Government of Assam</h2>
-					<h3>Department of Housing And Urban Affairs</h3>
-					<div className="govt-form-title">APPLICATION FOR TENANCY CERTIFICATE</div>
+				<div className="govt-form-header" style={{ textAlign: 'center', marginBottom: '30px' }}>
+					<div style={{ fontWeight: 'bold', fontSize: '1.2rem', textTransform: 'uppercase' }}>THE FIRST SCHEDULE</div>
+					<div style={{ fontStyle: 'italic', marginBottom: '5px' }}>[See section 4(1) and 7(2)]</div>
+					<div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>FORM FOR INFORMATION OF TENANCY</div>
 				</div>
 
-				<section className="govt-form-section">
-					<h4 className="govt-form-section-title"><span className="govt-form-section-num">1</span> Application Details</h4>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Application No:</span>
-						<span className="govt-form-value" style={{ fontWeight: 'bold', color: '#1e40af' }}>{application.application_no}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">UID / Ref Code:</span>
-						<span className="govt-form-value">{application.uid || application.ref_code || '-'}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Status:</span>
-						<span className="govt-form-value">
-							<span className={`dashboard-status-pill ${application.status === 'COMPLETED' ? 'dashboard-status-pill--success' : 'dashboard-status-pill--pending'}`}>
-								{application.status}
-							</span>
-						</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Initiator Role:</span>
-						<span className="govt-form-value">{application.initiator_role}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Submiited On:</span>
-						<span className="govt-form-value">{formatDate(application.created_at)}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">District / Office:</span>
-						<span className="govt-form-value">
-							{application.office?.district?.name || '-'} / {application.office?.name || '-'}
-						</span>
-					</div>
-				</section>
+				<div style={{ marginBottom: '20px' }}>
+					<div>To,</div>
+					<div>The Rent Authority</div>
+					<div>{application.office?.name ? `${application.office.name}, ${application.office.district?.name || ''}` : '________________________'} (Address)</div>
+				</div>
 
-				<section className="govt-form-section">
-					<h4 className="govt-form-section-title"><span className="govt-form-section-num">2</span> Landlord Details</h4>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Name:</span>
-						<span className="govt-form-value">{application.landlord_name}</span>
+				<div className="preview-list-container">
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>1.</div>
+						<div style={{ flex: '1.5' }}>Name and address of the landlord</div>
+						<div style={{ flex: '2' }}>: {application.landlord_name ? `${application.landlord_name}, ${application.landlord_address}` : ''}</div>
 					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Phone:</span>
-						<span className="govt-form-value">{application.landlord_phone}</span>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>2.</div>
+						<div style={{ flex: '1.5' }}>Name and address of the Property Manager (if any)</div>
+						<div style={{ flex: '2' }}>: {application.manager_name && application.manager_name !== 'NA' ? `${application.manager_name}, ${application.manager_address}` : ''}</div>
 					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Email:</span>
-						<span className="govt-form-value">{application.landlord_email || 'N/A'}</span>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>3.</div>
+						<div style={{ flex: '1.5' }}>Name(s) and address of the tenant, including email and contact details,</div>
+						<div style={{ flex: '2' }}>: {application.tenant_name ? `${application.tenant_name}, ${application.tenant_address}, Email: ${application.tenant_email}, Phone: ${application.tenant_phone}` : ''}</div>
 					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">PAN:</span>
-						<span className="govt-form-value">{application.landlord_pan || 'N/A'}</span>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>4.</div>
+						<div style={{ flex: '1.5' }}>Description of previous tenancy, if any</div>
+						<div style={{ flex: '2' }}>: {application.tenant_previous_tenancy}</div>
 					</div>
-					<div className="govt-form-full-row">
-						<div className="govt-form-label">Full Address:</div>
-						<div className="govt-form-value">{application.landlord_address}</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>5.</div>
+						<div style={{ flex: '1.5' }}>Description of premises let to the tenant Including appurtenant land, if any</div>
+						<div style={{ flex: '2' }}>: {application.property_premises_description}</div>
 					</div>
-				</section>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>6.</div>
+						<div style={{ flex: '1.5' }}>Date from which possession is given to the tenant</div>
+						<div style={{ flex: '2' }}>: {application.property_possession_date}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>7.</div>
+						<div style={{ flex: '1.5' }}>Rent payable as in section 8</div>
+						<div style={{ flex: '2' }}>: {application.property_rent_payable ? `₹${application.property_rent_payable}` : ''}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>8.</div>
+						<div style={{ flex: '1.5' }}>Furniture and other equipment provided to the tenant</div>
+						<div style={{ flex: '2' }}>: {application.property_furniture_description}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>9.</div>
+						<div style={{ flex: '1.5' }}>
+							Other charges payable<br />
+							(a) Electricity<br />
+							(b) Water<br />
+							(c) Extra furnishing, fittings and fixtures<br />
+							(d) Other services
+						</div>
+						<div style={{ flex: '2', display: 'flex', flexDirection: 'column' }}>
+							<div>&nbsp;</div>
+							<div>: {application.property_charge_electricity}</div>
+							<div>: {application.property_charge_water}</div>
+							<div>: {application.property_charge_furnishing}</div>
+							<div>: {application.property_charge_other_services}</div>
+						</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>10.</div>
+						<div style={{ flex: '1.5' }}>Attach rent or lease or tenancy agreement</div>
+						<div style={{ flex: '2' }}>: {application.agreement_pdf_path ? 'Attached' : 'Not Attached'}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>11.</div>
+						<div style={{ flex: '1.5' }}>Duration of tenancy (Period for which let)</div>
+						<div style={{ flex: '2' }}>: {application.property_tenancy_duration} {application.property_tenancy_end_date ? `(Till ${application.property_tenancy_end_date})` : ''}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>12.</div>
+						<div style={{ flex: '1.5' }}>Permanent Account Number (PAN) of landlord:</div>
+						<div style={{ flex: '2' }}>: {application.landlord_pan}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>13.</div>
+						<div style={{ flex: '1.5' }}>Aadhaar number of landlord:</div>
+						<div style={{ flex: '2' }}>: {application.landlord_aadhar || ''}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>14.</div>
+						<div style={{ flex: '1.5' }}>Mobile Number and E-mail id of landlord<br />(if available)</div>
+						<div style={{ flex: '2' }}>: {application.landlord_phone}, {application.landlord_email}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>15.</div>
+						<div style={{ flex: '1.5' }}>Permanent Account Number (PAN)of tenant</div>
+						<div style={{ flex: '2' }}>: {application.tenant_pan}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>16.</div>
+						<div style={{ flex: '1.5' }}>Aadhaar number of tenant</div>
+						<div style={{ flex: '2' }}>: {application.tenant_aadhar || ''}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>17.</div>
+						<div style={{ flex: '1.5' }}>Mobile Number and E-mail id of tenant</div>
+						<div style={{ flex: '2' }}>: {application.tenant_phone}, {application.tenant_email}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>18.</div>
+						<div style={{ flex: '1.5' }}>Permanent Account Number (PAN)of Property Manager (if any)</div>
+						<div style={{ flex: '2' }}>: {application.manager_pan && application.manager_pan !== 'NA' ? application.manager_pan : ''}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>19.</div>
+						<div style={{ flex: '1.5' }}>Aadhaar number of Property Manager<br />(if any)</div>
+						<div style={{ flex: '2' }}>: {application.manager_aadhar || ''}</div>
+					</div>
+					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
+						<div style={{ width: '40px' }}>20.</div>
+						<div style={{ flex: '1.5' }}>Mobile Number and E-mail id of<br />Property Manager (if any)</div>
+						<div style={{ flex: '2' }}>: {application.manager_phone && application.manager_phone !== 'NA' ? `${application.manager_phone}, ${application.manager_email !== 'noemail@noemail.com' ? application.manager_email : ''}` : ''}</div>
+					</div>
+				</div>
 
-				{application.manager_name && application.manager_name !== 'NA' && (
-					<section className="govt-form-section">
-						<h4 className="govt-form-section-title"><span className="govt-form-section-num">2A</span> Manager Details</h4>
-						<div className="govt-form-row">
-							<span className="govt-form-label">Name:</span>
-							<span className="govt-form-value">{application.manager_name}</span>
+				<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '50px', marginBottom: '30px' }}>
+					<div style={{ textAlign: 'center' }}>
+						<div style={{ marginBottom: '10px' }}>Name and signature of landlord</div>
+						<div style={{ border: '1px solid #000', width: '120px', height: '140px', margin: '10px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
+							{application.landlord_photo_path ? <img src={`${baseUrl}/storage/${application.landlord_photo_path}`} alt="L Photo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.8rem', textAlign: 'center' }}>Photograph<br />of<br />Landlord</span>}
 						</div>
-						<div className="govt-form-row">
-							<span className="govt-form-label">Phone:</span>
-							<span className="govt-form-value">{application.manager_phone}</span>
+						<div style={{ height: '50px', marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
+							{application.landlord_signature_path ? <img src={`${baseUrl}/storage/${application.landlord_signature_path}`} alt="L Sign" style={{ maxHeight: '100%', maxWidth: '150px' }} /> : null}
 						</div>
-						<div className="govt-form-full-row">
-							<div className="govt-form-label">Address:</div>
-							<div className="govt-form-value">{application.manager_address}</div>
+					</div>
+					<div style={{ textAlign: 'center' }}>
+						<div style={{ marginBottom: '10px' }}>Name and signature of tenant</div>
+						<div style={{ border: '1px solid #000', width: '120px', height: '140px', margin: '10px auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
+							{application.tenant_photo_path ? <img src={`${baseUrl}/storage/${application.tenant_photo_path}`} alt="T Photo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '0.8rem', textAlign: 'center' }}>Photograph<br />of<br />Tenant</span>}
 						</div>
-					</section>
-				)}
+						<div style={{ height: '50px', marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
+							{application.tenant_signature_path ? <img src={`${baseUrl}/storage/${application.tenant_signature_path}`} alt="T Sign" style={{ maxHeight: '100%', maxWidth: '150px' }} /> : null}
+						</div>
+					</div>
+				</div>
 
-				<section className="govt-form-section">
-					<h4 className="govt-form-section-title"><span className="govt-form-section-num">3</span> Tenant Details</h4>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Name:</span>
-						<span className="govt-form-value">{application.tenant_name}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Phone:</span>
-						<span className="govt-form-value">{application.tenant_phone}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Email:</span>
-						<span className="govt-form-value">{application.tenant_email || 'N/A'}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">PAN:</span>
-						<span className="govt-form-value">{application.tenant_pan || 'N/A'}</span>
-					</div>
-					<div className="govt-form-full-row">
-						<div className="govt-form-label">Full Address:</div>
-						<div className="govt-form-value">{application.tenant_address}</div>
-					</div>
-				</section>
-
-				<section className="govt-form-section">
-					<h4 className="govt-form-section-title"><span className="govt-form-section-num">4</span> Property & Financials</h4>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Possession Date:</span>
-						<span className="govt-form-value">{application.property_possession_date}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Monthly Rent:</span>
-						<span className="govt-form-value">₹{application.property_rent_payable}</span>
-					</div>
-					<div className="govt-form-row">
-						<span className="govt-form-label">Tenancy Duration:</span>
-						<span className="govt-form-value">{application.property_tenancy_duration}</span>
-					</div>
-					<div className="govt-form-full-row">
-						<div className="govt-form-label">Premises Description:</div>
-						<div className="govt-form-value">{application.property_premises_description || '-'}</div>
-					</div>
-					<div className="govt-form-full-row">
-						<div className="govt-form-label">Additional Charges (Elec/Water/Misc):</div>
-						<div className="govt-form-value">
-							{application.property_charge_electricity || '0'} / {application.property_charge_water || '0'} / {application.property_charge_other_services || '0'}
-						</div>
-					</div>
-				</section>
-
-				<section className="govt-form-section">
-					<h4 className="govt-form-section-title"><span className="govt-form-section-num">5</span> Affixed Documents</h4>
-					<div className="govt-doc-affix-grid">
-						<div className="govt-doc-affix-item">
-							<div className="govt-doc-affix-label">Landlord Photograph</div>
-							<div className="govt-doc-affix-area">
-								{application.landlord_photo_path ? (
-									<img src={`${baseUrl}/storage/${application.landlord_photo_path}`} alt="Landlord" />
-								) : <div className="affix-placeholder">Affix Photo Here</div>}
-							</div>
-						</div>
-						<div className="govt-doc-affix-item">
-							<div className="govt-doc-affix-label">Landlord Signature</div>
-							<div className="govt-doc-affix-area govt-doc-affix-area--sig">
-								{application.landlord_signature_path ? (
-									<img src={`${baseUrl}/storage/${application.landlord_signature_path}`} alt="Landlord Sign" />
-								) : <div className="affix-placeholder">Sign Here</div>}
-							</div>
-						</div>
-						<div className="govt-doc-affix-item">
-							<div className="govt-doc-affix-label">Tenant Photograph</div>
-							<div className="govt-doc-affix-area">
-								{application.tenant_photo_path ? (
-									<img src={`${baseUrl}/storage/${application.tenant_photo_path}`} alt="Tenant" />
-								) : <div className="affix-placeholder">Affix Photo Here</div>}
-							</div>
-						</div>
-						<div className="govt-doc-affix-item">
-							<div className="govt-doc-affix-label">Tenant Signature</div>
-							<div className="govt-doc-affix-area govt-doc-affix-area--sig">
-								{application.tenant_signature_path ? (
-									<img src={`${baseUrl}/storage/${application.tenant_signature_path}`} alt="Tenant Sign" />
-								) : <div className="affix-placeholder">Sign Here</div>}
-							</div>
-						</div>
-					</div>
-				</section>
-
-				<section className="govt-form-declaration">
-					<p><strong>Declaration:</strong> I/We hereby declare that the particulars given above are true and correct to the best of my/our knowledge and belief. We understand that any false statement or suppression of facts may lead to rejection of application or cancellation of certificate.</p>
-					<div className="govt-form-row govt-form-row--submission-date" style={{ marginTop: '1rem' }}>
-						<span className="govt-form-label">Date of Submission:</span>
-						<span className="govt-form-value govt-form-value--submission-date">{formatDate(application.created_at)}</span>
-					</div>
-				</section>
+				<div style={{ marginTop: '20px', marginBottom: '30px' }}>
+					<strong>Enclosed:</strong>
+					<ol style={{ marginLeft: '20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+						<li>Tenancy Agreement.</li>
+						<li>Self-attested copies of PAN and Aadhaar of landlord.</li>
+						<li>Self-attested copies of PAN and Aadhaar of tenant.</li>
+					</ol>
+				</div>
 			</div>
 		</div>
 	)
