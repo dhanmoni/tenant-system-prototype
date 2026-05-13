@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import api, { csrf } from '../api'
-import FormPageLegalContext from './FormPageLegalContext'
 
 const parseMoney = (value) => {
 	// Accept inputs like "25,000.50" and normalize to a number
@@ -83,9 +82,12 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 
 	return (
 		<div className="auth-card dashboard-card">
-			<FormPageLegalContext serviceMeta={serviceMeta} />
-			<h1>Form-I: Rent revision / fixation</h1>
-			<p className="muted">Fill the application details and submit to the system.</p>
+			<h1>{serviceMeta?.label || 'Form I - Revision or fixation of rent'}</h1>
+			<p className="muted">
+				{serviceMeta
+					? `${serviceMeta.matter} (${serviceMeta.rule}) - ${serviceMeta.authority}`
+					: 'Fill the application details and submit to the system.'}
+			</p>
 			{error ? <div className="error">{error}</div> : null}
 			{success ? <div className="success">{success}</div> : null}
 
@@ -244,4 +246,6 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 		</div>
 	)
 }
+
+
 
