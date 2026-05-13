@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('application_no')->unique();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
 
-            // Form 4: Application before rent court for recovery of possession
+            // Form-II: Application before rent court for recovery of possession
             $table->string('before_rent_court', 255); // court name / bench, as applicable
 
             $table->string('applicant_name');

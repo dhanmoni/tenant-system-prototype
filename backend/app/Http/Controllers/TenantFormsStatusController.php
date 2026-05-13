@@ -123,23 +123,23 @@ class TenantFormsStatusController extends Controller
             ],
             'form-4-rent-court-possession' => [
                 'model' => RentCourtPossessionApplication::class,
-                'label' => 'Form-IV: Before the Rent Court for recovery of possession',
+                'label' => 'Form-II: Before the Rent Court for recovery of possession',
             ],
             'form-5-rent-court-filing' => [
                 'model' => RentCourtFilingApplication::class,
-                'label' => 'Form-V: Filled before the Rent Court',
+                'label' => 'Form-III: Filed before the Rent Court',
             ],
             'form-6-rent-authority-filing' => [
                 'model' => RentAuthorityFilingApplication::class,
-                'label' => 'Form-VI: Filled before the Rent Authority',
+                'label' => 'Form-IV: Filed before the Rent Authority',
             ],
             'form-7-rent-court-appeal' => [
                 'model' => RentCourtAppealApplication::class,
-                'label' => 'Form-VII: Appeal before the Rent Court',
+                'label' => 'Form-V: Appeal before the Rent Court',
             ],
             'form-8-rent-tribunal-appeal' => [
                 'model' => RentTribunalAppealApplication::class,
-                'label' => 'Form-VIII: Appeal before the Rent Tribunal',
+                'label' => 'Form-VI: Appeal before the Rent Tribunal',
             ],
         ];
 

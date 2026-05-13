@@ -65,7 +65,7 @@ class RentCourtPossessionApplicationController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Form 4 submitted successfully.',
+            'message' => 'Form II submitted successfully.',
             'application' => $application,
             'submitted_at' => Carbon::now()->toDateTimeString(),
         ], 201);

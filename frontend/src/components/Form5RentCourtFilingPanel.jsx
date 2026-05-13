@@ -80,13 +80,13 @@ export default function Form5RentCourtFilingPanel({ onBack }) {
 				headers: { 'Content-Type': 'multipart/form-data' },
 			})
 
-			setSuccess(data?.message || 'Form 5 submitted successfully.')
+			setSuccess(data?.message || 'Form III submitted successfully.')
 		} catch (err) {
 			const msg =
 				err?.response?.data?.message ||
 				(err?.response?.data?.errors
 					? Object.values(err.response.data.errors).flat().join('. ')
-					: 'Failed to submit Form 5')
+					: 'Failed to submit Form III')
 			setError(msg)
 		} finally {
 			setSubmitting(false)
@@ -95,7 +95,7 @@ export default function Form5RentCourtFilingPanel({ onBack }) {
 
 	return (
 		<div className="auth-card dashboard-card">
-			<h1>Form 5: Application filed before the Rent Court</h1>
+			<h1>Form III: Application filed before the Rent Court</h1>
 			<p className="muted">
 				Fill the application details and submit to the system.
 			</p>
@@ -200,7 +200,7 @@ export default function Form5RentCourtFilingPanel({ onBack }) {
 						Back
 					</button>
 					<button type="submit" disabled={submitting}>
-						{submitting ? 'Submitting...' : 'Submit Form 5'}
+						{submitting ? 'Submitting...' : 'Submit Form III'}
 					</button>
 				</div>
 			</form>

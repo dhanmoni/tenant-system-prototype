@@ -80,7 +80,7 @@ class RentCourtAppealApplicationController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Form 7 submitted successfully.',
+            'message' => 'Form V submitted successfully.',
             'application' => $application,
             'submitted_at' => Carbon::now()->toDateTimeString(),
         ], 201);
