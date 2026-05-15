@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
-import nicLogo from '../assets/img/NIC.png'
-import digitalIndiaLogo from '../assets/img/digital-india.png'
+import LandingNav from '../components/landing/LandingNav'
+import LandingHero from '../components/landing/LandingHero'
+import GetStartedSection from '../components/landing/GetStartedSection'
+import HowToApply from '../components/landing/HowToApply'
+import CitizenServicesSection from '../components/landing/CitizenServicesSection'
+import TenancyAuthoritiesSection from '../components/landing/TenancyAuthoritiesSection'
+import AboutSection from '../components/landing/AboutSection'
+import NotificationsSection from '../components/landing/NotificationsSection'
+import NeedSupportSection from '../components/landing/NeedSupportSection'
+import LandingFooter from '../components/landing/LandingFooter'
+import LandingFab from '../components/landing/LandingFab'
 
 function Login({ onLogin }) {
 	const navigate = useNavigate()
 	const location = useLocation()
 
-	// Toggle between 'login' and 'register'
 	const [mode, setMode] = useState('login')
-
-	// Login form state
 	const [loginForm, setLoginForm] = useState({ phone: '', otp: '' })
 	const [otpSent, setOtpSent] = useState(false)
 	const [otpMessage, setOtpMessage] = useState('')
@@ -20,15 +26,6 @@ function Login({ onLogin }) {
 	const [resendTimer, setResendTimer] = useState(0)
 	const [showBackToTop, setShowBackToTop] = useState(false)
 
-	// Timer effect
-	useEffect(() => {
-		if (resendTimer > 0) {
-			const interval = setInterval(() => setResendTimer(t => t - 1), 1000)
-			return () => clearInterval(interval)
-		}
-	}, [resendTimer])
-
-	// Register form state
 	const [regForm, setRegForm] = useState({
 		name: '',
 		email: '',
@@ -37,14 +34,20 @@ function Login({ onLogin }) {
 	})
 	const [regError, setRegError] = useState('')
 	const [regLoading, setRegLoading] = useState(false)
-	const [regStep, setRegStep] = useState('details') // 'details' -> 'otp'
+	const [regStep, setRegStep] = useState('details')
 	const [regOtpSent, setRegOtpSent] = useState(false)
 	const [regOtp, setRegOtp] = useState('')
 	const [regPendingPhone, setRegPendingPhone] = useState('')
 	const [regOtpMessage, setRegOtpMessage] = useState('')
 	const [districts, setDistricts] = useState([])
 
-	// Load states & districts when register mode is active
+	useEffect(() => {
+		if (resendTimer > 0) {
+			const interval = setInterval(() => setResendTimer((t) => t - 1), 1000)
+			return () => clearInterval(interval)
+		}
+	}, [resendTimer])
+
 	useEffect(() => {
 		if (mode !== 'register') return
 		if (districts.length > 0) return
@@ -60,7 +63,6 @@ function Login({ onLogin }) {
 		loadDistricts()
 	}, [mode, districts.length])
 
-	// Listen to URL hash to switch modes and scroll
 	useEffect(() => {
 		if (location.hash === '#register') {
 			switchMode('register')
@@ -76,17 +78,12 @@ function Login({ onLogin }) {
 	}, [location.hash])
 
 	useEffect(() => {
-		const handleScroll = () => {
-			setShowBackToTop(window.scrollY > 420)
-		}
+		const handleScroll = () => setShowBackToTop(window.scrollY > 420)
 		handleScroll()
 		window.addEventListener('scroll', handleScroll, { passive: true })
 		return () => window.removeEventListener('scroll', handleScroll)
 	}, [])
 
-	const filteredDistricts = districts
-
-	// Handlers
 	const handleLoginChange = (e) => {
 		const { name, value } = e.target
 		setLoginForm((prev) => ({ ...prev, [name]: value }))
@@ -103,7 +100,6 @@ function Login({ onLogin }) {
 			setLoginError('Please enter phone number first')
 			return
 		}
-		// Reset OTP and start timer
 		setLoginForm((prev) => ({ ...prev, otp: '' }))
 		setOtpSent(true)
 		setResendTimer(60)
@@ -131,7 +127,10 @@ function Login({ onLogin }) {
 			onLogin(data.user)
 			const fromPath = location.state?.from?.pathname || '/dashboard'
 			const fromSearch = location.state?.from?.search || ''
-			const finalTarget = (fromPath.includes('/join') || fromPath.includes('/dashboard/join')) ? (fromPath + fromSearch) : '/dashboard'
+			const finalTarget =
+				fromPath.includes('/join') || fromPath.includes('/dashboard/join')
+					? fromPath + fromSearch
+					: '/dashboard'
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
 			setLoginError(err?.response?.data?.message || 'Login failed')
@@ -153,7 +152,7 @@ function Login({ onLogin }) {
 		}
 		setRegOtpSent(true)
 		setRegOtp('')
-		setResendTimer(60) // Reuse the same timer
+		setResendTimer(60)
 		setRegOtpMessage('OTP sent successfully.')
 	}
 
@@ -166,7 +165,6 @@ function Login({ onLogin }) {
 			setRegError('Please send OTP first')
 			return
 		}
-
 		if (!regOtp.trim()) {
 			setRegError('Please enter OTP')
 			return
@@ -179,7 +177,10 @@ function Login({ onLogin }) {
 			onLogin(data.user)
 			const fromPath = location.state?.from?.pathname || '/dashboard'
 			const fromSearch = location.state?.from?.search || ''
-			const finalTarget = (fromPath.includes('/join') || fromPath.includes('/dashboard/join')) ? (fromPath + fromSearch) : '/dashboard'
+			const finalTarget =
+				fromPath.includes('/join') || fromPath.includes('/dashboard/join')
+					? fromPath + fromSearch
+					: '/dashboard'
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
 			setRegError(err?.response?.data?.message || 'OTP verification failed')
@@ -194,9 +195,7 @@ function Login({ onLogin }) {
 		setRegLoading(true)
 		try {
 			await csrf()
-			const { data } = await api.post('/api/register', regForm)
-
-			// After account creation, require OTP verification before login.
+			await api.post('/api/register', regForm)
 			setRegPendingPhone(regForm.phone)
 			setRegStep('otp')
 			setRegOtpSent(true)
@@ -206,8 +205,8 @@ function Login({ onLogin }) {
 		} catch (err) {
 			setRegError(
 				err?.response?.data?.message ||
-				err?.response?.data?.errors?.phone?.[0] ||
-				'Registration failed'
+					err?.response?.data?.errors?.phone?.[0] ||
+					'Registration failed',
 			)
 		} finally {
 			setRegLoading(false)
@@ -229,320 +228,57 @@ function Login({ onLogin }) {
 		setMode(newMode)
 	}
 
+	const authPanelProps = {
+		mode,
+		regStep,
+		loginForm,
+		otpSent,
+		otpMessage,
+		loginError,
+		loginLoading,
+		resendTimer,
+		regForm,
+		regError,
+		regLoading,
+		regOtp,
+		regPendingPhone,
+		regOtpMessage,
+		filteredDistricts: districts,
+		onLoginChange: handleLoginChange,
+		onSendOtp: handleSendOtp,
+		onEditPhone: handleEditPhone,
+		onLoginSubmit: handleLoginSubmit,
+		onRegChange: handleRegChange,
+		onRegSubmit: handleRegSubmit,
+		onRegVerifyOtp: handleRegVerifyOtp,
+		onRegSendOtp: handleRegSendOtp,
+		onSwitchMode: switchMode,
+		onSetRegStep: setRegStep,
+		onSetRegOtp: setRegOtp,
+	}
+
 	return (
-		<section className="home">
-			<div className="hero hero--rent-portal">
-				<div className="hero-content">
-					<p className="hero-eyebrow">Government of Assam</p>
-					<h1>Assam Tenancy Registration & Management System</h1>
-					<p className="hero-subtitle">
-						A unified portal for tenancy registration, certificate issuance,
-						and property management — for the Department of Housing And Urban
-						Affairs.
-					</p>
-					<div className="audience">
-						<div className="audience-card">
-							<h3>For Tenants</h3>
-							<p>
-								Apply for tenancy certificates, track application status, and
-								keep your property records digitally.
-							</p>
-							<ul>
-								<li>Digital certificate access</li>
-								<li>Application status tracking</li>
-								<li>Online services 24x7</li>
-							</ul>
-						</div>
-						<div className="audience-card">
-							<h3>For Owners</h3>
-							<p>
-								Register properties, manage tenant records, and stay aligned
-								with tenancy regulations.
-							</p>
-							<ul>
-								<li>Property and application dashboard</li>
-								<li>Digital record management</li>
-								<li>Status and compliance visibility</li>
-							</ul>
-						</div>
-					</div>
-				</div>
-				<aside className="hero-card" id="auth-card-section">
-					<div className="auth-card auth-card-compact auth-card--rent-portal">
-						{mode === 'login' ? (
-							<>
-								<h2>Log In</h2>
-								<p className="muted">Use your phone number and OTP.</p>
-								{otpMessage ? <div className="success">{otpMessage}</div> : null}
-								{loginError ? <div className="error">{loginError}</div> : null}
-								<form onSubmit={handleLoginSubmit} className="otp-form">
-									{!otpSent ? (
-										<>
-											<label>
-												Phone Number
-												<input
-													type="tel"
-													name="phone"
-													value={loginForm.phone}
-													onChange={handleLoginChange}
-													placeholder="Enter your registered phone"
-													required
-												/>
-											</label>
-											<button type="button" className="btn-send-otp" onClick={handleSendOtp} disabled={loginLoading}>
-												Send OTP
-											</button>
-										</>
-									) : (
-										<>
-											<div className="phone-display">
-												<div className="phone-val">
-													<strong>{loginForm.phone}</strong>
-												</div>
-												<button type="button" className="btn-edit-phone" onClick={handleEditPhone}>Change</button>
-											</div>
-											<label className="otp-label">
-												Enter 6-digit OTP
-												<input
-													type="text"
-													name="otp"
-													value={loginForm.otp}
-													onChange={handleLoginChange}
-													maxLength={6}
-													placeholder="······"
-													autoFocus
-													required
-												/>
-											</label>
-											<div className="otp-resend">
-												{resendTimer > 0 ? (
-													<span className="timer">Resend in {resendTimer}s</span>
-												) : (
-													<button type="button" className="link-resend" onClick={handleSendOtp}>Resend OTP</button>
-												)}
-											</div>
-											<button type="submit" className="btn-login-submit" disabled={loginLoading}>
-												{loginLoading ? 'Signing in...' : 'Log In'}
-											</button>
-										</>
-									)}
-								</form>
-								<p className="muted">
-									No account?{' '}
-									<a href="#" onClick={(e) => { e.preventDefault(); switchMode('register') }}>
-										Create one
-									</a>
-								</p>
-							</>
-						) : (
-							<>
-								{regStep === 'details' ? (
-									<>
-										<h2>Create Account</h2>
-										<p className="muted">Complete your details to receive an OTP.</p>
-										{regError ? <div className="error">{regError}</div> : null}
-										<form onSubmit={handleRegSubmit}>
-											<label>
-												Name
-												<input type="text" name="name" value={regForm.name} onChange={handleRegChange} placeholder="Enter full name" required />
-											</label>
-											<label>
-												Email (Optional)
-												<input type="email" name="email" value={regForm.email} onChange={handleRegChange} placeholder="Email address" />
-											</label>
-											<label>
-												Phone Number
-												<input type="tel" name="phone" value={regForm.phone} onChange={handleRegChange} required />
-											</label>
-											<label>
-												District
-												<select
-													name="district_id"
-													value={regForm.district_id}
-													onChange={handleRegChange}
-													required
-												>
-													<option value="">---SELECT---</option>
-													{filteredDistricts.map((d) => (
-														<option key={d.id} value={d.id}>{d.name}</option>
-													))}
-												</select>
-											</label>
-											<button type="submit" disabled={regLoading}>
-												{regLoading ? 'Processing...' : 'Create Account & Send OTP'}
-											</button>
-										</form>
-										<p className="muted">
-											Already registered?{' '}
-											<a href="#" onClick={(e) => { e.preventDefault(); switchMode('login') }}>
-												Sign in
-											</a>
-										</p>
-									</>
-								) : (
-									<>
-										<h2>Verify OTP</h2>
-										<p className="muted">Enter the OTP sent to {regPendingPhone}.</p>
-										{regOtpMessage ? <div className="success">{regOtpMessage}</div> : null}
-										{regError ? <div className="error">{regError}</div> : null}
-										<form onSubmit={handleRegVerifyOtp} className="otp-form">
-											<div className="phone-display">
-												<div className="phone-val">
-													<strong>{regPendingPhone}</strong>
-												</div>
-												<button type="button" className="btn-edit-phone" onClick={() => setRegStep('details')}>Change</button>
-											</div>
-
-											<label className="otp-label">
-												Enter 6-digit OTP
-												<input
-													type="text"
-													name="regOtp"
-													value={regOtp}
-													onChange={(e) => setRegOtp(e.target.value)}
-													maxLength={6}
-													placeholder="······"
-													autoFocus
-													required
-												/>
-											</label>
-											<div className="otp-resend">
-												{resendTimer > 0 ? (
-													<span className="timer">Resend in {resendTimer}s</span>
-												) : (
-													<button type="button" className="link-resend" onClick={handleRegSendOtp}>Resend OTP</button>
-												)}
-											</div>
-
-											<button type="submit" className="btn-login-submit" disabled={regLoading}>
-												{regLoading ? 'Verifying...' : 'Verify & Log In'}
-											</button>
-										</form>
-										<p className="muted">
-											<a href="#" onClick={(e) => { e.preventDefault(); switchMode('login') }}>
-												Back to sign in
-											</a>
-										</p>
-									</>
-								)}
-							</>
-						)}
-					</div>
-				</aside>
+		<div className="landing-page-home">
+			<div className="relative landing-hero-wrap">
+				<LandingHero navSlot={<LandingNav />} />
 			</div>
 
-			<section className="landing-section landing-about landing-services" aria-labelledby="landing-about-heading">
-				<div className="landing-container">
-					<h2 id="landing-about-heading">About the portal</h2>
-					<p className="landing-lead">
-						This prototype demonstrates online workflows for tenancy certificates and
-						related services, similar in spirit to state rent-portal sites — with clear
-						navigation, citizen services, and helpdesk information.
-					</p>
-					<Link className="landing-text-link" to="/policies">
-						Read policies &amp; guidelines
-					</Link>
-					<h2 id="landing-services-heading">Citizen services</h2>
-					<p className="landing-section-intro">
-						Quick access to common actions.
-					</p>
-					<div className="landing-service-grid">
-						<Link className="landing-service-tile" to="/#register">
-							<span className="landing-service-tile-icon" aria-hidden>
-								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-									<circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" />
-									<path d="M19 8v6M22 11h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-								</svg>
-							</span>
-							<span className="landing-service-tile-title">New registration</span>
-							<span className="landing-service-tile-desc">Create a citizen account</span>
-						</Link>
-						<Link className="landing-service-tile" to="/#login">
-							<span className="landing-service-tile-icon" aria-hidden>
-								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-									<path d="M10 17l5-5-5-5M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-								</svg>
-							</span>
-							<span className="landing-service-tile-title">Login</span>
-							<span className="landing-service-tile-desc">Access your dashboard</span>
-						</Link>
-						<Link className="landing-service-tile" to="/#login">
-							<span className="landing-service-tile-icon" aria-hidden>
-								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-									<path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-								</svg>
-							</span>
-							<span className="landing-service-tile-title">Apply for certificate</span>
-							<span className="landing-service-tile-desc">Sign in to submit applications</span>
-						</Link>
-						<Link className="landing-service-tile" to="/contact">
-							<span className="landing-service-tile-icon" aria-hidden>
-								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-									<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" />
-									<path d="m22 6-10 7L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-								</svg>
-							</span>
-							<span className="landing-service-tile-title">Contact &amp; help</span>
-							<span className="landing-service-tile-desc">Reach the helpdesk</span>
-						</Link>
-					</div>
-				</div>
-			</section>
-
-			<section className="landing-section landing-notices" aria-labelledby="landing-notices-heading">
-				<div className="landing-container">
-					<h2 id="landing-notices-heading">Notifications</h2>
-					<ul className="landing-notice-list">
-						<li>
-							<span className="landing-notice-date">Demo</span>
-							<span>Portal content is for demonstration; data and timelines are illustrative.</span>
-						</li>
-						<li>
-							<span className="landing-notice-date">Demo</span>
-							<span>Use official circulars and gazette notifications for legal reference.</span>
-						</li>
-					</ul>
-				</div>
-			</section>
-
-			<div className="landing-helpdesk" role="region" aria-label="Helpdesk">
-				<div className="landing-container landing-helpdesk-inner">
-					<div className="landing-helpdesk-content">
-						<div className="landing-helpdesk-toplinks">
-							<a href="https://www.india.gov.in/" target="_blank" rel="noopener noreferrer">WEBSITE POLICIES</a>
-							<Link to="/contact">HELP</Link>
-							<Link to="/contact">CONTACT US</Link>
-							<a href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">TCP ASSAM</a>
-							<a href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">FEEDBACK</a>
-							<Link to="/sitemap">SITEMAP</Link>
-						</div>
-						<strong>Helpdesk (demo)</strong>
-						<p>For assistance with this prototype, use the contact details in the top bar or visit Contact Us section.</p>
-						<p className="landing-helpdesk-meta">
-							Content owned by Directorate of Town and Country Planning, Assam.
-						</p>
-						<p className="landing-helpdesk-updated">Last updated: Mar 20, 2026</p>
-					</div>
-					<div className="landing-helpdesk-branding">
-						<img className="landing-helpdesk-nic-logo" src={nicLogo} alt="NIC" />
-						<img className="landing-helpdesk-digital-india-logo" src={digitalIndiaLogo} alt="Digital India" />
-					</div>
-				</div>
+			<div className="landing-body">
+				<GetStartedSection authPanelProps={authPanelProps} />
+				<HowToApply />
+				<CitizenServicesSection />
+				<TenancyAuthoritiesSection />
+				<AboutSection />
+				<NotificationsSection />
+				<NeedSupportSection />
+				<LandingFooter />
 			</div>
-			{showBackToTop ? (
-				<button
-					type="button"
-					className="landing-back-to-top"
-					aria-label="Back to top"
-					onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-				>
-					↑
-				</button>
-			) : null}
-		</section>
+
+			<LandingFab
+				showBackToTop={showBackToTop}
+				onBackToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+			/>
+		</div>
 	)
 }
 

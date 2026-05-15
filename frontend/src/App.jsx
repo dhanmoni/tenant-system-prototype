@@ -28,6 +28,7 @@ import Contact from './pages/Contact'
 import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
+import AccessibilityWidget from './components/landing/AccessibilityWidget'
 import emblem from './assets/img/emblem-dark.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
@@ -37,6 +38,7 @@ function App() {
 	const [loading, setLoading] = useState(true)
 	const [fontScale, setFontScale] = useState('normal')
 	const [highContrast, setHighContrast] = useState(false)
+	const [language, setLanguage] = useState('en')
 	const slides = [
 		{
 			title: 'Digital Tenancy Registration',
@@ -87,6 +89,7 @@ function App() {
 
 	const location = useLocation()
 	const showCarousel = !user
+	const isLandingHome = !user && (location.pathname === '/' || location.pathname === '/login')
 
 	useEffect(() => {
 		try {
@@ -166,69 +169,106 @@ function App() {
 
 	return (
 		<div
-			className={`page${!user ? ' page-landing' : location.pathname.startsWith('/dashboard') ? ' page-dashboard' : ''}`}
+			className={`page${!user ? ' page-landing' : ''}${isLandingHome ? ' page-landing-home' : ''}${location.pathname.startsWith('/dashboard') ? ' page-dashboard' : ''}`}
 		>
 			<a className="skip-link" href="#main-content">Skip to main content</a>
-			<a className="skip-link" href="#primary-nav">Skip to navigation</a>
+			<a
+				className="skip-link"
+				href={isLandingHome ? '#landing-primary-nav' : '#public-primary-nav'}
+			>
+				Skip to navigation
+			</a>
 			{/* Accessibility Bar */}
-			<div className="accessibility-bar">
+			<div id="accessibility-bar" className="accessibility-bar">
 				<div className="accessibility-bar-inner">
 					<div className="accessibility-gov">
-						<span className="accessibility-goi">Government of India</span>
-						<span className="accessibility-ministry">
-							Department of Housing And Urban Affairs
-						</span>
+						<img className="accessibility-emblem" src={emblem} alt="" aria-hidden />
+						<div className="accessibility-gov-text">
+							<p className="accessibility-gov-line">
+								<span lang="hi">भारत सरकार</span>
+								<span className="accessibility-gov-sep" aria-hidden>
+									|
+								</span>
+								<span>Government of India</span>
+							</p>
+							<p className="accessibility-ministry">
+								Department of Housing And Urban Affairs
+							</p>
+						</div>
 					</div>
-					<div className="accessibility-bar-help" aria-label="Accessibility and help controls">
-						<a className="accessibility-skip-btn" href="#main-content">
+					<div className="accessibility-toolbar" role="toolbar" aria-label="Accessibility options">
+						<a className="accessibility-toolbar-link" href="#main-content">
 							Skip to main content
 						</a>
+						<span className="accessibility-toolbar-divider" aria-hidden />
+						<div className="accessibility-font-tools" role="group" aria-label="Font size">
+							<button
+								type="button"
+								className="accessibility-toolbar-btn"
+								onClick={increaseFontScale}
+								title="Increase text size"
+								aria-label="Increase text size"
+							>
+								A+
+							</button>
+							<button
+								type="button"
+								className={`accessibility-toolbar-btn${fontScale === 'normal' ? ' is-active' : ''}`}
+								onClick={() => setFontScale('normal')}
+								title="Reset text size"
+								aria-label="Reset text size"
+							>
+								A
+							</button>
+							<button
+								type="button"
+								className="accessibility-toolbar-btn"
+								onClick={decreaseFontScale}
+								title="Decrease text size"
+								aria-label="Decrease text size"
+							>
+								A-
+							</button>
+						</div>
+						<span className="accessibility-toolbar-divider" aria-hidden />
+						<div className="accessibility-lang-tools" role="group" aria-label="Language (display only)">
+							<button
+								type="button"
+								className={`accessibility-toolbar-btn${language === 'en' ? ' is-active' : ''}`}
+								onClick={() => setLanguage('en')}
+								aria-pressed={language === 'en'}
+								aria-label="English (display only)"
+								title="English (display only)"
+							>
+								EN
+							</button>
+							<button
+								type="button"
+								className={`accessibility-toolbar-btn${language === 'as' ? ' is-active' : ''}`}
+								onClick={() => setLanguage('as')}
+								aria-pressed={language === 'as'}
+								aria-label="Assamese (display only)"
+								title="Assamese (display only)"
+							>
+								অসমীয়া
+							</button>
+						</div>
+						<span className="accessibility-toolbar-divider" aria-hidden />
 						<button
 							type="button"
-							className="accessibility-control-btn"
-							onClick={decreaseFontScale}
-							title="Decrease text size"
-							aria-label="Decrease text size"
-						>
-							A-
-						</button>
-						<button
-							type="button"
-							className="accessibility-control-btn"
-							onClick={() => setFontScale('normal')}
-							title="Reset text size"
-							aria-label="Reset text size"
-						>
-							A
-						</button>
-						<button
-							type="button"
-							className="accessibility-control-btn"
-							onClick={increaseFontScale}
-							title="Increase text size"
-							aria-label="Increase text size"
-						>
-							A+
-						</button>
-						<button
-							type="button"
-							className={`accessibility-control-btn ${highContrast ? 'active' : ''}`}
+							className={`accessibility-toolbar-btn accessibility-toolbar-btn--text${highContrast ? ' is-active' : ''}`}
 							onClick={() => setHighContrast((prev) => !prev)}
 							title="Toggle high contrast"
 							aria-pressed={highContrast}
-							aria-label="Toggle high contrast mode"
 						>
-							High Contrast
+							High contrast
 						</button>
-						<span>Helpdesk (demo): 1800-000-0000</span>
-						<span className="accessibility-bar-help-sep">|</span>
-						<span>helpdesk.tcms@nic.in</span>
 					</div>
 				</div>
 			</div>
 
 			{/* Header (emblem + directorate title) — public only; hidden after login */}
-			{!user ? (
+			{!user && !isLandingHome ? (
 				<header className="topbar">
 					<div className="brand">
 						<img className="emblem" src={emblem} alt="Indian national emblem" />
@@ -247,16 +287,16 @@ function App() {
 				</header>
 			) : null}
 
-			{!user ? <div className="landing-accent-stripe" aria-hidden /> : null}
+			{!user && !isLandingHome ? <div className="landing-accent-stripe" aria-hidden /> : null}
 
 			{/* Main navigation – rent-portal style on landing; hidden on dashboard */}
-			{!(user && location.pathname.startsWith('/dashboard')) && (
+			{!(user && location.pathname.startsWith('/dashboard')) && !isLandingHome && (
 				<div className="globalnav">
 					<div className="globalnav-inner">
 						{!user ? (
 							<span className="globalnav-portal-title"></span>
 						) : null}
-						<nav id="primary-nav" className={user ? 'nav-auth' : undefined}>
+						<nav id="public-primary-nav" className={user ? 'nav-auth' : undefined}>
 							{!user ? (
 								<>
 									<Link to="/">Home</Link>
@@ -282,7 +322,7 @@ function App() {
 				</div>
 			)}
 
-			{showCarousel ? (
+			{showCarousel && !isLandingHome ? (
 				<section className="carousel carousel--rent-banner" aria-label="Tenant and owner highlights">
 					<div className="carousel-banner">
 						{slides.map((slide, index) => (
@@ -410,6 +450,18 @@ function App() {
 					</div>
 				</footer>
 			)} */}
+
+			{!user ? (
+				<AccessibilityWidget
+					fontScale={fontScale}
+					highContrast={highContrast}
+					onIncreaseFont={increaseFontScale}
+					onDecreaseFont={decreaseFontScale}
+					onResetFont={() => setFontScale('normal')}
+					onToggleContrast={() => setHighContrast((prev) => !prev)}
+					navTargetId={isLandingHome ? 'landing-primary-nav' : 'public-primary-nav'}
+				/>
+			) : null}
 		</div>
 	)
 }
