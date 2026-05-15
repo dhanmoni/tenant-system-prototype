@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Accessibility, Contrast, Minus, Navigation, Plus, RotateCcw, X, Type } from 'lucide-react'
+import { Contrast, Minus, Navigation, PersonStanding, Plus, RotateCcw, X, Type } from 'lucide-react'
 
 function AccessibilityWidget({
 	fontScale,
@@ -116,7 +116,7 @@ function AccessibilityWidget({
 			>
 				<div className="ux4g-a11y-panel-header">
 					<div className="ux4g-a11y-panel-brand">
-						<Accessibility className="h-5 w-5 shrink-0" aria-hidden />
+						<PersonStanding className="h-5 w-5 shrink-0" aria-hidden />
 						<div>
 							<h2 id="ux4g-a11y-panel-title">Accessibility options</h2>
 							<p>Adjust display settings for easier reading</p>
@@ -180,7 +180,7 @@ function AccessibilityWidget({
 				aria-label="Accessibility options"
 				title="Accessibility options"
 			>
-				<Accessibility className="h-7 w-7" strokeWidth={2.25} aria-hidden />
+				<PersonStanding className="h-7 w-7" strokeWidth={2.25} aria-hidden />
 			</button>
 		</>
 	)

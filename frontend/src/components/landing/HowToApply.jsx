@@ -20,7 +20,7 @@ const steps = [
 
 function HowToApply() {
 	return (
-		<section id="how-to-apply" className="bg-white py-24" aria-labelledby="how-to-heading">
+		<section id="how-to-apply" className="bg-white py-12 sm:py-16 lg:py-24" aria-labelledby="how-to-heading">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<p className="landing-section-eyebrow">Step by step</p>
 				<h2 id="how-to-heading" className="landing-section-title">
@@ -29,7 +29,7 @@ function HowToApply() {
 				<p className="landing-section-lead">
 					Follow these simple steps to register and apply for your tenancy certificate online.
 				</p>
-				<div className="mt-16 grid gap-12 md:grid-cols-3">
+				<div className="mt-10 grid gap-10 sm:mt-12 sm:gap-12 md:grid-cols-3">
 					{steps.map((step, index) => (
 						<motion.article
 							key={step.num}
@@ -40,12 +40,12 @@ function HowToApply() {
 							className="relative"
 						>
 							<span
-								className="pointer-events-none absolute -top-8 left-0 select-none text-[8rem] font-bold leading-none text-landing/15 sm:text-[9rem]"
+								className="pointer-events-none absolute -top-4 left-0 select-none text-[4.5rem] font-bold leading-none text-landing/15 sm:-top-6 sm:text-[6rem] md:text-[8rem] lg:text-[9rem]"
 								aria-hidden
 							>
 								{step.num}
 							</span>
-							<div className="relative pt-16">
+							<div className="relative pt-10 sm:pt-14 md:pt-16">
 								<h3 className="landing-section-subtitle">{step.title}</h3>
 								<p className="landing-card-text mt-3">{step.text}</p>
 							</div>

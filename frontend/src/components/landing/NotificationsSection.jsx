@@ -11,7 +11,7 @@ const notices = [
 
 function NotificationsSection() {
 	return (
-		<section className="bg-white py-24" aria-labelledby="notifications-heading">
+		<section className="bg-white py-12 sm:py-16 lg:py-24" aria-labelledby="notifications-heading">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<p className="landing-section-eyebrow">Updates</p>
 				<h2 id="notifications-heading" className="landing-section-title">

@@ -1,24 +1,25 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { UserPlus, LogIn, FileText, Mail } from 'lucide-react'
+import AuthNavLink from './AuthNavLink'
 
 const services = [
 	{
 		title: 'New registration',
 		description: 'Create a citizen account with your mobile number.',
-		to: '/#register',
+		authMode: 'register',
 		icon: UserPlus,
 	},
 	{
 		title: 'Login',
 		description: 'Access your dashboard and existing applications.',
-		to: '/#login',
+		authMode: 'login',
 		icon: LogIn,
 	},
 	{
 		title: 'Apply for certificate',
 		description: 'Sign in to submit a tenancy certificate application.',
-		to: '/#auth-card-section',
+		authMode: 'login',
 		icon: FileText,
 	},
 	{
@@ -31,7 +32,7 @@ const services = [
 
 function CitizenServicesSection() {
 	return (
-		<section id="services" className="bg-landing-cream py-24" aria-labelledby="services-heading">
+		<section id="services" className="bg-landing-cream py-12 sm:py-16 lg:py-24" aria-labelledby="services-heading">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<p className="landing-section-eyebrow">Quick links</p>
 				<h2 id="services-heading" className="landing-section-title">
@@ -43,7 +44,6 @@ function CitizenServicesSection() {
 				<div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
 					{services.map((service, index) => {
 						const Icon = service.icon
-						const isHash = service.to.startsWith('/#')
 						const className =
 							'group flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-landing/40 hover:shadow-md'
 
@@ -53,9 +53,7 @@ function CitizenServicesSection() {
 									<Icon className="h-6 w-6" aria-hidden />
 								</span>
 								<h3 className="landing-card-title mt-4">{service.title}</h3>
-								<p className="landing-card-text mt-2 flex-1">
-									{service.description}
-								</p>
+								<p className="landing-card-text mt-2 flex-1">{service.description}</p>
 							</>
 						)
 
@@ -67,10 +65,10 @@ function CitizenServicesSection() {
 								viewport={{ once: true, margin: '-40px' }}
 								transition={{ duration: 0.35, delay: index * 0.06 }}
 							>
-								{isHash ? (
-									<a href={service.to} className={className}>
+								{service.authMode ? (
+									<AuthNavLink mode={service.authMode} className={className}>
 										{content}
-									</a>
+									</AuthNavLink>
 								) : (
 									<Link to={service.to} className={className}>
 										{content}

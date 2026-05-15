@@ -6,7 +6,7 @@ const mainLinks = [
 	{ label: 'Home', to: '/', icon: Home, external: false },
 	{ label: 'Login', to: '/#login', icon: LogIn, external: false },
 	{ label: 'New registration', to: '/#register', icon: UserPlus, external: false },
-	{ label: 'Apply for certificate', to: '/#auth-card-section', icon: FileText, external: false },
+	{ label: 'Apply for certificate', to: '/#login', icon: FileText, external: false },
 ]
 
 const infoLinks = [

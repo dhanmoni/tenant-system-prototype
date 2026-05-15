@@ -29,6 +29,8 @@ import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
 import AccessibilityWidget from './components/landing/AccessibilityWidget'
+import PortalLoadingScreen from './components/PortalLoadingScreen'
+import { LANDING_A11Y_EVENT } from './utils/landingA11y'
 import emblem from './assets/img/emblem-dark.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
@@ -36,6 +38,7 @@ import digitalIndiaLogo from './assets/img/digital-india.png'
 function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
+	const [portalEntering, setPortalEntering] = useState(false)
 	const [fontScale, setFontScale] = useState('normal')
 	const [highContrast, setHighContrast] = useState(false)
 	const [language, setLanguage] = useState('en')
@@ -150,20 +153,47 @@ function App() {
 		})
 	}
 
+	useEffect(() => {
+		const onLandingA11y = (e) => {
+			const action = e.detail
+			if (action === 'increase') increaseFontScale()
+			else if (action === 'decrease') decreaseFontScale()
+			else if (action === 'reset') setFontScale('normal')
+			else if (action === 'contrast') setHighContrast((prev) => !prev)
+			else if (action === 'lang-en') setLanguage('en')
+			else if (action === 'lang-as') setLanguage('as')
+		}
+		window.addEventListener(LANDING_A11Y_EVENT, onLandingA11y)
+		return () => window.removeEventListener(LANDING_A11Y_EVENT, onLandingA11y)
+	}, [])
+
 	const handleLogout = async () => {
 		await api.post('/api/logout')
 		setUser(null)
+		setPortalEntering(false)
 	}
 
-	if (loading) {
+	const handleUserLogin = (nextUser) => {
+		setPortalEntering(true)
+		setUser(nextUser)
+	}
+
+	useEffect(() => {
+		if (!portalEntering) return undefined
+		const timer = setTimeout(() => setPortalEntering(false), 900)
+		return () => clearTimeout(timer)
+	}, [portalEntering, location.pathname])
+
+	if (loading || portalEntering) {
 		return (
-			<div className="page page-center">
-				<div className="full-page-loader">
-					<div className="loader-spinner"></div>
-					<h2 className="loader-text">Loading...</h2>
-					<p className="muted">Please wait while we check your session.</p>
-				</div>
-			</div>
+			<PortalLoadingScreen
+				title={portalEntering ? 'Opening your dashboard' : 'Loading portal'}
+				subtitle={
+					portalEntering
+						? 'Please wait while we load your workspace.'
+						: 'Please wait while we check your session.'
+				}
+			/>
 		)
 	}
 
@@ -178,8 +208,11 @@ function App() {
 			>
 				Skip to navigation
 			</a>
-			{/* Accessibility Bar */}
-			<div id="accessibility-bar" className="accessibility-bar">
+			{/* Accessibility Bar — hidden on landing home mobile (see LandingNav utility bar) */}
+			<div
+				id="accessibility-bar"
+				className={`accessibility-bar${isLandingHome ? ' accessibility-bar--landing-mobile-hidden' : ''}`}
+			>
 				<div className="accessibility-bar-inner">
 					<div className="accessibility-gov">
 						<img className="accessibility-emblem" src={emblem} alt="" aria-hidden />
@@ -366,10 +399,10 @@ function App() {
 					<Route
 						path="/"
 						element={
-							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={setUser} />
+							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleUserLogin} />
 						}
 					/>
-					<Route path="/login" element={<Login onLogin={setUser} />} />
+					<Route path="/login" element={<Login onLogin={handleUserLogin} />} />
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
 					<Route path="/contact" element={<Contact />} />

@@ -5,7 +5,7 @@ const ABOUT_IMAGE = '/TCP-Images/TCP-Office2.jpg'
 
 function AboutSection() {
 	return (
-		<section id="about" className="bg-white py-24" aria-labelledby="about-heading">
+		<section id="about" className="bg-white py-12 sm:py-16 lg:py-24" aria-labelledby="about-heading">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
 					<motion.div

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import { AuthPanelNavigationContext } from '../context/AuthPanelNavigationContext'
+import { authHashForMode, modeFromHash, scrollToAuthPanel } from '../utils/authPanelNav'
 import LandingNav from '../components/landing/LandingNav'
 import LandingHero from '../components/landing/LandingHero'
 import GetStartedSection from '../components/landing/GetStartedSection'
@@ -62,20 +64,6 @@ function Login({ onLogin }) {
 		}
 		loadDistricts()
 	}, [mode, districts.length])
-
-	useEffect(() => {
-		if (location.hash === '#register') {
-			switchMode('register')
-			setTimeout(() => {
-				document.getElementById('auth-card-section')?.scrollIntoView({ behavior: 'smooth' })
-			}, 100)
-		} else if (location.hash === '#login') {
-			switchMode('login')
-			setTimeout(() => {
-				document.getElementById('auth-card-section')?.scrollIntoView({ behavior: 'smooth' })
-			}, 100)
-		}
-	}, [location.hash])
 
 	useEffect(() => {
 		const handleScroll = () => setShowBackToTop(window.scrollY > 420)
@@ -228,6 +216,27 @@ function Login({ onLogin }) {
 		setMode(newMode)
 	}
 
+	const openAuthPanel = (targetMode) => {
+		switchMode(targetMode)
+		const hash = authHashForMode(targetMode)
+		if (location.pathname !== '/' || location.hash !== hash) {
+			navigate({ pathname: '/', hash })
+		}
+		scrollToAuthPanel()
+	}
+
+	useEffect(() => {
+		const targetMode = modeFromHash(location.hash)
+		if (!targetMode) return
+		switchMode(targetMode)
+		scrollToAuthPanel()
+	}, [location.hash])
+
+	const authNavValue = {
+		openLogin: () => openAuthPanel('login'),
+		openRegister: () => openAuthPanel('register'),
+	}
+
 	const authPanelProps = {
 		mode,
 		regStep,
@@ -258,27 +267,29 @@ function Login({ onLogin }) {
 	}
 
 	return (
-		<div className="landing-page-home">
-			<div className="relative landing-hero-wrap">
-				<LandingHero navSlot={<LandingNav />} />
-			</div>
+		<AuthPanelNavigationContext.Provider value={authNavValue}>
+			<div className="landing-page-home min-w-0 overflow-x-clip">
+				<div className="relative landing-hero-wrap">
+					<LandingHero navSlot={<LandingNav />} />
+				</div>
 
-			<div className="landing-body">
-				<GetStartedSection authPanelProps={authPanelProps} />
-				<HowToApply />
-				<CitizenServicesSection />
-				<TenancyAuthoritiesSection />
-				<AboutSection />
-				<NotificationsSection />
-				<NeedSupportSection />
-				<LandingFooter />
-			</div>
+				<div className="landing-body">
+					<GetStartedSection authPanelProps={authPanelProps} />
+					<HowToApply />
+					<CitizenServicesSection />
+					<TenancyAuthoritiesSection />
+					<AboutSection />
+					<NotificationsSection />
+					<NeedSupportSection />
+					<LandingFooter />
+				</div>
 
-			<LandingFab
-				showBackToTop={showBackToTop}
-				onBackToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-			/>
-		</div>
+				<LandingFab
+					showBackToTop={showBackToTop}
+					onBackToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+				/>
+			</div>
+		</AuthPanelNavigationContext.Provider>
 	)
 }
 

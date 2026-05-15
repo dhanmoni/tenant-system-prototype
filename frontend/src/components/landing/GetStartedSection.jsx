@@ -20,61 +20,67 @@ function AudienceCard({ title, description, items }) {
 
 function GetStartedSection({ authPanelProps }) {
 	return (
-		<section id="portal-content" className="bg-landing-cream py-24" aria-labelledby="get-started-heading">
+		<section
+			id="portal-content"
+			className="get-started-section relative z-10 -mt-6 bg-landing-cream pt-10 pb-12 sm:-mt-10 sm:pt-12 sm:pb-16 md:-mt-12 md:pb-20"
+			aria-labelledby="get-started-heading"
+		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<motion.div
-					initial={{ opacity: 0, y: 16 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.4 }}
-					className="mb-10 max-w-2xl"
-				>
-					<p className="landing-section-eyebrow">Citizen access</p>
-					<h2 id="get-started-heading" className="landing-section-title">
-						Get started
-					</h2>
-					<p className="landing-section-lead">
-						Register or sign in with your mobile number to apply for tenancy certificates and
-						manage your applications online.
-					</p>
-				</motion.div>
+				<div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)] lg:gap-10 xl:gap-12">
+					<div className="order-2 min-w-0 space-y-8 sm:space-y-10 lg:order-1 lg:space-y-12">
+						<motion.div
+							initial={{ opacity: 0, y: 16 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true }}
+							transition={{ duration: 0.4 }}
+							className="max-w-2xl"
+						>
+							<p className="landing-section-eyebrow">Citizen access</p>
+							<h2 id="get-started-heading" className="landing-section-title">
+								Get started
+							</h2>
+							<p className="landing-section-lead">
+								Register or sign in with your mobile number to apply for tenancy certificates and
+								manage your applications online.
+							</p>
+						</motion.div>
 
-				<div className="grid items-start gap-12 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_420px]">
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true }}
+							transition={{ duration: 0.5 }}
+						>
+							<p className="landing-section-label">Who can use this portal</p>
+							<div className="grid gap-6 sm:grid-cols-2">
+								<AudienceCard
+									title="For Tenants"
+									description="Apply for tenancy certificates, track application status, and keep your property records digitally."
+									items={[
+										'Digital certificate access',
+										'Application status tracking',
+										'Online services 24x7',
+									]}
+								/>
+								<AudienceCard
+									title="For Owners"
+									description="Register properties, manage tenant records, and stay aligned with tenancy regulations."
+									items={[
+										'Property and application dashboard',
+										'Digital record management',
+										'Status and compliance visibility',
+									]}
+								/>
+							</div>
+						</motion.div>
+					</div>
+
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true }}
-						transition={{ duration: 0.5 }}
-					>
-						<p className="landing-section-label">Who can use this portal</p>
-						<div className="grid gap-6 sm:grid-cols-2">
-							<AudienceCard
-								title="For Tenants"
-								description="Apply for tenancy certificates, track application status, and keep your property records digitally."
-								items={[
-									'Digital certificate access',
-									'Application status tracking',
-									'Online services 24x7',
-								]}
-							/>
-							<AudienceCard
-								title="For Owners"
-								description="Register properties, manage tenant records, and stay aligned with tenancy regulations."
-								items={[
-									'Property and application dashboard',
-									'Digital record management',
-									'Status and compliance visibility',
-								]}
-							/>
-						</div>
-					</motion.div>
-
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						viewport={{ once: true }}
-						transition={{ duration: 0.5, delay: 0.1 }}
-						className="lg:sticky lg:top-8"
+						transition={{ duration: 0.5, delay: 0.08 }}
+						className="order-1 min-w-0 lg:order-2 lg:sticky lg:top-6 xl:top-8"
 					>
 						<AuthPanel {...authPanelProps} />
 					</motion.div>
