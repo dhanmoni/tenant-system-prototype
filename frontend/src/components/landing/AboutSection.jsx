@@ -1,10 +1,26 @@
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import aboutImage from '../../assets/img/img4.png'
 
 function AboutSection() {
+	const sectionRef = useRef(null)
+	const reduceMotion = useReducedMotion()
+	const { scrollYProgress } = useScroll({
+		target: sectionRef,
+		offset: ['start end', 'end start'],
+	})
+	const imageY = useTransform(scrollYProgress, (progress) =>
+		reduceMotion ? 0 : (progress - 0.5) * 80,
+	)
+
 	return (
-		<section id="about" className="bg-white py-12 sm:py-16 lg:py-24" aria-labelledby="about-heading">
+		<section
+			ref={sectionRef}
+			id="about"
+			className="bg-white py-12 sm:py-16 lg:py-24"
+			aria-labelledby="about-heading"
+		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
 					<motion.div
@@ -14,10 +30,11 @@ function AboutSection() {
 						transition={{ duration: 0.5 }}
 						className="overflow-hidden rounded-2xl shadow-xl"
 					>
-						<img
+						<motion.img
 							src={aboutImage}
 							alt="Official explaining simplified home ownership and tenancy registration"
-							className="h-full min-h-[280px] w-full object-cover object-center"
+							className="min-h-[300px] w-full scale-110 object-cover object-center will-change-transform"
+							style={{ y: imageY }}
 							loading="lazy"
 						/>
 					</motion.div>

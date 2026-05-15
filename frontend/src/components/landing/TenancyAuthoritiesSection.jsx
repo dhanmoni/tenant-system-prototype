@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { Building2, Gavel, Landmark, Scale, Shield, Clock, FileCheck } from 'lucide-react'
 import { tenantServiceGroups } from '../../data/tenantServices'
 import authoritiesImage from '../../assets/img/img3.png'
@@ -101,8 +102,19 @@ function AuthorityCard({ group, index }) {
 }
 
 function TenancyAuthoritiesSection() {
+	const sectionRef = useRef(null)
+	const reduceMotion = useReducedMotion()
+	const { scrollYProgress } = useScroll({
+		target: sectionRef,
+		offset: ['start end', 'end start'],
+	})
+	const imageY = useTransform(scrollYProgress, (progress) =>
+		reduceMotion ? 0 : (progress - 0.5) * 80,
+	)
+
 	return (
 		<section
+			ref={sectionRef}
 			id="tenancy-authorities"
 			className="tenancy-bodies-section bg-landing-cream py-12 sm:py-16 lg:py-24"
 			aria-labelledby="tenancy-authorities-heading"
@@ -152,11 +164,12 @@ function TenancyAuthoritiesSection() {
 					className="tenancy-bodies-benefits mt-12 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:mt-16"
 				>
 					<div className="grid lg:grid-cols-[minmax(0,300px)_1fr]">
-						<div className="relative min-h-[200px] lg:min-h-full">
-							<img
+						<div className="relative min-h-[200px] overflow-hidden lg:min-h-full">
+							<motion.img
 								src={authoritiesImage}
 								alt="Official presenting tenancy solutions for diverse housing types"
-								className="absolute inset-0 h-full w-full object-cover object-center"
+								className="absolute inset-0 h-[115%] w-full scale-105 object-cover object-center will-change-transform"
+								style={{ y: imageY }}
 								loading="lazy"
 							/>
 							<div

@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import howToImage from '../../assets/img/img2.png'
 
 const steps = [
@@ -20,8 +21,23 @@ const steps = [
 ]
 
 function HowToApply() {
+	const sectionRef = useRef(null)
+	const reduceMotion = useReducedMotion()
+	const { scrollYProgress } = useScroll({
+		target: sectionRef,
+		offset: ['start end', 'end start'],
+	})
+	const imageY = useTransform(scrollYProgress, (progress) =>
+		reduceMotion ? 0 : (progress - 0.5) * 90,
+	)
+
 	return (
-		<section id="how-to-apply" className="bg-white py-12 sm:py-16 lg:py-24" aria-labelledby="how-to-heading">
+		<section
+			ref={sectionRef}
+			id="how-to-apply"
+			className="bg-white py-12 sm:py-16 lg:py-24"
+			aria-labelledby="how-to-heading"
+		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<p className="landing-section-eyebrow">Step by step</p>
 				<h2 id="how-to-heading" className="landing-section-title">
@@ -38,10 +54,11 @@ function HowToApply() {
 						transition={{ duration: 0.45 }}
 						className="overflow-hidden rounded-2xl shadow-xl ring-1 ring-slate-200/60 lg:sticky lg:top-8"
 					>
-						<img
+						<motion.img
 							src={howToImage}
 							alt="Tenants and property officials completing a tenancy agreement"
-							className="aspect-[4/5] w-full object-cover object-center sm:aspect-[3/4] lg:aspect-auto lg:min-h-[420px]"
+							className="aspect-[4/5] w-full scale-110 object-cover object-center will-change-transform sm:aspect-[3/4] lg:aspect-auto lg:min-h-[460px]"
+							style={{ y: imageY }}
 							loading="lazy"
 						/>
 					</motion.div>

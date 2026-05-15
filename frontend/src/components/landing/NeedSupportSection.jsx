@@ -1,20 +1,36 @@
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import supportImage from '../../assets/img/img1.png'
 
 function NeedSupportSection() {
+	const sectionRef = useRef(null)
+	const reduceMotion = useReducedMotion()
+	const { scrollYProgress } = useScroll({
+		target: sectionRef,
+		offset: ['start end', 'end start'],
+	})
+	const backgroundY = useTransform(scrollYProgress, (progress) =>
+		reduceMotion ? 0 : (progress - 0.5) * 100,
+	)
+
 	return (
 		<section
+			ref={sectionRef}
 			className="relative overflow-hidden bg-[#111111] text-white"
 			aria-labelledby="need-support-heading"
 		>
-			<div
-				className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
-				style={{ backgroundImage: `url(${supportImage})` }}
+			<motion.div
+				className="pointer-events-none absolute inset-x-0 top-[-15%] z-0 h-[130%] scale-105 bg-cover bg-center bg-no-repeat will-change-transform"
+				style={{
+					backgroundImage: `url(${supportImage})`,
+					y: backgroundY,
+				}}
 				aria-hidden
 			/>
-			<div className="pointer-events-none absolute inset-0 bg-[#111111]/82 sm:bg-gradient-to-r sm:from-[#111111]/95 sm:via-[#111111]/88 sm:to-[#111111]/55" aria-hidden />
-			<div className="relative mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-4 py-14 sm:flex-row sm:items-center sm:px-6 sm:py-16 lg:px-8">
+			<div className="pointer-events-none absolute inset-0 z-[1] bg-[#111111]/82 sm:bg-gradient-to-r sm:from-[#111111]/95 sm:via-[#111111]/88 sm:to-[#111111]/55" aria-hidden />
+			<div className="relative z-10 mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-4 py-14 sm:flex-row sm:items-center sm:px-6 sm:py-16 lg:px-8">
 				<div className="max-w-xl">
 					<h2 id="need-support-heading" className="text-3xl font-bold sm:text-4xl">
 						Need Support?

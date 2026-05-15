@@ -435,6 +435,10 @@
 }
 
 /* Hero scroll cue — reset global button { background: var(--nic-green) } */
+.landing-hero-carousel-nav {
+	pointer-events: auto;
+}
+
 .landing-hero-scroll {
 	margin: 0 !important;
 	padding: 0 !important;
@@ -465,7 +469,8 @@
 }
 
 /* Carousel dots — override global button { background: var(--nic-green) } */
-.get-started-carousel-dot {
+.get-started-carousel-dot,
+.landing-hero-carousel-dot {
 	width: 0.5rem;
 	height: 0.5rem;
 	margin: 0 !important;
@@ -482,20 +487,23 @@
 	transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
-.get-started-carousel-dot.is-active {
+.get-started-carousel-dot.is-active,
+.landing-hero-carousel-dot.is-active {
 	background: #fff !important;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 	outline: 2px solid rgba(168, 88, 36, 0.45);
 	outline-offset: 0;
 }
 
-.get-started-carousel-dot:hover:not(:disabled) {
+.get-started-carousel-dot:hover:not(:disabled),
+.landing-hero-carousel-dot:hover:not(:disabled) {
 	background: rgba(255, 255, 255, 0.85) !important;
 	box-shadow: none !important;
 	transform: none;
 }
 
-.get-started-carousel-dot.is-active:hover:not(:disabled) {
+.get-started-carousel-dot.is-active:hover:not(:disabled),
+.landing-hero-carousel-dot.is-active:hover:not(:disabled) {
 	background: #fff !important;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
@@ -744,6 +752,177 @@
 	color: #64748b;
 }
 
+/* Landing — public stats tiles */
+.landing-stats-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1.25rem 2rem;
+}
+
+.landing-stats-live {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.875rem;
+	border-radius: 9999px;
+	border: 1px solid rgba(168, 88, 36, 0.25);
+	background: var(--landing-cream);
+}
+
+.landing-stats-live-dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background: #22c55e;
+	box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+	animation: landing-stats-pulse 2s ease-in-out infinite;
+}
+
+@keyframes landing-stats-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+	}
+	50% {
+		box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.landing-stats-live-dot {
+		animation: none;
+	}
+}
+
+.landing-stats-live-text {
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--landing-accent-dark);
+}
+
+.landing-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+@media (min-width: 768px) {
+	.landing-stats-grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 1.25rem;
+	}
+}
+
+.landing-stat-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	height: 100%;
+	padding: 1.125rem 1.25rem;
+	border-radius: 0.875rem;
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	box-shadow:
+		0 1px 2px rgba(15, 23, 42, 0.05),
+		0 4px 12px rgba(168, 88, 36, 0.06);
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease,
+		transform 0.2s ease;
+}
+
+.landing-stat-card:hover {
+	border-color: rgba(168, 88, 36, 0.35);
+	box-shadow:
+		0 4px 6px rgba(15, 23, 42, 0.06),
+		0 8px 20px rgba(168, 88, 36, 0.1);
+	transform: translateY(-2px);
+}
+
+.landing-stat-card-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.35rem;
+}
+
+.landing-stat-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: 0.5rem;
+	background: rgba(168, 88, 36, 0.12);
+	color: var(--landing-accent);
+}
+
+.landing-stat-trend {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	max-width: 7.5rem;
+	font-size: 0.65rem;
+	font-weight: 600;
+	line-height: 1.25;
+	text-align: right;
+}
+
+.landing-stat-trend--up {
+	color: #15803d;
+}
+
+.landing-stat-trend--down {
+	color: #b45309;
+}
+
+.landing-stat-trend--neutral {
+	color: #64748b;
+}
+
+.landing-stat-value {
+	margin: 0.15rem 0 0;
+	font-family: var(--font-gov);
+	font-size: 1.75rem;
+	font-weight: 800;
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+	color: #0f172a;
+}
+
+@media (min-width: 640px) {
+	.landing-stat-value {
+		font-size: 2rem;
+	}
+}
+
+.landing-stat-label {
+	margin: 0;
+	font-family: var(--font-gov);
+	font-size: 0.875rem;
+	font-weight: 700;
+	line-height: 1.35;
+	color: #1e293b;
+}
+
+.landing-stat-hint {
+	margin: 0;
+	font-size: 0.75rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+.landing-stats-demo-note {
+	max-width: 42rem;
+	margin-left: auto;
+	margin-right: auto;
+}
+
 .landing-body .landing-card-title {
 	font-family: var(--font-gov);
 	font-size: 1.0625rem;
@@ -959,13 +1138,25 @@
 	color: #475569;
 }
 
+.tenancy-bodies-flow-item:nth-child(1) .tenancy-bodies-flow-dot {
+	background: #c47a3a;
+}
+
+.tenancy-bodies-flow-item:nth-child(2) .tenancy-bodies-flow-dot {
+	background: var(--landing-accent);
+}
+
+.tenancy-bodies-flow-item:nth-child(3) .tenancy-bodies-flow-dot {
+	background: var(--landing-accent-dark);
+}
+
 .tenancy-bodies-flow-line {
 	position: absolute;
 	top: 1rem;
 	left: calc(50% + 1.25rem);
 	width: calc(100% - 2.5rem);
 	height: 2px;
-	background: linear-gradient(90deg, var(--landing-accent), #e8c4a8);
+	background: linear-gradient(90deg, #c47a3a, var(--landing-accent), var(--landing-accent-dark));
 	border-radius: 999px;
 }
 
@@ -989,19 +1180,20 @@
 	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
+/* Theme palette: light → primary → dark terracotta (Authority → Court → Tribunal) */
 .tenancy-body-card--authority {
-	--body-accent: #7c3aed;
-	--body-accent-soft: rgba(124, 58, 237, 0.1);
+	--body-accent: #c47a3a;
+	--body-accent-soft: rgba(196, 122, 58, 0.14);
 }
 
 .tenancy-body-card--court {
-	--body-accent: #2563eb;
-	--body-accent-soft: rgba(37, 99, 235, 0.1);
+	--body-accent: var(--landing-accent);
+	--body-accent-soft: rgba(168, 88, 36, 0.12);
 }
 
 .tenancy-body-card--tribunal {
-	--body-accent: #d97706;
-	--body-accent-soft: rgba(217, 119, 6, 0.12);
+	--body-accent: var(--landing-accent-dark);
+	--body-accent-soft: rgba(138, 69, 25, 0.14);
 }
 
 .tenancy-body-card-step {

@@ -6,6 +6,7 @@ import { authHashForMode, modeFromHash, scrollToAuthPanel } from '../utils/authP
 import LandingNav from '../components/landing/LandingNav'
 import LandingHero from '../components/landing/LandingHero'
 import GetStartedSection from '../components/landing/GetStartedSection'
+import PortalStatsSection from '../components/landing/PortalStatsSection'
 import HowToApply from '../components/landing/HowToApply'
 import CitizenServicesSection from '../components/landing/CitizenServicesSection'
 import TenancyAuthoritiesSection from '../components/landing/TenancyAuthoritiesSection'
@@ -275,6 +276,7 @@ function Login({ onLogin }) {
 
 				<div className="landing-body">
 					<GetStartedSection authPanelProps={authPanelProps} />
+					<PortalStatsSection />
 					<HowToApply />
 					<CitizenServicesSection />
 					<TenancyAuthoritiesSection />

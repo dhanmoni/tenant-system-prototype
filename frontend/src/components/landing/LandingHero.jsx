@@ -1,9 +1,45 @@
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import heroBanner from '../../assets/img/banner.png'
+import heroKeysSlide from '../../assets/img/img7.png'
+
+const heroSlides = [
+	{
+		src: heroBanner,
+		alt: 'Modern residential community representing tenancy and housing',
+		objectPosition: 'center center',
+	},
+	{
+		src: heroKeysSlide,
+		alt: 'Ceremonial handover of keys for a registered tenancy in Assam',
+		objectPosition: 'center 40%',
+	},
+]
+
+const SLIDE_INTERVAL_MS = 6000
 
 function LandingHero({ navSlot }) {
+	const heroRef = useRef(null)
+	const [activeIndex, setActiveIndex] = useState(0)
+	const reduceMotion = useReducedMotion()
+	const { scrollYProgress } = useScroll({
+		target: heroRef,
+		offset: ['start start', 'end start'],
+	})
+	const backgroundY = useTransform(scrollYProgress, (progress) =>
+		reduceMotion ? 0 : progress * 140,
+	)
+
+	useEffect(() => {
+		if (reduceMotion || heroSlides.length <= 1) return undefined
+		const timer = setInterval(() => {
+			setActiveIndex((prev) => (prev + 1) % heroSlides.length)
+		}, SLIDE_INTERVAL_MS)
+		return () => clearInterval(timer)
+	}, [reduceMotion])
+
 	const scrollToContent = () => {
 		document.getElementById('portal-content')?.scrollIntoView({ behavior: 'smooth' })
 	}
@@ -13,18 +49,39 @@ function LandingHero({ navSlot }) {
 		document.getElementById('how-to-apply')?.scrollIntoView({ behavior: 'smooth' })
 	}
 
+	const activeSlide = heroSlides[activeIndex]
+
+	const slideTransition = reduceMotion
+		? { duration: 0 }
+		: { duration: 1.1, ease: [0.4, 0, 0.2, 1] }
+
 	return (
 		<section
+			ref={heroRef}
 			className="landing-hero relative isolate min-h-[108dvh] min-h-screen overflow-hidden"
 			aria-label="Portal introduction"
 		>
 			{navSlot}
-			<div
-				className="absolute inset-0 z-0 scale-105 bg-cover bg-center bg-no-repeat"
-				style={{ backgroundImage: `url(${heroBanner})` }}
-				role="img"
-				aria-label="Modern residential community representing tenancy and housing"
-			/>
+			<motion.div
+				className="absolute inset-x-0 top-[-12%] z-0 h-[124%] will-change-transform"
+				style={{ y: backgroundY }}
+				aria-hidden
+			>
+				<AnimatePresence mode="sync" initial={false}>
+					<motion.img
+						key={activeSlide.src}
+						src={activeSlide.src}
+						alt=""
+						className="absolute inset-0 h-full w-full scale-105 object-cover"
+						style={{ objectPosition: activeSlide.objectPosition }}
+						initial={reduceMotion ? false : { opacity: 0, scale: 1.08 }}
+						animate={{ opacity: 1, scale: 1.05 }}
+						exit={reduceMotion ? undefined : { opacity: 0, scale: 1.02 }}
+						transition={slideTransition}
+					/>
+				</AnimatePresence>
+			</motion.div>
+			<span className="sr-only">{activeSlide.alt}</span>
 			<div
 				className="absolute inset-0 z-[1] bg-gradient-to-r from-[#0c1f3d]/92 via-[#0c1f3d]/55 to-[#0c1f3d]/20"
 				aria-hidden
@@ -71,6 +128,24 @@ function LandingHero({ navSlot }) {
 						</a>
 					</div>
 				</motion.div>
+			</div>
+
+			<div
+				className="landing-hero-carousel-nav absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 gap-2 sm:bottom-28"
+				role="tablist"
+				aria-label="Hero background slides"
+			>
+				{heroSlides.map((slide, index) => (
+					<button
+						key={slide.src}
+						type="button"
+						role="tab"
+						aria-selected={index === activeIndex}
+						aria-label={`Show slide ${index + 1}: ${slide.alt}`}
+						className={`landing-hero-carousel-dot ${index === activeIndex ? 'is-active' : ''}`}
+						onClick={() => setActiveIndex(index)}
+					/>
+				))}
 			</div>
 
 			<button

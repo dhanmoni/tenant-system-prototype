@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import AuthPanel from './AuthPanel'
 import welcomeImage from '../../assets/img/img1.png'
 import keysImage from '../../assets/img/img6.png'
@@ -17,8 +17,16 @@ const getStartedSlides = [
 	},
 ]
 
-function GetStartedImageCarousel() {
+function GetStartedImageCarousel({ scrollTargetRef }) {
 	const [activeIndex, setActiveIndex] = useState(0)
+	const reduceMotion = useReducedMotion()
+	const { scrollYProgress } = useScroll({
+		target: scrollTargetRef,
+		offset: ['start end', 'end start'],
+	})
+	const imageY = useTransform(scrollYProgress, (progress) =>
+		reduceMotion ? 0 : (progress - 0.5) * 70,
+	)
 
 	useEffect(() => {
 		const timer = setInterval(() => {
@@ -33,20 +41,22 @@ function GetStartedImageCarousel() {
 			aria-roledescription="carousel"
 			aria-label="Get started highlights"
 		>
-			<div className="relative h-48 sm:h-56 lg:h-64">
-				{getStartedSlides.map((slide, index) => (
-					<img
-						key={slide.alt}
-						src={slide.src}
-						alt={slide.alt}
-						className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out ${
-							index === activeIndex ? 'opacity-100' : 'opacity-0'
-						}`}
-						style={{ objectPosition: slide.objectPosition }}
-						loading={index === 0 ? 'eager' : 'lazy'}
-						aria-hidden={index !== activeIndex}
-					/>
-				))}
+			<div className="relative h-48 overflow-hidden sm:h-56 lg:h-64">
+				<motion.div className="absolute inset-0 will-change-transform" style={{ y: imageY }}>
+					{getStartedSlides.map((slide, index) => (
+						<img
+							key={slide.alt}
+							src={slide.src}
+							alt={slide.alt}
+							className={`absolute inset-0 h-[115%] w-full scale-105 object-cover transition-opacity duration-700 ease-in-out ${
+								index === activeIndex ? 'opacity-100' : 'opacity-0'
+							}`}
+							style={{ objectPosition: slide.objectPosition }}
+							loading={index === 0 ? 'eager' : 'lazy'}
+							aria-hidden={index !== activeIndex}
+						/>
+					))}
+				</motion.div>
 			</div>
 			<div className="absolute inset-x-0 bottom-3 flex justify-center gap-2" role="tablist" aria-label="Carousel slides">
 				{getStartedSlides.map((slide, index) => (
@@ -83,8 +93,11 @@ function AudienceCard({ title, description, items }) {
 }
 
 function GetStartedSection({ authPanelProps }) {
+	const sectionRef = useRef(null)
+
 	return (
 		<section
+			ref={sectionRef}
 			id="portal-content"
 			className="get-started-section relative z-10 -mt-6 bg-landing-cream pt-10 pb-12 sm:-mt-10 sm:pt-12 sm:pb-16 md:-mt-12 md:pb-20"
 			aria-labelledby="get-started-heading"
@@ -115,7 +128,7 @@ function GetStartedSection({ authPanelProps }) {
 							viewport={{ once: true }}
 							transition={{ duration: 0.45 }}
 						>
-							<GetStartedImageCarousel />
+							<GetStartedImageCarousel scrollTargetRef={sectionRef} />
 						</motion.div>
 
 						<motion.div

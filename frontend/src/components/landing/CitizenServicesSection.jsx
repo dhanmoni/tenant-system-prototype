@@ -1,5 +1,6 @@
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { UserPlus, LogIn, FileText, Mail } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import servicesImage from '../../assets/img/img5.png'
@@ -32,8 +33,23 @@ const services = [
 ]
 
 function CitizenServicesSection() {
+	const sectionRef = useRef(null)
+	const reduceMotion = useReducedMotion()
+	const { scrollYProgress } = useScroll({
+		target: sectionRef,
+		offset: ['start end', 'end start'],
+	})
+	const imageY = useTransform(scrollYProgress, (progress) =>
+		reduceMotion ? 0 : (progress - 0.5) * 60,
+	)
+
 	return (
-		<section id="services" className="bg-landing-cream py-12 sm:py-16 lg:py-24" aria-labelledby="services-heading">
+		<section
+			ref={sectionRef}
+			id="services"
+			className="bg-landing-cream py-12 sm:py-16 lg:py-24"
+			aria-labelledby="services-heading"
+		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<p className="landing-section-eyebrow">Quick links</p>
 				<h2 id="services-heading" className="landing-section-title">
@@ -49,10 +65,11 @@ function CitizenServicesSection() {
 					transition={{ duration: 0.45 }}
 					className="mt-10 overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/80 lg:mt-12"
 				>
-					<img
+					<motion.img
 						src={servicesImage}
 						alt="Official tenancy agreement document for citizen registration services"
-						className="h-44 w-full object-cover object-[center_30%] sm:h-52 md:h-56"
+						className="h-48 w-full scale-110 object-cover object-[center_30%] will-change-transform sm:h-56 md:h-60"
+						style={{ y: imageY }}
 						loading="lazy"
 					/>
 				</motion.div>
