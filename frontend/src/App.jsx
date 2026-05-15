@@ -1,5 +1,7 @@
 import './App.css'
 import { useEffect, useState } from 'react'
+import bannerImage from './assets/img/banner.png'
+import welcomeImage from './assets/img/img1.png'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import api from './api'
 import DashboardLayout from './pages/dashboard/DashboardLayout'
@@ -44,10 +46,16 @@ function App() {
 	const [language, setLanguage] = useState('en')
 	const slides = [
 		{
+			title: 'Housing & tenancy in one place',
+			subtitle:
+				'Register tenancies, manage landlord–tenant records, and access department services with a modern, citizen-friendly portal.',
+			image: bannerImage,
+		},
+		{
 			title: 'Digital Tenancy Registration',
 			subtitle:
 				'Apply for tenancy certificates online, track your application status in real-time, and download digitally signed documents — all from one portal.',
-			image: '/TCP-Images/TCP-Office.jpg',
+			image: welcomeImage,
 		},
 		{
 			title: 'Property & tenancy records',

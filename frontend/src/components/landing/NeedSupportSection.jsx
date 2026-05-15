@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowUpRight } from 'lucide-react'
+import supportImage from '../../assets/img/img1.png'
 
 function NeedSupportSection() {
 	return (
@@ -8,13 +9,11 @@ function NeedSupportSection() {
 			aria-labelledby="need-support-heading"
 		>
 			<div
-				className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-[0.12]"
+				className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
+				style={{ backgroundImage: `url(${supportImage})` }}
 				aria-hidden
-				style={{
-					backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='1' d='M0 60 Q30 20 60 60 T120 60'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='1' d='M0 80 Q30 40 60 80 T120 80'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='1' d='M0 40 Q30 0 60 40 T120 40'/%3E%3C/svg%3E")`,
-					backgroundSize: '120px 120px',
-				}}
 			/>
+			<div className="pointer-events-none absolute inset-0 bg-[#111111]/82 sm:bg-gradient-to-r sm:from-[#111111]/95 sm:via-[#111111]/88 sm:to-[#111111]/55" aria-hidden />
 			<div className="relative mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-4 py-14 sm:flex-row sm:items-center sm:px-6 sm:py-16 lg:px-8">
 				<div className="max-w-xl">
 					<h2 id="need-support-heading" className="text-3xl font-bold sm:text-4xl">

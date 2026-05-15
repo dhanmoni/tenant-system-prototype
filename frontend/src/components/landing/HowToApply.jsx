@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import howToImage from '../../assets/img/img2.png'
 
 const steps = [
 	{
@@ -29,8 +30,23 @@ function HowToApply() {
 				<p className="landing-section-lead">
 					Follow these simple steps to register and apply for your tenancy certificate online.
 				</p>
-				<div className="mt-10 grid gap-10 sm:mt-12 sm:gap-12 md:grid-cols-3">
-					{steps.map((step, index) => (
+				<div className="mt-10 grid items-start gap-10 lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-12 xl:gap-16">
+					<motion.div
+						initial={{ opacity: 0, x: -20 }}
+						whileInView={{ opacity: 1, x: 0 }}
+						viewport={{ once: true, margin: '-60px' }}
+						transition={{ duration: 0.45 }}
+						className="overflow-hidden rounded-2xl shadow-xl ring-1 ring-slate-200/60 lg:sticky lg:top-8"
+					>
+						<img
+							src={howToImage}
+							alt="Tenants and property officials completing a tenancy agreement"
+							className="aspect-[4/5] w-full object-cover object-center sm:aspect-[3/4] lg:aspect-auto lg:min-h-[420px]"
+							loading="lazy"
+						/>
+					</motion.div>
+					<div className="grid gap-10 sm:gap-12 md:grid-cols-3">
+						{steps.map((step, index) => (
 						<motion.article
 							key={step.num}
 							initial={{ opacity: 0, y: 20 }}
@@ -50,7 +66,8 @@ function HowToApply() {
 								<p className="landing-card-text mt-3">{step.text}</p>
 							</div>
 						</motion.article>
-					))}
+						))}
+					</div>
 				</div>
 			</div>
 		</section>

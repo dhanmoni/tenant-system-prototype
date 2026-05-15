@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
-
-const HERO_IMAGE = '/TCP-Images/TCP-Office.jpg'
+import heroBanner from '../../assets/img/banner.png'
 
 function LandingHero({ navSlot }) {
 	const scrollToContent = () => {
@@ -21,13 +20,17 @@ function LandingHero({ navSlot }) {
 		>
 			{navSlot}
 			<div
-				className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-				style={{ backgroundImage: `url(${HERO_IMAGE})` }}
+				className="absolute inset-0 z-0 scale-105 bg-cover bg-center bg-no-repeat"
+				style={{ backgroundImage: `url(${heroBanner})` }}
 				role="img"
-				aria-label="Assam landscape and rural development backdrop"
+				aria-label="Modern residential community representing tenancy and housing"
 			/>
 			<div
-				className="absolute inset-0 z-[1] bg-gradient-to-r from-black/88 via-black/60 to-black/25"
+				className="absolute inset-0 z-[1] bg-gradient-to-r from-[#0c1f3d]/92 via-[#0c1f3d]/55 to-[#0c1f3d]/20"
+				aria-hidden
+			/>
+			<div
+				className="absolute inset-0 z-[1] bg-gradient-to-t from-[#0c1f3d]/40 via-transparent to-transparent"
 				aria-hidden
 			/>
 			<div className="landing-hero-inner relative z-10 mx-auto flex min-h-[108dvh] min-h-screen max-w-7xl items-center px-4 pb-32 pt-[6.25rem] sm:px-6 sm:pb-40 sm:pt-28 md:pb-44 md:pt-32 lg:px-8">

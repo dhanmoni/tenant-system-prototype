@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Building2, Gavel, Landmark, Scale, Shield, Clock, FileCheck } from 'lucide-react'
 import { tenantServiceGroups } from '../../data/tenantServices'
+import authoritiesImage from '../../assets/img/img3.png'
 
 const authorityMeta = {
 	'rent-authority': {
@@ -148,8 +149,22 @@ function TenancyAuthoritiesSection() {
 					whileInView={{ opacity: 1, y: 0 }}
 					viewport={{ once: true }}
 					transition={{ duration: 0.45 }}
-					className="tenancy-bodies-benefits mt-12 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8 lg:mt-16"
+					className="tenancy-bodies-benefits mt-12 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:mt-16"
 				>
+					<div className="grid lg:grid-cols-[minmax(0,300px)_1fr]">
+						<div className="relative min-h-[200px] lg:min-h-full">
+							<img
+								src={authoritiesImage}
+								alt="Official presenting tenancy solutions for diverse housing types"
+								className="absolute inset-0 h-full w-full object-cover object-center"
+								loading="lazy"
+							/>
+							<div
+								className="absolute inset-0 bg-gradient-to-r from-[#0c1f3d]/25 to-transparent lg:bg-gradient-to-t lg:from-[#0c1f3d]/40 lg:to-transparent"
+								aria-hidden
+							/>
+						</div>
+						<div className="p-6 sm:p-8">
 					<p className="landing-section-eyebrow">Why it matters</p>
 					<h3 className="landing-section-subtitle mt-1">
 						How this framework benefits citizens
@@ -178,6 +193,8 @@ function TenancyAuthoritiesSection() {
 						Sign in after registration to file forms before the Rent Authority, Rent Court, or
 						Rent Tribunal from your dashboard.
 					</p>
+						</div>
+					</div>
 				</motion.aside>
 			</div>
 		</section>

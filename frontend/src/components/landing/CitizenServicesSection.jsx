@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { UserPlus, LogIn, FileText, Mail } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
+import servicesImage from '../../assets/img/img5.png'
 
 const services = [
 	{
@@ -41,7 +42,21 @@ function CitizenServicesSection() {
 				<p className="landing-section-lead">
 					Quick access to the most common actions on the Assam Tenancy Registration Portal.
 				</p>
-				<div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+				<motion.div
+					initial={{ opacity: 0, y: 16 }}
+					whileInView={{ opacity: 1, y: 0 }}
+					viewport={{ once: true }}
+					transition={{ duration: 0.45 }}
+					className="mt-10 overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/80 lg:mt-12"
+				>
+					<img
+						src={servicesImage}
+						alt="Official tenancy agreement document for citizen registration services"
+						className="h-44 w-full object-cover object-[center_30%] sm:h-52 md:h-56"
+						loading="lazy"
+					/>
+				</motion.div>
+				<div className="mt-10 grid gap-6 sm:grid-cols-2 lg:mt-12 lg:grid-cols-4">
 					{services.map((service, index) => {
 						const Icon = service.icon
 						const className =

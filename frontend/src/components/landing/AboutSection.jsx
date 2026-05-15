@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-
-const ABOUT_IMAGE = '/TCP-Images/TCP-Office2.jpg'
+import aboutImage from '../../assets/img/img4.png'
 
 function AboutSection() {
 	return (
@@ -16,9 +15,9 @@ function AboutSection() {
 						className="overflow-hidden rounded-2xl shadow-xl"
 					>
 						<img
-							src={ABOUT_IMAGE}
-							alt="Directorate of Town and Country Planning office"
-							className="h-full w-full object-cover"
+							src={aboutImage}
+							alt="Official explaining simplified home ownership and tenancy registration"
+							className="h-full min-h-[280px] w-full object-cover object-center"
 							loading="lazy"
 						/>
 					</motion.div>

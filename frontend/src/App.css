@@ -464,6 +464,42 @@
 	color: inherit;
 }
 
+/* Carousel dots — override global button { background: var(--nic-green) } */
+.get-started-carousel-dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	margin: 0 !important;
+	padding: 0 !important;
+	min-width: 0;
+	border: none !important;
+	border-radius: 9999px;
+	background: rgba(255, 255, 255, 0.55) !important;
+	color: transparent !important;
+	font-size: 0 !important;
+	line-height: 0;
+	box-shadow: none !important;
+	cursor: pointer;
+	transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.get-started-carousel-dot.is-active {
+	background: #fff !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+	outline: 2px solid rgba(168, 88, 36, 0.45);
+	outline-offset: 0;
+}
+
+.get-started-carousel-dot:hover:not(:disabled) {
+	background: rgba(255, 255, 255, 0.85) !important;
+	box-shadow: none !important;
+	transform: none;
+}
+
+.get-started-carousel-dot.is-active:hover:not(:disabled) {
+	background: #fff !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
 .landing-hero-cta {
 	margin: 0 !important;
 	border: none !important;
