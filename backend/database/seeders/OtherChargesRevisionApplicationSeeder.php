@@ -20,7 +20,7 @@ class OtherChargesRevisionApplicationSeeder extends Seeder
             ['application_no' => 'RC-' . now()->format('Ym') . '-000001'],
             [
                 'user_id' => $tenantUser->id,
-                'rent_authority_uid' => 'RAUID-' . now()->format('Ymd') . '-002',
+                'tenancy_uin' => 'RAUID-' . now()->format('Ymd') . '-002',
                 'tenancy_agreement_document_no' => 'DOC-TS-002',
 
                 'landlord_name' => 'Landlord Demo',

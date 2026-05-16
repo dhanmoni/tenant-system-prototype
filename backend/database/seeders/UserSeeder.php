@@ -14,77 +14,82 @@ class UserSeeder extends Seeder
     public function run()
     {
         $district = District::first();
-        $office = Office::where('district_id', $district?->id)->first();
-        $designationDirector = Designation::where('name', 'Director')->first();
-        $designationAD = Designation::where('name', 'Assistant Director')->first();
-        $designationDH = Designation::where('name', 'District Head')->first();
-        $designationDA = Designation::where('name', 'District Assistant')->first();
+        // Fallback for district if not exists (should not happen with migrations)
+        if (!$district) {
+            $district = District::create(['name' => 'Kamrup']);
+        }
 
         $users = [
             [
-                'name' => 'System Admin',
+                'name' => 'Super Admin',
                 'email' => 'admin@nic.in',
                 'password' => 'password',
-                'role' => User::ROLE_SYSTEM_ADMIN,
+                'role' => User::ROLE_SUPER_ADMIN,
                 'district_id' => null,
-                'office_id' => null,
-                'designation_id' => null,
                 'phone' => '9999999999',
                 'approved_at' => now(),
             ],
             [
-                'name' => 'Director User',
-                'email' => 'director@nic.in',
+                'name' => 'District Admin User',
+                'email' => 'district.admin@nic.in',
                 'password' => 'password',
-                'role' => User::ROLE_DIRECTOR,
-                'district_id' => $district?->id,
-                'office_id' => $office?->id,
-                'designation_id' => $designationDirector?->id,
+                'role' => User::ROLE_DISTRICT_ADMIN,
+                'district_id' => $district->id,
                 'phone' => '9888888888',
                 'approved_at' => now(),
             ],
             [
-                'name' => 'Assistant Director User',
-                'email' => 'assistant.director@nic.in',
+                'name' => 'Rent Authority User',
+                'email' => 'rent.authority@nic.in',
                 'password' => 'password',
-                'role' => User::ROLE_ASSISTANT_DIRECTOR,
-                'district_id' => $district?->id,
-                'office_id' => $office?->id,
-                'designation_id' => $designationAD?->id,
+                'role' => User::ROLE_RENT_AUTHORITY,
+                'district_id' => $district->id,
                 'phone' => '9777777777',
                 'approved_at' => now(),
             ],
             [
-                'name' => 'District Head User',
-                'email' => 'district.head@nic.in',
+                'name' => 'Rent Court User',
+                'email' => 'rent.court@nic.in',
                 'password' => 'password',
-                'role' => User::ROLE_DISTRICT_HEAD,
-                'district_id' => $district?->id,
-                'office_id' => $office?->id,
-                'designation_id' => $designationDH?->id,
+                'role' => User::ROLE_RENT_COURT,
+                'district_id' => $district->id,
                 'phone' => '9666666666',
                 'approved_at' => now(),
             ],
             [
-                'name' => 'District Assistant User',
-                'email' => 'district.assistant@nic.in',
+                'name' => 'Rent Tribunal User',
+                'email' => 'rent.tribunal@nic.in',
                 'password' => 'password',
-                'role' => User::ROLE_DISTRICT_ASSISTANT,
-                'district_id' => $district?->id,
-                'office_id' => $office?->id,
-                'designation_id' => $designationDA?->id,
+                'role' => User::ROLE_RENT_TRIBUNAL,
+                'district_id' => $district->id,
                 'phone' => '9555555555',
                 'approved_at' => now(),
             ],
             [
-                'name' => 'Staff',
-                'email' => 'staff@nic.in',
+                'name' => 'RA Assistant',
+                'email' => 'ra.assistant@nic.in',
                 'password' => 'password',
-                'role' => User::ROLE_ASSISTANT_DIRECTOR,
-                'district_id' => $district?->id,
-                'office_id' => $office?->id,
-                'designation_id' => $designationAD?->id,
+                'role' => User::ROLE_RA_ASSISTANT,
+                'district_id' => $district->id,
                 'phone' => '9111111110',
+                'approved_at' => now(),
+            ],
+            [
+                'name' => 'RC Assistant',
+                'email' => 'rc.assistant@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_RC_ASSISTANT,
+                'district_id' => $district->id,
+                'phone' => '9111111111',
+                'approved_at' => now(),
+            ],
+            [
+                'name' => 'RT Assistant',
+                'email' => 'rt.assistant@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_RT_ASSISTANT,
+                'district_id' => $district->id,
+                'phone' => '9111111112',
                 'approved_at' => now(),
             ],
             [
@@ -92,32 +97,8 @@ class UserSeeder extends Seeder
                 'email' => 'tenant@nic.in',
                 'password' => 'password',
                 'role' => User::ROLE_USER,
-                'district_id' => $district?->id,
-                'office_id' => null,
-                'designation_id' => null,
+                'district_id' => $district->id,
                 'phone' => '9444444444',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'User One',
-                'email' => 'user1@gmail.com',
-                'password' => 'password',
-                'role' => User::ROLE_USER,
-                'district_id' => $district?->id,
-                'office_id' => null,
-                'designation_id' => null,
-                'phone' => '9333333333',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Landlord / Owner',
-                'email' => 'landlord@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_USER,
-                'district_id' => $district?->id,
-                'office_id' => null,
-                'designation_id' => null,
-                'phone' => '9222222221',
                 'approved_at' => now(),
             ],
         ];
@@ -125,30 +106,24 @@ class UserSeeder extends Seeder
         foreach ($users as $data) {
             $password = $data['password'];
             unset($data['password']);
-            User::updateOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $data['email']],
                 array_merge($data, [
                     'password' => Hash::make($password),
                     'email_verified_at' => now(),
                 ])
             );
-        }
 
-        // Set district head and assistant director on first district
-        if ($district) {
-            $updates = [];
-            $districtHead = User::where('role', User::ROLE_DISTRICT_HEAD)->first();
-            $assistantDirector = User::where('role', User::ROLE_ASSISTANT_DIRECTOR)->first();
-            if ($districtHead) {
-                $updates['district_head_id'] = $districtHead->id;
-            }
-            if ($assistantDirector) {
-                $updates['assistant_director_id'] = $assistantDirector->id;
-            }
-            if (!empty($updates)) {
-                $district->update($updates);
+            // Link to district if needed
+            if ($user->role === User::ROLE_DISTRICT_ADMIN) {
+                $district->update(['district_admin_id' => $user->id]);
+            } elseif ($user->role === User::ROLE_RENT_AUTHORITY) {
+                $district->update(['assistant_director_id' => $user->id]);
+            } elseif ($user->role === User::ROLE_RENT_COURT) {
+                $district->update(['district_head_id' => $user->id]);
+            } elseif ($user->role === User::ROLE_RENT_TRIBUNAL) {
+                $district->update(['rent_tribunal_id' => $user->id]);
             }
         }
     }
 }
-

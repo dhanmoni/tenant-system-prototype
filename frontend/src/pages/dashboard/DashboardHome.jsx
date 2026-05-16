@@ -14,6 +14,9 @@ import { Bar, Doughnut } from 'react-chartjs-2'
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
 import { formatDate } from '../../utils/formatters'
+import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, ADMIN_ROLES } from '../../constants/roles'
+import { STATUS, STATUS_LABELS } from '../../constants/status'
+import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../constants/application'
 
 ChartJS.register(
 	CategoryScale,
@@ -42,10 +45,10 @@ function DashboardHome() {
 	const [recentActivity, setRecentActivity] = useState([])
 
 	useEffect(() => {
-		if (user?.role === 'user') {
+		if (user?.role === ROLES.USER) {
 			loadTenantRecentApplications()
 			checkProfileCompleteness()
-		} else if (user?.role === 'system_admin') {
+		} else if (user?.role === ROLES.SUPER_ADMIN) {
 			loadAdminDashboard()
 		} else {
 			loadStaffDashboard()
@@ -114,17 +117,24 @@ function DashboardHome() {
 
 	const formatStatus = (status, applicationType = '') => {
 		const normalizedType = String(applicationType || '').toLowerCase()
-		const normalizedStatus = String(status || '').trim().toLowerCase()
-		if (normalizedStatus === 'submiited' || normalizedStatus === 'submitted') {
-			return 'Submitted'
+		const normalizedStatus = String(status || '').trim().toUpperCase()
+
+		if (normalizedStatus === STATUS.SUBMITTED) {
+			return STATUS_LABELS[STATUS.SUBMITTED]
 		}
-		if (normalizedType.includes('tenancy certificate') && normalizedStatus === 'under process') {
-			return 'Submitted'
+
+		if (normalizedType.includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) && normalizedStatus === STATUS.UNDER_PROCESS) {
+			return STATUS_LABELS[STATUS.SUBMITTED]
 		}
-		return status || '-'
+
+		return STATUS_LABELS[normalizedStatus] || status || '-'
 	}
 
-	if (user?.role === 'user') {
+	const getAppTypeLabel = (type) => {
+		return APPLICATION_LABELS[type] || type || '-'
+	}
+
+	if (user?.role === ROLES.USER) {
 		const recentItems = tenantRecentApplications || []
 
 		return (
@@ -230,7 +240,7 @@ function DashboardHome() {
 								recentItems.map((app) => {
 									const statusText = formatStatus(app.status, app.application_type || '-')
 									const statusUpper = String(app.status || '').toUpperCase()
-									const isSuccess = statusUpper.includes('APPROVED') || statusUpper.includes('COMPLETED') || statusUpper === 'SUBMITTED'
+									const isSuccess = [STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(statusUpper)
 									return (
 										<div
 											key={app.row_key || app.id}
@@ -245,7 +255,7 @@ function DashboardHome() {
 													{statusText}
 												</span>
 											</div>
-											<div className="dashboard-recent-tile-type">{app.application_type || '-'}</div>
+											<div className="dashboard-recent-tile-type">{getAppTypeLabel(app.application_type)}</div>
 											<div className="dashboard-recent-tile-bottom">
 												<span className="muted">Date: </span>
 												<span>{formatDate(app.created_at)}</span>
@@ -265,7 +275,7 @@ function DashboardHome() {
 								recentItems.map((app) => {
 									const statusText = formatStatus(app.status, app.application_type || '-')
 									const statusUpper = String(app.status || '').toUpperCase()
-									const isSuccess = statusUpper.includes('APPROVED') || statusUpper.includes('COMPLETED') || statusUpper === 'SUBMITTED'
+									const isSuccess = [STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(statusUpper)
 									return (
 										<div
 											key={app.row_key || app.id}
@@ -285,7 +295,7 @@ function DashboardHome() {
 											</div>
 											<div className="dashboard-recent-list-sub">
 												<span className="dashboard-recent-list-chip dashboard-recent-list-chip--type">
-													{app.application_type || '-'}
+													{getAppTypeLabel(app.application_type)}
 												</span>
 												<span className="dashboard-recent-list-chip dashboard-recent-list-chip--date">
 													{formatDate(app.created_at)}
@@ -303,7 +313,7 @@ function DashboardHome() {
 		)
 	}
 
-	const isStaff = user?.role !== 'user' && user?.role !== 'system_admin'
+	const isStaff = user?.role !== ROLES.USER && user?.role !== 'system_admin'
 	const s = stats || {}
 	const statCards = isStaff
 		? [
@@ -326,95 +336,82 @@ function DashboardHome() {
 				<div className="dashboard-stats-loading">Loading dashboard…</div>
 			) : (
 				<>
+					<div className="dashboard-welcome-header">
+						<h1>Welcome, {user.name}</h1>
+						<p className="muted">
+							{user.role === ROLES.SUPER_ADMIN
+								? 'System-wide overview and administrative controls.'
+								: `Overview for ${user.district?.name || 'your district'} activity.`}
+						</p>
+					</div>
+
 					<div className={`dashboard-overview-cards admin-stats-cards ${isStaff ? 'staff-stats-cards' : ''}`}>
 						{statCards.map((card) => (
 							<div key={card.label} className="dashboard-stat-card">
 								<span className="dashboard-stat-icon-wrap">
 									<Icon name={card.icon} className="dashboard-stat-icon" />
 								</span>
-								<span className="dashboard-stat-value">{card.value ?? '—'}</span>
+								<span className="dashboard-stat-value">{card.value ?? '0'}</span>
 								<span className="dashboard-stat-label">{card.label}</span>
 							</div>
 						))}
 					</div>
 
-					{stats && (
-						<div className="dashboard-charts-row">
-							<div className="auth-card dashboard-card dashboard-chart-card">
-								<h2 className="dashboard-section-title">Overview</h2>
-								<div className="dashboard-chart-wrap">
-									<Bar
-										data={{
-											labels: isStaff ? ['Districts', 'Users'] : ['Districts', 'Offices', 'Users', 'Roles', 'Designations'],
-											datasets: [{
-												label: 'Count',
-												data: isStaff
-													? [s.districts_count ?? 0, s.users_count ?? 0]
-													: [s.districts_count ?? 0, s.offices_count ?? 0, s.users_count ?? 0, s.roles_count ?? 0, s.designations_count ?? 0],
-												backgroundColor: 'rgba(13, 71, 161, 0.75)',
-												borderColor: '#0d47a1',
-												borderWidth: 1,
-											}],
-										}}
-										options={{
-											responsive: true,
-											maintainAspectRatio: false,
-											plugins: { legend: { display: false } },
-											scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-										}}
-									/>
-								</div>
+					{/* Role-Specific Action Tiles (from former AdminDashboard) */}
+					<div className="admin-stats-grid">
+						{ASSISTANT_ROLES.includes(user.role) && (
+							<div className="admin-stat-card">
+								<div className="stat-label">Action Required</div>
+								<h3 style={{ margin: '8px 0', fontSize: '1.25rem' }}>Pending Inbox</h3>
+								<p className="muted" style={{ fontSize: '0.9rem', marginBottom: '16px' }}>
+									You have applications waiting for your initial review and verification.
+								</p>
+								<button onClick={() => navigate('/dashboard/admin/inbox')} className="nav-link" style={{ background: 'var(--gov-blue)', color: '#fff', padding: '8px 16px', borderRadius: '4px' }}>
+									Open Inbox
+								</button>
 							</div>
-							<div className="auth-card dashboard-card dashboard-chart-card">
-								<h2 className="dashboard-section-title">Applications by status</h2>
-								<div className="dashboard-chart-wrap dashboard-chart-wrap--doughnut">
-									{Object.keys(s.applications_by_status || {}).length > 0 ? (
-										<Doughnut
-											data={{
-												labels: Object.keys(s.applications_by_status || {}),
-												datasets: [{
-													data: Object.values(s.applications_by_status || {}),
-													backgroundColor: [
-														'rgba(13, 71, 161, 0.85)',
-														'rgba(94, 208, 124, 0.85)',
-														'rgba(255, 193, 7, 0.85)',
-														'rgba(244, 67, 54, 0.85)',
-														'rgba(158, 158, 158, 0.85)',
-													],
-													borderWidth: 1,
-												}],
-											}}
-											options={{
-												responsive: true,
-												maintainAspectRatio: false,
-												plugins: { legend: { position: 'bottom' } },
-											}}
-										/>
-									) : (
-										<p className="muted">No applications yet.</p>
-									)}
-								</div>
+						)}
+						{PRINCIPAL_ROLES.includes(user.role) && (
+							<div className="admin-stat-card">
+								<div className="stat-label">Action Required</div>
+								<h3 style={{ margin: '8px 0', fontSize: '1.25rem' }}>Applications In Review</h3>
+								<p className="muted" style={{ fontSize: '0.9rem', marginBottom: '16px' }}>
+									Review applications in review by your assistants for final approval.
+								</p>
+								<button onClick={() => navigate('/dashboard/admin/applications')} className="nav-link" style={{ background: 'var(--gov-blue)', color: '#fff', padding: '8px 16px', borderRadius: '4px' }}>
+									View Applications
+								</button>
+							</div>
+						)}
+						{ADMIN_ROLES.includes(user.role) && (
+							<div className="admin-stat-card">
+								<div className="stat-label">Management</div>
+								<h3 style={{ margin: '8px 0', fontSize: '1.25rem' }}>User Management</h3>
+								<p className="muted" style={{ fontSize: '0.9rem', marginBottom: '16px' }}>
+									Manage staff accounts and district assignments.
+								</p>
+								<button onClick={() => navigate('/dashboard/admin/users')} className="nav-link" style={{ background: 'var(--gov-blue)', color: '#fff', padding: '8px 16px', borderRadius: '4px' }}>
+									Manage Users
+								</button>
+							</div>
+						)}
+					</div>
+
+
+					{[ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN].includes(user.role) && (
+						<div className="auth-card dashboard-card staff-info-card">
+							<h2 className="dashboard-section-title">Management Quick Links</h2>
+							<div className="staff-quick-actions-grid">
+								<button onClick={() => navigate('/dashboard/status')} className="dashboard-action-btn">UIN Status</button>
+								<button onClick={() => navigate('/dashboard/admin/tenancy')} className="dashboard-action-btn">Tenancy Records</button>
+								{user.role === ROLES.SUPER_ADMIN && (
+									<button onClick={() => navigate('/dashboard/admin/districts')} className="dashboard-action-btn">Districts</button>
+								)}
+								<button onClick={() => navigate('/dashboard/admin/users?mode=office')} className="dashboard-action-btn">Staff Management</button>
+								<button onClick={() => navigate('/dashboard/admin/users?mode=tenant')} className="dashboard-action-btn">Registered Users</button>
 							</div>
 						</div>
 					)}
-
-					<div className="auth-card dashboard-card staff-info-card">
-						<h2 className="dashboard-section-title">Quick actions</h2>
-						<div className="staff-quick-actions-grid">
-							<button onClick={() => navigate('/dashboard/status')} className="dashboard-action-btn">Application Status</button>
-							<button onClick={() => navigate('/dashboard/admin/district')} className="dashboard-action-btn">District Management</button>
-							<button onClick={() => navigate('/dashboard/admin/users?mode=office')} className="dashboard-action-btn">Staff</button>
-							<button onClick={() => navigate('/dashboard/admin/users?mode=tenant')} className="dashboard-action-btn">Users</button>
-							{!isStaff && (
-								<>
-									<button onClick={() => navigate('/dashboard/admin/office')} className="dashboard-action-btn">Office Management</button>
-									<button onClick={() => navigate('/dashboard/admin/designation')} className="dashboard-action-btn">Designation</button>
-									<button onClick={() => navigate('/dashboard/admin/role')} className="dashboard-action-btn">Role Management</button>
-									<button onClick={() => navigate('/dashboard/admin/activity-log')} className="dashboard-action-btn">Activity Log</button>
-								</>
-							)}
-						</div>
-					</div>
 				</>
 			)}
 		</div>

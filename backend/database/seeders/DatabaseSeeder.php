@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             RentAuthorityFilingApplicationSeeder::class,
             RentCourtAppealApplicationSeeder::class,
             RentTribunalAppealApplicationSeeder::class,
+            DemoTestDataSeeder::class,
         ]);
     }
 }

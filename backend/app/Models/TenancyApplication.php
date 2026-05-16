@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 
 class TenancyApplication extends Model
 {
+
     protected $casts = [
         'movement_history' => 'array',
         'initiator_completed' => 'boolean',
@@ -72,7 +73,13 @@ class TenancyApplication extends Model
         'tenant_pan_path',
         'manager_pan_path',
         'uid',
+        'district_id',
     ];
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
 
     public function office()
     {

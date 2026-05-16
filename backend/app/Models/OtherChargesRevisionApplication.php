@@ -2,14 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesApplicationNo;
+
 use Illuminate\Database\Eloquent\Model;
 
 class OtherChargesRevisionApplication extends Model
 {
+    use GeneratesApplicationNo;
+
+    protected $table = 'rent_authority_form_ia_applications';
+
     protected $fillable = [
         'application_no',
         'user_id',
-        'rent_authority_uid',
+        'tenancy_uin',
         'tenancy_agreement_document_no',
         'landlord_name',
         'landlord_address',
@@ -25,6 +31,13 @@ class OtherChargesRevisionApplication extends Model
         'signature_name',
         'signature_image_path',
         'status',
+        'district_id',
+        'forwarded_at',
+        'forwarded_by_user_id',
+        'rejected_at',
+        'rejected_by_user_id',
+        'rejection_message',
+        'assigned_to_role',
     ];
 
     public function getRouteKeyName()
@@ -35,6 +48,21 @@ class OtherChargesRevisionApplication extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
+
+    public function forwardedBy()
+    {
+        return $this->belongsTo(User::class, 'forwarded_by_user_id');
+    }
+
+    public function rejectedBy()
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
     }
 }
 

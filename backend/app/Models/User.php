@@ -7,17 +7,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Constants\Roles;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    public const ROLE_SYSTEM_ADMIN = 'system_admin';
-    public const ROLE_DIRECTOR = 'director';
-    public const ROLE_ASSISTANT_DIRECTOR = 'assistant_director';
-    public const ROLE_DISTRICT_HEAD = 'district_head';
-    public const ROLE_DISTRICT_ASSISTANT = 'district_assistant';
-    public const ROLE_USER = 'user';
+    public const ROLE_SUPER_ADMIN = Roles::SUPER_ADMIN;
+    public const ROLE_DISTRICT_ADMIN = Roles::DISTRICT_ADMIN;
+    public const ROLE_RENT_AUTHORITY = Roles::RENT_AUTHORITY;
+    public const ROLE_RENT_COURT = Roles::RENT_COURT;
+    public const ROLE_RENT_TRIBUNAL = Roles::RENT_TRIBUNAL;
+    public const ROLE_RA_ASSISTANT = Roles::RA_ASSISTANT;
+    public const ROLE_RC_ASSISTANT = Roles::RC_ASSISTANT;
+    public const ROLE_RT_ASSISTANT = Roles::RT_ASSISTANT;
+    public const ROLE_USER = Roles::USER;
 
     /**
      * The attributes that are mass assignable.
@@ -70,13 +74,31 @@ class User extends Authenticatable
     public static function roles(): array
     {
         return [
-            self::ROLE_SYSTEM_ADMIN,
-            self::ROLE_DIRECTOR,
-            self::ROLE_ASSISTANT_DIRECTOR,
-            self::ROLE_DISTRICT_HEAD,
-            self::ROLE_DISTRICT_ASSISTANT,
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_DISTRICT_ADMIN,
+            self::ROLE_RENT_AUTHORITY,
+            self::ROLE_RENT_COURT,
+            self::ROLE_RENT_TRIBUNAL,
+            self::ROLE_RA_ASSISTANT,
+            self::ROLE_RC_ASSISTANT,
+            self::ROLE_RT_ASSISTANT,
             self::ROLE_USER,
         ];
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function isDistrictAdmin(): bool
+    {
+        return $this->role === self::ROLE_DISTRICT_ADMIN;
+    }
+
+    public function isAssistant(): bool
+    {
+        return in_array($this->role, Roles::assistants());
     }
 
     public function district()

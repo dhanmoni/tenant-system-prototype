@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ValuerAppointmentApplication;
+use App\Http\Resources\ApplicationResource;
+use App\Constants\Roles;
+use App\Constants\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,7 +20,7 @@ class ValuerAppointmentApplicationController extends Controller
         }
 
         $data = $request->validate([
-            'rent_authority_uid' => ['required', 'string', 'max:64'],
+            'tenancy_uin' => ['required', 'string', 'max:64'],
 
             // Form-I-B body fields
             'applicant_name' => ['required', 'string', 'max:255'],
@@ -39,11 +42,16 @@ class ValuerAppointmentApplicationController extends Controller
             $signaturePath = $request->file('signature_image')->store('tenancy/signatures/valuer-appointment', 'public');
         }
 
-        $application = ValuerAppointmentApplication::create([
-            'application_no' => Str::uuid()->toString(),
-            'user_id' => $user->id,
-            'rent_authority_uid' => $data['rent_authority_uid'],
+        $tenancy = \App\Models\TenancyApplication::where('uid', $data['tenancy_uin'])->first();
+        if (!$tenancy) {
+            return response()->json(['message' => 'Invalid Tenancy UID'], 422);
+        }
 
+        $application = ValuerAppointmentApplication::create([
+            'application_no' => ValuerAppointmentApplication::generateApplicationNo($tenancy->district_id),
+            'user_id' => $user->id,
+            'district_id' => $tenancy->district_id,
+            'tenancy_uin' => $data['tenancy_uin'],
             'applicant_name' => $data['applicant_name'],
             'applicant_relation_type' => $data['applicant_relation_type'],
             'applicant_relation_target_name' => $data['applicant_relation_target_name'],
@@ -51,11 +59,11 @@ class ValuerAppointmentApplicationController extends Controller
             'applicant_landlord_or_tenant' => $data['applicant_landlord_or_tenant'],
             'premises_situated_address' => $data['premises_situated_address'],
             'district' => $data['district'],
-
             'signed_by' => $data['signed_by'] ?? null,
             'signature_name' => $data['signature_name'],
             'signature_image_path' => $signaturePath,
-            'status' => 'SUBMITTED',
+            'status' => Status::SUBMITTED,
+            'assigned_to_role' => Roles::RA_ASSISTANT,
         ]);
 
         return response()->json([
@@ -77,7 +85,7 @@ class ValuerAppointmentApplicationController extends Controller
         }
 
         return response()->json([
-            'application' => $application,
+            'application' => new ApplicationResource($application),
         ]);
     }
 }

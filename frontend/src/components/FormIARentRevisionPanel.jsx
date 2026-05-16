@@ -6,7 +6,7 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta }) {
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 
-	const [rentAuthorityUid, setRentAuthorityUid] = useState('')
+	const [tenancyUIN, setTenancyUIN] = useState('')
 	const [tenancyAgreementDocumentNo, setTenancyAgreementDocumentNo] = useState('')
 
 	const [landlordName, setLandlordName] = useState('')
@@ -34,7 +34,7 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta }) {
 		try {
 			await csrf()
 			const formData = new FormData()
-			formData.append('rent_authority_uid', rentAuthorityUid.trim())
+			formData.append('rent_authority_uid', tenancyUIN.trim())
 			if (tenancyAgreementDocumentNo.trim()) {
 				formData.append('tenancy_agreement_document_no', tenancyAgreementDocumentNo.trim())
 			}
@@ -91,11 +91,11 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta }) {
 				}}
 			>
 				<label>
-					<span className="label-text required">Unique Identification Number (UID) issued by Rent Authority</span>
+					<span className="label-text required">Tenancy UIN</span>
 					<input
 						type="text"
-						value={rentAuthorityUid}
-						onChange={(e) => setRentAuthorityUid(e.target.value)}
+						value={tenancyUIN}
+						onChange={(e) => setTenancyUIN(e.target.value)}
 						required
 					/>
 				</label>

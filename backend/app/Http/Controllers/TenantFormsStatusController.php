@@ -12,6 +12,8 @@ use App\Models\RentAuthorityFilingApplication;
 use App\Models\RentCourtAppealApplication;
 use App\Models\RentTribunalAppealApplication;
 use Illuminate\Http\Request;
+use App\Constants\ApplicationTypes;
+
 
 class TenantFormsStatusController extends Controller
 {
@@ -109,35 +111,35 @@ class TenantFormsStatusController extends Controller
 
         // Other Assam Tenancy Rules draft forms (user only)
         $formTables = [
-            'form-i-rent-revision' => [
+            ApplicationTypes::RENT_REVISION => [
                 'model' => RentRevisionApplication::class,
                 'label' => 'Form-I: Rent revision / fixation of rent',
             ],
-            'form-i-a-other-charges-revision' => [
+            ApplicationTypes::OTHER_CHARGES_REVISION => [
                 'model' => OtherChargesRevisionApplication::class,
                 'label' => 'Form-I-A: Revision of other charges',
             ],
-            'form-i-b-valuer-appointment' => [
+            ApplicationTypes::VALUER_APPOINTMENT => [
                 'model' => ValuerAppointmentApplication::class,
                 'label' => 'Form-I-B: Valuer appointment',
             ],
-            'form-4-rent-court-possession' => [
+            ApplicationTypes::RENT_COURT_POSSESSION => [
                 'model' => RentCourtPossessionApplication::class,
                 'label' => 'Form-II: Before the Rent Court for recovery of possession',
             ],
-            'form-5-rent-court-filing' => [
+            ApplicationTypes::RENT_COURT_FILING => [
                 'model' => RentCourtFilingApplication::class,
                 'label' => 'Form-III: Filed before the Rent Court',
             ],
-            'form-6-rent-authority-filing' => [
+            ApplicationTypes::RENT_AUTHORITY_FILING => [
                 'model' => RentAuthorityFilingApplication::class,
                 'label' => 'Form-IV: Filed before the Rent Authority',
             ],
-            'form-7-rent-court-appeal' => [
+            ApplicationTypes::RENT_COURT_APPEAL => [
                 'model' => RentCourtAppealApplication::class,
                 'label' => 'Form-V: Appeal before the Rent Court',
             ],
-            'form-8-rent-tribunal-appeal' => [
+            ApplicationTypes::RENT_TRIBUNAL_APPEAL => [
                 'model' => RentTribunalAppealApplication::class,
                 'label' => 'Form-VI: Appeal before the Rent Tribunal',
             ],
@@ -157,7 +159,7 @@ class TenantFormsStatusController extends Controller
             $records = $query
                 ->orderByDesc('created_at')
                 ->limit($formsMax)
-                ->get(['id', 'application_no', 'created_at', 'status']);
+                ->get(['id', 'application_no', 'created_at', 'status', 'tenancy_uin']);
 
             foreach ($records as $record) {
                 $items[] = [
@@ -166,7 +168,7 @@ class TenantFormsStatusController extends Controller
                     'form_key' => $key,
                     'row_key' => 'form-' . $key . '-' . $record->id,
                     'application_no' => $record->application_no,
-                    'uid' => '-',
+                    'uid' => $record->tenancy_uin ?? '-',
                     'created_at' => optional($record->created_at)->toDateTimeString(),
                     'status' => $record->status,
                     'application_type' => $meta['label'],
@@ -205,6 +207,7 @@ class TenantFormsStatusController extends Controller
 
         $pageItems = array_slice($items, $offset, $perPage);
 
+        \Log::info('TenantFormsStatusController response data: ' . json_encode($pageItems));
         return response()->json([
             'data' => $pageItems,
             'current_page' => $page,

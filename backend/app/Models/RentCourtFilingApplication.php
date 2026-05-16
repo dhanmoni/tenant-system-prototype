@@ -2,15 +2,21 @@
 
 namespace App\Models;
 
+use App\Traits\GeneratesApplicationNo;
+
 use Illuminate\Database\Eloquent\Model;
 
 class RentCourtFilingApplication extends Model
 {
+    use GeneratesApplicationNo;
+
+    protected $table = 'rent_court_form_5_applications';
+
     protected $fillable = [
         'application_no',
         'user_id',
         'rent_court_at',
-        'tenancy_unique_identification_number',
+        'tenancy_uin',
 
         'applicant_name',
         'applicant_residential_address',
@@ -30,6 +36,13 @@ class RentCourtFilingApplication extends Model
         'signature_name',
         'signature_image_path',
         'status',
+        'district_id',
+        'forwarded_at',
+        'forwarded_by_user_id',
+        'rejected_at',
+        'rejected_by_user_id',
+        'rejection_message',
+        'assigned_to_role',
     ];
 
     public function getRouteKeyName()
@@ -40,6 +53,21 @@ class RentCourtFilingApplication extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class);
+    }
+
+    public function forwardedBy()
+    {
+        return $this->belongsTo(User::class, 'forwarded_by_user_id');
+    }
+
+    public function rejectedBy()
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
     }
 }
 

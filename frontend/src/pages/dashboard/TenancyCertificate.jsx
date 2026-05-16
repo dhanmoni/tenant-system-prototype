@@ -475,7 +475,7 @@ function TenancyCertificate() {
 							<div className="form-group-row" style={{ marginTop: '20px' }}>
 								<label><span className="label-text required">1. Name and address of the landlord</span></label>
 								<div className="form-grid">
-									<input type="text" placeholder="Name" value={landlordName} onChange={e => setLandlordName(e.target.value)} required disabled={formLocked} />
+									<input type="text" placeholder="Landlord Name" value={landlordName} onChange={e => setLandlordName(e.target.value)} required disabled={formLocked} />
 									<textarea placeholder="Address" value={landlordAddress} onChange={e => setLandlordAddress(e.target.value)} required disabled={formLocked} />
 								</div>
 							</div>
@@ -483,7 +483,7 @@ function TenancyCertificate() {
 							<div className="form-group-row">
 								<label><span className="label-text">2. Name and address of the Property Manager (if any)</span></label>
 								<div className="form-grid">
-									<input type="text" placeholder="Name" value={managerName} onChange={e => setManagerName(e.target.value)} disabled={formLocked} />
+									<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} disabled={formLocked} />
 									<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} disabled={formLocked} />
 								</div>
 							</div>
@@ -491,7 +491,7 @@ function TenancyCertificate() {
 							<div className="form-group-row">
 								<label><span className="label-text required">3. Name and address of the tenant, including email and contact details</span></label>
 								<div className="form-grid">
-									<input type="text" placeholder="Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required disabled={formLocked} />
+									<input type="text" placeholder="Tenant Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required disabled={formLocked} />
 									<textarea placeholder="Address" value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required disabled={formLocked} />
 								</div>
 							</div>
@@ -591,7 +591,6 @@ function TenancyCertificate() {
 
 				{tenancyStep === 3 && (
 					<fieldset className="tenancy-fieldset">
-						<legend>Required Documents & Signatures</legend>
 
 						<div className="upload-rows-container">
 							<section className="upload-row">

@@ -7,7 +7,7 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta }) {
 	const [success, setSuccess] = useState('')
 
 	const [rentCourtAt, setRentCourtAt] = useState('')
-	const [tenancyUniqueId, setTenancyUniqueId] = useState('')
+	const [tenancyUIN, setTenancyUIN] = useState('')
 
 	const [applicantName, setApplicantName] = useState('')
 	const [applicantResidentialAddress, setApplicantResidentialAddress] = useState('')
@@ -47,8 +47,8 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta }) {
 
 			formData.append('rent_court_at', rentCourtAt.trim())
 			formData.append(
-				'tenancy_unique_identification_number',
-				tenancyUniqueId.trim()
+				'tenancy_uin',
+				tenancyUIN.trim()
 			)
 
 			formData.append('applicant_name', applicantName.trim())
@@ -127,7 +127,7 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta }) {
 				</label>
 				<label>
 					<span className="label-text required">Tenancy Unique Identification Number</span>
-					<input type="text" value={tenancyUniqueId} onChange={(e) => setTenancyUniqueId(e.target.value)} required />
+					<input type="text" value={tenancyUIN} onChange={(e) => setTenancyUIN(e.target.value)} required />
 				</label>
 
 				<fieldset className="tenancy-fieldset">

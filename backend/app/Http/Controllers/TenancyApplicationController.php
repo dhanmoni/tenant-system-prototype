@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Office;
 use App\Models\TenancyApplication;
 use App\Models\User;
+use App\Constants\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -127,7 +128,7 @@ class TenancyApplicationController extends Controller
 
         $initiatorRole = $data['initiator_role'];
 
-        $application = DB::transaction(function () use ($data, $request, $user, $refCode, $initiatorRole) {
+        $application = DB::transaction(function () use ($data, $request, $user, $refCode, $initiatorRole, $districtId) {
             $now = Carbon::now();
             $prefix = 'APP-' . $now->format('Ym');
 
@@ -159,22 +160,28 @@ class TenancyApplicationController extends Controller
             ];
 
             $movement = [[
-                'status' => 'PARTIAL',
+                'status' => Status::PARTIAL,
                 'current_with' => null,
                 'moved_at' => $now->toDateTimeString(),
             ]];
+
+            $districtId = null;
+            if (!empty($data['office_id'])) {
+                $districtId = Office::where('id', $data['office_id'])->value('district_id');
+            }
 
             return TenancyApplication::create(array_merge($data, $paths, [
                 'application_no' => $applicationNo,
                 'ref_code' => $refCode,
                 'user_id' => $user->id,
+                'district_id' => $districtId ?? $user->district_id,
                 'initiator_role' => $initiatorRole,
                 'initiator_completed' => true,
                 'second_party_completed' => false,
                 'landlord_user_id' => $initiatorRole === 'LANDLORD' ? $user->id : null,
                 'tenant_user_id' => $initiatorRole === 'TENANT' ? $user->id : null,
                 'application_type' => 'Tenancy Certificate',
-                'status' => 'PARTIAL',
+                'status' => Status::PARTIAL,
                 'current_with' => null,
                 'movement_history' => $movement,
             ]));
@@ -370,20 +377,20 @@ class TenancyApplicationController extends Controller
 
         $transactionResult = DB::transaction(function () use ($application, $updateData, $secondPartyRole, $now) {
             $uid = null;
-            $status = 'PARTIAL';
+            $status = Status::PARTIAL;
             if ($application->initiator_completed) {
                 // Pass the villageWard to get the correct state code for the UID
                 $uid = TenancyApplication::generateUid($application->villageWard, $application->office_id);
-                $status = 'COMPLETED';
+                $status = Status::COMPLETED;
                 $updateData['uid'] = $uid;
                 $updateData['status'] = $status;
-                $updateData['current_with'] = 'Rent Authority';
+                $updateData['current_with'] = Roles::RENT_AUTHORITY;
             }
 
             $movement = $application->movement_history ?? [];
             $movement[] = [
                 'status' => $status,
-                'current_with' => $status === 'COMPLETED' ? 'Rent Authority' : null,
+                'current_with' => $status === Status::COMPLETED ? Roles::RENT_AUTHORITY : null,
                 'moved_at' => $now->toDateTimeString(),
                 'action' => 'Second party (' . $secondPartyRole . ') joined',
             ];
@@ -401,7 +408,7 @@ class TenancyApplicationController extends Controller
         $status = $transactionResult['status'];
 
         return response()->json([
-            'message' => $status === 'COMPLETED'
+            'message' => $status === Status::COMPLETED
                 ? 'Application completed successfully. Both parties have submitted their details.'
                 : 'Your details have been submitted. Waiting for the other party.',
             'application_no' => $application->application_no,
@@ -696,6 +703,33 @@ class TenancyApplicationController extends Controller
         }
 
         return response($html, 200)->header('Content-Type', 'text/html');
+    }
+
+    public function adminIndex(Request $request)
+    {
+        $user = $request->user();
+        if (!in_array($user->role, [Roles::SUPER_ADMIN, Roles::DISTRICT_ADMIN])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $query = TenancyApplication::with('district');
+
+        if ($user->role === Roles::DISTRICT_ADMIN) {
+            $query->where('district_id', $user->district_id);
+        }
+
+        $records = $query->orderBy('created_at', 'desc')->get([
+            'id',
+            'application_no',
+            'uid',
+            'created_at',
+            'status',
+            'landlord_name',
+            'tenant_name',
+            'district_id',
+        ]);
+
+        return response()->json(['records' => $records]);
     }
 
     private function storeUpload(Request $request, string $key, string $path): ?string
