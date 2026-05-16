@@ -226,14 +226,13 @@ function App() {
 						<img className="accessibility-emblem" src={emblem} alt="" aria-hidden />
 						<div className="accessibility-gov-text">
 							<p className="accessibility-gov-line">
-								<span lang="hi">भारत सरकार</span>
-								<span className="accessibility-gov-sep" aria-hidden>
-									|
-								</span>
-								<span>Government of India</span>
+								<span>Government Of Assam</span>
 							</p>
 							<p className="accessibility-ministry">
-								Department of Housing And Urban Affairs
+								Housing &amp; Urban Affairs
+							</p>
+							<p className="accessibility-directorate">
+								Directorate of Town and Country Planning
 							</p>
 						</div>
 					</div>
