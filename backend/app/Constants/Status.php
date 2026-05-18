@@ -12,6 +12,7 @@ class Status
     public const COMPLETED = 'COMPLETED';
     public const PARTIAL = 'PARTIAL';
     public const PENDING = 'PENDING';
+    public const DRAFT = 'DRAFT';
 
     /**
      * Get all valid statuses.
@@ -27,6 +28,7 @@ class Status
             self::COMPLETED,
             self::PARTIAL,
             self::PENDING,
+            self::DRAFT,
         ];
     }
 }

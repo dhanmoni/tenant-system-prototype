@@ -1,18 +1,21 @@
 import './App.css'
+import './workspace/styles/workspace.css'
 import { useEffect, useState } from 'react'
 import bannerImage from './assets/img/banner.png'
 import welcomeImage from './assets/img/img1.png'
-import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
-import DashboardLayout from './pages/dashboard/DashboardLayout'
-import DashboardHome from './pages/dashboard/DashboardHome'
-import Profile from './pages/dashboard/Profile'
-import ApplicationStatus from './pages/dashboard/ApplicationStatus'
+import {
+	WorkspaceLayout,
+	WorkspaceHome,
+	WorkspaceProfile,
+	WorkspaceLegacyFrame,
+	WorkspaceServices,
+	WorkspaceUinStatus,
+} from './workspace'
 import ApplicationDetails from './pages/dashboard/ApplicationDetails'
 import TenancyCertificate from './pages/dashboard/TenancyCertificate'
 import FormPortal from './pages/dashboard/FormPortal'
-import TenantServices from './pages/dashboard/TenantServices'
-
 // import StateManagement from './pages/dashboard/admin/StateManagement'
 import DistrictManagement from './pages/dashboard/admin/DistrictManagement'
 import OfficeManagement from './pages/dashboard/admin/OfficeManagement'
@@ -33,9 +36,29 @@ import Contact from './pages/Contact'
 import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
+
+/** Invite links: logged-in users → join form; others → new login (no legacy carousel flash). */
+function JoinEntryRedirect({ user }) {
+	const location = useLocation()
+	const joinTarget = `/dashboard/join${location.search}`
+	if (user) {
+		return <Navigate to={joinTarget} replace />
+	}
+	return (
+		<Navigate
+			to={{ pathname: '/login', search: location.search }}
+			state={{ from: { pathname: '/dashboard/join', search: location.search } }}
+			replace
+		/>
+	)
+}
 import AccessibilityWidget from './components/landing/AccessibilityWidget'
 import PortalLoadingScreen from './components/PortalLoadingScreen'
 import { LANDING_A11Y_EVENT } from './utils/landingA11y'
+import {
+	getMainContentTargetId,
+	handleSkipLinkClick,
+} from './utils/skipNavigation'
 import emblem from './assets/img/emblem-dark.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
@@ -44,6 +67,8 @@ function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [portalEntering, setPortalEntering] = useState(false)
+	const [loggingOut, setLoggingOut] = useState(false)
+	const navigate = useNavigate()
 	const [fontScale, setFontScale] = useState('normal')
 	const [highContrast, setHighContrast] = useState(false)
 	const [highlightLinks, setHighlightLinks] = useState(false)
@@ -103,8 +128,15 @@ function App() {
 	}, [slides.length])
 
 	const location = useLocation()
-	const showCarousel = !user
-	const isLandingHome = !user && (location.pathname === '/' || location.pathname === '/login')
+	const isDashboardRoute = location.pathname.startsWith('/dashboard')
+	const isJoinEntry = location.pathname === '/join'
+	const isLandingHome =
+		!user &&
+		(location.pathname === '/' || location.pathname === '/login' || isJoinEntry)
+	const mainContentTargetId = getMainContentTargetId(location.pathname)
+	/* Old marketing shell (carousel, topbar) — never on dashboard, join links, or sign-out */
+	const showLegacyPublicChrome =
+		!user && !isLandingHome && !isDashboardRoute && !loggingOut && !isJoinEntry
 
 	useEffect(() => {
 		try {
@@ -189,10 +221,22 @@ function App() {
 	}, [])
 
 	const handleLogout = async () => {
-		await api.post('/api/logout')
+		setLoggingOut(true)
+		try {
+			await api.post('/api/logout')
+		} catch {
+			// Clear local session even if the request fails
+		}
 		setUser(null)
 		setPortalEntering(false)
+		navigate('/', { replace: true })
 	}
+
+	useEffect(() => {
+		if (loggingOut && isLandingHome) {
+			setLoggingOut(false)
+		}
+	}, [loggingOut, isLandingHome])
 
 	const handleUserLogin = (nextUser) => {
 		setPortalEntering(true)
@@ -205,14 +249,22 @@ function App() {
 		return () => clearTimeout(timer)
 	}, [portalEntering, location.pathname])
 
-	if (loading || portalEntering) {
+	if (loading || portalEntering || loggingOut) {
 		return (
 			<PortalLoadingScreen
-				title={portalEntering ? 'Opening your dashboard' : 'Loading portal'}
+				title={
+					loggingOut
+						? 'Signing out'
+						: portalEntering
+							? 'Opening your dashboard'
+							: 'Loading portal'
+				}
 				subtitle={
-					portalEntering
-						? 'Please wait while we load your workspace.'
-						: 'Please wait while we check your session.'
+					loggingOut
+						? 'Please wait while we return you to the home page.'
+						: portalEntering
+							? 'Please wait while we load your workspace.'
+							: 'Please wait while we check your session.'
 				}
 			/>
 		)
@@ -220,14 +272,14 @@ function App() {
 
 	return (
 		<div
-			className={`page${!user ? ' page-landing' : ''}${isLandingHome ? ' page-landing-home' : ''}${location.pathname.startsWith('/dashboard') ? ' page-dashboard' : ''}`}
+			className={`page${!user && !isDashboardRoute ? ' page-landing' : ''}${isLandingHome ? ' page-landing-home' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
 		>
-			<a className="skip-link" href="#main-content">Skip to main content</a>
 			<a
 				className="skip-link"
-				href={isLandingHome ? '#landing-primary-nav' : '#public-primary-nav'}
+				href={`#${mainContentTargetId}`}
+				onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
 			>
-				Skip to navigation
+				Skip to content
 			</a>
 			{/* Accessibility Bar — hidden on landing home mobile (see LandingNav utility bar) */}
 			<div
@@ -250,8 +302,12 @@ function App() {
 						</div>
 					</div>
 					<div className="accessibility-toolbar" role="toolbar" aria-label="Accessibility options">
-						<a className="accessibility-toolbar-link" href="#main-content">
-							Skip to main content
+						<a
+							className="accessibility-toolbar-link"
+							href={`#${mainContentTargetId}`}
+							onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
+						>
+							Skip to content
 						</a>
 						<span className="accessibility-toolbar-divider" aria-hidden />
 						<div className="accessibility-font-tools" role="group" aria-label="Font size">
@@ -325,7 +381,7 @@ function App() {
 			</div>
 
 			{/* Header (emblem + directorate title) — public only; hidden after login */}
-			{!user && !isLandingHome ? (
+			{showLegacyPublicChrome ? (
 				<header className="topbar">
 					<div className="brand">
 						<img className="emblem" src={emblem} alt="Indian national emblem" />
@@ -344,10 +400,10 @@ function App() {
 				</header>
 			) : null}
 
-			{!user && !isLandingHome ? <div className="landing-accent-stripe" aria-hidden /> : null}
+			{showLegacyPublicChrome ? <div className="landing-accent-stripe" aria-hidden /> : null}
 
 			{/* Main navigation – rent-portal style on landing; hidden on dashboard */}
-			{!(user && location.pathname.startsWith('/dashboard')) && !isLandingHome && (
+			{!isLandingHome && !isDashboardRoute && (
 				<div className="globalnav">
 					<div className="globalnav-inner">
 						{!user ? (
@@ -379,7 +435,7 @@ function App() {
 				</div>
 			)}
 
-			{showCarousel && !isLandingHome ? (
+			{showLegacyPublicChrome ? (
 				<section className="carousel carousel--rent-banner" aria-label="Tenant and owner highlights">
 					<div className="carousel-banner">
 						{slides.map((slide, index) => (
@@ -443,30 +499,89 @@ function App() {
 						path="/dashboard"
 						element={
 							<ProtectedRoute user={user}>
-								<DashboardLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
+								<WorkspaceLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
 							</ProtectedRoute>
 						}
 					>
-						<Route index element={<DashboardHome />} />
-						<Route path="profile" element={<Profile />} />
+						<Route index element={<WorkspaceHome />} />
+						<Route path="profile" element={<WorkspaceProfile />} />
 						<Route path="tenancy-certificate" element={<TenancyCertificate />} />
-						<Route path="status" element={<ApplicationStatus />} />
-						<Route path="status/:type/:applicationNo" element={<ApplicationDetails />} />
-						<Route path="services" element={<TenantServices />} />
-						<Route path=":formType" element={<FormPortal />} />
-						{/* Admin Routes */}
-						<Route path="admin/users" element={<UserManagement user={user} />} />
-						<Route path="admin/inbox" element={<ApplicationList user={user} />} />
-						<Route path="admin/applications" element={<ApplicationList user={user} />} />
-						<Route path="admin/applications/:applicationNo" element={<AdminApplicationDetails user={user} />} />
-						<Route path="admin/tenancy" element={<TenancyRecords user={user} />} />
-						<Route path="admin/districts" element={<DistrictManagement user={user} />} />
-						<Route path="join" element={<JoinApplication user={user} />} />
+						<Route path="status" element={<WorkspaceUinStatus />} />
+						<Route
+							path="status/:type/:applicationNo"
+							element={
+								<WorkspaceLegacyFrame title="Application details" subtitle="View submission">
+									<ApplicationDetails />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route path="services" element={<WorkspaceServices />} />
+						<Route
+							path=":formType"
+							element={
+								<WorkspaceLegacyFrame title="Application form" subtitle="Complete and submit">
+									<FormPortal />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/users"
+							element={
+								<WorkspaceLegacyFrame title="Users" subtitle="Staff and user management">
+									<UserManagement user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/inbox"
+							element={
+								<WorkspaceLegacyFrame title="Inbox" subtitle="Applications awaiting action">
+									<ApplicationList user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/applications"
+							element={
+								<WorkspaceLegacyFrame title="Applications" subtitle="District application list">
+									<ApplicationList user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/applications/:applicationNo"
+							element={
+								<WorkspaceLegacyFrame title="Application" subtitle="Review details">
+									<AdminApplicationDetails user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/tenancy"
+							element={
+								<WorkspaceLegacyFrame title="Tenancy records" subtitle="Registered tenancies">
+									<TenancyRecords user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/districts"
+							element={
+								<WorkspaceLegacyFrame title="Districts" subtitle="District configuration">
+									<DistrictManagement user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="join"
+							element={
+								<WorkspaceLegacyFrame title="Join application" subtitle="Second party registration">
+									<JoinApplication user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
 					</Route>
-					<Route
-						path="/join"
-						element={<Navigate to={`/dashboard/join${location.search}`} replace />}
-					/>
+					<Route path="/join" element={<JoinEntryRedirect user={user} />} />
 					<Route
 						path="/users/:id"
 						element={
@@ -517,7 +632,7 @@ function App() {
 					onResetFont={() => setFontScale('normal')}
 					onToggleContrast={() => setHighContrast((prev) => !prev)}
 					onToggleHighlightLinks={() => setHighlightLinks((prev) => !prev)}
-					navTargetId={isLandingHome ? 'landing-primary-nav' : 'public-primary-nav'}
+					mainContentTargetId={mainContentTargetId}
 				/>
 			) : null}
 		</div>

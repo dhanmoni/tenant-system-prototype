@@ -1,3 +1,20 @@
+/** Title-case person name for display; handles generic demo placeholders. */
+export const formatDisplayName = (name) => {
+	if (!name || !String(name).trim()) return 'Portal user'
+	const trimmed = String(name).trim()
+	if (trimmed.toLowerCase() === 'user') return 'Citizen account'
+	return trimmed
+		.split(/\s+/)
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+		.join(' ')
+}
+
+/** Normalise email for readable display (not database SHOUTING). */
+export const formatDisplayEmail = (email) => {
+	if (!email) return ''
+	return String(email).trim().toLowerCase()
+}
+
 export const formatDate = (value) => {
 	if (!value) return '-'
 	const parsed = new Date(value)

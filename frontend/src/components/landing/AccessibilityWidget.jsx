@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Contrast, Link2, Minus, Navigation, PersonStanding, Plus, RotateCcw, X, Type } from 'lucide-react'
+import { Contrast, Link2, Minus, PersonStanding, Plus, RotateCcw, X, Type } from 'lucide-react'
 
 function AccessibilityWidget({
 	fontScale,
@@ -10,7 +10,7 @@ function AccessibilityWidget({
 	onResetFont,
 	onToggleContrast,
 	onToggleHighlightLinks,
-	navTargetId = 'public-primary-nav',
+	mainContentTargetId = 'main-content',
 }) {
 	const [open, setOpen] = useState(false)
 	const panelId = useId()
@@ -107,6 +107,9 @@ function AccessibilityWidget({
 			if (!el.hasAttribute('tabindex')) {
 				el.setAttribute('tabindex', '-1')
 			}
+			if (id === 'dashboard-primary-content' && typeof el.scrollTop === 'number') {
+				el.scrollTop = 0
+			}
 			el.focus({ preventScroll: true })
 			el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 		}
@@ -169,17 +172,13 @@ function AccessibilityWidget({
 				</div>
 
 				<div className="ux4g-a11y-panel-links">
-					<button type="button" className="ux4g-a11y-link-btn" onClick={() => skipTo('main-content')}>
-						<Type className="h-4 w-4" aria-hidden />
-						Skip to main content
-					</button>
 					<button
 						type="button"
 						className="ux4g-a11y-link-btn"
-						onClick={() => skipTo(navTargetId)}
+						onClick={() => skipTo(mainContentTargetId)}
 					>
-						<Navigation className="h-4 w-4" aria-hidden />
-						Skip to navigation
+						<Type className="h-4 w-4" aria-hidden />
+						Skip to content
 					</button>
 				</div>
 			</div>

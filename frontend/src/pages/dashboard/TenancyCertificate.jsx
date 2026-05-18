@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
-import { useOutletContext, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
-import { formatDateTime } from '../../utils/formatters'
-import emblemDark from '../../assets/img/emblem-dark.png'
 import { Icon } from '../../components/dashboard/Icons'
+import { buildTenancyFormData, applyDraftToForm } from '../../utils/tenancyDraft'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
 	const PASSPORT_WIDTH = 350
 	const PASSPORT_HEIGHT = 450
 	const PASSPORT_TOP_BIAS = 0.18
@@ -16,8 +16,11 @@ function TenancyCertificate() {
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
+	const [draftSaving, setDraftSaving] = useState(false)
 	const [tenancyReceipt, setTenancyReceipt] = useState(null)
-	const [editingApplicationId, setEditingApplicationId] = useState(null)
+	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
+	const [savedWizardStep, setSavedWizardStep] = useState(0)
+	const [draftLoaded, setDraftLoaded] = useState(false)
 	const [conflictData, setConflictData] = useState(null)
 
 	// Step 1: Office/Registration
@@ -99,6 +102,84 @@ function TenancyCertificate() {
 		loadTenancyDistricts()
 	}, [])
 
+	const populateFromDraft = useCallback(
+		(draft) => {
+			applyDraftToForm(draft, {
+				setDraftApplicationNo,
+				setSavedWizardStep,
+				setTenancyStep,
+				setInitiatorRole,
+				setTenancyRegistrationDate,
+				setTenancyOfficeId,
+				setTenancyDistrictId,
+				setTenancyVillageWardId,
+				setLandlordName,
+				setLandlordAddress,
+				setLandlordEmail,
+				setLandlordPhone,
+				setLandlordPan,
+				setLandlordAadhar,
+				setManagerName,
+				setManagerAddress,
+				setManagerEmail,
+				setManagerPhone,
+				setManagerPan,
+				setManagerAadhar,
+				setTenantName,
+				setTenantAddress,
+				setTenantEmail,
+				setTenantPhone,
+				setTenantPan,
+				setTenantAadhar,
+				setTenantPreviousTenancy,
+				setPropertyPossessionDate,
+				setPropertyRentPayable,
+				setPropertyPremisesDescription,
+				setPropertyFurnitureDescription,
+				setPropertyChargeElectricity,
+				setPropertyChargeWater,
+				setPropertyChargeFurnishing,
+				setPropertyChargeOtherServices,
+				setPropertyTenancyDuration,
+				setAgreementPreviewUrl,
+				setLandlordPhotoPreview,
+				setLandlordSignaturePreview,
+				setTenantPhotoPreview,
+				setTenantSignaturePreview,
+			}, { loadVillageWards: loadTenancyVillageWards })
+		},
+		[]
+	)
+
+	const loadDraft = useCallback(async () => {
+		try {
+			const draftNo = searchParams.get('draft')
+			if (draftNo) {
+				const { data } = await api.get(`/api/tenancy-applications/${draftNo}`)
+				const app = data.application || data
+				if (app?.status === 'DRAFT') {
+					populateFromDraft(app)
+					setDraftLoaded(true)
+					return
+				}
+			}
+			const { data } = await api.get('/api/tenancy-applications/draft/current')
+			if (data.draft) {
+				populateFromDraft(data.draft)
+			}
+		} catch (err) {
+			console.error('Failed to load draft', err)
+		} finally {
+			setDraftLoaded(true)
+		}
+	}, [populateFromDraft, searchParams])
+
+	useEffect(() => {
+		if (tenancyDistricts.length > 0) {
+			loadDraft()
+		}
+	}, [tenancyDistricts.length, loadDraft])
+
 	const loadProfile = async () => {
 		try {
 			const { data } = await api.get('/api/profile')
@@ -179,7 +260,7 @@ function TenancyCertificate() {
 	}
 
 	const resetTenancyForm = () => {
-		setTenancyStep(1); setEditingApplicationId(null); setTenancyRegistrationDate(''); setTenancyOfficeId('');
+		setTenancyStep(1); setDraftApplicationNo(null); setSavedWizardStep(0); setTenancyRegistrationDate(''); setTenancyOfficeId('');
 		setAgreementFile(null); setAgreementPreviewUrl(''); setLandlordPhotoFile(null); setLandlordPhotoPreview(profileType === 'landlord' ? profilePhotoPreview : '');
 		setLandlordSignatureFile(null); setLandlordSignaturePreview(''); setTenantPhotoFile(null); setTenantPhotoPreview(profileType === 'tenant' ? profilePhotoPreview : '');
 		setTenantSignatureFile(null); setTenantSignaturePreview(''); setManagerName(''); setManagerAddress(''); setManagerEmail(''); setManagerPhone(''); setManagerPan('');
@@ -278,41 +359,129 @@ function TenancyCertificate() {
 		}
 	}
 
+	const getFormState = () => ({
+		tenancyRegistrationDate,
+		tenancyOfficeId,
+		tenancyVillageWardId,
+		initiatorRole,
+		applyType,
+		landlordName,
+		landlordAddress,
+		landlordEmail,
+		landlordPhone,
+		landlordPan,
+		landlordAadhar,
+		managerName,
+		managerAddress,
+		managerEmail,
+		managerPhone,
+		managerPan,
+		managerAadhar,
+		tenantName,
+		tenantAddress,
+		tenantEmail,
+		tenantPhone,
+		tenantPan,
+		tenantAadhar,
+		tenantPreviousTenancy,
+		propertyPossessionDate,
+		propertyRentPayable,
+		propertyPremisesDescription,
+		propertyFurnitureDescription,
+		propertyChargeElectricity,
+		propertyChargeWater,
+		propertyChargeFurnishing,
+		propertyChargeOtherServices,
+		propertyTenancyDuration,
+		agreementFile,
+		landlordPhotoFile,
+		landlordSignatureFile,
+		tenantPhotoFile,
+		tenantSignatureFile,
+		landlordPanFile,
+		tenantPanFile,
+		managerPanFile,
+	})
+
+	const saveDraftStep = async (step) => {
+		setError('')
+		setSuccess('')
+		setDraftSaving(true)
+		try {
+			await csrf()
+			// Include all stages up to the furthest reached so going back to edit
+			// stage 1 does not drop data saved in later stages.
+			const throughStep = Math.max(step, savedWizardStep || 0)
+			const formData = buildTenancyFormData(getFormState(), {
+				wizardStep: step,
+				includeThroughStep: throughStep,
+			})
+			let data
+			if (!draftApplicationNo) {
+				const res = await api.post('/api/tenancy-applications/draft', formData, {
+					headers: { 'Content-Type': 'multipart/form-data' },
+				})
+				data = res.data
+			} else {
+				const res = await api.put(
+					`/api/tenancy-applications/${draftApplicationNo}/draft`,
+					formData,
+					{ headers: { 'Content-Type': 'multipart/form-data' } }
+				)
+				data = res.data
+			}
+			const draft = data.draft || data
+			if (draft?.application_no) {
+				setDraftApplicationNo(draft.application_no)
+				setSavedWizardStep(Math.max(step, Number(draft.wizard_step) || step))
+			}
+			setSuccess('Progress saved.')
+			return true
+		} catch (err) {
+			const errors = err?.response?.data?.errors
+			let msg = err?.response?.data?.message || 'Failed to save progress'
+			if (errors && typeof errors === 'object') {
+				const list = Object.entries(errors).flatMap(([field, messages]) =>
+					(Array.isArray(messages) ? messages : [messages]).map((m) => `${field}: ${m}`)
+				)
+				if (list.length) msg = list.join('. ')
+			}
+			setError(msg)
+			return false
+		} finally {
+			setDraftSaving(false)
+		}
+	}
+
 	const submitTenancyApplication = async (forceNew = false) => {
 		setError(''); setSuccess(''); setTenancySubmitting(true)
 		if (!forceNew) setConflictData(null)
 
 		try {
 			await csrf()
-			const formData = new FormData()
-			formData.append('registration_date', tenancyRegistrationDate)
-			if (tenancyOfficeId) formData.append('office_id', tenancyOfficeId)
-			if (tenancyVillageWardId) formData.append('village_ward_id', tenancyVillageWardId)
-			if (initiatorRole) formData.append('initiator_role', initiatorRole)
+			const formData = buildTenancyFormData(getFormState(), { includeAll: true })
+			formData.append('initiator_role', initiatorRole)
 			formData.append('apply_type', applyType || 'Individual')
 			if (forceNew) formData.append('force_new', '1')
 
-			formData.append('landlord_name', landlordName); formData.append('landlord_address', landlordAddress); formData.append('landlord_email', landlordEmail); formData.append('landlord_phone', landlordPhone); formData.append('landlord_pan', landlordPan); if (landlordAadhar) formData.append('landlord_aadhar', landlordAadhar);
-			formData.append('manager_name', managerName); formData.append('manager_address', managerAddress); formData.append('manager_email', managerEmail); formData.append('manager_phone', managerPhone); formData.append('manager_pan', managerPan); if (managerAadhar) formData.append('manager_aadhar', managerAadhar);
-			formData.append('tenant_name', tenantName); formData.append('tenant_address', tenantAddress); formData.append('tenant_email', tenantEmail); formData.append('tenant_phone', tenantPhone); formData.append('tenant_pan', tenantPan); if (tenantAadhar) formData.append('tenant_aadhar', tenantAadhar);
-			formData.append('tenant_previous_tenancy', tenantPreviousTenancy || '')
-			formData.append('property_possession_date', propertyPossessionDate); formData.append('property_rent_payable', String(Number(propertyRentPayable) || 0)); formData.append('property_premises_description', propertyPremisesDescription);
-			formData.append('property_furniture_description', propertyFurnitureDescription || ''); formData.append('property_charge_electricity', propertyChargeElectricity || ''); formData.append('property_charge_water', propertyChargeWater || '');
-			formData.append('property_charge_furnishing', propertyChargeFurnishing || ''); formData.append('property_charge_other_services', propertyChargeOtherServices || ''); formData.append('property_tenancy_duration', propertyTenancyDuration)
-
-			if (agreementFile) formData.append('agreement_pdf', agreementFile)
-			if (landlordPhotoFile) formData.append('landlord_photo', landlordPhotoFile)
-			if (landlordSignatureFile) formData.append('landlord_signature', landlordSignatureFile)
-			if (tenantPhotoFile) formData.append('tenant_photo', tenantPhotoFile)
-			if (tenantSignatureFile) formData.append('tenant_signature', tenantSignatureFile)
-			if (landlordPanFile) formData.append('landlord_pan_file', landlordPanFile)
-			if (tenantPanFile) formData.append('tenant_pan_file', tenantPanFile)
-			if (managerPanFile) formData.append('manager_pan_file', managerPanFile)
-
-			const { data } = await api.post('/api/tenancy-applications', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+			let data
+			if (draftApplicationNo) {
+				const res = await api.post(
+					`/api/tenancy-applications/${draftApplicationNo}/submit`,
+					formData,
+					{ headers: { 'Content-Type': 'multipart/form-data' } }
+				)
+				data = res.data
+			} else {
+				const res = await api.post('/api/tenancy-applications', formData, {
+					headers: { 'Content-Type': 'multipart/form-data' },
+				})
+				data = res.data
+			}
 			setTenancyReceipt(data)
 			setSuccess('Application submitted successfully.')
 			setTenancyStep(5)
+			setSavedWizardStep(5)
 			setConflictData(null)
 		} catch (err) {
 			const data = err?.response?.data
@@ -333,17 +502,70 @@ function TenancyCertificate() {
 	}
 
 	const tenancySteps = [
-		{ id: 1, label: 'Registration' }, { id: 2, label: 'Information of Tenancy' }, { id: 3, label: 'Uploads' }, { id: 4, label: 'Preview' }, { id: 5, label: 'Submit' }
+		{ id: 1, label: 'Registration' },
+		{ id: 2, label: 'Tenancy details' },
+		{ id: 3, label: 'Documents' },
+		{ id: 4, label: 'Preview & submit' },
 	]
 
 	const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
 	const formLocked = Boolean(tenancyReceipt)
+	const maxReachableStep = tenancyReceipt ? 5 : Math.min(4, Math.max(tenancyStep, savedWizardStep + 1))
+
+	const goToStep = (stepId) => {
+		if (formLocked) return
+		if (stepId < 1 || stepId > 4) return
+		if (stepId > maxReachableStep) return
+		setTenancyStep(stepId)
+		setError('')
+		setSuccess('')
+		// Ensure village/ward list is available when returning to registration
+		if (stepId === 1 && tenancyDistrictId) {
+			loadTenancyVillageWards(tenancyDistrictId)
+		}
+	}
+
+	const handleContinue = async (e) => {
+		e.preventDefault()
+		if (tenancyStep === 1 && registrationTooOld) return
+		if (tenancyStep === 2) {
+			if (!managerName.trim()) setManagerName('NA')
+			if (!managerAddress.trim()) setManagerAddress('NA')
+			if (!managerEmail.trim()) setManagerEmail('noemail@noemail.com')
+			if (!managerPhone.trim()) setManagerPhone('NA')
+			if (!managerPan.trim()) setManagerPan('NA')
+		}
+		if (tenancyStep === 4) {
+			if (!declarationChecked) {
+				setError('You must accept the declaration to submit.')
+				return
+			}
+			submitTenancyApplication()
+			return
+		}
+		const ok = await saveDraftStep(tenancyStep)
+		if (ok) setTenancyStep((prev) => Math.min(4, prev + 1))
+	}
 
 	return (
-		<div className="dashboard-card tenancy-certificate-page">
-			<div className="tenancy-page-header">
-				<h1>Apply for Tenancy Certificate</h1>
-			</div>
+		<div className="ws-page ws-uin-apply tenancy-certificate-page">
+			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
+				<Link to="/dashboard">Dashboard</Link>
+				<span className="ws-breadcrumb-sep">/</span>
+				<span>Apply for UIN</span>
+			</nav>
+
+			<header className="ws-uin-apply-head">
+				<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
+				<p className="ws-uin-apply-lead">
+					Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
+				</p>
+				{draftApplicationNo && !tenancyReceipt ? (
+					<p className="ws-uin-apply-draft-id">
+						Draft: <strong>{draftApplicationNo}</strong>
+					</p>
+				) : null}
+			</header>
 
 			{tenancyStep === 1 && (
 				<>
@@ -378,17 +600,35 @@ function TenancyCertificate() {
 				</>
 			)}
 
-			<div className="tenancy-steps">
-				{tenancySteps.map((step, idx) => (
-					<div key={step.id} className={`tenancy-step ${tenancyStep === step.id ? 'active' : ''} ${tenancyStep > step.id ? 'done' : ''}`}>
-						<div className="tenancy-step-icon">{step.id}</div>
-						<span className="tenancy-step-label">{step.label}</span>
-						{idx < tenancySteps.length - 1 && <span className="tenancy-step-line" />}
-					</div>
-				))}
-			</div>
+			<ol className="ws-uin-wizard-steps" aria-label="Application stages">
+				{tenancySteps.map((step, idx) => {
+					const done = tenancyStep > step.id || savedWizardStep >= step.id
+					const active = tenancyStep === step.id
+					const reachable = step.id <= maxReachableStep
+					return (
+						<li
+							key={step.id}
+							className={`ws-uin-wizard-step${active ? ' is-active' : ''}${done ? ' is-done' : ''}${!reachable ? ' is-locked' : ''}`}
+						>
+							<button
+								type="button"
+								className="ws-uin-wizard-step-btn"
+								disabled={!reachable || formLocked}
+								aria-current={active ? 'step' : undefined}
+								onClick={() => goToStep(step.id)}
+							>
+								<span className="ws-uin-wizard-step-num">{done && !active ? '✓' : step.id}</span>
+								<span className="ws-uin-wizard-step-label">{step.label}</span>
+							</button>
+							{idx < tenancySteps.length - 1 ? (
+								<span className="ws-uin-wizard-step-line" aria-hidden />
+							) : null}
+						</li>
+					)
+				})}
+			</ol>
 
-			{error ? <div className="error">{error}</div> : null}
+			{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
 
 			{conflictData && (
 				<div className="conflict-notice-box">
@@ -400,24 +640,14 @@ function TenancyCertificate() {
 				</div>
 			)}
 
-			{success ? <div className="admin-success">{success}</div> : null}
+			{success ? <div className="ws-alert ws-alert--success">{success}</div> : null}
 
-			<form className="tenancy-form" onSubmit={(e) => {
-				e.preventDefault()
-				if (tenancyStep === 1 && registrationTooOld) return
-				if (tenancyStep === 2) {
-					if (!managerName.trim()) setManagerName('NA'); if (!managerAddress.trim()) setManagerAddress('NA');
-					if (!managerEmail.trim()) setManagerEmail('noemail@noemail.com'); if (!managerPhone.trim()) setManagerPhone('NA'); if (!managerPan.trim()) setManagerPan('NA');
-				}
-				if (tenancyStep < 4) { setTenancyStep(prev => prev + 1); return; }
-				if (tenancyStep === 4 && !tenancyReceipt) {
-					if (!declarationChecked) {
-						setError('You must accept the declaration to submit.')
-						return
-					}
-					submitTenancyApplication()
-				}
-			}}>
+			{!draftLoaded ? (
+				<div className="ws-uin-apply-loading">Loading your application…</div>
+			) : null}
+
+			{draftLoaded ? (
+			<form className="tenancy-form ws-uin-apply-form" onSubmit={handleContinue}>
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
 						<div className="form-grid">
@@ -897,13 +1127,30 @@ function TenancyCertificate() {
 					</div>
 				)}
 
-				<div className="form-actions">
-					{tenancyStep > 1 && tenancyStep < 5 && !tenancyReceipt && <button type="button" className="secondary" onClick={() => setTenancyStep(prev => prev - 1)}>Back</button>}
-					{tenancyStep === 1 && <button type="button" className="secondary" onClick={resetTenancyForm}>Reset</button>}
-					{tenancyStep < 4 && <button type="submit">Next</button>}
-					{tenancyStep === 4 && !tenancyReceipt && <button type="submit" disabled={tenancySubmitting || !declarationChecked}>{tenancySubmitting ? 'Submitting...' : 'Confirm & Submit'}</button>}
+				<div className="form-actions ws-uin-apply-actions">
+					{tenancyStep > 1 && !tenancyReceipt ? (
+						<button type="button" className="ws-btn ws-btn--secondary" onClick={() => goToStep(tenancyStep - 1)}>
+							Back
+						</button>
+					) : null}
+					{tenancyStep === 1 && !tenancyReceipt ? (
+						<button type="button" className="ws-btn ws-btn--secondary" onClick={resetTenancyForm}>
+							Start over
+						</button>
+					) : null}
+					{tenancyStep < 4 && !tenancyReceipt ? (
+						<button type="submit" className="ws-btn ws-btn--primary" disabled={draftSaving || (tenancyStep === 1 && registrationTooOld)}>
+							{draftSaving ? 'Saving…' : 'Save & continue'}
+						</button>
+					) : null}
+					{tenancyStep === 4 && !tenancyReceipt ? (
+						<button type="submit" className="ws-btn ws-btn--primary" disabled={tenancySubmitting || draftSaving || !declarationChecked}>
+							{tenancySubmitting ? 'Submitting…' : 'Confirm & submit'}
+						</button>
+					) : null}
 				</div>
 			</form>
+			) : null}
 		</div>
 	)
 }

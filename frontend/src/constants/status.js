@@ -10,6 +10,8 @@ export const STATUS = {
 	APPROVED: 'APPROVED', // Final approval by Principal (RA/RC/RT)
 	COMPLETED: 'COMPLETED', // Often used interchangeably with APPROVED
 	UNDER_PROCESS: 'UNDER_PROCESS', // Display state for SUBMITTED in some views
+	DRAFT: 'DRAFT',
+	PARTIAL: 'PARTIAL',
 }
 
 export const STATUS_LABELS = {
@@ -20,6 +22,8 @@ export const STATUS_LABELS = {
 	[STATUS.APPROVED]: 'Approved',
 	[STATUS.COMPLETED]: 'Completed',
 	[STATUS.UNDER_PROCESS]: 'Under Process',
+	[STATUS.DRAFT]: 'Draft',
+	[STATUS.PARTIAL]: 'Awaiting second party',
 }
 
 export const STATUS_COLORS = {

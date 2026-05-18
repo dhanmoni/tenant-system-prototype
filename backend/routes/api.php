@@ -52,6 +52,10 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
     Route::post('/tenancy-applications/join', [TenancyApplicationController::class, 'joinApplication']);
     Route::post('/tenancy-applications/check-ref-code', [TenancyApplicationController::class, 'checkRefCode']);
     Route::get('/tenancy-applications/my', [TenancyApplicationController::class, 'myApplications']);
+    Route::get('/tenancy-applications/draft/current', [TenancyApplicationController::class, 'currentDraft']);
+    Route::post('/tenancy-applications/draft', [TenancyApplicationController::class, 'createDraft']);
+    Route::put('/tenancy-applications/{tenancyApplication}/draft', [TenancyApplicationController::class, 'updateDraft']);
+    Route::post('/tenancy-applications/{tenancyApplication}/submit', [TenancyApplicationController::class, 'submitDraft']);
     Route::post('/tenancy-applications', [TenancyApplicationController::class, 'store']);
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);
     Route::get('/tenancy-applications/{tenancyApplication}/acknowledgement', [TenancyApplicationController::class, 'downloadAcknowledgement']);
@@ -118,8 +122,8 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
         Route::apiResource('roles', RoleController::class);
     });
 
-    // Staff dashboard statistics
-    Route::middleware("role:$managementRoles")->group(function () {
+    // Staff dashboard statistics (officials, assistants, district admin)
+    Route::middleware("role:$allAdminStaffRoles")->group(function () {
         Route::get('/staff-dashboard-stats', [DashboardController::class, 'staffStats']);
     });
 });

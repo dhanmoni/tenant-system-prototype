@@ -34,6 +34,7 @@ class TenancyApplication extends Model
         'village_ward_id',
         'apply_type',
         'status',
+        'wizard_step',
         'current_with',
         'movement_history',
         'landlord_name',

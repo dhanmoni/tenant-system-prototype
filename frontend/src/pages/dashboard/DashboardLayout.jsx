@@ -36,12 +36,12 @@ function DashboardLayout({ user, onLogout, onUserUpdate }) {
 					subtitle={loaderCopy.subtitle}
 				/>
 			) : null}
-			<section className="dashboard-layout">
+			<div className="dashboard-layout">
 				<Sidebar user={user} onLogout={onLogout} />
-				<main className="dashboard-content">
+				<div className="dashboard-content" id="dashboard-primary-content" tabIndex={-1}>
 					<Outlet context={{ user, onLogout, onUserUpdate }} />
-				</main>
-			</section>
+				</div>
+			</div>
 		</>
 	)
 }

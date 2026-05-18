@@ -31,7 +31,8 @@ class TenantFormsStatusController extends Controller
 
         $page = (int) $request->input('page', 1);
         $page = max(1, $page);
-        $perPage = 10;
+        $perPage = (int) $request->input('per_page', 10);
+        $perPage = max(1, min(100, $perPage));
 
         $applicationNo = $request->input('application_no');
         $uid = $request->input('uid');
