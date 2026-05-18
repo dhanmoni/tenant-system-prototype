@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react'
 import api, { csrf } from '../api'
+import { ROLES, PRINCIPAL_ROLES } from '../constants/roles'
 
 const roleOptions = [
-  { value: 'system_admin', label: 'System Administrator' },
-  { value: 'director', label: 'Director' },
-  { value: 'assistant_director', label: 'Assistant Director' },
-  { value: 'district_head', label: 'District Head' },
-  { value: 'district_assistant', label: 'District Assistant' },
+  { value: ROLES.SUPER_ADMIN, label: 'Super Admin' },
+  { value: ROLES.DISTRICT_ADMIN, label: 'District Admin' },
+  { value: ROLES.RENT_AUTHORITY, label: 'Rent Authority' },
+  { value: ROLES.RENT_COURT, label: 'Rent Court' },
+  { value: ROLES.RENT_TRIBUNAL, label: 'Rent Tribunal' },
+  { value: ROLES.RA_ASSISTANT, label: 'RA Assistant' },
+  { value: ROLES.RC_ASSISTANT, label: 'RC Assistant' },
+  { value: ROLES.RT_ASSISTANT, label: 'RT Assistant' },
+  { value: ROLES.USER, label: 'User' },
 ]
 
 function Admin({ user }) {
@@ -28,7 +33,7 @@ function Admin({ user }) {
     name: '',
     email: '',
     password: '',
-    role: 'district_assistant',
+    role: 'ra_assistant',
     district_id: '',
     reports_to_user_id: '',
   })
@@ -119,7 +124,7 @@ function Admin({ user }) {
         name: '',
         email: '',
         password: '',
-        role: 'district_assistant',
+        role: ROLES.RA_ASSISTANT,
         district_id: '',
         reports_to_user_id: '',
       })
@@ -224,7 +229,7 @@ function Admin({ user }) {
               >
                 <option value="">Unassigned</option>
                 {users
-                  .filter((entry) => entry.role === 'assistant_director')
+                  .filter((entry) => entry.role === ROLES.RENT_AUTHORITY)
                   .map((entry) => (
                     <option key={entry.id} value={entry.id}>
                       {entry.name}
@@ -245,7 +250,7 @@ function Admin({ user }) {
               >
                 <option value="">Unassigned</option>
                 {users
-                  .filter((entry) => entry.role === 'district_head')
+                  .filter((entry) => entry.role === ROLES.RENT_COURT)
                   .map((entry) => (
                     <option key={entry.id} value={entry.id}>
                       {entry.name}
@@ -341,7 +346,7 @@ function Admin({ user }) {
                 <option value="">Unassigned</option>
                 {users
                   .filter((entry) =>
-                    ['assistant_director', 'district_head'].includes(entry.role)
+                    PRINCIPAL_ROLES.includes(entry.role)
                   )
                   .map((entry) => (
                     <option key={entry.id} value={entry.id}>

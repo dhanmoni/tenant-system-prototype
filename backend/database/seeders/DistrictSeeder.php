@@ -37,9 +37,11 @@ class DistrictSeeder extends Seeder
             'Cachar', 'Hailakandi', 'Karimganj',
         ];
 
-        foreach ($assamDistricts as $name) {
+        foreach ($assamDistricts as $index => $name) {
+            $code = str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT);
             District::create([
                 'name' => $name,
+                'code' => $code,
                 'state_id' => $state->id,
             ]);
         }

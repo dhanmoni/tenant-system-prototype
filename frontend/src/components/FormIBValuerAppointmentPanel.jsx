@@ -6,7 +6,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 
-	const [rentAuthorityUid, setRentAuthorityUid] = useState('')
+	const [tenancyUIN, setTenancyUIN] = useState('')
 
 	const [applicantName, setApplicantName] = useState('')
 	const [applicantRelationType, setApplicantRelationType] = useState('Son')
@@ -28,7 +28,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 		try {
 			await csrf()
 			const formData = new FormData()
-			formData.append('rent_authority_uid', rentAuthorityUid.trim())
+			formData.append('rent_authority_uid', tenancyUIN.trim())
 
 			formData.append('applicant_name', applicantName.trim())
 			formData.append('applicant_relation_type', applicantRelationType)
@@ -85,11 +85,11 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 				}}
 			>
 				<label>
-					<span className="label-text required">Unique Identification Number (UID) issued by Rent Authority</span>
+					<span className="label-text required">Tenancy UIN</span>
 					<input
 						type="text"
-						value={rentAuthorityUid}
-						onChange={(e) => setRentAuthorityUid(e.target.value)}
+						value={tenancyUIN}
+						onChange={(e) => setTenancyUIN(e.target.value)}
 						required
 					/>
 				</label>

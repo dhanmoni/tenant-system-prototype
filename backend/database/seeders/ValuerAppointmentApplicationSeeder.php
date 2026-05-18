@@ -24,7 +24,7 @@ class ValuerAppointmentApplicationSeeder extends Seeder
             ['application_no' => 'VA-' . now()->format('Ym') . '-000001'],
             [
                 'user_id' => $tenantUser->id,
-                'rent_authority_uid' => 'RAUID-' . now()->format('Ymd') . '-003',
+                'tenancy_uin' => 'RAUID-' . now()->format('Ymd') . '-003',
 
                 'applicant_name' => 'Applicant Demo',
                 'applicant_relation_type' => 'Son',

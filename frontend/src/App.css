@@ -2667,11 +2667,11 @@ body.a11y-contrast-high *:focus-visible {
 .upload-rows-container {
 	display: flex;
 	flex-direction: column;
-	gap: 2rem;
+	gap: 1rem;
 }
 
 .upload-row h3 {
-	margin-bottom: 1.5rem;
+	margin-bottom: 1rem;
 	font-size: 1.2rem;
 	color: var(--gov-blue);
 	font-weight: 600;
@@ -2977,7 +2977,7 @@ main.main-fluid {
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;
-	align-items: flex-start;
+	align-items: stretch;
 	padding-bottom: 40px;
 	width: 100%;
 }
@@ -3639,9 +3639,10 @@ main.main-fluid {
 
 /* NIC / Government dashboard table style */
 .dashboard-layout .admin-table thead th,
-.dashboard-layout .status-table thead th {
-	background: var(--gov-blue);
-	color: #fff;
+.dashboard-layout .status-table thead th,
+.dashboard-layout .status-category-table thead th {
+	background: var(--gov-blue) !important;
+	color: #fff !important;
 	font-weight: 600;
 	padding: 12px 10px;
 	border: 1px solid var(--gov-blue-dark);
@@ -3699,6 +3700,39 @@ main.main-fluid {
 
 .action-icon-btn .btn-text {
 	font-weight: 600;
+}
+
+.action-icon-btn.info {
+	background-color: #f1f5f9;
+	color: #0f172a;
+	border: 1px solid #e2e8f0;
+}
+
+.action-icon-btn.info:hover {
+	background-color: #e2e8f0;
+	border-color: #cbd5e1;
+}
+
+.action-icon-btn.secondary {
+	background-color: #fff1f2;
+	color: #be123c;
+	border: 1px solid #fecdd3;
+}
+
+.action-icon-btn.secondary:hover {
+	background-color: #fecdd3;
+	border-color: #fda4af;
+}
+
+.action-icon-btn:not(.info):not(.secondary) {
+	background-color: #f0fdf4;
+	color: #15803d;
+	border: 1px solid #bbf7d0;
+}
+
+.action-icon-btn:not(.info):not(.secondary):hover {
+	background-color: #bbf7d0;
+	border-color: #86efac;
 }
 
 .action-icon-btn:hover {
@@ -4708,11 +4742,9 @@ main.main-fluid {
 	min-height: 200px;
 	border-top: 4px solid var(--tenant-tile-accent);
 	background-color: #fff;
-	background-image: linear-gradient(
-		165deg,
-		var(--tenant-tile-tint) 0%,
-		#ffffff min(52%, 180px)
-	);
+	background-image: linear-gradient(165deg,
+			var(--tenant-tile-tint) 0%,
+			#ffffff min(52%, 180px));
 	box-shadow:
 		0 1px 2px rgba(15, 23, 42, 0.06),
 		inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -5863,21 +5895,21 @@ main.main-fluid {
 	width: 100%;
 }
 
-.dashboard-services-nav-wrap > .dashboard-link {
+.dashboard-services-nav-wrap>.dashboard-link {
 	width: 100%;
 }
 
 /* While flyout is open, keep Services row highlighted like hover */
-.dashboard-services-nav-wrap.is-flyout-open > .dashboard-link {
+.dashboard-services-nav-wrap.is-flyout-open>.dashboard-link {
 	background: var(--dashboard-sidebar-hover, rgba(255, 255, 255, 0.08));
 	color: #fff;
 }
 
-.dashboard-services-nav-wrap.is-flyout-open > .dashboard-link .dashboard-link-icon {
+.dashboard-services-nav-wrap.is-flyout-open>.dashboard-link .dashboard-link-icon {
 	color: var(--dashboard-sidebar-accent, #7eb8ff);
 }
 
-.dashboard-services-nav-wrap.is-flyout-open > .dashboard-link.active {
+.dashboard-services-nav-wrap.is-flyout-open>.dashboard-link.active {
 	background: var(--dashboard-sidebar-active, rgba(255, 255, 255, 0.12));
 	border-left-color: var(--dashboard-sidebar-accent, #7eb8ff);
 	font-weight: 600;
@@ -6120,6 +6152,7 @@ main.main-fluid {
 
 .status-category-table {
 	margin-top: 10px;
+	width: 100%;
 }
 
 .status-category-title {
@@ -8475,4 +8508,285 @@ button.secondary:hover {
 	margin-bottom: 12px;
 	color: #1e293b;
 	font-weight: 600;
+}
+
+/* ── Admin Panel Layout ── */
+.dashboard-layout {
+	display: flex;
+	width: 100%;
+	flex: 1;
+}
+
+.admin-layout {
+	display: flex;
+	min-height: calc(100vh - 120px);
+	background: #f8fafc;
+}
+
+.admin-sidebar {
+	width: 260px;
+	background: #fff;
+	border-right: 1px solid #e2e8f0;
+	display: flex;
+	flex-direction: column;
+	padding: 24px 0;
+}
+
+.admin-sidebar-header {
+	padding: 0 24px 24px;
+	border-bottom: 1px solid #f1f5f9;
+	margin-bottom: 16px;
+}
+
+.admin-sidebar-header h3 {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #1e293b;
+}
+
+.role-badge {
+	display: inline-block;
+	margin-top: 8px;
+	padding: 2px 8px;
+	background: #e0f2fe;
+	color: #0369a1;
+	font-size: 0.75rem;
+	font-weight: 700;
+	border-radius: 99px;
+	text-transform: uppercase;
+}
+
+.admin-nav {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.admin-nav-item {
+	padding: 12px 24px;
+	color: #64748b;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.95rem;
+	transition: all 0.2s;
+	border-left: 4px solid transparent;
+}
+
+.admin-nav-item:hover {
+	background: #f1f5f9;
+	color: #0f172a;
+	text-decoration: none;
+}
+
+.admin-nav-item.active {
+	background: #eff6ff;
+	color: #2563eb;
+	border-left-color: #2563eb;
+}
+
+.admin-main {
+	flex: 1;
+	padding: 32px;
+	overflow-y: auto;
+}
+
+/* ── Admin Dashboard Cards ── */
+.admin-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 24px;
+	margin-bottom: 32px;
+}
+
+.admin-stat-card {
+	background: #fff;
+	padding: 24px;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.stat-label {
+	font-size: 0.875rem;
+	color: #64748b;
+	font-weight: 600;
+}
+
+.stat-value {
+	font-size: 1.875rem;
+	font-weight: 700;
+	color: #0f172a;
+	margin-top: 4px;
+}
+
+/* ── Admin Tables ── */
+.admin-table-container {
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	width: 100%;
+}
+
+.admin-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: left;
+}
+
+.admin-table th {
+	background: #f8fafc;
+	padding: 16px 24px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #475569;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table td {
+	padding: 16px 24px;
+	font-size: 0.95rem;
+	color: #1e293b;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-table tr:last-child td {
+	border-bottom: none;
+}
+
+.status-pill {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 99px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.status-pill.submitted {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.status-pill.in_review {
+	background: #fef9c3;
+	color: #854d0e;
+}
+
+.status-pill.rejected {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.status-pill.pending {
+	background: #f1f5f9;
+	color: #475569;
+}
+
+.rejection-row td {
+	padding: 0 24px 16px !important;
+	background: #fff !important;
+}
+
+.rejection-alert {
+	background: #fef2f2;
+	border: 1px solid #fee2e2;
+	color: #991b1b;
+	padding: 12px 16px;
+	border-radius: 6px;
+	font-size: 0.875rem;
+	margin-top: -8px;
+	margin-bottom: 8px;
+}
+
+.rejection-alert strong {
+	font-weight: 700;
+	margin-right: 4px;
+}
+
+.dashboard-sidebar-divider {
+	padding: 24px 20px 8px;
+	font-size: 0.7rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: rgba(255, 255, 255, 0.4);
+	border-top: 1px solid rgba(255, 255, 255, 0.05);
+	margin-top: 8px;
+}
+
+.sidebar-role-badge {
+	display: inline-block;
+	margin-left: 8px;
+	padding: 2px 6px;
+	background: rgba(126, 184, 255, 0.15);
+	color: #7eb8ff;
+	border: 1px solid rgba(126, 184, 255, 0.3);
+	border-radius: 4px;
+	font-size: 0.65rem;
+	font-weight: 700;
+	vertical-align: middle;
+}
+
+
+/* Admin Dashboard styles */
+.admin-dashboard {
+	padding: 24px;
+}
+
+.admin-header {
+	margin-bottom: 32px;
+}
+
+.admin-header h1 {
+	font-size: 1.8rem;
+	color: var(--gov-blue);
+	margin: 0 0 8px;
+}
+
+.admin-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 20px;
+	margin-bottom: 40px;
+}
+
+.admin-stat-card {
+	background: #fff;
+	border: 1px solid var(--nic-border);
+	border-radius: 12px;
+	padding: 24px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stat-label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #64748b;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 12px;
+}
+
+.stat-value {
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--nic-text);
+}
+
+.recent-activity h2 {
+	font-size: 1.25rem;
+	margin-bottom: 20px;
+	color: var(--nic-text);
+}
+
+.role-badge {
+	display: inline-block;
+	padding: 4px 12px;
+	background: var(--gov-blue-light);
+	color: var(--gov-blue);
+	border-radius: 99px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
 }

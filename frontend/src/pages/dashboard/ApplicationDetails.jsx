@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useOutletContext, useParams, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import { formatDateTime, formatDate } from '../../utils/formatters'
+import { APPLICATION_TYPES } from '../../constants/application'
+
 import emblemDark from '../../assets/img/emblem-dark.png'
 
 function ApplicationDetails() {
@@ -14,14 +16,14 @@ function ApplicationDetails() {
 	const [error, setError] = useState('')
 
 	const formKeyToEndpoint = {
-		'form-i-rent-revision': '/api/rent-revision-applications',
-		'form-i-a-other-charges-revision': '/api/other-charges-revision-applications',
-		'form-i-b-valuer-appointment': '/api/valuer-appointment-applications',
-		'form-4-rent-court-possession': '/api/rent-court-possession-applications',
-		'form-5-rent-court-filing': '/api/rent-court-filing-applications',
-		'form-6-rent-authority-filing': '/api/rent-authority-filing-applications',
-		'form-7-rent-court-appeal': '/api/rent-court-appeal-applications',
-		'form-8-rent-tribunal-appeal': '/api/rent-tribunal-appeal-applications',
+		[APPLICATION_TYPES.RENT_REVISION]: '/api/rent-revision-applications',
+		[APPLICATION_TYPES.OTHER_CHARGES_REVISION]: '/api/other-charges-revision-applications',
+		[APPLICATION_TYPES.VALUER_APPOINTMENT]: '/api/valuer-appointment-applications',
+		[APPLICATION_TYPES.RENT_COURT_POSSESSION]: '/api/rent-court-possession-applications',
+		[APPLICATION_TYPES.RENT_COURT_FILING]: '/api/rent-court-filing-applications',
+		[APPLICATION_TYPES.RENT_AUTHORITY_FILING]: '/api/rent-authority-filing-applications',
+		[APPLICATION_TYPES.RENT_COURT_APPEAL]: '/api/rent-court-appeal-applications',
+		[APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL]: '/api/rent-tribunal-appeal-applications',
 	}
 
 	useEffect(() => {
@@ -244,7 +246,7 @@ function ApplicationDetails() {
 						if (typeof value === 'object' || !value) return null
 						return (
 							<div key={key} style={{ marginBottom: '0.5rem' }}>
-								<span className="label-text" style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}:</span>
+								<span className="label-text" style={{ textTransform: key === 'tenancy_uin' ? 'none' : 'capitalize' }}>{key === 'tenancy_uin' ? 'Tenancy UIN' : key.replace(/_/g, ' ')}:</span>
 								<span style={{ marginLeft: '1rem' }}>{String(value)}</span>
 							</div>
 						)

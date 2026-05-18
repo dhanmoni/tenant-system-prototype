@@ -9,6 +9,16 @@ use App\Models\Role;
 use App\Models\State;
 use App\Models\TenancyApplication;
 use App\Models\User;
+use App\Constants\Roles;
+use App\Constants\Status;
+use App\Models\RentRevisionApplication;
+use App\Models\OtherChargesRevisionApplication;
+use App\Models\ValuerAppointmentApplication;
+use App\Models\RentCourtPossessionApplication;
+use App\Models\RentCourtFilingApplication;
+use App\Models\RentAuthorityFilingApplication;
+use App\Models\RentCourtAppealApplication;
+use App\Models\RentTribunalAppealApplication;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -19,63 +29,66 @@ class DashboardController extends Controller
     public function stats(Request $request)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'system_admin') {
+        if (!$user || $user->role !== Roles::SUPER_ADMIN) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $applicationsByStatus = TenancyApplication::query()
-            ->selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
         return response()->json([
             'districts_count' => District::count(),
-            'offices_count' => Office::count(),
             'users_count' => User::count(),
-            'roles_count' => Role::count(),
-            'designations_count' => Designation::count(),
-            'applications_count' => TenancyApplication::count(),
-            'applications_by_status' => $applicationsByStatus,
+            'tenancy_applications' => TenancyApplication::count(),
+            'service_applications' => 
+                RentRevisionApplication::count() +
+                OtherChargesRevisionApplication::count() +
+                ValuerAppointmentApplication::count() +
+                RentCourtPossessionApplication::count() +
+                RentCourtFilingApplication::count() +
+                RentAuthorityFilingApplication::count() +
+                RentCourtAppealApplication::count() +
+                RentTribunalAppealApplication::count(),
         ]);
     }
 
-    /**
-     * Dashboard statistics for staff (counts + applications scoped by user/office).
-     */
     public function staffStats(Request $request)
     {
         $user = $request->user();
-        $staffRoles = ['director', 'assistant_director', 'district_head', 'district_assistant'];
-        if (!$user || !in_array($user->role, $staffRoles, true)) {
+        if (!$user || $user->role === Roles::USER) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $appQuery = TenancyApplication::query();
-        if ($user->profile_type === 'landlord') {
-            $appQuery->where('landlord_email', $user->email);
-        } elseif ($user->profile_type === 'tenant') {
-            $appQuery->where('tenant_email', $user->email);
-        } else {
-            $appQuery->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-                if (!empty($user->office_id)) {
-                    $q->orWhere('office_id', $user->office_id);
-                }
-            });
+        $districtId = $user->district_id;
+        
+        $stats = [
+            'users_in_district' => User::where('district_id', $districtId)->count(),
+        ];
+
+        if ($user->role === Roles::DISTRICT_ADMIN) {
+            $stats['total_applications_district'] = TenancyApplication::where('district_id', $districtId)->count();
         }
 
-        $applicationsByStatus = (clone $appQuery)
-            ->selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
+        // Add pending review count for assistants
+        if ($user->isAssistant()) {
+            $targetRole = match ($user->role) {
+                Roles::RA_ASSISTANT => Roles::RENT_AUTHORITY,
+                Roles::RC_ASSISTANT => Roles::RENT_COURT,
+                Roles::RT_ASSISTANT => Roles::RENT_TRIBUNAL,
+                default => null,
+            };
 
-        return response()->json([
-            'districts_count' => District::count(),
-            'users_count' => User::count(),
-            'applications_count' => (clone $appQuery)->count(),
-            'applications_by_status' => $applicationsByStatus,
-        ]);
+            $types = match ($targetRole) {
+                Roles::RENT_AUTHORITY => [RentAuthorityFilingApplication::class, RentRevisionApplication::class, OtherChargesRevisionApplication::class, ValuerAppointmentApplication::class],
+                Roles::RENT_COURT => [RentCourtFilingApplication::class, RentCourtPossessionApplication::class, RentCourtAppealApplication::class],
+                Roles::RENT_TRIBUNAL => [RentTribunalAppealApplication::class],
+                default => [],
+            };
+
+            $pending = 0;
+            foreach ($types as $modelClass) {
+                $pending += $modelClass::where('district_id', $districtId)->where('status', Status::SUBMITTED)->count();
+            }
+            $stats['pending_review'] = $pending;
+        }
+
+        return response()->json($stats);
     }
 }

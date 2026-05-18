@@ -85,7 +85,7 @@ class AuthController extends Controller
         }
         if (
             !$user->approved_at &&
-            $user->role !== User::ROLE_SYSTEM_ADMIN &&
+            $user->role !== User::ROLE_SUPER_ADMIN &&
             $user->role !== 'user'
         ) {
             Auth::guard('web')->logout();

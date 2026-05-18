@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\RentAuthorityFilingApplication;
+use App\Http\Resources\ApplicationResource;
+use App\Constants\Roles;
+use App\Constants\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -18,7 +21,7 @@ class RentAuthorityFilingApplicationController extends Controller
 
         $data = $request->validate([
             // Header
-            'rent_authority_uid' => ['required', 'string', 'max:64'],
+            'tenancy_uin' => ['required', 'string', 'max:64'],
 
             // A. Applicant
             'applicant_name' => ['required', 'string', 'max:255'],
@@ -49,16 +52,20 @@ class RentAuthorityFilingApplicationController extends Controller
                 ->store('tenancy/signatures/rent-authority-filing', 'public');
         }
 
-        $application = RentAuthorityFilingApplication::create([
-            'application_no' => 'RAF-' . Str::uuid()->toString(),
-            'user_id' => $user->id,
-            'rent_authority_uid' => $data['rent_authority_uid'],
+        $tenancy = \App\Models\TenancyApplication::where('uid', $data['tenancy_uin'])->first();
+        if (!$tenancy) {
+            return response()->json(['message' => 'Invalid Tenancy UID'], 422);
+        }
 
+        $application = RentAuthorityFilingApplication::create([
+            'application_no' => RentAuthorityFilingApplication::generateApplicationNo($tenancy->district_id),
+            'user_id' => $user->id,
+            'district_id' => $tenancy->district_id,
+            'tenancy_uin' => $data['tenancy_uin'],
             'applicant_name' => $data['applicant_name'],
             'applicant_residential_address' => $data['applicant_residential_address'],
             'opposite_party_name' => $data['opposite_party_name'],
             'opposite_party_residential_address' => $data['opposite_party_residential_address'],
-
             'particulars_of_violation' => $data['particulars_of_violation'] ?? null,
             'jurisdiction_of_rent_authority' => $data['jurisdiction_of_rent_authority'] ?? null,
             'facts_of_case' => $data['facts_of_case'] ?? null,
@@ -67,10 +74,10 @@ class RentAuthorityFilingApplicationController extends Controller
             'relief_sought' => $data['relief_sought'] ?? null,
             'interim_order_sought' => $data['interim_order_sought'] ?? null,
             'list_of_enclosures' => $data['list_of_enclosures'] ?? null,
-
             'signature_name' => $data['signature_name'],
             'signature_image_path' => $signaturePath,
-            'status' => 'SUBMITTED',
+            'status' => Status::SUBMITTED,
+            'assigned_to_role' => Roles::RA_ASSISTANT,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -94,7 +101,7 @@ class RentAuthorityFilingApplicationController extends Controller
         }
 
         return response()->json([
-            'application' => $application,
+            'application' => new ApplicationResource($application),
         ]);
     }
 }

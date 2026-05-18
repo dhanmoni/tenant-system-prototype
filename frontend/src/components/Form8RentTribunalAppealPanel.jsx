@@ -7,7 +7,7 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta }) {
 	const [success, setSuccess] = useState('')
 
 	const [rentTribunalAt, setRentTribunalAt] = useState('')
-	const [tenancyUniqueId, setTenancyUniqueId] = useState('')
+	const [tenancyUIN, setTenancyUIN] = useState('')
 
 	const [appellantName, setAppellantName] = useState('')
 	const [appellantResidentialAddress, setAppellantResidentialAddress] = useState('')
@@ -48,7 +48,7 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta }) {
 			const formData = new FormData()
 
 			formData.append('rent_tribunal_at', rentTribunalAt.trim())
-			formData.append('tenancy_unique_identification_number', tenancyUniqueId.trim())
+			formData.append('tenancy_uin', tenancyUIN.trim())
 
 			formData.append('appellant_name', appellantName.trim())
 			formData.append('appellant_residential_address', appellantResidentialAddress.trim())
@@ -124,11 +124,11 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta }) {
 					/>
 				</label>
 				<label>
-					<span className="label-text required">Tenancy UID (U.I. No.)</span>
+					<span className="label-text required">Tenancy UIN</span>
 					<input
 						type="text"
-						value={tenancyUniqueId}
-						onChange={(e) => setTenancyUniqueId(e.target.value)}
+						value={tenancyUIN}
+						onChange={(e) => setTenancyUIN(e.target.value)}
 						required
 					/>
 				</label>

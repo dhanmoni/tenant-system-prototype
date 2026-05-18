@@ -23,7 +23,7 @@ class RentCourtPossessionApplicationSeeder extends Seeder
                 'before_rent_court' => 'Before the Rent Court - Demo',
                 'applicant_name' => $tenantUser->name ?? 'Tenant Demo',
                 'applicant_residential_address' => 'Demo residential address, Assam',
-                'tenant_unique_identification_number' => 'UID-DEMO-001',
+                'tenancy_uin' => 'UID-DEMO-001',
                 'tenant_name' => 'Tenant Demo',
 
                 'jurisdiction_statement' => 'The applicant states that this matter is within the jurisdiction of the Rent Court.',

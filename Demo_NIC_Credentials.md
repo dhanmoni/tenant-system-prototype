@@ -27,15 +27,14 @@
            │  /dashboard   │
            └───────┬───────┘
                    │
-     ┌─────────────┼─────────────┐
-     │             │             │
-     ▼             ▼             ▼
-┌─────────┐  ┌──────────┐  ┌──────────┐
-│ Tenant  │  │ Staff    │  │ System   │
-│ Owner   │  │ (Director│  │ Admin    │
-│         │  │  AD, DH, │  │          │
-│         │  │  DA)     │  │ /admin   │
-└─────────┘  └──────────┘  └──────────┘
+      ┌─────────────┼─────────────┐
+      │             │             │
+      ▼             ▼             ▼
+ ┌─────────┐  ┌──────────┐  ┌──────────┐
+ │ User    │  │ Official │  │ System   │
+ │ (Tenant/│  │ (RA, RC,  │  │ Admin    │
+ │ Owner)  │  │ RT, DA)   │  │          │
+ └─────────┘  └──────────┘  └──────────┘
 ```
 
 ### Step-by-step flow
@@ -59,19 +58,19 @@
   - **Status** – List and view status of own submissions (Tenancy Certificate + all Assam Tenancy Rules forms).
     - UI shows **separate tables per category** and uses **icon “View details”** for form submissions.
     - For Property Manager initiated tenancy applications, join flow currently awaits **Landlord** as second-party confirmation.
-4. **Staff roles (Staff, Director, Assistant Director, District Head, District Assistant)**
+4. **Official roles (RA, RC, RT, Assistants, District Admin)**
   - **Dashboard** – **Statistics** (states, districts, users, applications), **charts** (overview bar chart, applications by status), and **quick actions** to open other panels. Logged-in user info + logout are shown in the **sidebar**.
-  - **Application Status** – View tenancy applications (scoped by your office / district / user, per backend rules).
-  - **State Management** – List/manage states.
-  - **District Management** – List/manage districts.
-  - **User Management** – View user list (Office user / User), open user detail to **update** or **delete** users (no create, approve, or block).
-5. **System admin only**
+  - **Inbox / Applications** – View and process applications assigned to your office / district.
+    - **Assistants** (RA/RC/RT Assistant) can pre-verify and forward applications.
+    - **Heads** (Rent Authority, Rent Court, Rent Tribunal) can make final decisions (Approve/Reject).
+  - **District Management** – List/manage districts (scoped by permissions).
+  - **User Management** – View user list, open user detail to **update** or **delete** users.
+5. **System admin only (Super Admin)**
   - Dashboard (with stats and quick actions), Application Status, State Management, District Management, plus:
   - **Office Management** – Office, Designation.
   - **Role Management** – List/manage roles.
-  - **User Management** – Office user, User (full CRUD, approve, block).
+  - **User Management** – Full CRUD, approve, block.
   - **User Activity Log** – View activity logs.
-  - **Admin (/admin)** – Admin-specific UI (if used).
 6. **Other routes**
   - **User detail (/users/:id)** – View/edit user (protected, by permission).
 7. **Accessibility (global)**
@@ -83,17 +82,18 @@
 ## Role-based access summary
 
 
-| Role                   | Dashboard (tenant) | Dashboard (staff) | Admin panel | Tenancy apply | Profile |
-| ---------------------- | ------------------ | ----------------- | ----------- | ------------- | ------- |
-| **user**       | ✅                  | ❌                 | ❌           | ✅             | ✅       |
-| **district_assistant** | ❌                  | ✅                 | ❌           | ❌             | ✅       |
-| **district_head**      | ❌                  | ✅                 | ❌           | ❌             | ✅       |
-| **assistant_director** | ❌                  | ✅                 | ❌           | ❌             | ✅       |
-| **director**           | ❌                  | ✅                 | ❌           | ❌             | ✅       |
-| **system_admin**       | ❌                  | ✅                 | ✅           | ❌             | ✅       |
+| Role               | Dashboard (user) | Dashboard (official) | Admin panel | Application Management |
+| ------------------ | ---------------- | -------------------- | ----------- | ---------------------- |
+| **user**           | ✅                | ❌                    | ❌           | ❌ (View Own)           |
+| **ra_assistant**   | ❌                | ✅                    | ❌           | ✅ (Verify/Forward)     |
+| **rc_assistant**   | ❌                | ✅                    | ❌           | ✅ (Verify/Forward)     |
+| **rt_assistant**   | ❌                | ✅                    | ❌           | ✅ (Verify/Forward)     |
+| **rent_authority** | ❌                | ✅                    | ❌           | ✅ (Approve/Reject)     |
+| **rent_court**     | ❌                | ✅                    | ❌           | ✅ (Approve/Reject)     |
+| **rent_tribunal**  | ❌                | ✅                    | ❌           | ✅ (Approve/Reject)     |
+| **district_admin** | ❌                | ✅                    | ✅           | ✅ (District Level)     |
+| **super_admin**    | ❌                | ✅                    | ✅           | ✅ (Global Access)      |
 
-
-*The demo account **[staff@nic.in](mailto:staff@nic.in)** uses the same staff dashboard as above; in the seed file it is assigned the **Assistant Director** role (separate login from `assistant.director@nic.in`).*
 
 ---
 
@@ -102,70 +102,36 @@
 **Sign-in:** use **phone number** + **OTP** (API: `POST /api/login` with `phone` and `otp`).
 For now, OTP is a **demo value**: `123456`.
 
-Note: this prototype also keeps a **password fallback** for backward compatibility.
+Note: this prototype also keeps a **password fallback** (`password`) for backward compatibility.
 
-### Staff dashboard
+### Official & Admin dashboard
 
-To use the **staff dashboard** (Staff, Director, Assistant Director, District Head, District Assistant), log in with:
-
-
-| Role               | Phone (use to log in) | Email (reference only)                                        | OTP      |
-| ------------------ | --------------------- | ------------------------------------------------------------- | -------- |
-| Staff              | `9111111110`          | [staff@nic.in](mailto:staff@nic.in)                           | `123456` |
-| Director           | `9888888888`          | [director@nic.in](mailto:director@nic.in)                     | `123456` |
-| Assistant Director | `9777777777`          | [assistant.director@nic.in](mailto:assistant.director@nic.in) | `123456` |
-| District Head      | `9666666666`          | [district.head@nic.in](mailto:district.head@nic.in)           | `123456` |
-| District Assistant | `9555555555`          | [district.assistant@nic.in](mailto:district.assistant@nic.in) | `123456` |
+To use the **official dashboard**, log in with:
 
 
-The staff dashboard shows your **staff email** and role, **stat cards and charts** (applications by status, etc.), and **Application Status**, **State Management**, **District Management**, and **User Management** (view, update, delete users).
+| Role                  | Phone (to log in) | Email (reference only)          | OTP      |
+| --------------------- | ----------------- | ------------------------------- | -------- |
+| **Super Admin**       | `9999999999`      | `admin@nic.in`                  | `123456` |
+| **District Admin**    | `9888888888`      | `district.admin@nic.in`         | `123456` |
+| **Rent Authority**    | `9777777777`      | `rent.authority@nic.in`         | `123456` |
+| **Rent Court**        | `9666666666`      | `rent.court@nic.in`             | `123456` |
+| **Rent Tribunal**     | `9555555555`      | `rent.tribunal@nic.in`          | `123456` |
+| **RA Assistant**      | `9111111110`      | `ra.assistant@nic.in`           | `123456` |
+| **RC Assistant**      | `9111111111`      | `rc.assistant@nic.in`           | `123456` |
+| **RT Assistant**      | `9111111112`      | `rt.assistant@nic.in`           | `123456` |
 
-### All roles
+
+The official dashboard shows your **official email** and role, **stat cards and charts** (applications by status, etc.), and **Application Inbox** (Forward/Reject/Approve actions).
+
+### User role
 
 
-| Role                | Phone (use to log in) | Email (reference only)                                        | OTP      |
-| ------------------- | --------------------- | ------------------------------------------------------------- | -------- |
-| System Admin        | `9999999999`          | [admin@nic.in](mailto:admin@nic.in)                           | `123456` |
-| Staff               | `9111111110`          | [staff@nic.in](mailto:staff@nic.in)                           | `123456` |
-| Director            | `9888888888`          | [director@nic.in](mailto:director@nic.in)                     | `123456` |
-| Assistant Director  | `9777777777`          | [assistant.director@nic.in](mailto:assistant.director@nic.in) | `123456` |
-| District Head       | `9666666666`          | [district.head@nic.in](mailto:district.head@nic.in)           | `123456` |
-| District Assistant  | `9555555555`          | [district.assistant@nic.in](mailto:district.assistant@nic.in) | `123456` |
-| user        | `9444444444`          | [tenant@nic.in](mailto:tenant@nic.in)                         | `123456` |
-| Landlord / Owner    | `9222222221`          | [landlord@nic.in](mailto:landlord@nic.in)                     | `123456` |
-| User (user) | `9333333333`          | [user1@gmail.com](mailto:user1@gmail.com)                     | `123456` |
+| Role                  | Phone (to log in) | Email (reference only)          | OTP      |
+| --------------------- | ----------------- | ------------------------------- | -------- |
+| **General User**      | `9444444444`      | `tenant@nic.in`                 | `123456` |
 
 
 ---
-
-## Quick reference – login table
-
-
-| Role               | Phone        | OTP      |
-| ------------------ | ------------ | -------- |
-| System Admin       | `9999999999` | `123456` |
-| Staff              | `9111111110` | `123456` |
-| Director           | `9888888888` | `123456` |
-| Assistant Director | `9777777777` | `123456` |
-| District Head      | `9666666666` | `123456` |
-| District Assistant | `9555555555` | `123456` |
-| user       | `9444444444` | `123456` |
-| Landlord / Owner   | `9222222221` | `123456` |
-| User               | `9333333333` | `123456` |
-
-
----
-
-## API flow (simplified)
-
-- **Public:** `POST /api/register`, `POST /api/login`, `GET /api/public/states`, `GET /api/public/districts`, `GET /api/public/offices`, tenancy application submit/receipt/details (as per backend).
-- **Registration + OTP (prototype):** `POST /api/register` creates the account and requires OTP verification; then use `POST /api/login` with `{ phone, otp }` to log in.
-- **Authenticated (Sanctum):** `POST /api/logout`, `GET /api/user`, profile, tenancy “my” list and update.
-  - user status + form details:
-    - `GET /api/tenant-forms/my` (merged status list for Tenancy Certificate + Assam Tenancy Rules forms)
-    - `GET /api/*-applications/{id}` (show/view details for each form type)
-- **Staff + system admin (shared):** `GET /api/staff-dashboard-stats` (staff roles only), `GET/PUT/DELETE /api/users` (list, show, update, delete), `GET` offices/designations/roles (for user edit dropdowns), states/districts CRUD as configured in routes.
-- **System admin only:** users **create**, approve, block, activity logs, designations/roles/offices **create/update/delete**, `GET /api/dashboard-stats`.
 
 ## Database & seeding
 
@@ -176,14 +142,14 @@ cd backend
 php artisan migrate:fresh --seed
 ```
 
-Seeder order includes **states → districts → village/wards → offices → designations → users → tenancy applications**.  
+Seeder order includes **states → districts → village/wards → offices → designations → users → application data**.  
 **Users:** each demo user must have a **unique phone** (required by DB).  
-**Tenancy applications** may reference **village/ward**, joint-tenancy fields (`ref_code`, `uid`, etc.) per current migrations, and include a seeded example with **Property Manager** as initiator.
+**Applications:** Seeded data includes examples for Tenancy Certificates and various Rule forms (Form I to VI) distributed across different statuses.
 
-To reseed only users:
+---
 
-```bash
-php artisan db:seed --class=UserSeeder
-```
+## Technical Updates (May 2026)
 
-
+- **Role Migration:** Roles have been standardized to `super_admin`, `district_admin`, `rent_authority`, `rent_court`, `rent_tribunal`, `ra_assistant`, `rc_assistant`, `rt_assistant`, and `user`.
+- **Workflow Integration:** Service applications now support a workflow where Assistants can forward applications to their respective Heads, and Heads can Approve/Reject.
+- **District Scoping:** Official dashboards are now strictly scoped to the district assigned to the user. Super Admin remains global.

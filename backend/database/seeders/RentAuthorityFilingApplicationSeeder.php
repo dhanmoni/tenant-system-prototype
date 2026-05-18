@@ -20,7 +20,7 @@ class RentAuthorityFilingApplicationSeeder extends Seeder
             ['application_no' => 'RAF-' . now()->format('Ym') . '-000001'],
             [
                 'user_id' => $tenantUser->id,
-                'rent_authority_uid' => 'RAUID-' . now()->format('Ymd') . '-010',
+                'tenancy_uin' => 'RAUID-' . now()->format('Ymd') . '-010',
 
                 'applicant_name' => $tenantUser->name ?? 'Tenant Demo',
                 'applicant_residential_address' => 'Residential address of applicant, Assam (demo)',

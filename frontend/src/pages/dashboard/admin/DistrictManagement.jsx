@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
+import { ROLES } from '../../../constants/roles'
 
-function DistrictManagement() {
+function DistrictManagement({ user }) {
+	const navigate = useNavigate()
 	const [districts, setDistricts] = useState([])
 	const [districtName, setDistrictName] = useState('')
 	const [districtEditId, setDistrictEditId] = useState(null)
@@ -12,8 +15,12 @@ function DistrictManagement() {
 	const [districtTotalPages, setDistrictTotalPages] = useState(1)
 
 	useEffect(() => {
+		if (user?.role !== ROLES.SUPER_ADMIN) {
+			navigate('/dashboard')
+			return
+		}
 		loadDistricts(1)
-	}, [])
+	}, [user?.role])
 
 	const loadDistricts = async (page = 1) => {
 		try {

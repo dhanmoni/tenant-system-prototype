@@ -11,7 +11,7 @@ class DistrictController extends Controller
 {
     public function index(Request $request)
     {
-        $query = District::with(['state', 'assistantDirector', 'districtHead'])
+        $query = District::with(['state', 'rentAuthority', 'rentCourt', 'rentTribunal', 'districtAdmin'])
             ->orderBy('name');
 
         if ($request->boolean('all')) {
@@ -33,8 +33,10 @@ class DistrictController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z\\s]+$/', 'unique:districts,name'],
             'state_id' => ['nullable', 'integer', 'exists:states,id'],
-            'assistant_director_id' => ['nullable', 'integer', 'exists:users,id'],
-            'district_head_id' => ['nullable', 'integer', 'exists:users,id'],
+            'assistant_director_id' => ['nullable', 'integer', 'exists:users,id'], // Rent Authority
+            'district_head_id' => ['nullable', 'integer', 'exists:users,id'],      // Rent Court
+            'rent_tribunal_id' => ['nullable', 'integer', 'exists:users,id'],
+            'district_admin_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
         if (empty($data['state_id'])) {
@@ -51,11 +53,15 @@ class DistrictController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z\\s]+$/', 'unique:districts,name,' . $district->id],
             'state_id' => ['nullable', 'integer', 'exists:states,id'],
+            'assistant_director_id' => ['nullable', 'integer', 'exists:users,id'],
+            'district_head_id' => ['nullable', 'integer', 'exists:users,id'],
+            'rent_tribunal_id' => ['nullable', 'integer', 'exists:users,id'],
+            'district_admin_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
         $district->update($data);
 
-        return response()->json(['district' => $district->load('state')]);
+        return response()->json(['district' => $district->load(['state', 'rentAuthority', 'rentCourt', 'rentTribunal', 'districtAdmin'])]);
     }
 
     public function destroy(District $district)
@@ -65,40 +71,28 @@ class DistrictController extends Controller
         return response()->json(['message' => 'District deleted']);
     }
 
-    public function assignAssistantDirector(Request $request, District $district)
+    public function assignAdmin(Request $request, District $district)
     {
         $data = $request->validate([
-            'assistant_director_id' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'type' => ['required', 'string', 'in:rent_authority,rent_court,rent_tribunal,district_admin'],
         ]);
 
-        $assistantDirector = User::findOrFail($data['assistant_director_id']);
-        if ($assistantDirector->role !== User::ROLE_ASSISTANT_DIRECTOR) {
-            return response()->json(['message' => 'User is not an assistant director'], 422);
-        }
+        $user = User::findOrFail($data['user_id']);
+        
+        $column = match($data['type']) {
+            'rent_authority' => 'assistant_director_id',
+            'rent_court' => 'district_head_id',
+            'rent_tribunal' => 'rent_tribunal_id',
+            'district_admin' => 'district_admin_id',
+        };
 
-        $district->assistant_director_id = $assistantDirector->id;
+        $district->{$column} = $user->id;
         $district->save();
 
-        return response()->json(['district' => $district]);
-    }
+        $user->district_id = $district->id;
+        $user->save();
 
-    public function assignDistrictHead(Request $request, District $district)
-    {
-        $data = $request->validate([
-            'district_head_id' => ['required', 'integer', 'exists:users,id'],
-        ]);
-
-        $districtHead = User::findOrFail($data['district_head_id']);
-        if ($districtHead->role !== User::ROLE_DISTRICT_HEAD) {
-            return response()->json(['message' => 'User is not a district head'], 422);
-        }
-
-        $district->district_head_id = $districtHead->id;
-        $district->save();
-
-        $districtHead->district_id = $district->id;
-        $districtHead->save();
-
-        return response()->json(['district' => $district]);
+        return response()->json(['district' => $district->load(['rentAuthority', 'rentCourt', 'rentTribunal', 'districtAdmin'])]);
     }
 }

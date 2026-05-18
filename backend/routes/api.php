@@ -22,6 +22,14 @@ use App\Http\Controllers\TenantFormsStatusController;
 use App\Http\Controllers\UserActivityLogController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\VillageWardController;
+use App\Http\Controllers\ApplicationWorkflowController;
+use App\Constants\Roles;
+
+$allStaffRoles = implode(',', Roles::allStaff());
+$principalRoles = implode(',', Roles::principals());
+$adminRoles = implode(',', Roles::allAdmin());
+$managementRoles = implode(',', Roles::allManagement());
+$allAdminStaffRoles = implode(',', array_merge(Roles::allAdmin(), Roles::allStaff()));
 
 /*
 |--------------------------------------------------------------------------
@@ -38,8 +46,8 @@ Route::get('/public/village-wards', [VillageWardController::class, 'publicIndex'
 Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplicationController::class, 'receipt']);
 Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
 
-Route::middleware('auth:sanctum')->group(function () {
-    // Joint tenancy routes (must be before {tenancyApplication} parameter routes)
+Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles) {
+    // Joint tenancy routes
     Route::get('/tenancy-applications/lookup', [TenancyApplicationController::class, 'lookupByRefCode']);
     Route::post('/tenancy-applications/join', [TenancyApplicationController::class, 'joinApplication']);
     Route::post('/tenancy-applications/check-ref-code', [TenancyApplicationController::class, 'checkRefCode']);
@@ -48,10 +56,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);
     Route::get('/tenancy-applications/{tenancyApplication}/acknowledgement', [TenancyApplicationController::class, 'downloadAcknowledgement']);
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
-});
 
-// Tenant Forms (Assam Tenancy Rules draft) - user only
-Route::middleware('auth:sanctum')->group(function () {
+    // Tenant Forms (Assam Tenancy Rules draft) - user only
     Route::middleware('role:user')->group(function () {
         Route::get('/tenant-forms/my', [TenantFormsStatusController::class, 'my']);
         Route::post('/rent-revision-applications', [RentRevisionApplicationController::class, 'store']);
@@ -71,59 +77,50 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/rent-tribunal-appeal-applications', [RentTribunalAppealApplicationController::class, 'store']);
         Route::get('/rent-tribunal-appeal-applications/{application}', [RentTribunalAppealApplicationController::class, 'show']);
     });
-});
 
-Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 
-    // State and District: allowed for system_admin and staff
-    Route::middleware('role:system_admin,director,assistant_director,district_head,district_assistant')->group(function () {
-        // Route::get('/states', [StateController::class, 'index']);
-        // Route::post('/states', [StateController::class, 'store']);
-        // Route::put('/states/{state}', [StateController::class, 'update']);
-        // Route::delete('/states/{state}', [StateController::class, 'destroy']);
-        Route::get('/districts', [DistrictController::class, 'index']);
-        Route::post('/districts', [DistrictController::class, 'store']);
-        Route::put('/districts/{district}', [DistrictController::class, 'update']);
-        Route::delete('/districts/{district}', [DistrictController::class, 'destroy']);
-        Route::post('/districts/{district}/assign-assistant-director', [DistrictController::class, 'assignAssistantDirector']);
-        Route::post('/districts/{district}/assign-district-head', [DistrictController::class, 'assignDistrictHead']);
+    // Service Application Workflow
+    Route::middleware("role:$allAdminStaffRoles")->group(function () {
+        Route::get('/admin/applications/inbox', [ApplicationWorkflowController::class, 'inbox']);
+        Route::get('/admin/applications/principal-inbox', [ApplicationWorkflowController::class, 'principalInbox']);
+        Route::get('/admin/applications/{applicationNo}', [ApplicationWorkflowController::class, 'showByApplicationNo']);
+        Route::get('/admin/applications/{type}/{id}', [ApplicationWorkflowController::class, 'show']);
+        Route::post('/admin/applications/{type}/{id}/forward', [ApplicationWorkflowController::class, 'forward']);
+        Route::post('/admin/applications/{type}/{id}/reject', [ApplicationWorkflowController::class, 'reject']);
+        Route::post('/admin/applications/{type}/{id}/approve', [ApplicationWorkflowController::class, 'approve']);
     });
 
-    // User Management + read-only offices/designations/roles for staff and admin
-    Route::middleware('role:system_admin,director,assistant_director,district_head,district_assistant')->group(function () {
+    Route::middleware("role:$adminRoles")->group(function () {
+        Route::get('/admin/tenancy-records', [TenancyApplicationController::class, 'adminIndex']);
+        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
+    });
+
+    // Admin user management
+    Route::middleware("role:$managementRoles")->group(function () {
         Route::get('/users', [UserManagementController::class, 'index']);
         Route::get('/users/{user}', [UserManagementController::class, 'show']);
+        Route::post('/users', [UserManagementController::class, 'store']);
         Route::put('/users/{user}', [UserManagementController::class, 'update']);
         Route::delete('/users/{user}', [UserManagementController::class, 'destroy']);
-        Route::get('/offices', [OfficeController::class, 'index']);
-        Route::get('/designations', [DesignationController::class, 'index']);
-        Route::get('/roles', [RoleController::class, 'index']);
+    });
+
+    // Super Admin only routes
+    Route::middleware('role:super_admin')->group(function () {
+        Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
+        Route::get('/activity-logs', [UserActivityLogController::class, 'index']);
+        Route::apiResource('districts', DistrictController::class);
+        Route::apiResource('offices', OfficeController::class);
+        Route::apiResource('designations', DesignationController::class);
+        Route::apiResource('roles', RoleController::class);
     });
 
     // Staff dashboard statistics
-    Route::middleware('role:director,assistant_director,district_head,district_assistant')->group(function () {
+    Route::middleware("role:$managementRoles")->group(function () {
         Route::get('/staff-dashboard-stats', [DashboardController::class, 'staffStats']);
-    });
-
-    Route::middleware('role:system_admin')->group(function () {
-        Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
-        Route::post('/users', [UserManagementController::class, 'store']);
-        Route::post('/users/{user}/approve', [UserManagementController::class, 'approve']);
-        Route::post('/users/{user}/toggle-block', [UserManagementController::class, 'toggleBlock']);
-        Route::get('/activity-logs', [UserActivityLogController::class, 'index']);
-        Route::post('/designations', [DesignationController::class, 'store']);
-        Route::put('/designations/{designation}', [DesignationController::class, 'update']);
-        Route::delete('/designations/{designation}', [DesignationController::class, 'destroy']);
-        Route::post('/roles', [RoleController::class, 'store']);
-        Route::put('/roles/{role}', [RoleController::class, 'update']);
-        Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
-        Route::post('/offices', [OfficeController::class, 'store']);
-        Route::put('/offices/{office}', [OfficeController::class, 'update']);
-        Route::delete('/offices/{office}', [OfficeController::class, 'destroy']);
     });
 });
 

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\District;
 use App\Models\User;
+use App\Http\Resources\UserResource;
+use App\Constants\Roles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -11,18 +13,41 @@ use Illuminate\Validation\Rule;
 
 class UserManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['office', 'designation'])
-            ->orderBy('name')
-            ->get();
+        $currentUser = $request->user();
+        $query = User::with(['office', 'designation', 'district']);
 
-        return response()->json(['users' => $users]);
+        if ($currentUser->role === Roles::SUPER_ADMIN) {
+            // No additional filters for super admin
+        } elseif ($currentUser->role === Roles::DISTRICT_ADMIN) {
+            // District admin sees all staff in their district
+            $query->where('district_id', $currentUser->district_id)
+                  ->where('role', '!=', Roles::USER);
+        } elseif (in_array($currentUser->role, Roles::principals())) {
+            // Heads see only their respective assistants in their district
+            $assistantRole = match($currentUser->role) {
+                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
+                Roles::RENT_COURT => Roles::RC_ASSISTANT,
+                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
+                default => 'none',
+            };
+            $query->where('district_id', $currentUser->district_id)
+                  ->where('role', $assistantRole);
+        } else {
+            // Other roles (like assistants) should not see the user list generally,
+            // but if they access it, they see nothing.
+            return response()->json(['users' => []]);
+        }
+
+        $users = $query->orderBy('name')->get();
+
+        return response()->json(['users' => UserResource::collection($users)]);
     }
 
     public function show(User $user)
     {
-        return response()->json(['user' => $user->load(['office', 'designation'])]);
+        return response()->json(['user' => new UserResource($user->load(['office', 'designation']))]);
     }
 
     public function store(Request $request)
@@ -38,18 +63,35 @@ class UserManagementController extends Controller
             'reports_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
+        $user = $request->user();
         $role = $data['role'];
-        if (in_array($role, [User::ROLE_DISTRICT_HEAD, User::ROLE_DISTRICT_ASSISTANT], true) && empty($data['district_id'])) {
-            return response()->json(['message' => 'district_id is required for district roles'], 422);
-        }
-        if ($role === User::ROLE_DISTRICT_HEAD && empty($data['reports_to_user_id'])) {
-            return response()->json(['message' => 'reports_to_user_id is required for district heads'], 422);
-        }
-        if ($role === User::ROLE_DISTRICT_ASSISTANT && empty($data['reports_to_user_id'])) {
-            return response()->json(['message' => 'reports_to_user_id is required for district assistants'], 422);
+
+        // Permission checks
+        if ($user->role === Roles::SUPER_ADMIN) {
+            // Super admin can create anyone
+        } elseif ($user->role === Roles::DISTRICT_ADMIN) {
+            // District admin can create assistants for their district
+            if (!in_array($role, Roles::assistants())) {
+                return response()->json(['message' => 'Unauthorized role creation'], 403);
+            }
+            $data['district_id'] = $user->district_id;
+        } elseif (in_array($user->role, Roles::principals())) {
+            // Principals can create their own assistants
+            $allowedRole = match($user->role) {
+                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
+                Roles::RENT_COURT => Roles::RC_ASSISTANT,
+                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
+                default => null,
+            };
+            if ($role !== $allowedRole) {
+                return response()->json(['message' => 'Unauthorized assistant role'], 403);
+            }
+            $data['district_id'] = $user->district_id;
+        } else {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $user = User::create([
+        $newUser = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'role' => $role,
@@ -57,18 +99,28 @@ class UserManagementController extends Controller
             'office_id' => $data['office_id'] ?? null,
             'designation_id' => $data['designation_id'] ?? null,
             'phone' => $data['phone'] ?? null,
-            'reports_to_user_id' => $data['reports_to_user_id'] ?? null,
+            'reports_to_user_id' => $data['reports_to_user_id'] ?? $user->id,
             'password' => Hash::make('Test@123'),
             'email_verified_at' => now(),
+            'approved_at' => now(), // Auto-approve admin created users
             'remember_token' => Str::random(60),
         ]);
 
-        if ($role === User::ROLE_DISTRICT_HEAD && !empty($data['district_id'])) {
-            District::where('id', $data['district_id'])
-                ->update(['district_head_id' => $user->id]);
+        // Update district principal IDs
+        if (!empty($data['district_id'])) {
+            $districtUpdate = match($role) {
+                Roles::DISTRICT_ADMIN => ['district_admin_id' => $newUser->id],
+                Roles::RENT_AUTHORITY => ['assistant_director_id' => $newUser->id],
+                Roles::RENT_COURT => ['district_head_id' => $newUser->id],
+                Roles::RENT_TRIBUNAL => ['rent_tribunal_id' => $newUser->id],
+                default => [],
+            };
+            if (!empty($districtUpdate)) {
+                District::where('id', $data['district_id'])->update($districtUpdate);
+            }
         }
 
-        return response()->json(['user' => $user], 201);
+        return response()->json(['user' => $newUser], 201);
     }
 
     public function update(Request $request, User $user)

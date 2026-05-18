@@ -7,6 +7,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { Icon } from './Icons'
 
 import { tenantServiceGroups } from '../../data/tenantServices'
+import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, ADMIN_ROLES } from '../../constants/roles'
 
 
 
@@ -321,7 +322,14 @@ function Sidebar({ user, onLogout }) {
 					>
 						<img className="dashboard-menu-user-photo" src={sidebarPhotoUrl} alt="" />
 						<div className="dashboard-menu-user-text">
-							<div className="dashboard-menu-user-name">{user?.name || 'User'}</div>
+							<div className="dashboard-menu-user-name">
+								{user?.name || 'User'}
+								{user?.role && user.role !== ROLES.USER && (
+									<span className="sidebar-role-badge">
+										{user.role.replace('_', ' ').toUpperCase()}
+									</span>
+								)}
+							</div>
 							{user?.email ? (
 								<div className="dashboard-user-dropdown-hint" title={user.email}>
 									{user.email}
@@ -394,7 +402,7 @@ function Sidebar({ user, onLogout }) {
 
 
 
-				{user?.role === 'user' ? (
+				{user?.role === ROLES.USER ? (
 
 					<>
 
@@ -655,294 +663,85 @@ function Sidebar({ user, onLogout }) {
 				) : null}
 
 
-
-				{user?.role !== 'user' && user?.role !== 'system_admin' ? (
-
+				{user?.role !== ROLES.USER && (
 					<>
+						<div className="dashboard-sidebar-divider">Official Portal</div>
 
-						<NavLink
+						{/* Super Admin & District Admin: User/Staff View */}
+						{ADMIN_ROLES.includes(user.role) && (
+							<NavLink
+								to="/dashboard/admin/users"
+								className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
+								title={user.role === ROLES.SUPER_ADMIN ? "User Management" : "Staff Directory"}
+							>
+								<Icon name="users" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">
+									{user.role === ROLES.SUPER_ADMIN ? "User Management" : "Staff Directory"}
+								</span>
+							</NavLink>
+						)}
 
-							to="/dashboard/status"
+						{/* RA/RC/RT Heads: Assistant Management */}
+						{PRINCIPAL_ROLES.includes(user.role) && (
+							<NavLink
+								to="/dashboard/admin/users"
+								className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
+								title="Manage Assistants"
+							>
+								<Icon name="users" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">Manage Assistants</span>
+							</NavLink>
+						)}
 
-							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
+						{/* Assistants: Only Inbox */}
+						{ASSISTANT_ROLES.includes(user.role) && (
+							<NavLink
+								to="/dashboard/admin/inbox"
+								className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
+								title="Application Inbox"
+							>
+								<Icon name="list" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">Application Inbox</span>
+							</NavLink>
+						)}
 
-							title="Application Status"
+						{/* Heads & District Admins: View Applications */}
+						{[...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN].includes(user.role) && (
+							<NavLink
+								to="/dashboard/admin/applications"
+								className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
+								title="View Applications"
+							>
+								<Icon name="eye" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">View Applications</span>
+							</NavLink>
+						)}
 
-						>
+						{/* Super Admin & District Admin: Tenancy Records */}
+						{ADMIN_ROLES.includes(user.role) && (
+							<NavLink
+								to="/dashboard/admin/tenancy"
+								className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
+								title="Tenancy Records"
+							>
+								<Icon name="file" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">Tenancy Records</span>
+							</NavLink>
+						)}
 
-							<Icon name="status" className="dashboard-link-icon" />
-
-							<span className="dashboard-link-text">Application Status</span>
-
-						</NavLink>
-
-
-
-						<NavLink
-
-							to="/dashboard/admin/district"
-
-							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-							title="District Management"
-
-						>
-
-							<Icon name="building" className="dashboard-link-icon" />
-
-							<span className="dashboard-link-text">District Management</span>
-
-						</NavLink>
-
-						<a
-
-							className={`dashboard-link dashboard-link-expandable ${userMenuOpen ? 'menu-open' : ''}`}
-
-							href="#staff-user-menu"
-
-							onClick={(e) => {
-
-								e.preventDefault()
-
-								setUserMenuOpen((prev) => !prev)
-
-							}}
-
-							title="User Management"
-
-						>
-
-							<div className="dashboard-link-main">
-
-								<Icon name="user" className="dashboard-link-icon" />
-
-								<span className="dashboard-link-text">User Management</span>
-
-							</div>
-
-							<Icon name="chevron" className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} />
-
-						</a>
-
-						{userMenuOpen ? (
-
-							<div className="dashboard-submenu">
-
-								<NavLink
-
-									to="/dashboard/admin/users?mode=office"
-
-									className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-								>
-
-									Office user
-
-								</NavLink>
-
-								<NavLink
-
-									to="/dashboard/admin/users?mode=tenant"
-
-									className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-								>
-
-									User
-
-								</NavLink>
-
-							</div>
-
-						) : null}
-
+						{/* Super Admin Only: Districts */}
+						{user.role === ROLES.SUPER_ADMIN && (
+							<NavLink
+								to="/dashboard/admin/districts"
+								className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
+								title="Districts"
+							>
+								<Icon name="map" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">Districts</span>
+							</NavLink>
+						)}
 					</>
-
-				) : null}
-
-
-
-				{user?.role === 'system_admin' ? (
-
-					<>
-
-
-
-						<NavLink
-
-							to="/dashboard/admin/district"
-
-							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-							title="District Management"
-
-						>
-
-							<Icon name="building" className="dashboard-link-icon" />
-
-							<span className="dashboard-link-text">District Management</span>
-
-						</NavLink>
-
-						<a
-
-							className={`dashboard-link dashboard-link-expandable ${officeMenuOpen ? 'menu-open' : ''}`}
-
-							href="#office-menu"
-
-							onClick={(e) => {
-
-								e.preventDefault()
-
-								setOfficeMenuOpen((prev) => !prev)
-
-							}}
-
-							title="Office Management"
-
-						>
-
-							<div className="dashboard-link-main">
-
-								<Icon name="building" className="dashboard-link-icon" />
-
-								<span className="dashboard-link-text">Office Management</span>
-
-							</div>
-
-							<Icon name="chevron" className={`dashboard-link-chevron ${officeMenuOpen ? 'open' : ''}`} />
-
-						</a>
-
-						{officeMenuOpen ? (
-
-							<div className="dashboard-submenu">
-
-								<NavLink
-
-									to="/dashboard/admin/office"
-
-									className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-								>
-
-									Office
-
-								</NavLink>
-
-								<NavLink
-
-									to="/dashboard/admin/designation"
-
-									className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-								>
-
-									Designation
-
-								</NavLink>
-
-							</div>
-
-						) : null}
-
-						<NavLink
-
-							to="/dashboard/admin/role"
-
-							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-							title="Role Management"
-
-						>
-
-							<Icon name="settings" className="dashboard-link-icon" />
-
-							<span className="dashboard-link-text">Role Management</span>
-
-						</NavLink>
-
-						<a
-
-							className={`dashboard-link dashboard-link-expandable ${userMenuOpen ? 'menu-open' : ''}`}
-
-							href="#user-menu"
-
-							onClick={(e) => {
-
-								e.preventDefault()
-
-								setUserMenuOpen((prev) => !prev)
-
-							}}
-
-							title="User Management"
-
-						>
-
-							<div className="dashboard-link-main">
-
-								<Icon name="user" className="dashboard-link-icon" />
-
-								<span className="dashboard-link-text">User Management</span>
-
-							</div>
-
-							<Icon name="chevron" className={`dashboard-link-chevron ${userMenuOpen ? 'open' : ''}`} />
-
-						</a>
-
-						{userMenuOpen ? (
-
-							<div className="dashboard-submenu">
-
-								<NavLink
-
-									to="/dashboard/admin/users?mode=office"
-
-									className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-								>
-
-									Office user
-
-								</NavLink>
-
-								<NavLink
-
-									to="/dashboard/admin/users?mode=tenant"
-
-									className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-								>
-
-									User
-
-								</NavLink>
-
-							</div>
-
-						) : null}
-
-						<NavLink
-
-							to="/dashboard/admin/activity-log"
-
-							className={({ isActive }) => `dashboard-link ${isActive ? 'active' : ''}`}
-
-							title="User Activity Log"
-
-						>
-
-							<Icon name="activity" className="dashboard-link-icon" />
-
-							<span className="dashboard-link-text">User Activity Log</span>
-
-						</NavLink>
-
-					</>
-
-				) : null}
+				)}
 
 			</nav>
 

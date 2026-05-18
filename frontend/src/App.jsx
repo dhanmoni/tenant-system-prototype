@@ -20,6 +20,9 @@ import UserManagement from './pages/dashboard/admin/UserManagement'
 import RoleManagement from './pages/dashboard/admin/RoleManagement'
 import DesignationManagement from './pages/dashboard/admin/DesignationManagement'
 import ActivityLog from './pages/dashboard/admin/ActivityLog'
+import ApplicationList from './pages/dashboard/admin/ApplicationList'
+import AdminApplicationDetails from './pages/dashboard/admin/AdminApplicationDetails'
+import TenancyRecords from './pages/dashboard/admin/TenancyRecords'
 
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -452,13 +455,12 @@ function App() {
 						<Route path="services" element={<TenantServices />} />
 						<Route path=":formType" element={<FormPortal />} />
 						{/* Admin Routes */}
-						{/* <Route path="admin/state" element={<StateManagement />} /> */}
-						<Route path="admin/district" element={<DistrictManagement />} />
-						<Route path="admin/office" element={<OfficeManagement />} />
-						<Route path="admin/users" element={<UserManagement />} />
-						<Route path="admin/role" element={<RoleManagement />} />
-						<Route path="admin/designation" element={<DesignationManagement />} />
-						<Route path="admin/activity-log" element={<ActivityLog />} />
+						<Route path="admin/users" element={<UserManagement user={user} />} />
+						<Route path="admin/inbox" element={<ApplicationList user={user} />} />
+						<Route path="admin/applications" element={<ApplicationList user={user} />} />
+						<Route path="admin/applications/:applicationNo" element={<AdminApplicationDetails user={user} />} />
+						<Route path="admin/tenancy" element={<TenancyRecords user={user} />} />
+						<Route path="admin/districts" element={<DistrictManagement user={user} />} />
 						<Route path="join" element={<JoinApplication user={user} />} />
 					</Route>
 					<Route

@@ -61,6 +61,7 @@ class TenancyApplicationSeeder extends Seeder
                 'property_furniture_description' => 'Fully furnished',
                 'property_tenancy_duration' => '11 months',
                 'uid' => TenancyApplication::generateUid($villageWard, $office->id),
+                'district_id' => $district->id,
                 'movement_history' => [['status' => 'COMPLETED', 'current_with' => 'Rent Authority', 'moved_at' => now()->toDateTimeString()]],
             ]
         );
@@ -100,6 +101,7 @@ class TenancyApplicationSeeder extends Seeder
                 'property_furniture_description' => 'Semi furnished',
                 'property_tenancy_duration' => '11 months',
                 'uid' => TenancyApplication::generateUid($villageWard, $office->id),
+                'district_id' => $district->id,
                 'movement_history' => [['status' => 'PARTIAL', 'current_with' => null, 'moved_at' => now()->toDateTimeString()]],
             ]
         );
@@ -144,6 +146,7 @@ class TenancyApplicationSeeder extends Seeder
                 'property_furniture_description' => 'Semi furnished',
                 'property_tenancy_duration' => '11 months',
                 'uid' => TenancyApplication::generateUid($villageWard, $office->id),
+                'district_id' => $district->id,
                 'movement_history' => [['status' => 'PARTIAL', 'current_with' => null, 'moved_at' => now()->toDateTimeString()]],
             ]
         );
@@ -184,6 +187,7 @@ class TenancyApplicationSeeder extends Seeder
                     'property_furniture_description' => '',
                     'property_tenancy_duration' => '11 months',
                     'uid' => TenancyApplication::generateUid($villageWard, $office->id),
+                    'district_id' => $district->id,
                     'movement_history' => [['status' => 'COMPLETED', 'current_with' => 'NIC Office', 'moved_at' => now()->toDateTimeString()]],
                 ]
             );
