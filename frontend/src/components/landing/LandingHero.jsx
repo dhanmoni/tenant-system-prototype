@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Pause, Play } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import heroBanner from '../../assets/img/banner.png'
 import heroKeysSlide from '../../assets/img/img7.png'
@@ -23,6 +23,7 @@ const SLIDE_INTERVAL_MS = 6000
 function LandingHero({ navSlot }) {
 	const heroRef = useRef(null)
 	const [activeIndex, setActiveIndex] = useState(0)
+	const [isPaused, setIsPaused] = useState(false)
 	const reduceMotion = useReducedMotion()
 	const { scrollYProgress } = useScroll({
 		target: heroRef,
@@ -33,12 +34,12 @@ function LandingHero({ navSlot }) {
 	)
 
 	useEffect(() => {
-		if (reduceMotion || heroSlides.length <= 1) return undefined
+		if (reduceMotion || heroSlides.length <= 1 || isPaused) return undefined
 		const timer = setInterval(() => {
 			setActiveIndex((prev) => (prev + 1) % heroSlides.length)
 		}, SLIDE_INTERVAL_MS)
 		return () => clearInterval(timer)
-	}, [reduceMotion])
+	}, [reduceMotion, isPaused])
 
 	const scrollToContent = () => {
 		document.getElementById('portal-content')?.scrollIntoView({ behavior: 'smooth' })
@@ -131,10 +132,19 @@ function LandingHero({ navSlot }) {
 			</div>
 
 			<div
-				className="landing-hero-carousel-nav absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 gap-2 sm:bottom-28"
-				role="tablist"
-				aria-label="Hero background slides"
+				className="landing-hero-carousel-nav absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 sm:bottom-28"
 			>
+				<button
+					type="button"
+					className="landing-hero-carousel-pause"
+					onClick={() => setIsPaused((p) => !p)}
+					aria-pressed={isPaused}
+					aria-label={isPaused ? 'Play hero slideshow' : 'Pause hero slideshow'}
+					title={isPaused ? 'Play slideshow' : 'Pause slideshow'}
+				>
+					{isPaused ? <Play className="h-4 w-4" aria-hidden /> : <Pause className="h-4 w-4" aria-hidden />}
+				</button>
+				<div className="flex gap-2" role="tablist" aria-label="Hero background slides">
 				{heroSlides.map((slide, index) => (
 					<button
 						key={slide.src}
@@ -146,6 +156,7 @@ function LandingHero({ navSlot }) {
 						onClick={() => setActiveIndex(index)}
 					/>
 				))}
+				</div>
 			</div>
 
 			<button

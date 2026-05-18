@@ -43,6 +43,7 @@ function App() {
 	const [portalEntering, setPortalEntering] = useState(false)
 	const [fontScale, setFontScale] = useState('normal')
 	const [highContrast, setHighContrast] = useState(false)
+	const [highlightLinks, setHighlightLinks] = useState(false)
 	const [language, setLanguage] = useState('en')
 	const slides = [
 		{
@@ -144,6 +145,15 @@ function App() {
 			body.classList.remove('a11y-contrast-high')
 		}
 	}, [highContrast])
+
+	useEffect(() => {
+		const body = document.body
+		if (!body) return
+		body.classList.toggle('a11y-highlight-links', highlightLinks)
+		return () => {
+			body.classList.remove('a11y-highlight-links')
+		}
+	}, [highlightLinks])
 
 	const increaseFontScale = () => {
 		setFontScale((prev) => {
@@ -271,24 +281,28 @@ function App() {
 							</button>
 						</div>
 						<span className="accessibility-toolbar-divider" aria-hidden />
-						<div className="accessibility-lang-tools" role="group" aria-label="Language (display only)">
+						<div
+							className="accessibility-lang-tools"
+							role="group"
+							aria-label="Language — English active; Assamese coming soon"
+						>
 							<button
 								type="button"
 								className={`accessibility-toolbar-btn${language === 'en' ? ' is-active' : ''}`}
 								onClick={() => setLanguage('en')}
 								aria-pressed={language === 'en'}
-								aria-label="English (display only)"
-								title="English (display only)"
+								aria-label="English"
+								title="English"
 							>
 								EN
 							</button>
 							<button
 								type="button"
-								className={`accessibility-toolbar-btn${language === 'as' ? ' is-active' : ''}`}
-								onClick={() => setLanguage('as')}
-								aria-pressed={language === 'as'}
-								aria-label="Assamese (display only)"
-								title="Assamese (display only)"
+								className="accessibility-toolbar-btn accessibility-toolbar-btn--soon"
+								disabled
+								aria-disabled="true"
+								aria-label="Assamese — coming soon"
+								title="Assamese translation coming soon (GIGW bilingual requirement)"
 							>
 								অসমীয়া
 							</button>
@@ -495,10 +509,12 @@ function App() {
 				<AccessibilityWidget
 					fontScale={fontScale}
 					highContrast={highContrast}
+					highlightLinks={highlightLinks}
 					onIncreaseFont={increaseFontScale}
 					onDecreaseFont={decreaseFontScale}
 					onResetFont={() => setFontScale('normal')}
 					onToggleContrast={() => setHighContrast((prev) => !prev)}
+					onToggleHighlightLinks={() => setHighlightLinks((prev) => !prev)}
 					navTargetId={isLandingHome ? 'landing-primary-nav' : 'public-primary-nav'}
 				/>
 			) : null}

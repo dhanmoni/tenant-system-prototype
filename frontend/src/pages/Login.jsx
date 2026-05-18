@@ -15,6 +15,7 @@ import NotificationsSection from '../components/landing/NotificationsSection'
 import NeedSupportSection from '../components/landing/NeedSupportSection'
 import LandingFooter from '../components/landing/LandingFooter'
 import LandingFab from '../components/landing/LandingFab'
+import GigwNoticeBar from '../components/landing/GigwNoticeBar'
 
 function Login({ onLogin }) {
 	const navigate = useNavigate()
@@ -273,6 +274,8 @@ function Login({ onLogin }) {
 				<div className="relative landing-hero-wrap">
 					<LandingHero navSlot={<LandingNav />} />
 				</div>
+
+				<GigwNoticeBar />
 
 				<div className="landing-body">
 					<GetStartedSection authPanelProps={authPanelProps} />

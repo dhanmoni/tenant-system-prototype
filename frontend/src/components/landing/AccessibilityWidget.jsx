@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Contrast, Minus, Navigation, PersonStanding, Plus, RotateCcw, X, Type } from 'lucide-react'
+import { Contrast, Link2, Minus, Navigation, PersonStanding, Plus, RotateCcw, X, Type } from 'lucide-react'
 
 function AccessibilityWidget({
 	fontScale,
 	highContrast,
+	highlightLinks = false,
 	onIncreaseFont,
 	onDecreaseFont,
 	onResetFont,
 	onToggleContrast,
+	onToggleHighlightLinks,
 	navTargetId = 'public-primary-nav',
 }) {
 	const [open, setOpen] = useState(false)
@@ -84,6 +86,18 @@ function AccessibilityWidget({
 			onClick: onToggleContrast,
 			active: highContrast,
 		},
+		...(onToggleHighlightLinks
+			? [
+					{
+						id: 'highlight-links',
+						label: 'Highlight links',
+						hint: 'On / Off',
+						icon: Link2,
+						onClick: onToggleHighlightLinks,
+						active: highlightLinks,
+					},
+				]
+			: []),
 	]
 
 	const skipTo = (target) => {

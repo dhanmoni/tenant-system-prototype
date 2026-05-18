@@ -521,6 +521,50 @@
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
+.landing-hero-carousel-pause {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 1px solid rgba(255, 255, 255, 0.55) !important;
+	border-radius: 9999px;
+	background: rgba(0, 0, 0, 0.35) !important;
+	color: #fff !important;
+	cursor: pointer;
+	box-shadow: none !important;
+}
+
+.landing-hero-carousel-pause:hover:not(:disabled) {
+	background: rgba(0, 0, 0, 0.55) !important;
+	border-color: #fff !important;
+	transform: none;
+}
+
+.accessibility-toolbar-btn--soon:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+body.a11y-highlight-links a {
+	outline: 2px solid #f59e0b !important;
+	outline-offset: 2px;
+	text-decoration: underline !important;
+	background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+body.a11y-highlight-links button:not(.accessibility-toolbar-btn):not(.landing-hero-carousel-pause):not(.landing-hero-carousel-dot):not(.get-started-carousel-dot) {
+	outline: 2px dashed #f59e0b !important;
+	outline-offset: 2px;
+}
+
+.landing-gigw-notice a {
+	color: var(--landing-accent-dark);
+	font-weight: 600;
+}
+
 .landing-hero-cta {
 	margin: 0 !important;
 	border: none !important;

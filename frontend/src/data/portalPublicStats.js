@@ -8,7 +8,7 @@ export const portalStatsMeta = {
 	lead: 'Key indicators from tenancy registration, certificates, and dispute resolution under the Assam Tenancy Act.',
 	demoNote:
 		'Figures shown are illustrative for this demonstration build. Live counts will reflect production data when connected.',
-	lastUpdatedLabel: 'Demo snapshot',
+	lastUpdatedLabel: 'Illustrative data',
 }
 
 export const portalPublicStats = [

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink, Globe, Link2, Mail, Share2 } from 'lucide-react'
 import nicLogo from '../../assets/img/NIC.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
+import { siteLastUpdated } from '../../data/siteMeta'
 
 const portalLinks = [
 	{ label: 'Home', to: '/' },
@@ -151,6 +152,9 @@ function LandingFooter() {
 					<p>
 						© 2026 Assam Tenancy Registration Portal (demo). Content owned by Directorate of Town and
 						Country Planning, Assam.
+					</p>
+					<p className="mt-2 font-medium text-white/60">
+						Last updated: <time dateTime="2026-05-16">{siteLastUpdated}</time>
 					</p>
 					<div className="flex flex-wrap gap-4">
 						<Link to="/policies" className="text-white/50 no-underline hover:text-white">
