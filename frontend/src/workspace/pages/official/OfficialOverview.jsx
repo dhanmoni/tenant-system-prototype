@@ -203,7 +203,7 @@ function OfficialOverview() {
 									{isSuperAdmin ? 'District coverage map' : 'Your district snapshot'}
 								</h2>
 							</div>
-							<div className="ws-card-body">
+							<div className="ws-card-body ws-card-body--pad">
 								<DistrictCoverageMap
 									districts={stats.district_breakdown}
 									hint={
@@ -222,7 +222,7 @@ function OfficialOverview() {
 								<div className="ws-card-header">
 									<h2 className="ws-card-title">States overview</h2>
 								</div>
-								<div className="ws-card-body">
+								<div className="ws-card-body ws-card-body--pad">
 									<p className="ws-dashboard-hint">
 										Registered states and union territories with district and application
 										counts.
@@ -237,7 +237,7 @@ function OfficialOverview() {
 								<div className="ws-card-header">
 									<h2 className="ws-card-title">Forms in your scope</h2>
 								</div>
-								<div className="ws-card-body">
+								<div className="ws-card-body ws-card-body--pad">
 									<FormTypeTable forms={stats?.form_type_breakdown} />
 								</div>
 							</section>
@@ -248,7 +248,7 @@ function OfficialOverview() {
 						<div className="ws-card-header">
 							<h2 className="ws-card-title">Recent applications</h2>
 						</div>
-						<div className="ws-card-body">
+						<div className="ws-card-body ws-card-body--pad ws-card-body--table">
 							<RecentApplicationsTable applications={stats?.recent_applications} />
 						</div>
 					</section>
@@ -258,7 +258,7 @@ function OfficialOverview() {
 							<div className="ws-card-header">
 								<h2 className="ws-card-title">Recent activity</h2>
 							</div>
-							<div className="ws-card-body">
+							<div className="ws-card-body ws-card-body--pad">
 								<ActivityFeed />
 							</div>
 						</section>

@@ -278,15 +278,21 @@ function UserOverview() {
 								</button>
 							</div>
 						) : (
-							<ul className="ws-citizen-recent-list">
-								{applications.map((app) => (
-									<li key={app.row_key || app.id || app.application_no}>
-										<button
-											type="button"
-											className="ws-citizen-recent-row"
-											onClick={() => openApplication(app)}
-										>
-											<span className="ws-citizen-recent-main">
+							<div className="ws-citizen-recent-table">
+								<div className="ws-citizen-recent-head" aria-hidden>
+									<span>Application no.</span>
+									<span>Type</span>
+									<span>Status</span>
+									<span>Submitted</span>
+								</div>
+								<ul className="ws-citizen-recent-list">
+									{applications.map((app) => (
+										<li key={app.row_key || app.id || app.application_no}>
+											<button
+												type="button"
+												className="ws-citizen-recent-row"
+												onClick={() => openApplication(app)}
+											>
 												<span className="ws-citizen-recent-no">
 													{app.application_no || '—'}
 												</span>
@@ -295,19 +301,19 @@ function UserOverview() {
 														app.application_type ||
 														'Application'}
 												</span>
-											</span>
-											<span className="ws-citizen-recent-meta">
-												<span className={statusBadgeClass(app.status)}>
+												<span
+													className={`ws-citizen-recent-status ${statusBadgeClass(app.status)}`}
+												>
 													{formatStatus(app.status, app.application_type)}
 												</span>
 												<span className="ws-citizen-recent-date">
 													{formatDate(app.created_at)}
 												</span>
-											</span>
-										</button>
-									</li>
-								))}
-							</ul>
+											</button>
+										</li>
+									))}
+								</ul>
+							</div>
 						)}
 					</div>
 				</section>

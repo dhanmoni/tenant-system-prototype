@@ -1,12 +1,32 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useNavigate } from 'react-router-dom'
+import {
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend,
+	ArcElement
+} from 'chart.js'
+import { Bar, Doughnut } from 'react-chartjs-2'
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
-import OfficialDashboard from '../../components/dashboard/OfficialDashboard'
 import { formatDate } from '../../utils/formatters'
-import { ROLES } from '../../constants/roles'
+import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, ADMIN_ROLES } from '../../constants/roles'
 import { STATUS, STATUS_LABELS } from '../../constants/status'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../constants/application'
+
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend,
+	ArcElement
+)
 
 function DashboardHome() {
 	const { user } = useOutletContext()
@@ -293,15 +313,110 @@ function DashboardHome() {
 		)
 	}
 
+	const isStaff = user?.role !== ROLES.USER && user?.role !== 'system_admin'
+	const s = stats || {}
+	const statCards = isStaff
+		? [
+			{ label: 'Districts', value: s.districts_count, icon: 'chart' },
+			{ label: 'Users', value: s.users_count, icon: 'users' },
+			{ label: 'Applications', value: s.applications_count, icon: 'file' },
+		]
+		: [
+			{ label: 'Districts', value: s.districts_count, icon: 'chart' },
+			{ label: 'Offices', value: s.offices_count, icon: 'building' },
+			{ label: 'Users', value: s.users_count, icon: 'users' },
+			{ label: 'Roles', value: s.roles_count, icon: 'file' },
+			{ label: 'Designations', value: s.designations_count, icon: 'file' },
+			{ label: 'Tenancy applications', value: s.applications_count, icon: 'file' },
+		]
+
 	return (
-		<OfficialDashboard
-			user={user}
-			stats={stats}
-			statsLoading={statsLoading}
-			recentActivity={recentActivity}
-			error={error}
-		/>
+		<div className={`dashboard-home ${isStaff ? 'staff-dashboard-home' : 'admin-dashboard-home'}`}>
+			{statsLoading ? (
+				<div className="dashboard-stats-loading">Loading dashboard…</div>
+			) : (
+				<>
+					<div className="dashboard-welcome-header">
+						<h1>Welcome, {user.name}</h1>
+						<p className="muted">
+							{user.role === ROLES.SUPER_ADMIN
+								? 'System-wide overview and administrative controls.'
+								: `Overview for ${user.district?.name || 'your district'} activity.`}
+						</p>
+					</div>
+
+					<div className={`dashboard-overview-cards admin-stats-cards ${isStaff ? 'staff-stats-cards' : ''}`}>
+						{statCards.map((card) => (
+							<div key={card.label} className="dashboard-stat-card">
+								<span className="dashboard-stat-icon-wrap">
+									<Icon name={card.icon} className="dashboard-stat-icon" />
+								</span>
+								<span className="dashboard-stat-value">{card.value ?? '0'}</span>
+								<span className="dashboard-stat-label">{card.label}</span>
+							</div>
+						))}
+					</div>
+
+					{/* Role-Specific Action Tiles (from former AdminDashboard) */}
+					<div className="admin-stats-grid">
+						{ASSISTANT_ROLES.includes(user.role) && (
+							<div className="admin-stat-card">
+								<div className="stat-label">Action Required</div>
+								<h3 style={{ margin: '8px 0', fontSize: '1.25rem' }}>Pending Inbox</h3>
+								<p className="muted" style={{ fontSize: '0.9rem', marginBottom: '16px' }}>
+									You have applications waiting for your initial review and verification.
+								</p>
+								<button onClick={() => navigate('/dashboard/admin/inbox')} className="nav-link" style={{ background: 'var(--gov-blue)', color: '#fff', padding: '8px 16px', borderRadius: '4px' }}>
+									Open Inbox
+								</button>
+							</div>
+						)}
+						{PRINCIPAL_ROLES.includes(user.role) && (
+							<div className="admin-stat-card">
+								<div className="stat-label">Action Required</div>
+								<h3 style={{ margin: '8px 0', fontSize: '1.25rem' }}>Applications In Review</h3>
+								<p className="muted" style={{ fontSize: '0.9rem', marginBottom: '16px' }}>
+									Review applications in review by your assistants for final approval.
+								</p>
+								<button onClick={() => navigate('/dashboard/admin/applications')} className="nav-link" style={{ background: 'var(--gov-blue)', color: '#fff', padding: '8px 16px', borderRadius: '4px' }}>
+									View Applications
+								</button>
+							</div>
+						)}
+						{ADMIN_ROLES.includes(user.role) && (
+							<div className="admin-stat-card">
+								<div className="stat-label">Management</div>
+								<h3 style={{ margin: '8px 0', fontSize: '1.25rem' }}>User Management</h3>
+								<p className="muted" style={{ fontSize: '0.9rem', marginBottom: '16px' }}>
+									Manage staff accounts and district assignments.
+								</p>
+								<button onClick={() => navigate('/dashboard/admin/users')} className="nav-link" style={{ background: 'var(--gov-blue)', color: '#fff', padding: '8px 16px', borderRadius: '4px' }}>
+									Manage Users
+								</button>
+							</div>
+						)}
+					</div>
+
+
+					{[ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN].includes(user.role) && (
+						<div className="auth-card dashboard-card staff-info-card">
+							<h2 className="dashboard-section-title">Management Quick Links</h2>
+							<div className="staff-quick-actions-grid">
+								<button onClick={() => navigate('/dashboard/status')} className="dashboard-action-btn">UIN Status</button>
+								<button onClick={() => navigate('/dashboard/admin/tenancy')} className="dashboard-action-btn">Tenancy Records</button>
+								{user.role === ROLES.SUPER_ADMIN && (
+									<button onClick={() => navigate('/dashboard/admin/districts')} className="dashboard-action-btn">Districts</button>
+								)}
+								<button onClick={() => navigate('/dashboard/admin/users?mode=office')} className="dashboard-action-btn">Staff Management</button>
+								<button onClick={() => navigate('/dashboard/admin/users?mode=tenant')} className="dashboard-action-btn">Registered Users</button>
+							</div>
+						</div>
+					)}
+				</>
+			)}
+		</div>
 	)
 }
 
 export default DashboardHome
+

@@ -1,22 +1,27 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, Search, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
+import NavDashboardMenu from './NavDashboardMenu'
 import emblem from '../../assets/img/emblem-dark.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
 import { emitLandingA11y } from '../../utils/landingA11y'
 
 const scrollLinks = [
-	{ id: 'how-to-apply', label: 'How to apply' },
-	{ id: 'tenancy-authorities', label: 'Tenancy bodies' },
-	{ id: 'about', label: 'About' },
+	{ id: 'services', label: 'Services' },
+	{ id: 'portal-guide', label: 'How it works' },
 ]
 
 function LandingNav() {
 	const [menuOpen, setMenuOpen] = useState(false)
+	const location = useLocation()
+	const isHome = location.pathname === '/' || location.pathname === '/login'
+
+	const sectionHref = (id) => (isHome ? `#${id}` : `/#${id}`)
 
 	const scrollTo = (id) => (e) => {
+		if (!isHome) return
 		e.preventDefault()
 		setMenuOpen(false)
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
@@ -29,11 +34,7 @@ function LandingNav() {
 		document.getElementById('portal-content')?.scrollIntoView({ behavior: 'smooth' })
 	}
 
-	const ctaClass =
-		'landing-nav-cta inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-bold shadow-md transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-5 sm:py-2.5 sm:text-sm'
-
-	const drawerLinkClass =
-		'block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-landing-cream hover:text-landing'
+	const drawerLinkClass = 'landing-nav-drawer-link'
 
 	return (
 		<motion.nav
@@ -45,15 +46,30 @@ function LandingNav() {
 			aria-label="Main navigation"
 		>
 			<div className="landing-nav-mobile md:hidden">
-				<div className="landing-nav-utility">
-					<span className="landing-nav-flag" role="img" aria-label="India">
-						🇮🇳
-					</span>
-					<div className="landing-nav-utility-actions">
-						<div className="landing-nav-font-tools" role="group" aria-label="Text size">
+				<div
+					className="landing-nav-mobile-a11y"
+					role="toolbar"
+					aria-label="Accessibility options"
+				>
+					<div className="landing-nav-mobile-a11y-scroll">
+						<span className="landing-nav-mobile-flag" role="img" aria-label="India">
+							🇮🇳
+						</span>
+						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
+						<a href="#main-content" className="landing-nav-mobile-skip">
+							Skip to main content
+						</a>
+						<a
+							href="#portal-content"
+							className="landing-nav-mobile-skip landing-nav-mobile-skip--apply"
+						>
+							Skip to apply
+						</a>
+						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
+						<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Text size">
 							<button
 								type="button"
-								className="landing-nav-font-btn"
+								className="landing-nav-mobile-a11y-btn"
 								onClick={() => emitLandingA11y('increase')}
 								aria-label="Increase text size"
 							>
@@ -61,7 +77,7 @@ function LandingNav() {
 							</button>
 							<button
 								type="button"
-								className="landing-nav-font-btn"
+								className="landing-nav-mobile-a11y-btn"
 								onClick={() => emitLandingA11y('reset')}
 								aria-label="Reset text size"
 							>
@@ -69,17 +85,18 @@ function LandingNav() {
 							</button>
 							<button
 								type="button"
-								className="landing-nav-font-btn"
+								className="landing-nav-mobile-a11y-btn"
 								onClick={() => emitLandingA11y('decrease')}
 								aria-label="Decrease text size"
 							>
 								A−
 							</button>
 						</div>
-						<div className="landing-nav-lang-tools" role="group" aria-label="Language">
+						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
+						<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Language">
 							<button
 								type="button"
-								className="landing-nav-font-btn"
+								className="landing-nav-mobile-a11y-btn"
 								onClick={() => emitLandingA11y('lang-en')}
 								aria-label="English"
 							>
@@ -87,24 +104,26 @@ function LandingNav() {
 							</button>
 							<button
 								type="button"
-								className="landing-nav-font-btn"
+								className="landing-nav-mobile-a11y-btn"
 								onClick={() => emitLandingA11y('lang-as')}
 								aria-label="Assamese"
 							>
 								অসমীয়া
 							</button>
 						</div>
+						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
 						<button
 							type="button"
-							className="landing-nav-contrast-btn"
+							className="landing-nav-mobile-a11y-btn landing-nav-mobile-a11y-btn--solo"
 							onClick={() => emitLandingA11y('contrast')}
 						>
-							Contrast
+							<span className="landing-nav-a11y-label landing-nav-a11y-label--long">High contrast</span>
+							<span className="landing-nav-a11y-label landing-nav-a11y-label--short">Contrast</span>
 						</button>
 					</div>
 				</div>
 
-				<div className="landing-nav-mainbar">
+				<div className="landing-nav-mobile-brand">
 					<Link to="/" onClick={closeMenu} className="landing-nav-brand">
 						<img src={emblem} alt="" className="landing-nav-emblem" aria-hidden />
 						<span className="landing-nav-brand-text">
@@ -114,35 +133,20 @@ function LandingNav() {
 							</span>
 						</span>
 					</Link>
-					<img
-						src={digitalIndiaLogo}
-						alt="Digital India"
-						className="landing-nav-di-logo"
-					/>
-					<div className="landing-nav-mainbar-tools">
-						<button
-							type="button"
-							className="landing-nav-icon-btn"
-							onClick={scrollToPortal}
-							aria-label="Jump to apply and login"
-						>
-							<Search className="h-5 w-5" aria-hidden />
-						</button>
-						<button
-							type="button"
-							className="landing-nav-icon-btn"
-							onClick={() => setMenuOpen((open) => !open)}
-							aria-expanded={menuOpen}
-							aria-controls="landing-nav-menu"
-							aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-						>
-							{menuOpen ? (
-								<X className="h-5 w-5" aria-hidden />
-							) : (
-								<Menu className="h-5 w-5" aria-hidden />
-							)}
-						</button>
-					</div>
+					<button
+						type="button"
+						className="landing-nav-mobile-menu-btn"
+						onClick={() => setMenuOpen((open) => !open)}
+						aria-expanded={menuOpen}
+						aria-controls="landing-nav-menu"
+						aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+					>
+						{menuOpen ? (
+							<X className="h-6 w-6" aria-hidden />
+						) : (
+							<Menu className="h-6 w-6" aria-hidden />
+						)}
+					</button>
 				</div>
 
 				<AnimatePresence>
@@ -156,16 +160,30 @@ function LandingNav() {
 							className="landing-nav-drawer overflow-hidden"
 						>
 							<div className="landing-nav-drawer-inner">
+								<button
+									type="button"
+									onClick={scrollToPortal}
+									className={drawerLinkClass}
+								>
+									Apply &amp; sign in
+								</button>
+								<Link to="/" onClick={closeMenu} className={drawerLinkClass}>
+									Home
+								</Link>
 								{scrollLinks.map((link) => (
 									<a
 										key={link.id}
-										href={`#${link.id}`}
+										href={sectionHref(link.id)}
 										onClick={scrollTo(link.id)}
 										className={drawerLinkClass}
 									>
 										{link.label}
 									</a>
 								))}
+								<NavDashboardMenu variant="drawer" onNavigate={closeMenu} />
+								<Link to="/about" onClick={closeMenu} className={drawerLinkClass}>
+									About us
+								</Link>
 								<Link to="/contact" onClick={closeMenu} className={drawerLinkClass}>
 									Contact Us
 								</Link>
@@ -188,55 +206,58 @@ function LandingNav() {
 										Register
 									</AuthNavLink>
 								</div>
+								<div className="landing-nav-drawer-footer">
+									<img
+										src={digitalIndiaLogo}
+										alt="Digital India"
+										className="landing-nav-drawer-di-logo"
+									/>
+								</div>
 							</div>
 						</motion.div>
 					) : null}
 				</AnimatePresence>
 			</div>
 
-			<div className="landing-nav-overlay pointer-events-none hidden justify-center px-3 pt-3 sm:px-6 sm:pt-5 md:flex lg:px-8">
-				<div className="landing-nav-shell pointer-events-auto w-full max-w-6xl rounded-full border border-white/20 bg-black/45 px-4 py-2 shadow-xl backdrop-blur-md">
-					<div className="flex w-full flex-wrap items-center justify-between gap-2">
-						<div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-0.5 lg:gap-1">
-							<Link
-								to="/"
-								className="rounded-full px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10 lg:px-4"
-							>
+			<div className="landing-nav-overlay hidden md:block">
+				<div className="landing-nav-shell">
+					<div className="landing-nav-shell-inner">
+						<div className="landing-nav-shell-links">
+							<Link to="/" className="landing-nav-shell-link">
 								Home
 							</Link>
 							{scrollLinks.map((link) => (
 								<a
 									key={link.id}
-									href={`#${link.id}`}
+									href={sectionHref(link.id)}
 									onClick={scrollTo(link.id)}
-									className="rounded-full px-3 py-2 text-sm font-semibold text-white/95 transition-colors hover:bg-white/10 hover:text-white lg:px-4"
+									className="landing-nav-shell-link"
 								>
 									{link.label}
 								</a>
 							))}
-							<Link
-								to="/contact"
-								className="rounded-full px-3 py-2 text-sm font-semibold text-white/95 transition-colors hover:bg-white/10 hover:text-white lg:px-4"
-							>
+							<NavDashboardMenu />
+							<Link to="/about" className="landing-nav-shell-link">
+								About us
+							</Link>
+							<Link to="/contact" className="landing-nav-shell-link">
 								Contact Us
 							</Link>
-							<Link
-								to="/policies"
-								className="rounded-full px-3 py-2 text-sm font-semibold text-white/95 transition-colors hover:bg-white/10 hover:text-white lg:px-4"
-							>
-								Policies &amp; Guidelines
+							<Link to="/policies" className="landing-nav-shell-link">
+								<span className="landing-nav-shell-link-long">Policies &amp; Guidelines</span>
+								<span className="landing-nav-shell-link-short">Policies</span>
 							</Link>
 						</div>
-						<div className="landing-nav-cta-group flex shrink-0 items-center gap-2">
+						<div className="landing-nav-cta-group">
 							<AuthNavLink
 								mode="login"
-								className={`${ctaClass} bg-landing text-white hover:bg-landing-dark`}
+								className="landing-nav-cta landing-nav-cta--primary"
 							>
 								Login
 							</AuthNavLink>
 							<AuthNavLink
 								mode="register"
-								className={`${ctaClass} landing-nav-cta--outline border-2 border-white/90 bg-transparent text-white hover:bg-white/15`}
+								className="landing-nav-cta landing-nav-cta--outline"
 							>
 								Register
 							</AuthNavLink>

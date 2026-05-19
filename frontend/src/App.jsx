@@ -33,6 +33,8 @@ import UserDetail from './pages/UserDetail'
 import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
 import Contact from './pages/Contact'
+import About from './pages/About'
+import PublicDashboard from './pages/PublicDashboard'
 import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -413,6 +415,8 @@ function App() {
 							{!user ? (
 								<>
 									<Link to="/">Home</Link>
+									<Link to="/about">About us</Link>
+									<Link to="/public-dashboard">Public dashboard</Link>
 									<Link to="/#login">Login</Link>
 									<Link to="/#register">Registration</Link>
 									<div className="contact-link-with-logo">
@@ -485,6 +489,8 @@ function App() {
 					<Route path="/login" element={<Login onLogin={handleUserLogin} />} />
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
+					<Route path="/about" element={<About />} />
+					<Route path="/public-dashboard" element={<PublicDashboard />} />
 					<Route path="/contact" element={<Contact />} />
 					<Route path="/sitemap" element={<Sitemap />} />
 					<Route

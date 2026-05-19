@@ -103,7 +103,7 @@ function PortalStatsSection() {
 	return (
 		<section
 			id="portal-stats"
-			className="landing-stats-section bg-white py-12 sm:py-16 lg:py-20"
+			className="landing-stats-section landing-wallpaper-bg landing-wallpaper-bg--white py-12 sm:py-16 lg:py-20"
 			aria-labelledby="portal-stats-heading"
 		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

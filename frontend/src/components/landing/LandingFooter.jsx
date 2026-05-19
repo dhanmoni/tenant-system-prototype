@@ -6,14 +6,16 @@ import { siteLastUpdated } from '../../data/siteMeta'
 
 const portalLinks = [
 	{ label: 'Home', to: '/' },
-	{ label: 'How to apply', to: '/#how-to-apply', hash: true },
+	{ label: 'Services', to: '/#services', hash: true },
+	{ label: 'How it works', to: '/#portal-guide', hash: true },
 	{ label: 'Login', to: '/#login', hash: true },
 	{ label: 'New registration', to: '/#register', hash: true },
 ]
 
 const resourceLinks = [
-	{ label: 'Citizen services', to: '/#services', hash: true },
-	{ label: 'About the portal', to: '/#about', hash: true },
+	{ label: 'About us', to: '/about' },
+	{ label: 'Public dashboard', to: '/public-dashboard' },
+	{ label: 'Services', to: '/#services', hash: true },
 	{ label: 'Policies & guidelines', to: '/policies' },
 	{ label: 'Contact us', to: '/contact' },
 	{ label: 'Sitemap', to: '/sitemap' },

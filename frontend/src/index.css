@@ -49,6 +49,11 @@
 	--landing-accent-hover: #964f1f;
 	--landing-cream: #fff5eb;
 	--landing-text: #212529;
+	/* Warm dark tones for hero / ticker (pairs with terracotta, not cold navy) */
+	--landing-ink: #1f1612;
+	--landing-ink-mid: rgba(31, 22, 18, 0.42);
+	--landing-on-dark: #fff5eb;
+	--landing-on-dark-muted: rgba(255, 245, 235, 0.88);
 	--font-gov: 'Lato', 'Segoe UI', system-ui, sans-serif;
 	--font-hero: 'Lato', 'Segoe UI', system-ui, sans-serif;
 }

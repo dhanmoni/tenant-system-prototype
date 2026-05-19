@@ -18,7 +18,7 @@ function AboutSection() {
 		<section
 			ref={sectionRef}
 			id="about"
-			className="bg-white py-12 sm:py-16 lg:py-24"
+			className="landing-wallpaper-bg landing-wallpaper-bg--white py-12 sm:py-16 lg:py-24"
 			aria-labelledby="about-heading"
 		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

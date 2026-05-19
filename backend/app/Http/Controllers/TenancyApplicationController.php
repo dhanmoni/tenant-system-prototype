@@ -996,9 +996,9 @@ class TenancyApplicationController extends Controller
             $rules = array_merge($rules, [
                 'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT'],
                 'registration_date' => ['required', 'date', 'before_or_equal:today'],
-                'office_id' => ['nullable', 'integer', 'exists:offices,id'],
+                'office_id' => ['required', 'integer', 'exists:offices,id'],
                 'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
-                'apply_type' => ['nullable', 'string', 'max:32'],
+                'apply_type' => ['required', 'string', 'max:32'],
             ]);
         }
 

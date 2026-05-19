@@ -418,15 +418,14 @@ function TenancyCertificate() {
 			})
 			let data
 			if (!draftApplicationNo) {
-				const res = await api.post('/api/tenancy-applications/draft', formData, {
-					headers: { 'Content-Type': 'multipart/form-data' },
-				})
+				const res = await api.post('/api/tenancy-applications/draft', formData)
 				data = res.data
 			} else {
-				const res = await api.put(
+				// PHP does not parse multipart bodies on PUT; use POST + method spoofing.
+				formData.append('_method', 'PUT')
+				const res = await api.post(
 					`/api/tenancy-applications/${draftApplicationNo}/draft`,
-					formData,
-					{ headers: { 'Content-Type': 'multipart/form-data' } }
+					formData
 				)
 				data = res.data
 			}
@@ -511,6 +510,19 @@ function TenancyCertificate() {
 	const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
 	const formLocked = Boolean(tenancyReceipt)
 	const maxReachableStep = tenancyReceipt ? 5 : Math.min(4, Math.max(tenancyStep, savedWizardStep + 1))
+
+	const scrollFormToTop = useCallback(() => {
+		const main = document.getElementById('dashboard-primary-content')
+		if (main?.scrollTo) {
+			main.scrollTo({ top: 0, behavior: 'auto' })
+		} else {
+			window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+		}
+	}, [])
+
+	useEffect(() => {
+		scrollFormToTop()
+	}, [tenancyStep, scrollFormToTop])
 
 	const goToStep = (stepId) => {
 		if (formLocked) return

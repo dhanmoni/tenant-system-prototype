@@ -35,7 +35,7 @@ function HowToApply() {
 		<section
 			ref={sectionRef}
 			id="how-to-apply"
-			className="bg-white py-12 sm:py-16 lg:py-24"
+			className="landing-wallpaper-bg landing-wallpaper-bg--white py-12 sm:py-16 lg:py-24"
 			aria-labelledby="how-to-heading"
 		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

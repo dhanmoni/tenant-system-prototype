@@ -1,7 +1,33 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Clock, FileText, LogIn, Mail, ShieldCheck, UserPlus } from 'lucide-react'
+import {
+	ArrowRight,
+	Clock,
+	FileText,
+	LogIn,
+	Mail,
+	ShieldCheck,
+	UserPlus,
+} from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
+
+const steps = [
+	{
+		num: '1',
+		title: 'Create your account',
+		text: 'Register with your name, mobile number, and district. Verify with OTP.',
+	},
+	{
+		num: '2',
+		title: 'Log in and apply',
+		text: 'Sign in, complete your application, and upload required documents.',
+	},
+	{
+		num: '3',
+		title: 'Track and download',
+		text: 'Monitor status in real time and download your signed certificate.',
+	},
+]
 
 const highlights = [
 	'Register and verify with mobile OTP',
@@ -63,7 +89,7 @@ function ServiceAction({ service, index }) {
 	return (
 		<motion.li
 			initial={{ opacity: 0, x: 12 }}
-			whileInView={{ opacity: 1, x: 0 }}
+			whileInView={{ opacity: 1, y: 0 }}
 			viewport={{ once: true, margin: '-40px' }}
 			transition={{ duration: 0.35, delay: index * 0.06 }}
 		>
@@ -80,13 +106,15 @@ function ServiceAction({ service, index }) {
 	)
 }
 
-function CitizenServicesSection() {
+function PortalGuideSection() {
 	return (
 		<section
-			id="services"
-			className="citizen-services-section landing-wallpaper-bg landing-wallpaper-bg--cream py-12 sm:py-16 lg:py-24"
-			aria-labelledby="services-heading"
+			id="portal-guide"
+			className="portal-guide-section landing-wallpaper-bg landing-wallpaper-bg--cream py-12 sm:py-16 lg:py-24"
+			aria-labelledby="portal-guide-heading"
 		>
+			<div id="how-to-apply" className="scroll-mt-28" tabIndex={-1} aria-hidden />
+
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<motion.div
 					initial={{ opacity: 0, y: 16 }}
@@ -95,17 +123,38 @@ function CitizenServicesSection() {
 					transition={{ duration: 0.4 }}
 					className="mx-auto max-w-2xl text-center"
 				>
-					<p className="landing-section-eyebrow">Quick links</p>
-					<h2 id="services-heading" className="landing-section-title">
-						Citizen services
+					<p className="landing-section-eyebrow">Quick start</p>
+					<h2 id="portal-guide-heading" className="landing-section-title">
+						How it works
 					</h2>
 					<p className="landing-section-lead">
-						Everything you need to register, apply, and stay updated — in one place on the Assam
-						Tenancy Registration Portal.
+						Register, apply, and manage tenancy services online — follow the steps below or open a
+						service directly.
 					</p>
 				</motion.div>
 
-				<div className="citizen-services-layout">
+				<ol className="portal-guide-steps">
+					{steps.map((step, index) => (
+						<motion.li
+							key={step.num}
+							initial={{ opacity: 0, y: 14 }}
+							whileInView={{ opacity: 1, y: 0 }}
+							viewport={{ once: true, margin: '-40px' }}
+							transition={{ duration: 0.35, delay: index * 0.07 }}
+							className="portal-guide-step"
+						>
+							<span className="portal-guide-step__num" aria-hidden>
+								{step.num}
+							</span>
+							<div>
+								<h3 className="portal-guide-step__title">{step.title}</h3>
+								<p className="portal-guide-step__text">{step.text}</p>
+							</div>
+						</motion.li>
+					))}
+				</ol>
+
+				<div className="citizen-services-layout portal-guide-services">
 					<motion.aside
 						initial={{ opacity: 0, y: 20 }}
 						whileInView={{ opacity: 1, y: 0 }}
@@ -116,11 +165,11 @@ function CitizenServicesSection() {
 					>
 						<div className="citizen-services-aside__header">
 							<ShieldCheck className="h-5 w-5 shrink-0" aria-hidden strokeWidth={2.25} />
-							<p>One portal for citizens</p>
+							<p>Quick access</p>
 						</div>
 						<div className="citizen-services-aside__body">
 							<h3 className="citizen-services-aside__title">
-								Register once, manage everything online
+								Everything in one place
 							</h3>
 							<ul className="citizen-services-aside__list">
 								{highlights.map((item) => (
@@ -135,8 +184,8 @@ function CitizenServicesSection() {
 								<AuthNavLink mode="register" className="citizen-services-aside__btn-primary">
 									Create account
 								</AuthNavLink>
-								<a href="#how-to-apply" className="citizen-services-aside__btn-secondary">
-									How to apply
+								<a href="#services" className="citizen-services-aside__btn-secondary">
+									View services
 								</a>
 							</div>
 						</div>
@@ -165,4 +214,4 @@ function CitizenServicesSection() {
 	)
 }
 
-export default CitizenServicesSection
+export default PortalGuideSection

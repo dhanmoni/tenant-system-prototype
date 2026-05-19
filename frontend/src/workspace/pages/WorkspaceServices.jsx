@@ -155,7 +155,6 @@ function WorkspaceServices() {
 								>
 									{group.title}
 								</h2>
-								<p className="ws-services-catalog-authority">{group.authority}</p>
 							</div>
 							<span className="ws-services-catalog-count">
 								{group.forms.length} form{group.forms.length === 1 ? '' : 's'}

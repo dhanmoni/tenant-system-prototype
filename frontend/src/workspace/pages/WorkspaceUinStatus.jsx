@@ -336,7 +336,41 @@ function StatusCategorySection({
 									onClick={() => onOpenDetails(app)}
 								>
 									<td className="ws-status-cell-mono">{app.application_no}</td>
-									<td>{app.uid || '—'}</td>
+									<td
+										className="ws-status-cell-uin"
+										onClick={(e) => e.stopPropagation()}
+									>
+										{app.uid && app.uid !== '-' ? (
+											<span className="ws-copyable-value">
+												<span className="ws-copyable-value-text ws-status-cell-mono">
+													{app.uid}
+												</span>
+												<button
+													type="button"
+													className="ws-copy-btn"
+													title={
+														copiedRefCode === `uid:${app.uid}`
+															? 'Copied!'
+															: 'Copy UIN'
+													}
+													aria-label={
+														copiedRefCode === `uid:${app.uid}`
+															? 'UIN copied to clipboard'
+															: `Copy UIN ${app.uid}`
+													}
+													onClick={() => onCopyRef(app.uid, `uid:${app.uid}`)}
+												>
+													<Icon
+														name={
+															copiedRefCode === `uid:${app.uid}` ? 'check' : 'copy'
+														}
+													/>
+												</button>
+											</span>
+										) : (
+											'—'
+										)}
+									</td>
 									{!category.isTenancy ? (
 										<td className="ws-status-cell-form">
 											{app.application_type || '—'}

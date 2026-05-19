@@ -1,110 +1,41 @@
-import { useEffect, useRef, useState } from 'react'
-import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { Building2, Check, UserRound } from 'lucide-react'
 import AuthPanel from './AuthPanel'
-import welcomeImage from '../../assets/img/img1.png'
-import keysImage from '../../assets/img/img6.png'
 
-const getStartedSlides = [
-	{
-		src: welcomeImage,
-		alt: 'Citizens registering a new tenancy and moving into their home',
-		objectPosition: 'center 35%',
-	},
-	{
-		src: keysImage,
-		alt: 'Handing over keys after a successful tenancy registration',
-		objectPosition: 'center center',
-	},
-]
-
-function GetStartedImageCarousel({ scrollTargetRef }) {
-	const [activeIndex, setActiveIndex] = useState(0)
-	const reduceMotion = useReducedMotion()
-	const { scrollYProgress } = useScroll({
-		target: scrollTargetRef,
-		offset: ['start end', 'end start'],
-	})
-	const imageY = useTransform(scrollYProgress, (progress) =>
-		reduceMotion ? 0 : (progress - 0.5) * 70,
-	)
-
-	useEffect(() => {
-		const timer = setInterval(() => {
-			setActiveIndex((prev) => (prev + 1) % getStartedSlides.length)
-		}, 5500)
-		return () => clearInterval(timer)
-	}, [])
-
+function AudienceCard({ title, description, items, icon: Icon }) {
 	return (
-		<div
-			className="get-started-carousel relative overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/80"
-			aria-roledescription="carousel"
-			aria-label="Get started highlights"
-		>
-			<div className="relative h-48 overflow-hidden sm:h-56 lg:h-64">
-				<motion.div className="absolute inset-0 will-change-transform" style={{ y: imageY }}>
-					{getStartedSlides.map((slide, index) => (
-						<img
-							key={slide.alt}
-							src={slide.src}
-							alt={slide.alt}
-							className={`absolute inset-0 h-[115%] w-full scale-105 object-cover transition-opacity duration-700 ease-in-out ${
-								index === activeIndex ? 'opacity-100' : 'opacity-0'
-							}`}
-							style={{ objectPosition: slide.objectPosition }}
-							loading={index === 0 ? 'eager' : 'lazy'}
-							aria-hidden={index !== activeIndex}
-						/>
+		<article className="get-started-audience-card">
+			<div className="get-started-audience-card__header">
+				<span className="get-started-audience-card__icon" aria-hidden>
+					<Icon className="h-5 w-5" strokeWidth={2.25} />
+				</span>
+				<h3 className="get-started-audience-card__title">{title}</h3>
+			</div>
+			<div className="get-started-audience-card__body">
+				<p className="get-started-audience-card__lead">{description}</p>
+				<ul className="get-started-audience-card__list">
+					{items.map((item) => (
+						<li key={item}>
+							<Check className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.5} />
+							<span>{item}</span>
+						</li>
 					))}
-				</motion.div>
+				</ul>
 			</div>
-			<div className="absolute inset-x-0 bottom-3 flex justify-center gap-2" role="tablist" aria-label="Carousel slides">
-				{getStartedSlides.map((slide, index) => (
-					<button
-						key={slide.alt}
-						type="button"
-						role="tab"
-						aria-selected={index === activeIndex}
-						aria-label={`Go to slide ${index + 1}`}
-						className={`get-started-carousel-dot ${index === activeIndex ? 'is-active' : ''}`}
-						onClick={() => setActiveIndex(index)}
-					/>
-				))}
-			</div>
-		</div>
-	)
-}
-
-function AudienceCard({ title, description, items }) {
-	return (
-		<div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-			<h3 className="landing-card-title">{title}</h3>
-			<p className="landing-card-text mt-3">{description}</p>
-			<ul className="mt-4 space-y-2 text-sm text-slate-600">
-				{items.map((item) => (
-					<li key={item} className="flex items-start gap-2">
-						<span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-landing" aria-hidden />
-						{item}
-					</li>
-				))}
-			</ul>
-		</div>
+		</article>
 	)
 }
 
 function GetStartedSection({ authPanelProps }) {
-	const sectionRef = useRef(null)
-
 	return (
 		<section
-			ref={sectionRef}
 			id="portal-content"
-			className="get-started-section relative z-10 -mt-6 bg-landing-cream pt-10 pb-12 sm:-mt-10 sm:pt-12 sm:pb-16 md:-mt-12 md:pb-20"
+			className="get-started-section landing-wallpaper-bg landing-wallpaper-bg--cream relative z-10 pt-10 pb-12 sm:pt-12 sm:pb-16 md:pb-20"
 			aria-labelledby="get-started-heading"
 		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)] lg:gap-10 xl:gap-12">
-					<div className="order-2 min-w-0 space-y-8 sm:space-y-10 lg:order-1 lg:space-y-12">
+					<div className="order-2 min-w-0 space-y-8 sm:space-y-10 lg:order-1">
 						<motion.div
 							initial={{ opacity: 0, y: 16 }}
 							whileInView={{ opacity: 1, y: 0 }}
@@ -122,43 +53,47 @@ function GetStartedSection({ authPanelProps }) {
 							</p>
 						</motion.div>
 
-						<motion.div
-							initial={{ opacity: 0, y: 16 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							viewport={{ once: true }}
-							transition={{ duration: 0.45 }}
-						>
-							<GetStartedImageCarousel scrollTargetRef={sectionRef} />
-						</motion.div>
-
-						<motion.div
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							viewport={{ once: true }}
-							transition={{ duration: 0.5 }}
-						>
-							<p className="landing-section-label">Who can use this portal</p>
-							<div className="grid gap-6 sm:grid-cols-2">
-								<AudienceCard
-									title="For Tenants"
-									description="Apply for tenancy certificates, track application status, and keep your property records digitally."
-									items={[
-										'Digital certificate access',
-										'Application status tracking',
-										'Online services 24x7',
-									]}
-								/>
-								<AudienceCard
-									title="For Owners"
-									description="Register properties, manage tenant records, and stay aligned with tenancy regulations."
-									items={[
-										'Property and application dashboard',
-										'Digital record management',
-										'Status and compliance visibility',
-									]}
-								/>
+						<div className="get-started-audience">
+							<p className="get-started-audience__eyebrow">Who can use this portal</p>
+							<div className="get-started-audience-grid">
+								<motion.div
+									initial={{ opacity: 0, y: 16 }}
+									whileInView={{ opacity: 1, y: 0 }}
+									viewport={{ once: true }}
+									transition={{ duration: 0.45 }}
+									className="h-full"
+								>
+									<AudienceCard
+										icon={UserRound}
+										title="For tenants"
+										description="Apply for certificates, track your application, and access signed records anytime."
+										items={[
+											'Digital certificate download',
+											'Real-time application tracking',
+											'Secure access 24×7',
+										]}
+									/>
+								</motion.div>
+								<motion.div
+									initial={{ opacity: 0, y: 16 }}
+									whileInView={{ opacity: 1, y: 0 }}
+									viewport={{ once: true }}
+									transition={{ duration: 0.45, delay: 0.08 }}
+									className="h-full"
+								>
+									<AudienceCard
+										icon={Building2}
+										title="For owners"
+										description="Register properties, manage tenant records, and stay aligned with tenancy rules."
+										items={[
+											'Property & tenant dashboard',
+											'Digital record keeping',
+											'Compliance visibility',
+										]}
+									/>
+								</motion.div>
 							</div>
-						</motion.div>
+						</div>
 					</div>
 
 					<motion.div

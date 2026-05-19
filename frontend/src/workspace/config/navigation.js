@@ -71,7 +71,10 @@ export function getWorkspaceNavigation(user) {
 	}
 
 	if (user.role === ROLES.SUPER_ADMIN) {
-		items.push({ to: '/dashboard/admin/districts', label: 'Districts', icon: 'map' })
+		items.push(
+			{ to: '/dashboard/admin/applications', label: 'All applications', icon: 'eye' },
+			{ to: '/dashboard/admin/districts', label: 'Districts', icon: 'map' }
+		)
 	}
 
 	return [

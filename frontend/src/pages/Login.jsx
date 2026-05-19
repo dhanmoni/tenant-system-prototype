@@ -5,17 +5,15 @@ import { AuthPanelNavigationContext } from '../context/AuthPanelNavigationContex
 import { authHashForMode, modeFromHash, scrollToAuthPanel } from '../utils/authPanelNav'
 import LandingNav from '../components/landing/LandingNav'
 import LandingHero from '../components/landing/LandingHero'
+import DailyUpdateTicker from '../components/landing/DailyUpdateTicker'
 import GetStartedSection from '../components/landing/GetStartedSection'
 import PortalStatsSection from '../components/landing/PortalStatsSection'
-import HowToApply from '../components/landing/HowToApply'
-import CitizenServicesSection from '../components/landing/CitizenServicesSection'
-import TenancyAuthoritiesSection from '../components/landing/TenancyAuthoritiesSection'
-import AboutSection from '../components/landing/AboutSection'
-import NotificationsSection from '../components/landing/NotificationsSection'
+import PortalGuideSection from '../components/landing/PortalGuideSection'
+import PortalServicesSection from '../components/landing/PortalServicesSection'
 import NeedSupportSection from '../components/landing/NeedSupportSection'
+import GovernmentLogosCarousel from '../components/landing/GovernmentLogosCarousel'
 import LandingFooter from '../components/landing/LandingFooter'
 import LandingFab from '../components/landing/LandingFab'
-import GigwNoticeBar from '../components/landing/GigwNoticeBar'
 
 function Login({ onLogin }) {
 	const navigate = useNavigate()
@@ -275,17 +273,15 @@ function Login({ onLogin }) {
 					<LandingHero navSlot={<LandingNav />} />
 				</div>
 
-				<GigwNoticeBar />
+				<DailyUpdateTicker />
 
 				<div className="landing-body">
 					<GetStartedSection authPanelProps={authPanelProps} />
 					<PortalStatsSection />
-					<HowToApply />
-					<CitizenServicesSection />
-					<TenancyAuthoritiesSection />
-					<AboutSection />
-					<NotificationsSection />
+					<PortalServicesSection />
+					<PortalGuideSection />
 					<NeedSupportSection />
+					<GovernmentLogosCarousel />
 					<LandingFooter />
 				</div>
 

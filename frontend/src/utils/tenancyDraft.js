@@ -67,11 +67,11 @@ export function buildTenancyFormData(
 	const appendStep3 = through >= 3
 
 	if (appendStep1) {
-		if (initiatorRole) formData.append('initiator_role', initiatorRole)
-		if (tenancyRegistrationDate) formData.append('registration_date', tenancyRegistrationDate)
-		if (tenancyOfficeId) formData.append('office_id', tenancyOfficeId)
-		if (tenancyVillageWardId) formData.append('village_ward_id', tenancyVillageWardId)
-		if (applyType) formData.append('apply_type', applyType)
+		formData.append('initiator_role', initiatorRole || '')
+		formData.append('registration_date', tenancyRegistrationDate || '')
+		formData.append('office_id', tenancyOfficeId || '')
+		formData.append('village_ward_id', tenancyVillageWardId || '')
+		formData.append('apply_type', applyType || 'Individual')
 	}
 
 	if (appendStep2) {
