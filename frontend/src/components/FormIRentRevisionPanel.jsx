@@ -43,7 +43,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 		try {
 			await csrf()
 			const formData = new FormData()
-			formData.append('rent_authority_uid', tenancyUIN.trim())
+			formData.append('tenancy_uin', tenancyUIN.trim())
 			if (tenancyAgreementDocumentNo.trim()) {
 				formData.append('tenancy_agreement_document_no', tenancyAgreementDocumentNo.trim())
 			}

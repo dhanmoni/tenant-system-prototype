@@ -44,7 +44,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 			await csrf()
 			const formData = new FormData()
 
-			formData.append('rent_authority_uid', tenancyUIN.trim())
+			formData.append('tenancy_uin', tenancyUIN.trim())
 
 			formData.append('applicant_name', applicantName.trim())
 			formData.append(
