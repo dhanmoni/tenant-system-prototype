@@ -10,6 +10,7 @@ import GetStartedSection from '../components/landing/GetStartedSection'
 import PortalStatsSection from '../components/landing/PortalStatsSection'
 import PortalGuideSection from '../components/landing/PortalGuideSection'
 import PortalServicesSection from '../components/landing/PortalServicesSection'
+import PortalBenefitsSection from '../components/landing/PortalBenefitsSection'
 import NeedSupportSection from '../components/landing/NeedSupportSection'
 import GovernmentLogosCarousel from '../components/landing/GovernmentLogosCarousel'
 import LandingFooter from '../components/landing/LandingFooter'
@@ -72,9 +73,12 @@ function Login({ onLogin }) {
 		return () => window.removeEventListener('scroll', handleScroll)
 	}, [])
 
+	const sanitizeMobileInput = (value) => value.replace(/\D/g, '').slice(0, 10)
+
 	const handleLoginChange = (e) => {
 		const { name, value } = e.target
-		setLoginForm((prev) => ({ ...prev, [name]: value }))
+		const nextValue = name === 'phone' ? sanitizeMobileInput(value) : value
+		setLoginForm((prev) => ({ ...prev, [name]: nextValue }))
 		if (name === 'phone') {
 			setOtpSent(false)
 			setOtpMessage('')
@@ -84,8 +88,8 @@ function Login({ onLogin }) {
 	const handleSendOtp = () => {
 		setLoginError('')
 		setOtpMessage('')
-		if (!loginForm.phone.trim()) {
-			setLoginError('Please enter phone number first')
+		if (!/^\d{10}$/.test(loginForm.phone)) {
+			setLoginError('Please enter a valid 10-digit mobile number')
 			return
 		}
 		setLoginForm((prev) => ({ ...prev, otp: '' }))
@@ -279,6 +283,7 @@ function Login({ onLogin }) {
 					<GetStartedSection authPanelProps={authPanelProps} />
 					<PortalStatsSection />
 					<PortalServicesSection />
+					<PortalBenefitsSection />
 					<PortalGuideSection />
 					<NeedSupportSection />
 					<GovernmentLogosCarousel />

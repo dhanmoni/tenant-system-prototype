@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
 import { formatDate } from '../../../utils/formatters'
 import { APPLICATION_LABELS } from '../../../constants/application'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
@@ -47,6 +48,9 @@ function RecentApplicationsTable({ applications = [], onRowClick }) {
 						<th scope="col">Applicant</th>
 						<th scope="col">Status</th>
 						<th scope="col">Date</th>
+						<th scope="col" className="ws-table-actions-col">
+							<span className="sr-only">Actions</span>
+						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -69,6 +73,9 @@ function RecentApplicationsTable({ applications = [], onRowClick }) {
 								</span>
 							</td>
 							<td>{formatDate(app.created_at)}</td>
+							<td className="ws-table-actions-cell" onClick={(e) => e.stopPropagation()}>
+								<StatusProgressViewButton application={app} variant="admin" />
+							</td>
 						</tr>
 					))}
 				</tbody>

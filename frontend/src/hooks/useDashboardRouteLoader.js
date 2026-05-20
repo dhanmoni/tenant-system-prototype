@@ -1,21 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
-const ADMIN_ROUTE_PREFIX = '/dashboard/admin'
-const MIN_LOADER_MS = 480
+const DASHBOARD_ROUTE_PREFIX = '/dashboard'
+const MIN_LOADER_MS = 380
 
+export function isDashboardWorkspaceRoute(pathname) {
+	return pathname.startsWith(DASHBOARD_ROUTE_PREFIX)
+}
+
+/** @deprecated Use isDashboardWorkspaceRoute */
 export function isDashboardAdminRoute(pathname) {
-	return pathname.startsWith(ADMIN_ROUTE_PREFIX)
+	return pathname.startsWith(`${DASHBOARD_ROUTE_PREFIX}/admin`)
 }
 
 export default function useDashboardRouteLoader(enabled = true) {
 	const location = useLocation()
 	const [loading, setLoading] = useState(false)
 	const timerRef = useRef(null)
+	const isInitialMount = useRef(true)
 
 	useEffect(() => {
-		if (!enabled || !isDashboardAdminRoute(location.pathname)) {
+		if (!enabled || !isDashboardWorkspaceRoute(location.pathname)) {
 			setLoading(false)
+			return undefined
+		}
+
+		if (isInitialMount.current) {
+			isInitialMount.current = false
 			return undefined
 		}
 

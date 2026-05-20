@@ -8,7 +8,7 @@ function PortalLoadingScreen({
 }) {
 	return (
 		<div
-			className={`page page-center landing-wallpaper-bg landing-wallpaper-bg--cream portal-loading-screen${overlay ? ' portal-loading-overlay' : ''}`}
+			className={`${overlay ? 'portal-loading-overlay' : 'page page-center'} landing-wallpaper-bg landing-wallpaper-bg--cream portal-loading-screen`}
 			role="presentation"
 		>
 			<div className="full-page-loader">

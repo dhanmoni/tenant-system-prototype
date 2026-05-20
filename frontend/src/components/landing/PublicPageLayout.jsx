@@ -1,28 +1,49 @@
 import { Link } from 'react-router-dom'
+import LandingNav from './LandingNav'
+import PublicPageHero from './PublicPageHero'
 import LandingFooter from './LandingFooter'
 
-function PublicPageLayout({ eyebrow, title, titleId, lead, breadcrumbLabel, children }) {
+function PublicPageLayout({
+	eyebrow,
+	title,
+	titleId,
+	lead,
+	breadcrumbLabel,
+	children,
+	showHero = false,
+	heroSlides,
+}) {
 	return (
-		<div className="public-page min-h-[60vh] bg-landing-cream">
-			<div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-				<nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="Breadcrumb">
-					<Link to="/" className="font-semibold text-landing hover:text-landing-dark hover:underline">
-						Home
-					</Link>
-					<span aria-hidden>/</span>
-					<span className="font-medium text-slate-700">{breadcrumbLabel}</span>
-				</nav>
+		<div className="page-public-site min-w-0 overflow-x-clip">
+			<header
+				className={`public-page-header${showHero ? '' : ' public-page-header--compact'}`}
+			>
+				<LandingNav variant="static" />
+				{showHero ? <PublicPageHero slides={heroSlides} /> : null}
+			</header>
 
-				<header className="mb-10 max-w-3xl">
-					{eyebrow ? <p className="landing-section-eyebrow">{eyebrow}</p> : null}
-					<h1 id={titleId} className="landing-section-title text-3xl sm:text-4xl">
-						{title}
-					</h1>
-					{lead ? <p className="landing-section-lead mt-5">{lead}</p> : null}
-				</header>
+			<div className="public-page landing-body landing-wallpaper-bg landing-wallpaper-bg--cream min-h-[40vh]">
+				<div className="public-page__content">
+					<nav className="public-page__breadcrumb" aria-label="Breadcrumb">
+						<Link to="/" className="public-page__breadcrumb-link">
+							Home
+						</Link>
+						<span aria-hidden>/</span>
+						<span className="public-page__breadcrumb-current">{breadcrumbLabel}</span>
+					</nav>
 
-				{children}
+					<header className="public-page__intro">
+						{eyebrow ? <p className="landing-section-eyebrow">{eyebrow}</p> : null}
+						<h1 id={titleId} className="landing-section-title text-3xl sm:text-4xl">
+							{title}
+						</h1>
+						{lead ? <p className="landing-section-lead mt-5 max-w-4xl">{lead}</p> : null}
+					</header>
+
+					<div className="public-page__body">{children}</div>
+				</div>
 			</div>
+
 			<LandingFooter />
 		</div>
 	)

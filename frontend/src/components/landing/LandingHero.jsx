@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import heroCommunityHomes from '../../assets/img/img12.png'
@@ -33,17 +33,9 @@ const heroSlides = [
 const SLIDE_INTERVAL_MS = 6000
 
 function LandingHero({ navSlot }) {
-	const heroRef = useRef(null)
 	const [activeIndex, setActiveIndex] = useState(0)
 	const [isPaused, setIsPaused] = useState(false)
 	const reduceMotion = useReducedMotion()
-	const { scrollYProgress } = useScroll({
-		target: heroRef,
-		offset: ['start start', 'end start'],
-	})
-	const backgroundY = useTransform(scrollYProgress, (progress) =>
-		reduceMotion ? 0 : progress * 140,
-	)
 
 	useEffect(() => {
 		if (reduceMotion || heroSlides.length <= 1 || isPaused) return undefined
@@ -78,31 +70,24 @@ function LandingHero({ navSlot }) {
 
 	return (
 		<section
-			ref={heroRef}
 			className="landing-hero relative isolate overflow-hidden"
 			aria-label="Portal introduction"
 		>
 			{navSlot}
 			<div className="landing-hero-media">
-				<motion.div
-					className="landing-hero-parallax"
-					style={{ y: backgroundY }}
-					aria-hidden
-				>
-					<AnimatePresence mode="sync" initial={false}>
-						<motion.img
-							key={activeSlide.src}
-							src={activeSlide.src}
-							alt=""
-							className="absolute inset-0 h-full w-full scale-105 object-cover"
-							style={{ objectPosition: activeSlide.objectPosition }}
-							initial={reduceMotion ? false : { opacity: 0, scale: 1.08 }}
-							animate={{ opacity: 1, scale: 1.05 }}
-							exit={reduceMotion ? undefined : { opacity: 0, scale: 1.02 }}
-							transition={slideTransition}
-						/>
-					</AnimatePresence>
-				</motion.div>
+				<AnimatePresence mode="sync" initial={false}>
+					<motion.img
+						key={activeSlide.src}
+						src={activeSlide.src}
+						alt=""
+						className="absolute inset-0 h-full w-full object-cover"
+						style={{ objectPosition: activeSlide.objectPosition }}
+						initial={reduceMotion ? false : { opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={reduceMotion ? undefined : { opacity: 0 }}
+						transition={slideTransition}
+					/>
+				</AnimatePresence>
 				<span className="sr-only">{activeSlide.alt}</span>
 				<div className="landing-hero-overlay landing-hero-overlay--lr" aria-hidden />
 				<div className="landing-hero-overlay landing-hero-overlay--tb" aria-hidden />
@@ -114,13 +99,15 @@ function LandingHero({ navSlot }) {
 						transition={{ duration: 0.6, ease: 'easeOut' }}
 						className="landing-hero-copy"
 					>
-						<h1 id="hero-heading" className="landing-hero-title">
-							Digital Tenancy Records for Assam
-						</h1>
-						<p className="landing-hero-lead">
-							Apply for your certificate, track your application, and download digitally signed
-							documents when approved.
-						</p>
+						<div className="landing-hero-copy__text">
+							<h1 id="hero-heading" className="landing-hero-title">
+								Assam Tenancy Registration and Management System
+							</h1>
+							<p className="landing-hero-lead">
+								Register tenancies, apply for UIN certificates, and track applications online under
+								the Assam Tenancy Act.
+							</p>
+						</div>
 						<div className="landing-hero-actions">
 							<AuthNavLink
 								mode="login"
@@ -128,18 +115,13 @@ function LandingHero({ navSlot }) {
 							>
 								Apply Now
 							</AuthNavLink>
-						<a
-							href="#portal-guide"
-							onClick={scrollToHowToApply}
-							className="landing-hero-cta landing-hero-cta--ghost"
-						>
-							<span className="landing-hero-cta-label landing-hero-cta-label--short">
+							<a
+								href="#portal-guide"
+								onClick={scrollToHowToApply}
+								className="landing-hero-cta landing-hero-cta--ghost"
+							>
 								How to apply
-							</span>
-							<span className="landing-hero-cta-label landing-hero-cta-label--long">
-								See how to apply
-							</span>
-						</a>
+							</a>
 						</div>
 					</motion.div>
 				</div>

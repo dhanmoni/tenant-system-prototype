@@ -11,7 +11,7 @@ function About() {
 			breadcrumbLabel="About us"
 			lead="The Assam Tenancy Registration & Management System is a unified digital portal for citizens, tenants, and property owners under the Government of Assam."
 		>
-			<div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
+			<div className="about-page-grid grid items-start gap-10 lg:grid-cols-2 lg:gap-14 xl:gap-16">
 				<div className="overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/60">
 					<img
 						src={aboutImage}
@@ -25,7 +25,7 @@ function About() {
 						<h2 className="landing-section-subtitle">Our mission</h2>
 						<p className="mt-3 text-sm leading-relaxed text-slate-600">
 							To make tenancy registration, certificate issuance, and dispute filing accessible
-							online ? reducing visits to offices while keeping records transparent and
+							online — reducing visits to offices while keeping records transparent and
 							verifiable for tenants and owners across Assam.
 						</p>
 					</div>

@@ -88,7 +88,7 @@ const DataTable = ({
                                                             autoFocus
                                                         />
                                                         <div className="popup-actions">
-                                                            <button onClick={() => handleSearchSubmit(col.key)}>Find</button>
+                                                            <button type="button" className="btn-find" onClick={() => handleSearchSubmit(col.key)}>Find</button>
                                                             <button className="btn-clear" onClick={() => handleClearSearch(col.key)}>Clear</button>
                                                         </div>
                                                     </div>

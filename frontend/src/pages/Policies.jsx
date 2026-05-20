@@ -57,7 +57,7 @@ function Policies() {
 				</a>
 			</div>
 
-			<div className="space-y-6">
+			<div className="policies-page-list space-y-6">
 				{policySections.map((section) => (
 					<article
 						key={section.title}

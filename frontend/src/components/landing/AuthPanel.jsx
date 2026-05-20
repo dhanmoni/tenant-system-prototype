@@ -184,6 +184,9 @@ function AuthPanel({
 												placeholder="10-digit mobile number"
 												autoComplete="tel"
 												inputMode="numeric"
+												pattern="[0-9]{10}"
+												maxLength={10}
+												title="Enter a 10-digit mobile number"
 												required
 											/>
 										</div>

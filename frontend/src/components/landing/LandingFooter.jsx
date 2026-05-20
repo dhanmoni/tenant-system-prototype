@@ -6,7 +6,7 @@ import { siteLastUpdated } from '../../data/siteMeta'
 
 const portalLinks = [
 	{ label: 'Home', to: '/' },
-	{ label: 'Services', to: '/#services', hash: true },
+	{ label: 'Services', to: '/services' },
 	{ label: 'How it works', to: '/#portal-guide', hash: true },
 	{ label: 'Login', to: '/#login', hash: true },
 	{ label: 'New registration', to: '/#register', hash: true },
@@ -15,7 +15,7 @@ const portalLinks = [
 const resourceLinks = [
 	{ label: 'About us', to: '/about' },
 	{ label: 'Public dashboard', to: '/public-dashboard' },
-	{ label: 'Services', to: '/#services', hash: true },
+	{ label: 'Services', to: '/services' },
 	{ label: 'Policies & guidelines', to: '/policies' },
 	{ label: 'Contact us', to: '/contact' },
 	{ label: 'Sitemap', to: '/sitemap' },
@@ -35,9 +35,14 @@ const socialLinks = [
 	{ label: 'TCP Assam', href: 'https://tcp.assam.gov.in/', icon: ExternalLink },
 ]
 
+const footerLinkClass =
+	'landing-footer-link text-sm text-white/80 no-underline transition hover:text-white hover:underline'
+
+const footerSocialClass =
+	'landing-footer-social flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/80 no-underline transition hover:border-white/40 hover:bg-white/10 hover:text-white'
+
 function FooterLink({ item }) {
-	const className =
-		'text-sm text-white/80 no-underline transition hover:text-white hover:underline'
+	const className = footerLinkClass
 
 	if (item.hash) {
 		return (
@@ -65,7 +70,7 @@ function FooterColumn({ title, children }) {
 
 function LandingFooter() {
 	return (
-		<footer className="bg-[#111111] text-white" role="contentinfo">
+		<footer className="landing-footer bg-[#111111] text-white" role="contentinfo">
 			<div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
 				<div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
 					<div className="lg:col-span-4">
@@ -83,7 +88,7 @@ function LandingFooter() {
 									href={href}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/80 no-underline transition hover:border-white/40 hover:bg-white/10 hover:text-white"
+									className={footerSocialClass}
 									aria-label={label}
 								>
 									<Icon className="h-4 w-4" aria-hidden />
@@ -122,7 +127,7 @@ function LandingFooter() {
 										href={item.href}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="inline-flex items-center gap-1.5 text-sm text-white/80 no-underline transition hover:text-white hover:underline"
+										className={`${footerLinkClass} inline-flex items-center gap-1.5`}
 									>
 										{item.label}
 										<ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
@@ -159,17 +164,17 @@ function LandingFooter() {
 						Last updated: <time dateTime="2026-05-16">{siteLastUpdated}</time>
 					</p>
 					<div className="flex flex-wrap gap-4">
-						<Link to="/policies" className="text-white/50 no-underline hover:text-white">
+						<Link to="/policies" className="landing-footer-link text-white/50 no-underline hover:text-white">
 							Terms &amp; policies
 						</Link>
-						<Link to="/policies" className="text-white/50 no-underline hover:text-white">
+						<Link to="/policies" className="landing-footer-link text-white/50 no-underline hover:text-white">
 							Privacy
 						</Link>
 						<a
 							href="https://www.india.gov.in/"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-white/50 no-underline hover:text-white"
+							className="landing-footer-link text-white/50 no-underline hover:text-white"
 						>
 							Website policies
 						</a>

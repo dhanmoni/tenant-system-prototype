@@ -50,18 +50,18 @@ function ApplicationDetails() {
 	}
 
 	if (loading) return <div className="auth-card dashboard-card"><p>Loading application details...</p></div>
-	if (error) return <div className="auth-card dashboard-card"><p className="error">{error}</p><button onClick={() => navigate(-1)}>Back</button></div>
-	if (!application) return <div className="auth-card dashboard-card"><p>No application data found.</p><button onClick={() => navigate(-1)}>Back</button></div>
+	if (error) return <div className="auth-card dashboard-card"><p className="error">{error}</p><button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate(-1)}>Back</button></div>
+	if (!application) return <div className="auth-card dashboard-card"><p>No application data found.</p><button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate(-1)}>Back</button></div>
 
 	const baseUrl = (api.defaults.baseURL || 'http://localhost:8000').replace(/\/$/, '')
 	
 	const renderTenancyDetails = () => (
 		<div className="tenancy-preview-container">
 			<div className="form-actions no-print application-details-actions">
-				<button className="secondary application-back-btn" onClick={() => navigate(-1)}>Back</button>
-				<button className="secondary" onClick={() => window.print()}>Print / Save PDF</button>
+				<button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate(-1)}>Back</button>
+				<button type="button" className="ws-btn ws-btn--primary" onClick={() => window.print()}>Print / Save PDF</button>
 				{application.agreement_pdf_path && (
-					<button className="secondary" onClick={() => window.open(`${baseUrl}/storage/${application.agreement_pdf_path}`, '_blank')}>View Agreement</button>
+					<button type="button" className="ws-btn ws-btn--primary" onClick={() => window.open(`${baseUrl}/storage/${application.agreement_pdf_path}`, '_blank')}>View Agreement</button>
 				)}
 			</div>
 
@@ -260,7 +260,7 @@ function ApplicationDetails() {
 					</div>
 				)}
 				<div className="form-actions" style={{ marginTop: '2rem' }}>
-					<button onClick={() => navigate(-1)}>Back</button>
+					<button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate(-1)}>Back</button>
 				</div>
 			</div>
 		)

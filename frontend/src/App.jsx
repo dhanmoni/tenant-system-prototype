@@ -34,6 +34,7 @@ import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
 import Contact from './pages/Contact'
 import About from './pages/About'
+import Services from './pages/Services'
 import PublicDashboard from './pages/PublicDashboard'
 import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
@@ -60,6 +61,7 @@ import { LANDING_A11Y_EVENT } from './utils/landingA11y'
 import {
 	getMainContentTargetId,
 	handleSkipLinkClick,
+	isPublicMarketingPath,
 } from './utils/skipNavigation'
 import emblem from './assets/img/emblem-dark.png'
 import nicLogo from './assets/img/NIC.png'
@@ -135,10 +137,16 @@ function App() {
 	const isLandingHome =
 		!user &&
 		(location.pathname === '/' || location.pathname === '/login' || isJoinEntry)
+	const isPublicMarketingPage = !user && isPublicMarketingPath(location.pathname)
+	const usesLandingChrome = isLandingHome || isPublicMarketingPage
 	const mainContentTargetId = getMainContentTargetId(location.pathname)
-	/* Old marketing shell (carousel, topbar) — never on dashboard, join links, or sign-out */
+	/* Old marketing shell (carousel, topbar) — only on legacy public routes */
 	const showLegacyPublicChrome =
-		!user && !isLandingHome && !isDashboardRoute && !loggingOut && !isJoinEntry
+		!user &&
+		!usesLandingChrome &&
+		!isDashboardRoute &&
+		!loggingOut &&
+		!isJoinEntry
 
 	useEffect(() => {
 		try {
@@ -274,7 +282,7 @@ function App() {
 
 	return (
 		<div
-			className={`page${!user && !isDashboardRoute ? ' page-landing' : ''}${isLandingHome ? ' page-landing-home' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
+			className={`page${!user && !isDashboardRoute ? ' page-landing' : ''}${usesLandingChrome ? ' page-landing-home page-public-marketing' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
 		>
 			<a
 				className="skip-link"
@@ -286,7 +294,7 @@ function App() {
 			{/* Accessibility Bar — hidden on landing home mobile (see LandingNav utility bar) */}
 			<div
 				id="accessibility-bar"
-				className={`accessibility-bar${isLandingHome ? ' accessibility-bar--landing-mobile-hidden' : ''}`}
+				className={`accessibility-bar${usesLandingChrome ? ' accessibility-bar--landing-mobile-hidden' : ''}`}
 			>
 				<div className="accessibility-bar-inner">
 					<div className="accessibility-gov">
@@ -405,7 +413,7 @@ function App() {
 			{showLegacyPublicChrome ? <div className="landing-accent-stripe" aria-hidden /> : null}
 
 			{/* Main navigation – rent-portal style on landing; hidden on dashboard */}
-			{!isLandingHome && !isDashboardRoute && (
+			{!usesLandingChrome && !isDashboardRoute && (
 				<div className="globalnav">
 					<div className="globalnav-inner">
 						{!user ? (
@@ -490,6 +498,7 @@ function App() {
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
 					<Route path="/about" element={<About />} />
+					<Route path="/services" element={<Services />} />
 					<Route path="/public-dashboard" element={<PublicDashboard />} />
 					<Route path="/contact" element={<Contact />} />
 					<Route path="/sitemap" element={<Sitemap />} />

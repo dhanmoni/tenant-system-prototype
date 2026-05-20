@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api';
 import DataTable from '../../../components/dashboard/DataTable';
+import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton';
 import { useEffect, useState } from 'react';
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, ADMIN_ROLES } from '../../../constants/roles';
 import { STATUS_LABELS } from '../../../constants/status';
@@ -139,7 +140,8 @@ const ApplicationList = ({ user }) => {
 					}
 				]}
 				actions={(app) => (
-					<div className="nav-actions">
+					<div className="nav-actions table-row-actions">
+						<StatusProgressViewButton application={app} variant="admin" />
 						<button
 							className="action-icon-btn info"
 							onClick={() => navigate(`/dashboard/admin/applications/${app.application_no}`)}

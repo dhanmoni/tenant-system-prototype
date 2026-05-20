@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
+import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
 import { formatDate, formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
 import { parseTenantFormsResponse } from '../../../utils/tenantFormsApi'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
@@ -284,10 +285,14 @@ function UserOverview() {
 									<span>Type</span>
 									<span>Status</span>
 									<span>Submitted</span>
+									<span className="ws-citizen-recent-head-actions">Progress</span>
 								</div>
 								<ul className="ws-citizen-recent-list">
 									{applications.map((app) => (
-										<li key={app.row_key || app.id || app.application_no}>
+										<li
+											key={app.row_key || app.id || app.application_no}
+											className="ws-citizen-recent-item"
+										>
 											<button
 												type="button"
 												className="ws-citizen-recent-row"
@@ -310,6 +315,12 @@ function UserOverview() {
 													{formatDate(app.created_at)}
 												</span>
 											</button>
+											<StatusProgressViewButton
+												application={app}
+												variant="workspace"
+												className="ws-citizen-recent-progress"
+												title="View application progress"
+											/>
 										</li>
 									))}
 								</ul>

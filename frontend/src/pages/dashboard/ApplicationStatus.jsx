@@ -229,7 +229,7 @@ function ApplicationStatus() {
 																autoFocus
 															/>
 															<div className="popup-actions">
-																<button onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+																<button type="button" className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
 																<button className="btn-clear" onClick={() => { setStatusSearchAppNo(''); loadStatusApplications(1, { application_no: '' }); setActiveSearchColumn(null); }}>Clear</button>
 															</div>
 														</div>
@@ -257,7 +257,7 @@ function ApplicationStatus() {
 																autoFocus
 															/>
 															<div className="popup-actions">
-																<button onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+																<button type="button" className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
 																<button className="btn-clear" onClick={() => { setStatusSearchUid(''); loadStatusApplications(1, { uid: '' }); setActiveSearchColumn(null); }}>Clear</button>
 															</div>
 														</div>

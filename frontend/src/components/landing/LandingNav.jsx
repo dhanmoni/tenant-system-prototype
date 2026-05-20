@@ -8,23 +8,23 @@ import emblem from '../../assets/img/emblem-dark.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
 import { emitLandingA11y } from '../../utils/landingA11y'
 
-const scrollLinks = [
-	{ id: 'services', label: 'Services' },
-	{ id: 'portal-guide', label: 'How it works' },
-]
-
-function LandingNav() {
+function LandingNav({ variant = 'overlay' }) {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const location = useLocation()
-	const isHome = location.pathname === '/' || location.pathname === '/login'
+	const isStatic = variant === 'static'
 
-	const sectionHref = (id) => (isHome ? `#${id}` : `/#${id}`)
+	const shellLinkClass = (path, exact = true) => {
+		const active = exact
+			? location.pathname === path
+			: location.pathname.startsWith(path)
+		return `landing-nav-shell-link${active ? ' is-active' : ''}`
+	}
 
-	const scrollTo = (id) => (e) => {
-		if (!isHome) return
-		e.preventDefault()
-		setMenuOpen(false)
-		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+	const drawerLinkClass = (path, exact = true) => {
+		const active = exact
+			? location.pathname === path
+			: location.pathname.startsWith(path)
+		return `landing-nav-drawer-link${active ? ' is-active' : ''}`
 	}
 
 	const closeMenu = () => setMenuOpen(false)
@@ -34,15 +34,13 @@ function LandingNav() {
 		document.getElementById('portal-content')?.scrollIntoView({ behavior: 'smooth' })
 	}
 
-	const drawerLinkClass = 'landing-nav-drawer-link'
-
 	return (
 		<motion.nav
-			initial={{ opacity: 0, y: -12 }}
+			initial={{ opacity: 0, y: isStatic ? 0 : -12 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.4 }}
 			id="landing-primary-nav"
-			className="landing-nav-host absolute inset-x-0 top-0 z-40"
+			className={`landing-nav-host z-40${isStatic ? ' landing-nav-host--static' : ' absolute inset-x-0 top-0'}`}
 			aria-label="Main navigation"
 		>
 			<div className="landing-nav-mobile md:hidden">
@@ -167,27 +165,20 @@ function LandingNav() {
 								>
 									Apply &amp; sign in
 								</button>
-								<Link to="/" onClick={closeMenu} className={drawerLinkClass}>
+								<Link to="/" onClick={closeMenu} className={drawerLinkClass('/')}>
 									Home
 								</Link>
-								{scrollLinks.map((link) => (
-									<a
-										key={link.id}
-										href={sectionHref(link.id)}
-										onClick={scrollTo(link.id)}
-										className={drawerLinkClass}
-									>
-										{link.label}
-									</a>
-								))}
+								<Link to="/services" onClick={closeMenu} className={drawerLinkClass('/services')}>
+									Services
+								</Link>
 								<NavDashboardMenu variant="drawer" onNavigate={closeMenu} />
-								<Link to="/about" onClick={closeMenu} className={drawerLinkClass}>
+								<Link to="/about" onClick={closeMenu} className={drawerLinkClass('/about')}>
 									About us
 								</Link>
-								<Link to="/contact" onClick={closeMenu} className={drawerLinkClass}>
-									Contact Us
+								<Link to="/contact" onClick={closeMenu} className={drawerLinkClass('/contact')}>
+									Contact
 								</Link>
-								<Link to="/policies" onClick={closeMenu} className={drawerLinkClass}>
+								<Link to="/policies" onClick={closeMenu} className={drawerLinkClass('/policies')}>
 									Policies &amp; Guidelines
 								</Link>
 								<div className="landing-nav-drawer-ctas">
@@ -223,27 +214,20 @@ function LandingNav() {
 				<div className="landing-nav-shell">
 					<div className="landing-nav-shell-inner">
 						<div className="landing-nav-shell-links">
-							<Link to="/" className="landing-nav-shell-link">
+							<Link to="/" className={shellLinkClass('/')}>
 								Home
 							</Link>
-							{scrollLinks.map((link) => (
-								<a
-									key={link.id}
-									href={sectionHref(link.id)}
-									onClick={scrollTo(link.id)}
-									className="landing-nav-shell-link"
-								>
-									{link.label}
-								</a>
-							))}
+							<Link to="/services" className={shellLinkClass('/services')}>
+								Services
+							</Link>
 							<NavDashboardMenu />
-							<Link to="/about" className="landing-nav-shell-link">
+							<Link to="/about" className={shellLinkClass('/about')}>
 								About us
 							</Link>
-							<Link to="/contact" className="landing-nav-shell-link">
-								Contact Us
+							<Link to="/contact" className={shellLinkClass('/contact')}>
+								Contact
 							</Link>
-							<Link to="/policies" className="landing-nav-shell-link">
+							<Link to="/policies" className={shellLinkClass('/policies')}>
 								<span className="landing-nav-shell-link-long">Policies &amp; Guidelines</span>
 								<span className="landing-nav-shell-link-short">Policies</span>
 							</Link>

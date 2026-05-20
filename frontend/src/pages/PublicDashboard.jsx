@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
-import PortalStatsSection from '../components/landing/PortalStatsSection'
 import {
 	publicDashboardMeta,
 	monthlyApplications,
@@ -25,9 +24,7 @@ function PublicDashboard() {
 			lead={publicDashboardMeta.lead}
 		>
 			<div className="public-dashboard-page">
-				<PortalStatsSection />
-
-				<div ref={chartsRef} className="public-dashboard-charts mt-12 space-y-8 sm:mt-14">
+				<div ref={chartsRef} className="public-dashboard-charts space-y-8">
 					<motion.div
 						initial={{ opacity: 0, y: 20 }}
 						animate={chartsInView ? { opacity: 1, y: 0 } : {}}

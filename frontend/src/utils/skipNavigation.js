@@ -1,3 +1,16 @@
+const PUBLIC_MARKETING_PATHS = new Set([
+	'/about',
+	'/services',
+	'/policies',
+	'/contact',
+	'/public-dashboard',
+	'/sitemap',
+])
+
+export function isPublicMarketingPath(pathname = '') {
+	return PUBLIC_MARKETING_PATHS.has(String(pathname || ''))
+}
+
 /** Resolve main-content skip target for current route. */
 export function getMainContentTargetId(pathname = '') {
 	return String(pathname || '').startsWith('/dashboard')
@@ -10,7 +23,7 @@ export function getNavTargetId(pathname = '', isLandingHome = false) {
 	if (String(pathname || '').startsWith('/dashboard')) {
 		return 'workspace-primary-nav'
 	}
-	if (isLandingHome) {
+	if (isLandingHome || isPublicMarketingPath(pathname)) {
 		return 'landing-primary-nav'
 	}
 	return 'public-primary-nav'

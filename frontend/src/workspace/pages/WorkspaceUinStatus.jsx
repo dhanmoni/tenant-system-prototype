@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
+import StatusProgressViewButton from '../../components/dashboard/StatusProgressViewButton'
 import { formatDate } from '../../utils/formatters'
 import { STATUS, STATUS_LABELS } from '../../constants/status'
 import { APPLICATION_TYPES } from '../../constants/application'
@@ -402,7 +403,7 @@ function StatusCategorySection({
 										{app.status === STATUS.DRAFT && category.isTenancy ? (
 											<button
 												type="button"
-												className="ws-status-action-btn ws-status-action-btn--primary"
+												className="ws-status-action-btn ws-status-action-btn--resume"
 												title="Resume draft application"
 												onClick={() =>
 													navigate(
@@ -414,20 +415,27 @@ function StatusCategorySection({
 												<span>Resume</span>
 											</button>
 										) : (
-											<button
-												type="button"
-												className="ws-status-action-btn"
-												title="View details"
-												onClick={() => onOpenDetails(app)}
-											>
-												<Icon name="eye" />
-												<span>View</span>
-											</button>
+											<>
+												<StatusProgressViewButton
+													application={app}
+													variant="workspace"
+													title="View status progress"
+												/>
+												<button
+													type="button"
+													className="ws-status-action-btn ws-status-action-btn--view"
+													title="View details"
+													onClick={() => onOpenDetails(app)}
+												>
+													<Icon name="eye" />
+													<span>View</span>
+												</button>
+											</>
 										)}
 										{category.isTenancy ? (
 											<button
 												type="button"
-												className="ws-status-action-btn"
+												className="ws-status-action-btn ws-status-action-btn--receipt"
 												title="Download acknowledgement"
 												onClick={() => onDownloadAck(app.application_no)}
 											>
@@ -439,7 +447,7 @@ function StatusCategorySection({
 											canJoinApp(app) ? (
 												<button
 													type="button"
-													className="ws-status-action-btn ws-status-action-btn--primary"
+													className="ws-status-action-btn ws-status-action-btn--join"
 													title="Join application"
 													onClick={() => onJoin(app.ref_code)}
 												>
@@ -449,7 +457,7 @@ function StatusCategorySection({
 											) : (
 												<button
 													type="button"
-													className="ws-status-action-btn"
+													className="ws-status-action-btn ws-status-action-btn--invite"
 													title={
 														copiedRefCode === app.ref_code
 															? 'Copied!'

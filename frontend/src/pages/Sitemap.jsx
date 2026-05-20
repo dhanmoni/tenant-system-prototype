@@ -10,6 +10,7 @@ const mainLinks = [
 ]
 
 const infoLinks = [
+	{ label: 'Services', to: '/services', icon: FileText, external: false },
 	{ label: 'About us', to: '/about', icon: BookOpen, external: false },
 	{ label: 'Public dashboard', to: '/public-dashboard', icon: FileText, external: false },
 	{ label: 'Policies & Guidelines', to: '/policies', icon: BookOpen, external: false },

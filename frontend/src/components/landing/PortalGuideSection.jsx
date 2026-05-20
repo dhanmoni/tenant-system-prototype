@@ -25,14 +25,14 @@ const steps = [
 	{
 		num: '3',
 		title: 'Track and download',
-		text: 'Monitor status in real time and download your signed certificate.',
+		text: 'Monitor status in real time and download your certificate.',
 	},
 ]
 
 const highlights = [
 	'Register and verify with mobile OTP',
 	'Track applications in real time',
-	'Download signed certificates online',
+	'Download certificates online',
 ]
 
 const services = [
@@ -110,7 +110,7 @@ function PortalGuideSection() {
 	return (
 		<section
 			id="portal-guide"
-			className="portal-guide-section landing-wallpaper-bg landing-wallpaper-bg--cream py-12 sm:py-16 lg:py-24"
+			className="portal-guide-section landing-wallpaper-bg landing-wallpaper-bg--white py-12 sm:py-16 lg:py-24"
 			aria-labelledby="portal-guide-heading"
 		>
 			<div id="how-to-apply" className="scroll-mt-28" tabIndex={-1} aria-hidden />

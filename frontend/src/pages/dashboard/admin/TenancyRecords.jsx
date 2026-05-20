@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api';
 import DataTable from '../../../components/dashboard/DataTable';
+import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton';
 import { useEffect, useState } from 'react';
 import { formatDate } from '../../../utils/formatters';
 import { ADMIN_ROLES } from '../../../constants/roles';
@@ -63,12 +64,15 @@ const TenancyRecords = ({ user }) => {
 				}
 			]}
 			actions={(record) => (
-				<button
-					className="action-icon-btn info"
-					onClick={() => navigate(`/dashboard/admin/applications/${record.application_no}`)}
-				>
-					View Info
-				</button>
+				<div className="nav-actions table-row-actions">
+					<StatusProgressViewButton application={record} variant="admin" />
+					<button
+						className="action-icon-btn info"
+						onClick={() => navigate(`/dashboard/admin/applications/${record.application_no}`)}
+					>
+						View Info
+					</button>
+				</div>
 			)}
 			emptyMessage="No tenancy records found."
 		/>
