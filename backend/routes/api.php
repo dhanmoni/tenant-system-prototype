@@ -87,6 +87,11 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 
+    Route::middleware("role:$adminRoles")->group(function () {
+        Route::get('/admin/tenancy-records', [TenancyApplicationController::class, 'adminIndex']);
+        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
+    });
+
     // Service Application Workflow
     Route::middleware("role:$allAdminStaffRoles")->group(function () {
         Route::get('/admin/applications/inbox', [ApplicationWorkflowController::class, 'inbox']);
@@ -96,11 +101,6 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
         Route::post('/admin/applications/{type}/{id}/forward', [ApplicationWorkflowController::class, 'forward']);
         Route::post('/admin/applications/{type}/{id}/reject', [ApplicationWorkflowController::class, 'reject']);
         Route::post('/admin/applications/{type}/{id}/approve', [ApplicationWorkflowController::class, 'approve']);
-    });
-
-    Route::middleware("role:$adminRoles")->group(function () {
-        Route::get('/admin/tenancy-records', [TenancyApplicationController::class, 'adminIndex']);
-        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
     });
 
     // Admin user management

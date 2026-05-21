@@ -13,6 +13,8 @@ const TenancyRecords = ({ user }) => {
 	const [records, setRecords] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+	const [page, setPage] = useState(1);
+	const [paginationInfo, setPaginationInfo] = useState(null);
 
 	useEffect(() => {
 		if (!ADMIN_ROLES.includes(user?.role)) {
@@ -20,12 +22,13 @@ const TenancyRecords = ({ user }) => {
 			return;
 		}
 		fetchRecords();
-	}, [user?.role]);
+	}, [user?.role, page]);
 
 	const fetchRecords = async () => {
 		try {
-			const { data } = await api.get('/api/admin/tenancy-records');
+			const { data } = await api.get(`/api/admin/tenancy-records?page=${page}&per_page=15`);
 			setRecords(data.records || []);
+			setPaginationInfo(data.pagination || null);
 		} catch (err) {
 			setError('Failed to load tenancy records');
 		} finally {
@@ -75,6 +78,11 @@ const TenancyRecords = ({ user }) => {
 				</div>
 			)}
 			emptyMessage="No tenancy records found."
+			pagination={paginationInfo ? {
+				currentPage: paginationInfo.current_page,
+				totalPages: paginationInfo.last_page,
+				onPageChange: (newPage) => setPage(newPage)
+			} : null}
 		/>
 	);
 };

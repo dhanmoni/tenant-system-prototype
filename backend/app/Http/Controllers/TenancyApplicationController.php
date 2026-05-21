@@ -726,7 +726,9 @@ class TenancyApplicationController extends Controller
             $query->where('district_id', $user->district_id);
         }
 
-        $records = $query->orderBy('created_at', 'desc')->get([
+        $perPage = (int) $request->input('per_page', 15);
+
+        $paginated = $query->orderBy('created_at', 'desc')->orderBy('id', 'desc')->paginate($perPage, [
             'id',
             'application_no',
             'uid',
@@ -737,7 +739,15 @@ class TenancyApplicationController extends Controller
             'district_id',
         ]);
 
-        return response()->json(['records' => $records]);
+        return response()->json([
+            'records' => $paginated->items(),
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+        ]);
     }
 
     public function currentDraft(Request $request)
@@ -1320,6 +1330,10 @@ class TenancyApplicationController extends Controller
 
     private function userCanAccess($user, TenancyApplication $application): bool
     {
+        if ($user->role === \App\Constants\Roles::SUPER_ADMIN) {
+            return true;
+        }
+
         // Check landlord/tenant user ID match
         if ($application->landlord_user_id && (int) $application->landlord_user_id === (int) $user->id) {
             return true;
@@ -1344,8 +1358,7 @@ class TenancyApplicationController extends Controller
             return true;
         }
 
-        $staffRoles = [User::ROLE_DIRECTOR, User::ROLE_ASSISTANT_DIRECTOR, User::ROLE_DISTRICT_HEAD, User::ROLE_DISTRICT_ASSISTANT];
-        if (in_array($user->role, $staffRoles, true) && !empty($user->district_id) && !empty($application->office_id)) {
+        if ($user->role === \App\Constants\Roles::DISTRICT_ADMIN && !empty($user->district_id) && !empty($application->office_id)) {
             $office = Office::find($application->office_id);
             return $office && (int) $office->district_id === (int) $user->district_id;
         }

@@ -14,6 +14,8 @@ const ApplicationList = ({ user }) => {
 	const [actionLoading, setActionLoading] = useState(null);
 	const [rejectionMsg, setRejectionMsg] = useState('');
 	const [showRejectModal, setShowRejectModal] = useState(null);
+	const [page, setPage] = useState(1);
+	const [paginationInfo, setPaginationInfo] = useState(null);
 
 	const fetchApplications = async () => {
 		try {
@@ -23,8 +25,9 @@ const ApplicationList = ({ user }) => {
 			} else if (PRINCIPAL_ROLES.includes(user?.role)) {
 				endpoint = '/api/admin/applications/principal-inbox';
 			}
-			const { data } = await api.get(endpoint);
+			const { data } = await api.get(`${endpoint}?page=${page}&per_page=15`);
 			setApplications(data.applications || []);
+			setPaginationInfo(data.pagination || null);
 		} catch (error) {
 			console.error('Error fetching applications:', error);
 		} finally {
@@ -34,7 +37,7 @@ const ApplicationList = ({ user }) => {
 
 	useEffect(() => {
 		fetchApplications();
-	}, [user?.role]);
+	}, [user?.role, page]);
 
 	const handleForward = async (type, id) => {
 		if (!window.confirm('Are you sure you want to FORWARD this application?')) return;
@@ -178,6 +181,11 @@ const ApplicationList = ({ user }) => {
 					</div>
 				)}
 				emptyMessage="No applications found."
+				pagination={paginationInfo ? {
+					currentPage: paginationInfo.current_page,
+					totalPages: paginationInfo.last_page,
+					onPageChange: (newPage) => setPage(newPage)
+				} : null}
 			/>
 
 			{showRejectModal && (

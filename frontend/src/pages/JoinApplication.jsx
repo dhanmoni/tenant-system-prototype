@@ -28,6 +28,25 @@ function JoinApplication() {
 	const [panDocumentFile, setPanDocumentFile] = useState(null)
 	const [declarationChecked, setDeclarationChecked] = useState(false)
 
+	// Payment State
+	const [paymentComplete, setPaymentComplete] = useState(false)
+	const [paymentSimulating, setPaymentSimulating] = useState(false)
+
+	const feeAmount = (() => {
+		if (!application?.apply_type) return 0
+		const type = application.apply_type.toLowerCase()
+		return type === 'joint' ? 50 : type === 'individual' ? 75 : 0
+	})()
+
+	const handleMockPayment = () => {
+		setPaymentSimulating(true)
+		// TODO: Replace this mock with actual eGRAS payment gateway redirect & callback logic
+		setTimeout(() => {
+			setPaymentSimulating(false)
+			setPaymentComplete(true)
+		}, 1500)
+	}
+
 	useEffect(() => {
 		if (!refCode) {
 			setError('No reference code provided.')
@@ -63,6 +82,10 @@ function JoinApplication() {
 		e.preventDefault()
 		if (!declarationChecked) {
 			setError('You must accept the declaration to submit.')
+			return
+		}
+		if (!paymentComplete) {
+			setError('You must complete the fee payment before submitting.')
 			return
 		}
 		setError('')
@@ -380,6 +403,20 @@ function JoinApplication() {
 					</label>
 				</fieldset>
 
+				<div className="payment-section" style={{ marginTop: '30px', padding: '20px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>
+					<h3>Fee Payment</h3>
+					<p>Based on your agreement registration date, the required application fee is <strong>₹{feeAmount}</strong>.</p>
+					{!paymentComplete ? (
+						<button type="button" className="ws-btn ws-btn--primary" onClick={handleMockPayment} disabled={paymentSimulating || submitting}>
+							{paymentSimulating ? 'Processing Payment...' : `Pay ₹${feeAmount} via eGRAS`}
+						</button>
+					) : (
+						<div className="ws-alert ws-alert--success" style={{ marginTop: '10px' }}>
+							Payment of ₹{feeAmount} completed successfully. (Mock GRN: {Math.floor(Math.random() * 1000000000)})
+						</div>
+					)}
+				</div>
+
 				<div className="tenancy-declaration-section" style={{ marginTop: '32px', padding: '16px', background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '4px' }}>
 					<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', margin: 0, flexDirection: 'row' }}>
 						<input 
@@ -396,7 +433,7 @@ function JoinApplication() {
 				</div>
 
 				<div className="form-actions">
-					<button type="submit" disabled={submitting || !declarationChecked}>
+					<button type="submit" disabled={submitting || !declarationChecked || !paymentComplete}>
 						{submitting ? 'Submitting...' : 'Submit & Complete Application'}
 					</button>
 					<button

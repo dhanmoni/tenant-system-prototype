@@ -111,7 +111,7 @@ const DataTable = ({
                             </tr>
                         ) : data.length > 0 ? (
                             data.map((row, rowIndex) => (
-                                <tr key={row.id || rowIndex}>
+                                <tr key={row.application_no || row.uid || row.id || rowIndex}>
                                     {columns.map((col) => (
                                         <td key={col.key}>
                                             {col.render ? col.render(row[col.key], row) : row[col.key]}

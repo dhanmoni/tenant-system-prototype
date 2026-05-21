@@ -12,11 +12,14 @@ const ApplicationInbox = ({ user }) => {
 	const [actionLoading, setActionLoading] = useState(null);
 	const [rejectionMsg, setRejectionMsg] = useState('');
 	const [showRejectModal, setShowRejectModal] = useState(null);
+	const [page, setPage] = useState(1);
+	const [paginationInfo, setPaginationInfo] = useState(null);
 
 	const fetchInbox = async () => {
 		try {
-			const { data } = await api.get('/api/admin/applications/inbox');
+			const { data } = await api.get(`/api/admin/applications/inbox?page=${page}&per_page=15`);
 			setApplications(data.applications);
+			setPaginationInfo(data.pagination || null);
 		} catch (error) {
 			console.error('Error fetching inbox:', error);
 		} finally {
@@ -26,7 +29,7 @@ const ApplicationInbox = ({ user }) => {
 
 	useEffect(() => {
 		fetchInbox();
-	}, []);
+	}, [page]);
 
 	const handleForward = async (type, id) => {
 		setActionLoading(id);
@@ -141,6 +144,11 @@ const ApplicationInbox = ({ user }) => {
 					</div>
 				)}
 				emptyMessage="No pending applications found."
+				pagination={paginationInfo ? {
+					currentPage: paginationInfo.current_page,
+					totalPages: paginationInfo.last_page,
+					onPageChange: (newPage) => setPage(newPage)
+				} : null}
 			/>
 
 			{showRejectModal && (
