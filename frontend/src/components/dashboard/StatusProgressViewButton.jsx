@@ -16,10 +16,10 @@ function StatusProgressViewButton({
 
 	if (!application) return null
 
-	const btnClass =
-		variant === 'workspace'
-			? `ws-status-action-btn ws-status-action-btn--progress ${className}`.trim()
-			: `table-icon-btn table-icon-btn--progress ${className}`.trim()
+	const useWorkspaceBtn = variant === 'workspace' || variant === 'admin'
+	const btnClass = useWorkspaceBtn
+		? `ws-status-action-btn ws-status-action-btn--progress ${className}`.trim()
+		: `table-icon-btn table-icon-btn--progress ${className}`.trim()
 
 	return (
 		<>
@@ -34,7 +34,7 @@ function StatusProgressViewButton({
 				}}
 			>
 				<Icon name="timeline" className="btn-icon-svg" />
-				{variant === 'workspace' ? <span>Progress</span> : null}
+				{useWorkspaceBtn ? <span>Progress</span> : null}
 			</button>
 			<ApplicationStatusProgressModal
 				open={open}

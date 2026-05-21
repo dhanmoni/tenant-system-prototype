@@ -2137,6 +2137,22 @@
 	border-color: #a78bfa !important;
 }
 
+.page.page-dashboard .ws-root button.ws-status-action-btn--reject {
+	background: #fef2f2 !important;
+	color: #b91c1c !important;
+	border-color: #fecaca !important;
+}
+
+.page.page-dashboard .ws-root button.ws-status-action-btn--reject:hover:not(:disabled) {
+	background: #fee2e2 !important;
+	color: #991b1b !important;
+	border-color: #fca5a5 !important;
+}
+
+.ws-legacy-page .ws-status-category {
+	margin-top: 0;
+}
+
 .ws-status-pagination {
 	display: flex;
 	flex-wrap: wrap;

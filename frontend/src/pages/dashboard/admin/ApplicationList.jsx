@@ -1,12 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api';
 import DataTable from '../../../components/dashboard/DataTable';
+import { Icon } from '../../../components/dashboard/Icons';
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton';
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal';
 import { useEffect, useState } from 'react';
-import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, ADMIN_ROLES } from '../../../constants/roles';
-import { STATUS_LABELS } from '../../../constants/status';
+import { ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles';
+import { STATUS, STATUS_LABELS } from '../../../constants/status';
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application';
+import { formatDate } from '../../../utils/formatters';
+
+function statusBadgeClass(status) {
+	const s = String(status || '').toUpperCase();
+	if ([STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(s)) {
+		return 'ws-badge ws-badge--success';
+	}
+	if (s === STATUS.REJECTED) return 'ws-badge ws-badge--danger';
+	if ([STATUS.DRAFT, STATUS.PARTIAL, STATUS.PENDING].includes(s)) {
+		return 'ws-badge ws-badge--warning';
+	}
+	return 'ws-badge ws-badge--pending';
+}
 
 const ApplicationList = ({ user }) => {
 	const navigate = useNavigate();
@@ -21,6 +35,7 @@ const ApplicationList = ({ user }) => {
 	const [paginationInfo, setPaginationInfo] = useState(null);
 
 	const fetchApplications = async () => {
+		setLoading(true);
 		try {
 			let endpoint = '/api/admin/applications/all';
 			if (ASSISTANT_ROLES.includes(user?.role)) {
@@ -95,25 +110,36 @@ const ApplicationList = ({ user }) => {
 		}
 	};
 
-	if (loading) return <div>Loading applications...</div>;
+	const openDetails = (app) => {
+		navigate(`/dashboard/admin/applications/${app.application_no}`);
+	};
 
 	return (
 		<>
-
 			<DataTable
-				title={ASSISTANT_ROLES.includes(user?.role) ? 'Pending Applications' : 'Applications In Review'}
+				title={
+					ASSISTANT_ROLES.includes(user?.role)
+						? 'Pending applications'
+						: 'Applications in review'
+				}
+				accent="uin"
 				loading={loading}
 				data={applications}
+				onRowClick={openDetails}
 				columns={[
 					{
 						key: 'application_no',
-						label: 'Application No',
-						render: (val) => <span className="bold">{val}</span>
+						label: 'Application no.',
+						mono: true,
 					},
 					{
 						key: 'form_type',
 						label: 'Type',
-						render: (val) => APPLICATION_LABELS[val] || val.replace(/-/g, ' ').toUpperCase()
+						cellClassName: 'ws-status-cell-form',
+						render: (val) =>
+							APPLICATION_LABELS[val] ||
+							val?.replace(/-/g, ' ').toUpperCase() ||
+							'—',
 					},
 					{
 						key: 'applicant_name',
@@ -122,7 +148,9 @@ const ApplicationList = ({ user }) => {
 							switch (row.form_type) {
 								case APPLICATION_TYPES.RENT_REVISION:
 								case APPLICATION_TYPES.OTHER_CHARGES_REVISION:
-									return row.signed_by === 'landlord' ? row.landlord_name : row.tenant_name;
+									return row.signed_by === 'landlord'
+										? row.landlord_name
+										: row.tenant_name;
 								case APPLICATION_TYPES.VALUER_APPOINTMENT:
 								case APPLICATION_TYPES.RENT_COURT_POSSESSION:
 								case APPLICATION_TYPES.RENT_COURT_FILING:
@@ -132,46 +160,51 @@ const ApplicationList = ({ user }) => {
 								case APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL:
 									return row.appellant_name;
 								default:
-									return row.user?.name || row.applicant_name || '-';
+									return row.user?.name || row.applicant_name || '—';
 							}
-						}
+						},
 					},
 					{
 						key: 'district',
 						label: 'District',
-						render: (val) => val?.name || '-'
+						render: (val) => val?.name || '—',
 					},
 					{
 						key: 'status',
 						label: 'Status',
 						render: (val) => (
-							<span className={`status-pill ${val.toLowerCase()}`}>
+							<span className={statusBadgeClass(val)}>
 								{STATUS_LABELS[val] || val}
 							</span>
-						)
+						),
 					},
 					{
 						key: 'created_at',
 						label: 'Date',
-						render: (val) => new Date(val).toLocaleDateString()
-					}
+						render: (val) => formatDate(val),
+					},
 				]}
 				actions={(app) => (
-					<div className="nav-actions table-row-actions">
+					<>
 						<StatusProgressViewButton
 							application={app}
 							variant="admin"
 							viewerRole={user?.role}
 						/>
 						<button
-							className="action-icon-btn info"
-							onClick={() => navigate(`/dashboard/admin/applications/${app.application_no}`)}
+							type="button"
+							className="ws-status-action-btn ws-status-action-btn--view"
+							title="View details"
+							onClick={() => openDetails(app)}
 						>
-							View Info
+							<Icon name="eye" />
+							<span>View</span>
 						</button>
-						{ASSISTANT_ROLES.includes(user?.role) && (
+						{ASSISTANT_ROLES.includes(user?.role) ? (
 							<button
-								className="action-icon-btn"
+								type="button"
+								className="ws-status-action-btn ws-status-action-btn--primary"
+								title="Forward to principal"
 								onClick={() =>
 									setShowForwardModal({
 										type: app.form_type,
@@ -181,21 +214,27 @@ const ApplicationList = ({ user }) => {
 								}
 								disabled={actionLoading === app.id}
 							>
-								{actionLoading === app.id ? '...' : 'Forward'}
+								<span>{actionLoading === app.id ? '…' : 'Forward'}</span>
 							</button>
-						)}
-						{PRINCIPAL_ROLES.includes(user?.role) && (
+						) : null}
+						{PRINCIPAL_ROLES.includes(user?.role) ? (
 							<button
-								className="action-icon-btn"
+								type="button"
+								className="ws-status-action-btn ws-status-action-btn--join"
+								title="Approve application"
 								onClick={() => handleApprove(app.form_type, app.id)}
 								disabled={actionLoading === app.id}
 							>
-								{actionLoading === app.id ? '...' : 'Approve'}
+								<Icon name="check" />
+								<span>{actionLoading === app.id ? '…' : 'Approve'}</span>
 							</button>
-						)}
-						{(ASSISTANT_ROLES.includes(user?.role) || PRINCIPAL_ROLES.includes(user?.role)) && (
+						) : null}
+						{ASSISTANT_ROLES.includes(user?.role) ||
+						PRINCIPAL_ROLES.includes(user?.role) ? (
 							<button
-								className="action-icon-btn secondary"
+								type="button"
+								className="ws-status-action-btn ws-status-action-btn--reject"
+								title="Reject application"
 								onClick={() =>
 									setShowRejectModal({
 										type: app.form_type,
@@ -205,17 +244,21 @@ const ApplicationList = ({ user }) => {
 								}
 								disabled={actionLoading === app.id}
 							>
-								Reject
+								<span>Reject</span>
 							</button>
-						)}
-					</div>
+						) : null}
+					</>
 				)}
 				emptyMessage="No applications found."
-				pagination={paginationInfo ? {
-					currentPage: paginationInfo.current_page,
-					totalPages: paginationInfo.last_page,
-					onPageChange: (newPage) => setPage(newPage)
-				} : null}
+				pagination={
+					paginationInfo
+						? {
+								currentPage: paginationInfo.current_page,
+								totalPages: paginationInfo.last_page,
+								onPageChange: (newPage) => setPage(newPage),
+							}
+						: null
+				}
 			/>
 
 			<WorkflowConfirmModal
@@ -272,7 +315,6 @@ const ApplicationList = ({ user }) => {
 				onPrimary={() => setSuccessModal(null)}
 			/>
 		</>
-
 	);
 };
 
