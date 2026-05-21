@@ -23,6 +23,10 @@ function TenancyCertificate() {
 	const [draftLoaded, setDraftLoaded] = useState(false)
 	const [conflictData, setConflictData] = useState(null)
 
+	// Payment State
+	const [paymentComplete, setPaymentComplete] = useState(false)
+	const [paymentSimulating, setPaymentSimulating] = useState(false)
+
 	// Step 1: Office/Registration
 	const [tenancyRegistrationDate, setTenancyRegistrationDate] = useState('')
 	const [tenancyOfficeId, setTenancyOfficeId] = useState('')
@@ -278,6 +282,21 @@ function TenancyCertificate() {
 		const monthsDiff = (now.getFullYear() - regDate.getFullYear()) * 12 + (now.getMonth() - regDate.getMonth())
 		return monthsDiff > 2 ? 'Individual' : 'Joint'
 	})()
+
+	const feeAmount = (() => {
+		if (!applyType) return 0
+		const type = applyType.toLowerCase()
+		return type === 'joint' ? 50 : type === 'individual' ? 75 : 0
+	})()
+
+	const handleMockPayment = () => {
+		setPaymentSimulating(true)
+		// TODO: Replace this mock with actual eGRAS payment gateway redirect & callback logic
+		setTimeout(() => {
+			setPaymentSimulating(false)
+			setPaymentComplete(true)
+		}, 1500)
+	}
 
 	const registrationTooOld = (() => {
 		if (!tenancyRegistrationDate) return false
@@ -550,6 +569,10 @@ function TenancyCertificate() {
 		if (tenancyStep === 4) {
 			if (!declarationChecked) {
 				setError('You must accept the declaration to submit.')
+				return
+			}
+			if (!paymentComplete) {
+				setError('You must complete the fee payment before submitting.')
 				return
 			}
 			submitTenancyApplication()
@@ -1092,6 +1115,20 @@ function TenancyCertificate() {
 							Please review all details carefully before final submission.
 						</div>
 
+						<div className="payment-section" style={{ marginTop: '30px', padding: '20px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>
+							<h3>Fee Payment</h3>
+							<p>Based on your agreement registration date, the required application fee is <strong>₹{feeAmount}</strong>.</p>
+							{!paymentComplete ? (
+								<button type="button" className="ws-btn ws-btn--primary" onClick={handleMockPayment} disabled={paymentSimulating || draftSaving}>
+									{paymentSimulating ? 'Processing Payment...' : `Pay ₹${feeAmount} via eGRAS`}
+								</button>
+							) : (
+								<div className="ws-alert ws-alert--success" style={{ marginTop: '10px' }}>
+									Payment of ₹{feeAmount} completed successfully. (Mock GRN: {Math.floor(Math.random() * 1000000000)})
+								</div>
+							)}
+						</div>
+
 						{!tenancyReceipt && (
 							<div className="tenancy-declaration-section" style={{ marginTop: '32px', padding: '16px', background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '4px' }}>
 								<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', margin: 0, flexDirection: 'row' }}>
@@ -1156,7 +1193,7 @@ function TenancyCertificate() {
 						</button>
 					) : null}
 					{tenancyStep === 4 && !tenancyReceipt ? (
-						<button type="submit" className="ws-btn ws-btn--primary" disabled={tenancySubmitting || draftSaving || !declarationChecked}>
+						<button type="submit" className="ws-btn ws-btn--primary" disabled={tenancySubmitting || draftSaving || !declarationChecked || !paymentComplete}>
 							{tenancySubmitting ? 'Submitting…' : 'Confirm & submit'}
 						</button>
 					) : null}

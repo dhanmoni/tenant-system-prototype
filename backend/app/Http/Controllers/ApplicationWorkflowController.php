@@ -43,6 +43,9 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Only assistants can access the inbox'], 403);
         }
 
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 15);
+
         $districtId = $user->district_id;
         if (!$districtId) {
             return response()->json(['message' => 'User not assigned to a district'], 403);
@@ -85,7 +88,29 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
-        return response()->json(['applications' => $allApplications]);
+        usort($allApplications, function ($a, $b) {
+            $timeDiff = strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
+            if ($timeDiff === 0) {
+                return strcmp($b['application_no'] ?? '', $a['application_no'] ?? '');
+            }
+            return $timeDiff;
+        });
+
+        $total = count($allApplications);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $lastPage));
+        $offset = ($page - 1) * $perPage;
+        $paginatedItems = array_slice($allApplications, $offset, $perPage);
+
+        return response()->json([
+            'applications' => $paginatedItems,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => $total,
+            ],
+        ]);
     }
 
     public function forward(Request $request, $type, $id)
@@ -191,6 +216,9 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 15);
+
         $districtId = $user->district_id;
         $types = match ($user->role) {
             Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
@@ -216,7 +244,29 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
-        return response()->json(['applications' => $allApplications]);
+        usort($allApplications, function ($a, $b) {
+            $timeDiff = strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
+            if ($timeDiff === 0) {
+                return strcmp($b['application_no'] ?? '', $a['application_no'] ?? '');
+            }
+            return $timeDiff;
+        });
+
+        $total = count($allApplications);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $lastPage));
+        $offset = ($page - 1) * $perPage;
+        $paginatedItems = array_slice($allApplications, $offset, $perPage);
+
+        return response()->json([
+            'applications' => $paginatedItems,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => $total,
+            ],
+        ]);
     }
 
     public function allApplications(Request $request)
@@ -226,14 +276,21 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 15);
+
         $districtId = $user->district_id;
-        $types = [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL, ApplicationTypes::RENT_TRIBUNAL_APPEAL];
+        $types = [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL, ApplicationTypes::RENT_TRIBUNAL_APPEAL, ApplicationTypes::TENANCY_CERTIFICATE];
 
         $allApplications = [];
         foreach ($types as $type) {
             $modelClass = $this->getModel($type);
             if ($modelClass) {
-                $query = $modelClass::with(['user', 'forwardedBy', 'district']);
+                $relations = ['district'];
+                if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
+                    $relations = ['user', 'forwardedBy', 'district'];
+                }
+                $query = $modelClass::with($relations);
                 if ($user->role === Roles::DISTRICT_ADMIN) {
                     $query->where('district_id', $districtId);
                 }
@@ -246,7 +303,29 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
-        return response()->json(['applications' => $allApplications]);
+        usort($allApplications, function ($a, $b) {
+            $timeDiff = strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
+            if ($timeDiff === 0) {
+                return strcmp($b['application_no'] ?? '', $a['application_no'] ?? '');
+            }
+            return $timeDiff;
+        });
+
+        $total = count($allApplications);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $lastPage));
+        $offset = ($page - 1) * $perPage;
+        $paginatedItems = array_slice($allApplications, $offset, $perPage);
+
+        return response()->json([
+            'applications' => $paginatedItems,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => $total,
+            ],
+        ]);
     }
 
     public function show(Request $request, $type, $id)
@@ -279,7 +358,11 @@ class ApplicationWorkflowController extends Controller
         foreach ($types as $type) {
             $modelClass = $this->getModel($type);
             if ($modelClass) {
-                $application = $modelClass::with(['user', 'forwardedBy', 'district'])->where('application_no', $applicationNo)->first();
+                $relations = ['district'];
+                if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
+                    $relations = ['user', 'forwardedBy', 'district'];
+                }
+                $application = $modelClass::with($relations)->where('application_no', $applicationNo)->first();
                 if ($application) {
                     $foundType = $type;
                     break;
