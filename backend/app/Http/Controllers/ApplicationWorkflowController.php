@@ -280,7 +280,7 @@ class ApplicationWorkflowController extends Controller
         $perPage = (int) $request->input('per_page', 15);
 
         $districtId = $user->district_id;
-        $types = [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL, ApplicationTypes::RENT_TRIBUNAL_APPEAL, ApplicationTypes::TENANCY_CERTIFICATE];
+        $types = ApplicationTypes::serviceForms();
 
         $allApplications = [];
         foreach ($types as $type) {

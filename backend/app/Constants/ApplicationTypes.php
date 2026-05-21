@@ -28,4 +28,13 @@ class ApplicationTypes
             self::RENT_TRIBUNAL_APPEAL,
         ];
     }
+
+    /** Rent Authority / Court / Tribunal form applications (excludes UIN / tenancy certificate). */
+    public static function serviceForms(): array
+    {
+        return array_values(array_filter(
+            self::all(),
+            fn (string $type) => $type !== self::TENANCY_CERTIFICATE
+        ));
+    }
 }

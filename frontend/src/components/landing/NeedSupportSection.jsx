@@ -15,7 +15,7 @@ function NeedSupportSection() {
 							Need support?
 						</h2>
 						<p className="mt-3 text-base text-white/75 sm:text-lg">
-							Contact us for help with UIN applications, tenancy services, or your citizen account.
+							Contact us for help and support.
 						</p>
 					</div>
 					<Link

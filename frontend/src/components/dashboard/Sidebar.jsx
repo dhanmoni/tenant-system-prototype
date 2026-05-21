@@ -317,10 +317,10 @@ function Sidebar({ user, onLogout }) {
 							<NavLink
 								to="/dashboard/admin/applications"
 								className={linkClass}
-								title="View Applications"
+								title="Service Applications"
 							>
-								<Icon name="eye" className="dashboard-link-icon" />
-								<span className="dashboard-link-text">View Applications</span>
+								<Icon name="services" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">Service Applications</span>
 							</NavLink>
 						)}
 
@@ -328,10 +328,10 @@ function Sidebar({ user, onLogout }) {
 							<NavLink
 								to="/dashboard/admin/tenancy"
 								className={linkClass}
-								title="Tenancy Records"
+								title="Tenancy Applications"
 							>
 								<Icon name="file" className="dashboard-link-icon" />
-								<span className="dashboard-link-text">Tenancy Records</span>
+								<span className="dashboard-link-text">Tenancy Applications</span>
 							</NavLink>
 						)}
 						{user.role === ROLES.DISTRICT_ADMIN && (

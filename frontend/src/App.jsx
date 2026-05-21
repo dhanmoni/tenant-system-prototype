@@ -550,7 +550,7 @@ function App() {
 						<Route
 							path="admin/inbox"
 							element={
-								<WorkspaceLegacyFrame title="Inbox" subtitle="Applications awaiting action">
+								<WorkspaceLegacyFrame title="Application inbox" subtitle="Verify and forward service applications">
 									<ApplicationList user={user} />
 								</WorkspaceLegacyFrame>
 							}
@@ -558,7 +558,7 @@ function App() {
 						<Route
 							path="admin/applications"
 							element={
-								<WorkspaceLegacyFrame title="Applications" subtitle="District application list">
+								<WorkspaceLegacyFrame title="Service applications" subtitle="Rent Authority, Court, and Tribunal forms">
 									<ApplicationList user={user} />
 								</WorkspaceLegacyFrame>
 							}
@@ -574,7 +574,7 @@ function App() {
 						<Route
 							path="admin/tenancy"
 							element={
-								<WorkspaceLegacyFrame title="Tenancy records" subtitle="Registered tenancies">
+								<WorkspaceLegacyFrame title="Tenancy applications" subtitle="UIN applications">
 									<TenancyRecords user={user} />
 								</WorkspaceLegacyFrame>
 							}
@@ -582,7 +582,7 @@ function App() {
 						<Route
 							path="admin/districts"
 							element={
-								<WorkspaceLegacyFrame title="Districts" subtitle="District configuration">
+								<WorkspaceLegacyFrame title="Districts" subtitle="Manage district master data">
 									<DistrictManagement user={user} />
 								</WorkspaceLegacyFrame>
 							}

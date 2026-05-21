@@ -5,7 +5,7 @@
 export const portalStatsMeta = {
 	eyebrow: 'Portal activity',
 	title: 'At a glance',
-	lead: 'Key indicators for UIN applications, tenancy services, and dispute resolution across Assam.',
+	lead: '',
 	lastUpdatedLabel: 'Live portal data',
 }
 

@@ -37,7 +37,7 @@ function PublicPageLayout({
 						<h1 id={titleId} className="landing-section-title text-3xl sm:text-4xl">
 							{title}
 						</h1>
-						{lead ? <p className="landing-section-lead mt-5 max-w-4xl">{lead}</p> : null}
+						{lead ? <p className="landing-section-lead public-page__lead mt-5">{lead}</p> : null}
 					</header>
 
 					<div className="public-page__body">{children}</div>

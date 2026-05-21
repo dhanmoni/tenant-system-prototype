@@ -7,7 +7,7 @@ function WorkspaceLegacyFrame({ title, subtitle, breadcrumb = [], children }) {
 	const crumbs = [{ label: 'Dashboard', to: '/dashboard' }, ...breadcrumb, { label: title }]
 
 	return (
-		<div className="ws-page ws-legacy-page">
+		<div className="ws-page ws-legacy-page ws-admin-page">
 			<WorkspacePageHeader title={title} subtitle={subtitle} breadcrumb={crumbs} />
 			{children}
 		</div>

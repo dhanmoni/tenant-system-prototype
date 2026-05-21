@@ -52,20 +52,22 @@ function RoleActionCards({ user, stats }) {
 			cards.push({
 				key: 'tenancy',
 				kicker: 'Records',
-				title: 'Tenancy records',
-				desc: 'UIN and tenancy certificate applications in your district.',
+				title: 'Tenancy applications',
+				desc: 'UIN applications in your district.',
 				to: '/dashboard/admin/tenancy',
 			})
 		}
 	}
 
-	cards.push({
-		key: 'apps',
-		kicker: 'Tracking',
-		title: 'All applications',
-		desc: 'Search and open application details.',
-		to: '/dashboard/admin/applications',
-	})
+	if (user?.role === ROLES.SUPER_ADMIN || user?.role === ROLES.DISTRICT_ADMIN) {
+		cards.push({
+			key: 'apps',
+			kicker: 'Tracking',
+			title: 'Service applications',
+			desc: 'Rent Authority, Court, and Tribunal form applications.',
+			to: '/dashboard/admin/applications',
+		})
+	}
 
 	if (!cards.length) return null
 

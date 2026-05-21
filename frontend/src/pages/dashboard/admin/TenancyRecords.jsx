@@ -5,19 +5,7 @@ import { Icon } from '../../../components/dashboard/Icons';
 import { useEffect, useState } from 'react';
 import { formatDate } from '../../../utils/formatters';
 import { ADMIN_ROLES } from '../../../constants/roles';
-import { STATUS, STATUS_LABELS } from '../../../constants/status';
-
-function statusBadgeClass(status) {
-	const s = String(status || '').toUpperCase();
-	if ([STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(s)) {
-		return 'ws-badge ws-badge--success';
-	}
-	if (s === STATUS.REJECTED) return 'ws-badge ws-badge--danger';
-	if ([STATUS.DRAFT, STATUS.PARTIAL, STATUS.PENDING].includes(s)) {
-		return 'ws-badge ws-badge--warning';
-	}
-	return 'ws-badge ws-badge--pending';
-}
+import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge';
 
 const TenancyRecords = ({ user }) => {
 	const navigate = useNavigate();
@@ -43,7 +31,7 @@ const TenancyRecords = ({ user }) => {
 			setRecords(data.records || []);
 			setPaginationInfo(data.pagination || null);
 		} catch (err) {
-			setError('Failed to load tenancy records');
+			setError('Failed to load tenancy applications');
 		} finally {
 			setLoading(false);
 		}
@@ -62,7 +50,7 @@ const TenancyRecords = ({ user }) => {
 			) : null}
 
 			<DataTable
-				title="Tenancy records (UIN applications)"
+				title="Tenancy applications (UIN)"
 				accent="uin"
 				loading={loading}
 				data={records}
@@ -73,7 +61,12 @@ const TenancyRecords = ({ user }) => {
 						label: 'Application no.',
 						mono: true,
 					},
-					{ key: 'applicant_name', label: 'Applicant' },
+					{
+						key: 'landlord_name',
+						label: 'Applicant',
+						render: (_, row) =>
+							row.landlord_name || row.tenant_name || '—',
+					},
 					{
 						key: 'district',
 						label: 'District',
@@ -83,8 +76,8 @@ const TenancyRecords = ({ user }) => {
 						key: 'status',
 						label: 'Status',
 						render: (val) => (
-							<span className={statusBadgeClass(val)}>
-								{STATUS_LABELS[val] || val}
+							<span className={adminStatusBadgeClass(val)}>
+								{adminStatusLabel(val)}
 							</span>
 						),
 					},
@@ -105,7 +98,7 @@ const TenancyRecords = ({ user }) => {
 						<span>View</span>
 					</button>
 				)}
-				emptyMessage="No tenancy records found."
+				emptyMessage="No tenancy applications found."
 				pagination={
 					paginationInfo
 						? {

@@ -29,7 +29,7 @@ function GetStartedSection({ authPanelProps }) {
 	return (
 		<section
 			id="portal-content"
-			className="get-started-section get-started-section--flat relative z-10 pt-10 pb-12 sm:pt-12 sm:pb-16 md:pb-20"
+			className="get-started-section landing-wallpaper-bg landing-wallpaper-bg--cream relative z-10 pt-10 pb-12 sm:pt-12 sm:pb-16 md:pb-20"
 			aria-labelledby="get-started-heading"
 		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -40,7 +40,7 @@ function GetStartedSection({ authPanelProps }) {
 								Get started
 							</h2>
 							<p className="landing-section-lead">
-								Register or sign in with your mobile number to apply for a UIN, track your
+								Register or sign in with your mobile number to apply for services, track your
 								application, and access tenancy services on this portal.
 							</p>
 						</div>
@@ -50,7 +50,7 @@ function GetStartedSection({ authPanelProps }) {
 								<AudienceCard
 									icon={FileCheck}
 									title="Apply for UIN"
-									description="Register online and obtain a Unique Identification Number (UIN)."
+									description="Register online and track your applications."
 									items={[
 										'Individual or Joint application (by agreement date)',
 										'Track status from your dashboard',

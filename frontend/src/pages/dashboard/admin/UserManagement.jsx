@@ -61,16 +61,32 @@ function UserManagement({ user: currentUser }) {
 	}
 
 	return (
-		<div className="admin-users">
-			<header className="section-header">
-				<h2>User Management {mode === 'tenant' ? '' : '(Staff)'}</h2>
-				{mode !== 'tenant' && getAllowedRoles().length > 0 && (
-					<button onClick={() => setShowAddForm(true)}>Add Staff User</button>
-				)}
-			</header>
+		<>
+			{mode !== 'tenant' && getAllowedRoles().length > 0 ? (
+				<section className="ws-card ws-district-add-card">
+					<div className="ws-card-header">
+						<h2 className="ws-card-title">Staff users</h2>
+						<button
+							type="button"
+							className="ws-btn ws-btn--primary ws-btn--sm"
+							onClick={() => setShowAddForm(true)}
+						>
+							Add staff user
+						</button>
+					</div>
+				</section>
+			) : null}
 
-			{error ? <div className="error">{error}</div> : null}
-			{success ? <div className="admin-success">{success}</div> : null}
+			{error ? (
+				<div className="ws-profile-alert ws-profile-alert--error" role="alert">
+					{error}
+				</div>
+			) : null}
+			{success ? (
+				<div className="ws-profile-alert ws-profile-alert--success" role="status">
+					{success}
+				</div>
+			) : null}
 
 			{showAddForm && (
 				<div className="modal-overlay">
@@ -106,7 +122,9 @@ function UserManagement({ user: currentUser }) {
 			)}
 
 			<DataTable
-				title={mode === 'tenant' ? 'Registered Users' : 'Staff Users'}
+				title={mode === 'tenant' ? 'Registered users' : 'Staff users'}
+				accent="default"
+				loading={false}
 				data={filteredUsers}
 				columns={[
 					{ key: 'name', label: 'Name' },
@@ -131,7 +149,7 @@ function UserManagement({ user: currentUser }) {
 				)}
 				emptyMessage="No users found."
 			/>
-		</div>
+		</>
 	)
 }
 

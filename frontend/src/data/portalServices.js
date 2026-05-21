@@ -37,7 +37,15 @@ export const portalServicesIntro = {
 	eyebrow: 'Portal services',
 	title: 'Portal services',
 	lead:
-		'This portal provides UIN registration and tenancy services with the Rent Authority, Rent Court, and Rent Tribunal.',
+		'This portal provides registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
+}
+
+/** Dedicated /services page — readable citizen guide (not homepage showcase). */
+export const servicesPageIntro = {
+	// eyebrow: 'Citizen guide',
+	title: 'Portal services',
+	lead:
+		'Read below to understand which online service applies to your situation, what each authority does, and how to file after you sign in. Matters are listed in the order most citizens follow — from tenancy registration through the Rent Authority, Rent Court, and Rent Tribunal.',
 }
 
 export const portalServiceSections = [
@@ -48,13 +56,13 @@ export const portalServiceSections = [
 		when:
 			'When you enter into a tenancy agreement in Assam, or need an official record of rent, parties, and property details for banks, employers, or government processes.',
 		why:
-			'A registered tenancy and UIN create a verifiable record before the Rent Authority. It helps both parties prove terms, track status online, and download a digitally signed certificate when approved.',
+			'A registered tenancy and UIN create a verifiable record before the Rent Authority. It helps both parties prove terms, track status online, and download acknowledgement when approved.',
 		how: [
 			'Create a citizen account with mobile OTP verification.',
 			'Open Apply for UIN from your dashboard and complete the tenancy information form.',
 			'Upload required documents (agreement, ID, property details as applicable).',
 			'Submit and note your application number — track status under UIN Status.',
-			'Download the certificate once the Rent Authority approves the application.',
+			'Download your UIN acknowledgement once the Rent Authority approves the application.',
 		],
 		cta: { label: 'Apply after sign-in', hash: '/#login' },
 	},
@@ -62,52 +70,49 @@ export const portalServiceSections = [
 		id: 'rent-tribunal',
 		groupId: 'rent-tribunal',
 		title: 'Rent Tribunal services',
-		subtitle: 'District Judge or Additional District Judge — Section 34 (highest level)',
+		// subtitle: 'District Judge or Additional District Judge — Section 34 (highest level)',
 		when:
 			'When you are aggrieved by an order of the Rent Court and wish to file a further appeal.',
 		why:
 			'The Rent Tribunal is the highest forum under the Act and provides appellate review of Rent Court orders.',
 		how: [
 			'Obtain the Rent Court order you wish to challenge.',
-			'Open **All services** → **Rent Tribunal** and complete your appeal application.',
+			'Sign in, open All services, choose Rent Tribunal, and complete your appeal application.',
 			'Submit with grounds and supporting documents.',
 			'Track the appeal status from your dashboard.',
 		],
-		cta: { label: 'View Rent Tribunal services', anchor: 'rent-tribunal-forms' },
 	},
 	{
 		id: 'rent-court',
 		groupId: 'rent-court',
 		title: 'Rent Court services',
-		subtitle: 'ADC or equivalent — Section 33 (second level)',
+		// subtitle: 'ADC or equivalent — Section 33 (second level)',	
 		when:
 			'When you seek recovery or eviction of premises, or wish to appeal an order passed by the Rent Authority.',
 		why:
 			'The Rent Court sits above the Rent Authority and hears possession, eviction, and appeals against Rent Authority orders.',
 		how: [
 			'Confirm whether your matter belongs here (possession, eviction, or appeal against Rent Authority order).',
-			'From **All services**, select **Rent Court** and open the relevant service.',
-			'Reference your earlier Rent Authority order or tenancy UIN where required.',
+			'Sign in, open All services, select Rent Court, and open the relevant service.',
+			'Reference your earlier Rent Authority order or UIN where required.',
 			'Submit and monitor status online.',
 		],
-		cta: { label: 'View Rent Court services', anchor: 'rent-court-forms' },
 	},
 	{
 		id: 'rent-authority',
 		groupId: 'rent-authority',
 		title: 'Rent Authority services',
-		subtitle: 'Circle Officer or equivalent — Section 30 (first level)',
+		// subtitle: 'Circle Officer or equivalent — Section 30 (first level)',
 		when:
 			'When you need to revise or fix rent or other charges, appoint a valuer, or raise disputes on rent, deposits, repairs, or withholding — before going to court.',
 		why:
 			'The Rent Authority is the first level for most tenancy matters. Many cases start here before escalation to the Rent Court.',
 		how: [
-			'Sign in and open **All services** → **Rent Authority**.',
+			'Sign in and open All services, then Rent Authority.',
 			'Choose the service that matches your matter (rent revision, other charges, valuer, or disputes).',
 			'Fill the application, attach supporting documents, and submit.',
-			'Track processing from **UIN Status** or your dashboard inbox.',
+			'Track processing from UIN Status or your dashboard.',
 		],
-		cta: { label: 'View Rent Authority services', anchor: 'rent-authority-forms' },
 	},
 ]
 
@@ -119,7 +124,7 @@ export const serviceEscalationGuide = {
 		{
 			step: '1',
 			title: 'Register the tenancy',
-			text: 'Apply for UIN / tenancy certificate unless you only need a specific dispute form with an existing record.',
+			text: 'Apply for a UIN unless you only need a specific dispute form and already have a registered record.',
 		},
 		{
 			step: '2',

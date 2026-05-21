@@ -20,12 +20,12 @@ const steps = [
 	{
 		num: '2',
 		title: 'Log in and apply for UIN',
-		text: 'Sign in, complete your UIN application, and upload the required documents.',
+		text: 'Sign in, complete your application, and upload the required documents.',
 	},
 	{
 		num: '3',
 		title: 'Follow your application',
-		text: 'Check status on your dashboard and get your UIN when approved.',
+		text: 'Check status on your dashboard.',
 	},
 ]
 
@@ -50,7 +50,7 @@ const services = [
 	},
 	{
 		title: 'Apply for UIN',
-		description: 'Submit a UIN application and upload documents after sign-in.',
+		description: 'Submit an application and upload documents after sign-in.',
 		authMode: 'login',
 		icon: FileText,
 		badge: 'Most used',
@@ -129,8 +129,8 @@ function PortalGuideSection() {
 						How it works
 					</h2>
 					<p className="landing-section-lead">
-						Register, apply for UIN, track your application, and use tenancy services online —
-						follow the steps below or open a service directly.
+						{/* Register, apply for UIN, track your application, and use tenancy services online —
+						follow the steps below or open a service directly. */}
 					</p>
 				</motion.div>
 

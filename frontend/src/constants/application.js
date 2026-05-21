@@ -26,6 +26,11 @@ export const APPLICATION_TYPES = {
 	RENT_TRIBUNAL_APPEAL: 'form-vi-rent-tribunal-appeal',
 }
 
+/** Form applications under Rent Authority / Court / Tribunal (excludes UIN). */
+export const SERVICE_APPLICATION_TYPES = Object.values(APPLICATION_TYPES).filter(
+	(type) => type !== APPLICATION_TYPES.TENANCY_CERTIFICATE
+)
+
 export const APPLICATION_LABELS = {
 	[APPLICATION_TYPES.TENANCY_CERTIFICATE]: 'Tenancy Certificate',
 	[APPLICATION_TYPES.RENT_AUTHORITY_FILING]: 'Application filed before Rent Authority',

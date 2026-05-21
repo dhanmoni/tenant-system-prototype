@@ -79,7 +79,7 @@ function LandingFooter() {
 							Assam Tenancy Registration Portal
 						</p>
 						<p className="mt-2 max-w-xs text-sm leading-relaxed text-white/60">
-							One digital platform for tenancy registration and certificate services in Assam.
+							One digital platform for tenancy registration and services in Assam.
 						</p>
 						<div className="mt-5 flex flex-wrap gap-2">
 							{socialLinks.map(({ label, href, icon: Icon }) => (
@@ -157,7 +157,7 @@ function LandingFooter() {
 			<div className="border-t border-white/10">
 				<div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
 					<p>
-						© 2026 Assam Tenancy Registration Portal (demo). Content owned by Directorate of Town and
+						© 2026 Assam Tenancy Registration Portal. Content owned by Directorate of Town and
 						Country Planning, Assam.
 					</p>
 					<p className="mt-2 font-medium text-white/60">

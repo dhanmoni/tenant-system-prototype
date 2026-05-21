@@ -57,7 +57,7 @@ function OfficialOverview() {
 				{ label: 'Districts', value: s.districts_count, hint: 'Across Assam' },
 				{ label: 'Offices', value: s.offices_count, hint: 'Circle offices' },
 				{ label: 'Users', value: s.users_count, hint: 'All accounts' },
-				{ label: 'UIN applications', value: s.tenancy_applications, hint: 'Tenancy certificates' },
+				{ label: 'UIN applications', value: s.tenancy_applications, hint: 'Tenancy applications' },
 				{ label: 'Form applications', value: s.service_applications, hint: 'Assam Tenancy Act forms' },
 				{ label: 'Pending review', value: s.pending_review, hint: 'Submitted', highlight: true },
 				{ label: 'In review', value: s.in_review, hint: 'With principals' },
@@ -79,7 +79,7 @@ function OfficialOverview() {
 			cards.push({
 				label: 'UIN applications',
 				value: s.tenancy_applications,
-				hint: 'Tenancy certificates',
+				hint: 'Tenancy applications',
 			})
 		}
 		if (ASSISTANT_ROLES.includes(user?.role)) {

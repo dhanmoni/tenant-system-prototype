@@ -5,22 +5,11 @@ import { Icon } from '../../../components/dashboard/Icons';
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton';
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal';
 import { useEffect, useState } from 'react';
-import { ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles';
-import { STATUS, STATUS_LABELS } from '../../../constants/status';
+import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES } from '../../../constants/roles';
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application';
 import { formatDate } from '../../../utils/formatters';
-
-function statusBadgeClass(status) {
-	const s = String(status || '').toUpperCase();
-	if ([STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(s)) {
-		return 'ws-badge ws-badge--success';
-	}
-	if (s === STATUS.REJECTED) return 'ws-badge ws-badge--danger';
-	if ([STATUS.DRAFT, STATUS.PARTIAL, STATUS.PENDING].includes(s)) {
-		return 'ws-badge ws-badge--warning';
-	}
-	return 'ws-badge ws-badge--pending';
-}
+import { getAdminTableAccent } from '../../../utils/adminTableAccent';
+import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge';
 
 const ApplicationList = ({ user }) => {
 	const navigate = useNavigate();
@@ -114,15 +103,19 @@ const ApplicationList = ({ user }) => {
 		navigate(`/dashboard/admin/applications/${app.application_no}`);
 	};
 
+	const tableTitle = (() => {
+		if (ASSISTANT_ROLES.includes(user?.role)) return 'Pending applications';
+		if (PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review';
+		if (user?.role === ROLES.SUPER_ADMIN) return 'Service applications';
+		if (user?.role === ROLES.DISTRICT_ADMIN) return 'Service applications';
+		return 'Applications';
+	})();
+
 	return (
 		<>
 			<DataTable
-				title={
-					ASSISTANT_ROLES.includes(user?.role)
-						? 'Pending applications'
-						: 'Applications in review'
-				}
-				accent="uin"
+				title={tableTitle}
+				accent={getAdminTableAccent(user)}
 				loading={loading}
 				data={applications}
 				onRowClick={openDetails}
@@ -173,8 +166,8 @@ const ApplicationList = ({ user }) => {
 						key: 'status',
 						label: 'Status',
 						render: (val) => (
-							<span className={statusBadgeClass(val)}>
-								{STATUS_LABELS[val] || val}
+							<span className={adminStatusBadgeClass(val)}>
+								{adminStatusLabel(val)}
 							</span>
 						),
 					},
@@ -249,7 +242,7 @@ const ApplicationList = ({ user }) => {
 						) : null}
 					</>
 				)}
-				emptyMessage="No applications found."
+				emptyMessage="No service applications found."
 				pagination={
 					paginationInfo
 						? {

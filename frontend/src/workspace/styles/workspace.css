@@ -2149,8 +2149,100 @@
 	border-color: #fca5a5 !important;
 }
 
-.ws-legacy-page .ws-status-category {
+/* ── Admin list pages (legacy frame + DataTable) ── */
+.ws-admin-page {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.ws-admin-page > .ws-profile-alert {
+	margin-bottom: 0;
+}
+
+.page.page-dashboard .ws-root .ws-admin-page form.ws-district-add-form,
+.page.page-dashboard .ws-root .ws-admin-page .ws-district-add-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.75rem 1rem;
+}
+
+.page.page-dashboard .ws-root .ws-admin-page form.ws-district-add-form button.ws-btn {
+	justify-self: auto;
+	min-width: auto;
+	flex-shrink: 0;
+}
+
+.ws-status-category--default {
+	border-top-color: var(--ws-accent);
+}
+
+.ws-status-category--default .ws-status-category-count {
+	background: var(--ws-accent-soft);
+	color: var(--ws-accent);
+}
+
+.ws-legacy-page .ws-status-category,
+.ws-admin-page .ws-status-category {
 	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.ws-admin-page .ws-table .th-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.ws-admin-page .ws-table th .header-actions {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+
+.page.page-dashboard .ws-root .ws-admin-page .header-search-popup {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	z-index: 30;
+	min-width: 220px;
+	padding: 12px;
+	background: #fff;
+	border: 1px solid var(--ws-border);
+	border-radius: var(--ws-radius);
+	box-shadow: var(--ws-shadow);
+}
+
+.page.page-dashboard .ws-root .ws-admin-page .header-search-popup input {
+	display: block;
+	width: 100%;
+	margin-bottom: 8px;
+	padding: 8px 10px;
+	border: 1px solid var(--ws-border);
+	border-radius: 6px;
+	font-size: 0.875rem;
+}
+
+.page.page-dashboard .ws-root .ws-admin-page .header-search-popup .popup-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.ws-admin-page .ws-status-cell-form {
+	min-width: 10rem;
+	max-width: 16rem;
+}
+
+.ws-admin-page .ws-district-add-card {
+	margin-bottom: 0;
+}
+
+/* Prevent legacy global form grid from breaking admin toolbars */
+.page.page-dashboard .ws-root .ws-admin-page > form:not(.profile-form) {
+	display: revert;
+	gap: revert;
 }
 
 .ws-status-pagination {
@@ -2294,6 +2386,39 @@
 	background: #f0fdf4;
 	border: 1px solid #bbf7d0;
 	color: #166534;
+}
+
+.ws-district-add-card {
+	margin-bottom: 1.25rem;
+}
+
+.ws-district-add-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.75rem 1rem;
+}
+
+.ws-district-add-form__field {
+	flex: 1;
+	min-width: min(100%, 16rem);
+}
+
+.ws-district-add-form__label {
+	display: block;
+	margin-bottom: 0.35rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ws-text-muted, #64748b);
+}
+
+.ws-district-add-form__input {
+	display: block;
+	width: 100%;
+	padding: 0.6rem 0.75rem;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: var(--ws-radius, 0.5rem);
+	font-size: 0.9375rem;
 }
 
 .ws-profile-details {

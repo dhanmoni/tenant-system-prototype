@@ -1,177 +1,270 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../../../api';
-import DataTable from '../../../components/dashboard/DataTable';
-import { STATUS_LABELS } from '../../../constants/status';
-import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import api from '../../../api'
+import DataTable from '../../../components/dashboard/DataTable'
+import { Icon } from '../../../components/dashboard/Icons'
+import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
+import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
+import { STATUS_LABELS } from '../../../constants/status'
+import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
+import { formatDate } from '../../../utils/formatters'
+import { getAdminTableAccent } from '../../../utils/adminTableAccent'
+import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
+
+function resolveApplicantName(row) {
+	switch (row.form_type) {
+		case APPLICATION_TYPES.RENT_REVISION:
+		case APPLICATION_TYPES.OTHER_CHARGES_REVISION:
+			return row.signed_by === 'landlord' ? row.landlord_name : row.tenant_name
+		case APPLICATION_TYPES.VALUER_APPOINTMENT:
+		case APPLICATION_TYPES.RENT_COURT_POSSESSION:
+		case APPLICATION_TYPES.RENT_COURT_FILING:
+		case APPLICATION_TYPES.RENT_AUTHORITY_FILING:
+			return row.applicant_name
+		case APPLICATION_TYPES.RENT_COURT_APPEAL:
+		case APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL:
+			return row.appellant_name
+		default:
+			return row.user?.name || row.applicant_name || '—'
+	}
+}
 
 const ApplicationInbox = ({ user }) => {
-	const navigate = useNavigate();
-	const [applications, setApplications] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [actionLoading, setActionLoading] = useState(null);
-	const [rejectionMsg, setRejectionMsg] = useState('');
-	const [showRejectModal, setShowRejectModal] = useState(null);
-	const [page, setPage] = useState(1);
-	const [paginationInfo, setPaginationInfo] = useState(null);
+	const navigate = useNavigate()
+	const [applications, setApplications] = useState([])
+	const [loading, setLoading] = useState(true)
+	const [actionLoading, setActionLoading] = useState(null)
+	const [rejectionMsg, setRejectionMsg] = useState('')
+	const [showRejectModal, setShowRejectModal] = useState(null)
+	const [showForwardModal, setShowForwardModal] = useState(null)
+	const [successModal, setSuccessModal] = useState(null)
+	const [page, setPage] = useState(1)
+	const [paginationInfo, setPaginationInfo] = useState(null)
 
 	const fetchInbox = async () => {
+		setLoading(true)
 		try {
-			const { data } = await api.get(`/api/admin/applications/inbox?page=${page}&per_page=15`);
-			setApplications(data.applications);
-			setPaginationInfo(data.pagination || null);
+			const { data } = await api.get(`/api/admin/applications/inbox?page=${page}&per_page=15`)
+			setApplications(data.applications || [])
+			setPaginationInfo(data.pagination || null)
 		} catch (error) {
-			console.error('Error fetching inbox:', error);
+			console.error('Error fetching inbox:', error)
 		} finally {
-			setLoading(false);
+			setLoading(false)
 		}
-	};
+	}
 
 	useEffect(() => {
-		fetchInbox();
-	}, [page]);
+		fetchInbox()
+	}, [page])
 
-	const handleForward = async (type, id) => {
-		setActionLoading(id);
+	const handleForward = async () => {
+		if (!showForwardModal) return
+		const { type, id, application_no } = showForwardModal
+		setActionLoading(id)
 		try {
-			await api.post(`/api/admin/applications/${type}/${id}/forward`);
-			fetchInbox();
-		} catch (error) {
-			alert('Failed to forward application');
+			await api.post(`/api/admin/applications/${type}/${id}/forward`)
+			setShowForwardModal(null)
+			setSuccessModal({
+				title: 'Application forwarded',
+				description: `${application_no} has been sent to the principal officer for final review.`,
+			})
+			fetchInbox()
+		} catch {
+			alert('Failed to forward application')
 		} finally {
-			setActionLoading(null);
+			setActionLoading(null)
 		}
-	};
+	}
 
 	const handleReject = async () => {
-		if (!rejectionMsg) return alert('Please provide a rejection reason');
-		const { type, id } = showRejectModal;
-		setActionLoading(id);
+		const trimmed = rejectionMsg.trim()
+		if (!trimmed || !showRejectModal) return
+		const { type, id, application_no } = showRejectModal
+		setActionLoading(id)
 		try {
-			await api.post(`/api/admin/applications/${type}/${id}/reject`, { message: rejectionMsg });
-			setShowRejectModal(null);
-			setRejectionMsg('');
-			fetchInbox();
-		} catch (error) {
-			alert('Failed to reject application');
+			await api.post(`/api/admin/applications/${type}/${id}/reject`, { message: trimmed })
+			setShowRejectModal(null)
+			setRejectionMsg('')
+			setSuccessModal({
+				title: 'Application rejected',
+				description: `${application_no} was rejected. Reason recorded: "${trimmed}"`,
+			})
+			fetchInbox()
+		} catch {
+			alert('Failed to reject application')
 		} finally {
-			setActionLoading(null);
+			setActionLoading(null)
 		}
-	};
+	}
 
-	if (loading) return <div>Loading inbox...</div>;
+	const openDetails = (app) => {
+		navigate(`/dashboard/admin/applications/${app.application_no}`)
+	}
 
 	return (
 		<>
 			<DataTable
-				title="Pending Review"
+				title="Pending applications"
+				accent={getAdminTableAccent(user)}
 				loading={loading}
 				data={applications}
+				onRowClick={openDetails}
 				columns={[
 					{
 						key: 'application_no',
-						label: 'Application No',
-						render: (val) => <span className="bold">{val}</span>
+						label: 'Application no.',
+						mono: true,
 					},
 					{
 						key: 'form_type',
 						label: 'Type',
-						render: (val) => APPLICATION_LABELS[val] || val.replace(/-/g, ' ').toUpperCase()
+						cellClassName: 'ws-status-cell-form',
+						render: (val) =>
+							APPLICATION_LABELS[val] ||
+							val?.replace(/-/g, ' ').toUpperCase() ||
+							'—',
 					},
 					{
 						key: 'applicant_name',
 						label: 'Applicant',
-						render: (_, row) => {
-							switch (row.form_type) {
-								case APPLICATION_TYPES.RENT_REVISION:
-								case APPLICATION_TYPES.OTHER_CHARGES_REVISION:
-									return row.signed_by === 'landlord' ? row.landlord_name : row.tenant_name;
-								case APPLICATION_TYPES.VALUER_APPOINTMENT:
-								case APPLICATION_TYPES.RENT_COURT_POSSESSION:
-								case APPLICATION_TYPES.RENT_COURT_FILING:
-								case APPLICATION_TYPES.RENT_AUTHORITY_FILING:
-									return row.applicant_name;
-								case APPLICATION_TYPES.RENT_COURT_APPEAL:
-								case APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL:
-									return row.appellant_name;
-								default:
-									return row.user?.name || '-';
-							}
-						}
+						render: (_, row) => resolveApplicantName(row),
 					},
 					{
 						key: 'district',
 						label: 'District',
-						render: (val) => val?.name || 'Global'
-					},
-					{
-						key: 'created_at',
-						label: 'Date',
-						render: (val) => new Date(val).toLocaleDateString()
+						render: (val) => val?.name || '—',
 					},
 					{
 						key: 'status',
 						label: 'Status',
 						render: (val) => (
-							<span className={`status-pill ${val.toLowerCase()}`}>
-								{STATUS_LABELS[val] || val.replace(/_/g, ' ')}
+							<span className={adminStatusBadgeClass(val)}>
+								{adminStatusLabel(val)}
 							</span>
-						)
-					}
+						),
+					},
+					{
+						key: 'created_at',
+						label: 'Date',
+						render: (val) => formatDate(val),
+					},
 				]}
 				actions={(app) => (
-					<div className="nav-actions">
+					<>
+						<StatusProgressViewButton
+							application={app}
+							variant="admin"
+							viewerRole={user?.role}
+						/>
 						<button
-							className="action-icon-btn info"
-							onClick={() => navigate(`/dashboard/admin/applications/${app.application_no}`)}
+							type="button"
+							className="ws-status-action-btn ws-status-action-btn--view"
+							title="View details"
+							onClick={() => openDetails(app)}
 						>
-							View Info
+							<Icon name="eye" />
+							<span>View</span>
 						</button>
 						<button
-							className="action-icon-btn"
-							onClick={() => handleForward(app.form_type, app.id)}
+							type="button"
+							className="ws-status-action-btn ws-status-action-btn--primary"
+							title="Forward to principal"
+							onClick={() =>
+								setShowForwardModal({
+									type: app.form_type,
+									id: app.id,
+									application_no: app.application_no,
+								})
+							}
 							disabled={actionLoading === app.id}
 						>
-							{actionLoading === app.id ? '...' : 'Forward'}
+							<span>{actionLoading === app.id ? '…' : 'Forward'}</span>
 						</button>
 						<button
-							className="action-icon-btn secondary"
-							onClick={() => setShowRejectModal({ type: app.form_type, id: app.id })}
+							type="button"
+							className="ws-status-action-btn ws-status-action-btn--reject"
+							title="Reject application"
+							onClick={() =>
+								setShowRejectModal({
+									type: app.form_type,
+									id: app.id,
+									application_no: app.application_no,
+								})
+							}
 							disabled={actionLoading === app.id}
 						>
-							Reject
+							<span>Reject</span>
 						</button>
-					</div>
+					</>
 				)}
 				emptyMessage="No pending applications found."
-				pagination={paginationInfo ? {
-					currentPage: paginationInfo.current_page,
-					totalPages: paginationInfo.last_page,
-					onPageChange: (newPage) => setPage(newPage)
-				} : null}
+				pagination={
+					paginationInfo
+						? {
+								currentPage: paginationInfo.current_page,
+								totalPages: paginationInfo.last_page,
+								onPageChange: (newPage) => setPage(newPage),
+							}
+						: null
+				}
 			/>
 
-			{showRejectModal && (
-				<div className="modal-overlay">
-					<div className="auth-card" style={{ maxWidth: '400px' }}>
-						<h3>Reject Application</h3>
-						<p>Provide a reason for rejection. This will be visible to the applicant.</p>
-						<textarea
-							value={rejectionMsg}
-							onChange={(e) => setRejectionMsg(e.target.value)}
-							placeholder="Enter rejection message..."
-							rows="4"
-							style={{ width: '100%', marginBottom: '16px', padding: '8px' }}
-						/>
-						<div className="nav-actions">
-							<button onClick={handleReject} disabled={actionLoading}>Confirm Rejection</button>
-							<button className="secondary" onClick={() => setShowRejectModal(null)}>Cancel</button>
-						</div>
-					</div>
-				</div>
-			)}
-		</>
-	);
-};
+			<WorkflowConfirmModal
+				open={Boolean(showForwardModal)}
+				onClose={() => setShowForwardModal(null)}
+				title="Forward application"
+				description={
+					showForwardModal
+						? `Send ${showForwardModal.application_no} to the principal officer for final review?`
+						: ''
+				}
+				primaryLabel={actionLoading ? 'Forwarding…' : 'Forward to principal'}
+				onPrimary={handleForward}
+				primaryDisabled={Boolean(actionLoading)}
+			/>
 
-export default ApplicationInbox;
+			<WorkflowConfirmModal
+				open={Boolean(showRejectModal)}
+				onClose={() => {
+					setShowRejectModal(null)
+					setRejectionMsg('')
+				}}
+				title="Reject application"
+				description={
+					showRejectModal
+						? `Provide a reason for rejecting ${showRejectModal.application_no}. This will be shown to the applicant and in the progress timeline.`
+						: ''
+				}
+				primaryLabel={actionLoading ? 'Rejecting…' : 'Confirm rejection'}
+				primaryVariant="danger"
+				onPrimary={handleReject}
+				primaryDisabled={Boolean(actionLoading) || !rejectionMsg.trim()}
+			>
+				<label className="workflow-confirm-field">
+					<span className="workflow-confirm-field__label">Rejection reason (required)</span>
+					<textarea
+						className="workflow-confirm-field__input"
+						value={rejectionMsg}
+						onChange={(e) => setRejectionMsg(e.target.value)}
+						placeholder="Explain why this application is rejected…"
+						rows={4}
+						required
+					/>
+				</label>
+			</WorkflowConfirmModal>
+
+			<WorkflowConfirmModal
+				open={Boolean(successModal)}
+				onClose={() => setSuccessModal(null)}
+				title={successModal?.title || 'Done'}
+				description={successModal?.description}
+				primaryLabel="OK"
+				secondaryLabel="Close"
+				onPrimary={() => setSuccessModal(null)}
+			/>
+		</>
+	)
+}
+
+export default ApplicationInbox

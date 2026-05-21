@@ -59,7 +59,7 @@ function PortalFaqSection() {
 						Frequently asked questions
 					</h2>
 					<p className="landing-section-lead mx-auto max-w-2xl">
-						Quick answers about UIN applications, required documents, and tracking your status.
+						{/* Quick answers about UIN applications, required documents, and tracking your status. */}
 					</p>
 				</div>
 

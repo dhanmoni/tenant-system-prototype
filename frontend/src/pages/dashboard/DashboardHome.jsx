@@ -403,7 +403,7 @@ function DashboardHome() {
 							<h2 className="dashboard-section-title">Management Quick Links</h2>
 							<div className="staff-quick-actions-grid">
 								<button onClick={() => navigate('/dashboard/status')} className="dashboard-action-btn">UIN Status</button>
-								<button onClick={() => navigate('/dashboard/admin/tenancy')} className="dashboard-action-btn">Tenancy Records</button>
+								<button onClick={() => navigate('/dashboard/admin/tenancy')} className="dashboard-action-btn">Tenancy Applications</button>
 								{user.role === ROLES.SUPER_ADMIN && (
 									<button onClick={() => navigate('/dashboard/admin/districts')} className="dashboard-action-btn">Districts</button>
 								)}

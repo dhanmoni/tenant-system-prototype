@@ -508,7 +508,7 @@ function OfficialDashboard({ user, stats, statsLoading, recentActivity = [], err
 									onClick={() => navigate('/dashboard/admin/tenancy')}
 									className="dashboard-action-btn"
 								>
-									Tenancy records
+									Tenancy applications
 								</button>
 								{user.role === ROLES.SUPER_ADMIN ? (
 									<button
@@ -538,7 +538,7 @@ function OfficialDashboard({ user, stats, statsLoading, recentActivity = [], err
 									onClick={() => navigate('/dashboard/admin/applications')}
 									className="dashboard-action-btn"
 								>
-									All applications
+									Service applications
 								</button>
 							</div>
 						</div>

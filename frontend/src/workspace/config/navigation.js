@@ -58,13 +58,13 @@ export function getWorkspaceNavigation(user) {
 	if ([...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/applications',
-			label: 'View applications',
-			icon: 'eye',
+			label: 'Service applications',
+			icon: 'services',
 		})
 	}
 
 	if (ADMIN_ROLES.includes(user.role)) {
-		items.push({ to: '/dashboard/admin/tenancy', label: 'Tenancy records', icon: 'file' })
+		items.push({ to: '/dashboard/admin/tenancy', label: 'Tenancy applications', icon: 'file' })
 		if (user.role !== ROLES.SUPER_ADMIN) {
 			items.push({ to: '/dashboard/status', label: 'UIN status', icon: 'status' })
 		}
@@ -72,7 +72,7 @@ export function getWorkspaceNavigation(user) {
 
 	if (user.role === ROLES.SUPER_ADMIN) {
 		items.push(
-			{ to: '/dashboard/admin/applications', label: 'All applications', icon: 'eye' },
+			{ to: '/dashboard/admin/applications', label: 'Service applications', icon: 'services' },
 			{ to: '/dashboard/admin/districts', label: 'Districts', icon: 'map' }
 		)
 	}
