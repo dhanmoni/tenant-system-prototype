@@ -1,7 +1,22 @@
 import { STATUS, STATUS_LABELS } from '../constants/status'
-import { APPLICATION_TYPES } from '../constants/application'
+import { APPLICATION_TYPES, APPLICATION_LABELS } from '../constants/application'
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES } from '../constants/roles'
 import { ROLE_LABELS, getRoleLabel } from '../constants/roleLabels'
+
+const RENT_AUTHORITY_FORM_TYPES = new Set([
+	APPLICATION_TYPES.RENT_AUTHORITY_FILING,
+	APPLICATION_TYPES.RENT_REVISION,
+	APPLICATION_TYPES.OTHER_CHARGES_REVISION,
+	APPLICATION_TYPES.VALUER_APPOINTMENT,
+])
+
+const RENT_COURT_FORM_TYPES = new Set([
+	APPLICATION_TYPES.RENT_COURT_POSSESSION,
+	APPLICATION_TYPES.RENT_COURT_FILING,
+	APPLICATION_TYPES.RENT_COURT_APPEAL,
+])
+
+const RENT_TRIBUNAL_FORM_TYPES = new Set([APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL])
 
 const WORKFLOW_ORDER = [
 	STATUS.DRAFT,
@@ -230,7 +245,41 @@ function buildTenancySteps(application, currentStatus) {
 	return steps
 }
 
+function getOfficeReviewLabel(application) {
+	const assigned = application.assigned_to_role
+	if (assigned) return getRoleLabel(assigned)
+
+	const formType = String(application.form_type || application.application_type || '')
+	if (RENT_TRIBUNAL_FORM_TYPES.has(formType)) return ROLE_LABELS[ROLES.RENT_TRIBUNAL]
+	if (RENT_COURT_FORM_TYPES.has(formType)) return ROLE_LABELS[ROLES.RENT_COURT]
+	if (RENT_AUTHORITY_FORM_TYPES.has(formType)) return ROLE_LABELS[ROLES.RENT_AUTHORITY]
+	return 'Reviewing office'
+}
+
+function buildOfficeReviewDescription(application, currentStatus) {
+	const office = getOfficeReviewLabel(application)
+	const at = formatTimestamp(application.forwarded_at)
+
+	if ([STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)) {
+		return application.approved_by?.name
+			? `Approved by ${application.approved_by.name} (${office}).`
+			: `Final decision recorded by ${office}.`
+	}
+
+	if (currentStatus === STATUS.IN_REVIEW) {
+		return at
+			? `Under review by ${office} since ${at}.`
+			: `Awaiting final decision by ${office}.`
+	}
+
+	return `After assistant verification, the file is reviewed by ${office}.`
+}
+
 function buildServiceFormSteps(application, currentStatus) {
+	const pastSubmitted = statusRank(currentStatus) > statusRank(STATUS.DRAFT)
+	const assistantDone = statusRank(currentStatus) > statusRank(STATUS.SUBMITTED)
+	const office = getOfficeReviewLabel(application)
+
 	const steps = [
 		{
 			id: 'draft',
@@ -243,38 +292,34 @@ function buildServiceFormSteps(application, currentStatus) {
 		{
 			id: 'submitted',
 			title: 'Submitted by applicant',
-			description: 'Received in the district queue.',
+			description: pastSubmitted
+				? 'Received in the district queue.'
+				: 'Waiting for the applicant to submit.',
 			timestamp: formatTimestamp(application.created_at),
-			state: resolveState(STATUS.SUBMITTED, currentStatus, false),
-			badge:
-				currentStatus === STATUS.SUBMITTED
-					? 'in-progress'
-					: statusRank(currentStatus) > statusRank(STATUS.SUBMITTED)
-						? 'completed'
-						: 'pending',
+			state: pastSubmitted ? 'completed' : 'pending',
+			badge: pastSubmitted ? 'completed' : 'pending',
 		},
 		{
 			id: 'assistant',
 			title: 'Assistant review',
-			description: application.forwarded_by?.name
-				? `Forwarded by ${application.forwarded_by.name}`
-				: 'Verify the application, then forward to the principal officer or reject with a reason.',
+			description: buildAssistantReviewDescription(application, null, currentStatus),
 			timestamp: formatTimestamp(application.forwarded_at),
-			state: resolveState(STATUS.IN_REVIEW, currentStatus, false),
-			badge:
-				currentStatus === STATUS.SUBMITTED
-					? 'in-progress'
-					: statusRank(currentStatus) >= statusRank(STATUS.IN_REVIEW)
-						? 'completed'
-						: 'pending',
+			state: currentStatus === STATUS.SUBMITTED
+				? 'in_progress'
+				: assistantDone
+					? 'completed'
+					: 'pending',
+			badge: currentStatus === STATUS.SUBMITTED
+				? 'in-progress'
+				: assistantDone
+					? 'completed'
+					: 'pending',
 		},
 		{
-			id: 'principal',
-			title: 'Principal officer review',
-			description: application.approved_by?.name
-				? `Decision by ${application.approved_by.name}`
-				: 'Final scrutiny and approval.',
-			timestamp: formatTimestamp(application.approved_at),
+			id: 'office-review',
+			title: `${office} review`,
+			description: buildOfficeReviewDescription(application, currentStatus),
+			timestamp: formatTimestamp(application.approved_at || application.forwarded_at),
 			state:
 				currentStatus === STATUS.IN_REVIEW
 					? 'in_progress'
@@ -322,13 +367,11 @@ function buildServiceFormSteps(application, currentStatus) {
 
 function getForwardTargetLabel(application, viewerRole) {
 	const assigned = application.assigned_to_role
-	if (assigned && ROLE_LABELS[assigned]) {
-		return getRoleLabel(assigned)
-	}
+	if (assigned) return getRoleLabel(assigned)
 	if (viewerRole === ROLES.RA_ASSISTANT) return ROLE_LABELS[ROLES.RENT_AUTHORITY]
 	if (viewerRole === ROLES.RC_ASSISTANT) return ROLE_LABELS[ROLES.RENT_COURT]
 	if (viewerRole === ROLES.RT_ASSISTANT) return ROLE_LABELS[ROLES.RENT_TRIBUNAL]
-	return null
+	return getOfficeReviewLabel(application)
 }
 
 function isForwardedToOffice(application, currentStatus) {
@@ -365,17 +408,15 @@ function getPrincipalOfficeLabel(viewerRole) {
 }
 
 function adaptStepsForViewer(steps, viewerRole, application, currentStatus) {
-	if (!viewerRole) return steps
-
 	let result = [...steps]
 
-	if (ASSISTANT_ROLES.includes(viewerRole)) {
+	if (viewerRole && ASSISTANT_ROLES.includes(viewerRole)) {
 		const showCompleted = [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
 		const forwarded = isForwardedToOffice(application, currentStatus)
 
 		result = result
 			.filter((step) => {
-				if (step.id === 'principal') return false
+				if (step.id === 'principal' || step.id === 'office-review') return false
 				if (step.id === 'completed' && !showCompleted) return false
 				const title = String(step.title || '').toLowerCase()
 				if (title.includes('principal officer')) return false
@@ -412,20 +453,19 @@ function adaptStepsForViewer(steps, viewerRole, application, currentStatus) {
 			})
 	}
 
-	if (PRINCIPAL_ROLES.includes(viewerRole)) {
+	if (viewerRole && PRINCIPAL_ROLES.includes(viewerRole)) {
 		const office = getPrincipalOfficeLabel(viewerRole)
 
 		result = result
 			.filter((step) => {
 				const title = String(step.title || '').toLowerCase()
-				return !title.includes('principal officer')
+				return !title.includes('principal officer') && step.id !== 'principal'
 			})
 			.map((step) => {
-				if (step.id !== 'principal') return step
+				if (step.id !== 'office-review') return step
 
 				return {
 					...step,
-					id: 'officer-review',
 					title: `${office} review`,
 					description: application.approved_by?.name
 						? `Decision recorded by ${application.approved_by.name}.`
@@ -436,7 +476,22 @@ function adaptStepsForViewer(steps, viewerRole, application, currentStatus) {
 			})
 	}
 
+	// Citizens, super admin, district admin: never show legacy principal-officer step
+	result = result.filter((step) => {
+		if (step.id === 'principal') return false
+		const title = String(step.title || '').toLowerCase()
+		return !title.includes('principal officer')
+	})
+
 	return result
+}
+
+/** Office an assistant forwards applications to (by assistant role). */
+export function getAssistantForwardOfficeLabel(viewerRole) {
+	if (viewerRole === ROLES.RA_ASSISTANT) return ROLE_LABELS[ROLES.RENT_AUTHORITY]
+	if (viewerRole === ROLES.RC_ASSISTANT) return ROLE_LABELS[ROLES.RENT_COURT]
+	if (viewerRole === ROLES.RT_ASSISTANT) return ROLE_LABELS[ROLES.RENT_TRIBUNAL]
+	return 'the reviewing office'
 }
 
 /**
@@ -466,6 +521,8 @@ export function buildApplicationStatusProgress(application = {}, options = {}) {
 		currentLabel: STATUS_LABELS[currentStatus] || application.status || 'Unknown',
 		applicationNo: application.application_no || '—',
 		formLabel:
+			APPLICATION_LABELS[application.form_type] ||
+			APPLICATION_LABELS[application.application_type] ||
 			application.application_type ||
 			application.form_type ||
 			(isTenancy ? 'Tenancy certificate' : 'Application'),

@@ -1,10 +1,56 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../../api'
-import { STATUS, STATUS_LABELS, STATUS_COLORS } from '../../../constants/status'
+import { Icon } from '../../../components/dashboard/Icons'
+import { STATUS, STATUS_LABELS } from '../../../constants/status'
 import { APPLICATION_LABELS } from '../../../constants/application'
-import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
+import { ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
+import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
+import { formatDate, formatDateTime } from '../../../utils/formatters'
 import './ApplicationDetails.css'
+
+const EXCLUDED_FIELDS = new Set([
+	'id',
+	'user_id',
+	'user',
+	'district_id',
+	'forwarded_by_user_id',
+	'rejected_by_user_id',
+	'approved_by_user_id',
+	'movement_history',
+	'created_at',
+	'updated_at',
+	'deleted_at',
+	'assigned_to_role',
+])
+
+const WORKFLOW_FIELDS = new Set([
+	'forwarded_at',
+	'rejected_at',
+	'approved_at',
+	'rejection_message',
+])
+
+const SUMMARY_FIELDS = ['district', 'form_type']
+
+function hasDisplayValue(value) {
+	if (value === null || value === undefined || value === '') return false
+	if (typeof value === 'string' && value.trim() === '') return false
+	if (value === '-') return false
+	return true
+}
+
+function labelize(key) {
+	if (key === 'rent_authority_uid' || key === 'rent_court_uid' || key === 'tenancy_uin') {
+		return 'Tenancy UIN'
+	}
+	if (key === 'form_type') return 'Form type'
+	if (key === 'application_no') return 'Application number'
+	return key
+		.split('_')
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(' ')
+}
 
 const AdminApplicationDetails = () => {
 	const { applicationNo } = useParams()
@@ -38,9 +84,11 @@ const AdminApplicationDetails = () => {
 
 		try {
 			setActionLoading(true)
-			await api.post(`/api/admin/applications/${application.form_type}/${application.id}/${action}`)
+			await api.post(
+				`/api/admin/applications/${application.form_type}/${application.id}/${action}`
+			)
 			alert(`Application ${action}ed successfully.`)
-			fetchDetails() // Refresh
+			fetchDetails()
 		} catch (err) {
 			console.error(`Error during ${action}:`, err)
 			alert(`Failed to ${action} application.`)
@@ -49,115 +97,240 @@ const AdminApplicationDetails = () => {
 		}
 	}
 
-	if (loading) return <div className="admin-loading">Loading application details...</div>
-	if (error) return <div className="admin-error-container">{error}</div>
-	if (!application) return <div className="admin-error-container">Application not found.</div>
+	const formLabel = useMemo(() => {
+		if (!application?.form_type) return 'Application'
+		return (
+			APPLICATION_LABELS[application.form_type] ||
+			labelize(application.form_type)
+		)
+	}, [application?.form_type])
 
-	console.log({ application })
+	const { summaryFields, workflowFields, detailFields } = useMemo(() => {
+		if (!application) {
+			return { summaryFields: [], workflowFields: [], detailFields: [] }
+		}
+
+		const entries = Object.entries(application).filter(([key]) => !EXCLUDED_FIELDS.has(key))
+		const summary = []
+		const workflow = []
+		const details = []
+
+		for (const [key, value] of entries) {
+			if (['application_no', 'status'].includes(key)) continue
+
+			if (SUMMARY_FIELDS.includes(key)) {
+				summary.push([key, value])
+				continue
+			}
+
+			if (WORKFLOW_FIELDS.has(key)) {
+				if (hasDisplayValue(value)) workflow.push([key, value])
+				continue
+			}
+
+			details.push([key, value])
+		}
+
+		const uinIndex = details.findIndex(
+			([key]) =>
+				key === 'rent_authority_uid' || key === 'rent_court_uid' || key === 'tenancy_uin'
+		)
+		if (uinIndex !== -1) {
+			const [uinField] = details.splice(uinIndex, 1)
+			details.unshift(uinField)
+		}
+
+		return {
+			summaryFields: summary,
+			workflowFields: workflow,
+			detailFields: details,
+		}
+	}, [application])
+
 	const renderValue = (key, value) => {
-		if (value === null || value === undefined) return '-'
+		if (!hasDisplayValue(value)) return <span className="admin-app-details__empty">—</span>
 		if (typeof value === 'boolean') return value ? 'Yes' : 'No'
 
-		// Handle images/documents
-		if (key.toLowerCase().includes('path') || key.toLowerCase().includes('image') || key.toLowerCase().includes('pdf')) {
+		if (
+			key.toLowerCase().includes('path') ||
+			key.toLowerCase().includes('image') ||
+			key.toLowerCase().includes('pdf')
+		) {
 			if (typeof value === 'string' && (value.includes('/') || value.includes('\\'))) {
 				const url = `${import.meta.env.VITE_API_URL}/storage/${value}`
 				if (value.match(/\.(jpg|jpeg|png|gif)$/i)) {
 					return (
-						<div className="detail-media">
-							<img src={url} alt={key} className="detail-img" onClick={() => window.open(url, '_blank')} />
-							<a href={url} target="_blank" rel="noopener noreferrer" className="view-link">View Full Image</a>
+						<div className="admin-app-details__media">
+							<img
+								src={url}
+								alt={labelize(key)}
+								className="admin-app-details__img"
+								onClick={() => window.open(url, '_blank')}
+							/>
+							<a href={url} target="_blank" rel="noopener noreferrer" className="admin-app-details__link">
+								View full image
+							</a>
 						</div>
 					)
 				}
-				return <a href={url} target="_blank" rel="noopener noreferrer" className="view-link">View Document</a>
+				return (
+					<a href={url} target="_blank" rel="noopener noreferrer" className="admin-app-details__link">
+						View document
+					</a>
+				)
 			}
 		}
 
 		if (key === 'status') {
-			return <span className={`status-pill ${value.toLowerCase()}`}>{STATUS_LABELS[value] || value}</span>
+			return (
+				<span className={adminStatusBadgeClass(value)}>
+					{adminStatusLabel(value)}
+				</span>
+			)
+		}
+
+		if (key === 'form_type') {
+			return APPLICATION_LABELS[value] || labelize(value)
+		}
+
+		if (key.endsWith('_at')) {
+			return formatDateTime(value) || formatDate(value) || value
 		}
 
 		if (typeof value === 'object') {
-			if (value.name) return value.name
+			if (value?.name) return value.name
 			return JSON.stringify(value)
 		}
 
-		return value.toString()
+		return String(value)
 	}
 
-	const labelize = (key) => {
-		if (key === 'rent_authority_uid' || key === 'rent_court_uid' || key === 'tenancy_uin') {
-			return 'Tenancy UIN'
-		}
-		return key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+	const renderFieldGrid = (fields) => (
+		<dl className="admin-app-details__grid">
+			{fields.map(([key, value]) => (
+				<div className="admin-app-details__field" key={key}>
+					<dt>{labelize(key)}</dt>
+					<dd>{renderValue(key, value)}</dd>
+				</div>
+			))}
+		</dl>
+	)
+
+	if (loading) {
+		return <div className="ws-dashboard-loading">Loading application details…</div>
 	}
 
-	// Grouping fields
-	const excludedFields = ['id', 'user_id', 'user', 'district_id', 'forwarded_by_user_id', 'rejected_by_user_id', 'approved_by_user_id', 'movement_history', 'created_at', 'updated_at', 'deleted_at', 'assigned_to_role']
-	const fields = Object.entries(application).filter(([key]) => !excludedFields.includes(key))
-
-	// Move Tenancy UIN to the first row
-	const uinIndex = fields.findIndex(([key]) => key === 'rent_authority_uid' || key === 'rent_court_uid' || key === 'tenancy_uin')
-	if (uinIndex !== -1) {
-		const [uinField] = fields.splice(uinIndex, 1)
-		fields.unshift(uinField)
+	if (error) {
+		return (
+			<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
+				{error}
+			</div>
+		)
 	}
+
+	if (!application) {
+		return (
+			<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
+				Application not found.
+			</div>
+		)
+	}
+
+	const statusClass = adminStatusBadgeClass(application.status)
+	const statusText = adminStatusLabel(application.status)
 
 	return (
-		<div className="application-details-page">
-			<div className="details-header">
-				<div className="header-left">
-					<button className="back-btn" onClick={() => navigate(-1)} title="Go Back">
-						Back
-					</button>
-					<div className="header-main">
-						<h1>{APPLICATION_LABELS[application?.form_type] || labelize(application?.form_type || '')} Details</h1>
-						<p className="app-no">{application.application_no}</p>
-					</div>
-				</div>
-				<div className="header-status">
-					<span className={`status-badge ${application.status?.toLowerCase()}`}>
+		<div className="admin-app-details">
+			<div className="admin-app-details__toolbar">
+				<button
+					type="button"
+					className="ws-btn ws-btn--outline ws-btn--sm admin-app-details__back"
+					onClick={() => navigate('/dashboard/admin/applications')}
+				>
+					<Icon name="collapse" className="admin-app-details__back-icon" />
+					Back to applications
+				</button>
+			</div>
+
+			<header className="admin-app-details__hero">
+				<div className="admin-app-details__hero-main">
+					<p className="admin-app-details__eyebrow">{formLabel}</p>
+					<h2 className="admin-app-details__ref">{application.application_no}</h2>
+					<p className="admin-app-details__meta">
 						{STATUS_LABELS[application.status] || application.status}
-					</span>
+						{application.district?.name ? (
+							<>
+								<span className="admin-app-details__meta-sep" aria-hidden>
+									·
+								</span>
+								{application.district.name} district
+							</>
+						) : null}
+					</p>
 				</div>
-			</div>
+				<span className={statusClass}>{statusText}</span>
+			</header>
 
-			<div className="details-content">
-				<h2 className="section-title">Application Information</h2>
-				<div className="details-grid">
-					{fields.map(([key, value]) => (
-						<div className="detail-item" key={key}>
-							<label>{labelize(key)}</label>
-							<div className="detail-value">{renderValue(key, value)}</div>
-						</div>
-					))}
-				</div>
-			</div>
+			{(summaryFields.length > 0 || workflowFields.length > 0) && (
+				<section className="admin-app-details__card">
+					<h3 className="admin-app-details__section-title">Overview</h3>
+					{renderFieldGrid([...summaryFields, ...workflowFields])}
+				</section>
+			)}
 
-			<div className="details-actions">
-				{ASSISTANT_ROLES.includes(user.role) && application.status === STATUS.SUBMITTED && (
-					<>
-						<button className="action-btn forward" onClick={() => handleAction('forward')} disabled={actionLoading}>
-							Move to Review
-						</button>
-						<button className="action-btn reject" onClick={() => handleAction('reject')} disabled={actionLoading}>
-							Reject
-						</button>
-					</>
-				)}
+			{detailFields.length > 0 && (
+				<section className="admin-app-details__card">
+					<h3 className="admin-app-details__section-title">Application details</h3>
+					{renderFieldGrid(detailFields)}
+				</section>
+			)}
 
-				{PRINCIPAL_ROLES.includes(user.role) && application.status === STATUS.IN_REVIEW && (
-					<>
-						<button className="action-btn approve" onClick={() => handleAction('approve')} disabled={actionLoading}>
-							Approve
-						</button>
-						<button className="action-btn reject" onClick={() => handleAction('reject')} disabled={actionLoading}>
-							Reject
-						</button>
-					</>
-				)}
-			</div>
+			{(ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED) ||
+			(PRINCIPAL_ROLES.includes(user?.role) && application.status === STATUS.IN_REVIEW) ? (
+				<footer className="admin-app-details__actions">
+					{ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED && (
+						<>
+							<button
+								type="button"
+								className="ws-btn ws-btn--primary"
+								onClick={() => handleAction('forward')}
+								disabled={actionLoading}
+							>
+								Move to review
+							</button>
+							<button
+								type="button"
+								className="ws-btn ws-btn--danger"
+								onClick={() => handleAction('reject')}
+								disabled={actionLoading}
+							>
+								Reject
+							</button>
+						</>
+					)}
+
+					{PRINCIPAL_ROLES.includes(user?.role) && application.status === STATUS.IN_REVIEW && (
+						<>
+							<button
+								type="button"
+								className="ws-btn ws-btn--primary"
+								onClick={() => handleAction('approve')}
+								disabled={actionLoading}
+							>
+								Approve
+							</button>
+							<button
+								type="button"
+								className="ws-btn ws-btn--danger"
+								onClick={() => handleAction('reject')}
+								disabled={actionLoading}
+							>
+								Reject
+							</button>
+						</>
+					)}
+				</footer>
+			) : null}
 		</div>
 	)
 }

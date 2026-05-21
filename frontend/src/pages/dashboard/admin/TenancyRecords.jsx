@@ -38,7 +38,9 @@ const TenancyRecords = ({ user }) => {
 	};
 
 	const openDetails = (record) => {
-		navigate(`/dashboard/admin/applications/${record.application_no}`);
+		navigate(`/dashboard/admin/applications/${record.application_no}`, {
+			state: { from: 'tenancy' },
+		})
 	};
 
 	return (

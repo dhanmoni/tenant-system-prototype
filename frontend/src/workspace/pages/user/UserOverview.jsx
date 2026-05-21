@@ -149,7 +149,6 @@ function UserOverview() {
 						</span>
 					)}
 					<div className="ws-citizen-welcome-copy">
-						<p className="ws-citizen-welcome-kicker">Citizen portal · Assam Tenancy Act</p>
 						<h1 className="ws-citizen-welcome-title">Welcome, {displayName}</h1>
 						<p className="ws-citizen-welcome-email">{displayEmail}</p>
 						{user?.district?.name ? (

@@ -109,11 +109,11 @@ function AuthPanel({
 	return (
 		<div
 			id="auth-card-section"
-			className="auth-panel auth-panel--get-started overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg ring-1 ring-slate-200/80"
+			className="auth-panel auth-panel--get-started overflow-hidden"
 		>
 			<div className="p-4 sm:p-5">
 				<div
-					className="mb-5 flex rounded-lg bg-slate-100 p-1"
+					className="auth-panel-tabs mb-5 flex p-1"
 					role="tablist"
 					aria-label="Sign in or register"
 				>
@@ -121,10 +121,8 @@ function AuthPanel({
 						type="button"
 						role="tab"
 						aria-selected={mode === 'login'}
-						className={`auth-panel-tab flex-1 rounded-md py-2.5 text-sm font-bold transition ${
-							mode === 'login'
-								? 'bg-white text-landing shadow-sm'
-								: 'text-slate-600 hover:text-slate-800'
+						className={`auth-panel-tab flex-1 py-2.5 text-sm font-bold transition ${
+							mode === 'login' ? 'auth-panel-tab--active' : ''
 						}`}
 						onClick={switchToLogin}
 					>
@@ -134,10 +132,8 @@ function AuthPanel({
 						type="button"
 						role="tab"
 						aria-selected={mode === 'register'}
-						className={`auth-panel-tab flex-1 rounded-md py-2.5 text-sm font-bold transition ${
-							mode === 'register'
-								? 'bg-white text-landing shadow-sm'
-								: 'text-slate-600 hover:text-slate-800'
+						className={`auth-panel-tab flex-1 py-2.5 text-sm font-bold transition ${
+							mode === 'register' ? 'auth-panel-tab--active' : ''
 						}`}
 						onClick={switchToRegister}
 					>

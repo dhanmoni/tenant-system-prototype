@@ -24,7 +24,7 @@ function RoleActionCards({ user, stats }) {
 			key: 'review',
 			kicker: 'Decision queue',
 			title: 'Applications in review',
-			desc: 'Approve or reject applications forwarded by assistants.',
+			desc: 'Approve or reject applications forwarded by your assistant.',
 			badge: s.in_review > 0 ? `${s.in_review} in review` : null,
 			to: '/dashboard/admin/applications',
 			primary: true,

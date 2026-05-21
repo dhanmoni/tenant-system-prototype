@@ -24,7 +24,7 @@ import RoleManagement from './pages/dashboard/admin/RoleManagement'
 import DesignationManagement from './pages/dashboard/admin/DesignationManagement'
 import ActivityLog from './pages/dashboard/admin/ActivityLog'
 import ApplicationList from './pages/dashboard/admin/ApplicationList'
-import AdminApplicationDetails from './pages/dashboard/admin/AdminApplicationDetails'
+import AdminApplicationDetailsPage from './pages/dashboard/admin/AdminApplicationDetailsPage'
 import TenancyRecords from './pages/dashboard/admin/TenancyRecords'
 
 import Login from './pages/Login'
@@ -565,11 +565,7 @@ function App() {
 						/>
 						<Route
 							path="admin/applications/:applicationNo"
-							element={
-								<WorkspaceLegacyFrame title="Application" subtitle="Review details">
-									<AdminApplicationDetails user={user} />
-								</WorkspaceLegacyFrame>
-							}
+							element={<AdminApplicationDetailsPage />}
 						/>
 						<Route
 							path="admin/tenancy"

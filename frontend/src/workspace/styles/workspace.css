@@ -355,6 +355,10 @@
 	margin-bottom: 24px;
 }
 
+.ws-page-header:has(.ws-breadcrumb):not(:has(.ws-page-title-row)) {
+	margin-bottom: 12px;
+}
+
 .ws-breadcrumb {
 	display: flex;
 	flex-wrap: wrap;
@@ -3306,15 +3310,6 @@
 .ws-citizen-welcome-avatar-fallback svg {
 	width: 28px;
 	height: 28px;
-}
-
-.ws-citizen-welcome-kicker {
-	margin: 0 0 4px;
-	font-size: 0.72rem;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--ws-accent);
 }
 
 .ws-citizen-welcome-title {

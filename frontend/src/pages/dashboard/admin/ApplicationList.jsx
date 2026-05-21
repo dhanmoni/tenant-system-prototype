@@ -10,8 +10,10 @@ import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/applic
 import { formatDate } from '../../../utils/formatters';
 import { getAdminTableAccent } from '../../../utils/adminTableAccent';
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge';
+import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress';
 
 const ApplicationList = ({ user }) => {
+	const forwardOffice = getAssistantForwardOfficeLabel(user?.role);
 	const navigate = useNavigate();
 	const [applications, setApplications] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ const ApplicationList = ({ user }) => {
 			setShowForwardModal(null);
 			setSuccessModal({
 				title: 'Application forwarded',
-				description: `${application_no} has been sent to the principal officer for final review.`,
+				description: `${application_no} has been sent to ${forwardOffice} for final review.`,
 			});
 			fetchApplications();
 		} catch (error) {
@@ -197,7 +199,7 @@ const ApplicationList = ({ user }) => {
 							<button
 								type="button"
 								className="ws-status-action-btn ws-status-action-btn--primary"
-								title="Forward to principal"
+								title={`Forward to ${forwardOffice}`}
 								onClick={() =>
 									setShowForwardModal({
 										type: app.form_type,
@@ -260,10 +262,10 @@ const ApplicationList = ({ user }) => {
 				title="Forward application"
 				description={
 					showForwardModal
-						? `Send ${showForwardModal.application_no} to the principal officer for final review?`
+						? `Send ${showForwardModal.application_no} to ${forwardOffice} for final review?`
 						: ''
 				}
-				primaryLabel={actionLoading ? 'Forwarding…' : 'Forward to principal'}
+				primaryLabel={actionLoading ? 'Forwarding…' : `Forward to ${forwardOffice}`}
 				onPrimary={handleForward}
 				primaryDisabled={Boolean(actionLoading)}
 			/>
