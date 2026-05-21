@@ -99,9 +99,11 @@ function ProgressStep({ step, isLast }) {
 	)
 }
 
-function ApplicationStatusProgress({ application }) {
-	const { steps, currentLabel, applicationNo, formLabel } =
-		buildApplicationStatusProgress(application)
+function ApplicationStatusProgress({ application, viewerRole }) {
+	const { steps, currentLabel, applicationNo, formLabel } = buildApplicationStatusProgress(
+		application,
+		{ viewerRole }
+	)
 
 	return (
 		<div className="status-progress">

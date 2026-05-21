@@ -38,6 +38,7 @@ class ApplicationResource extends JsonResource
             'rejected_at' => $this->rejected_at,
             'approved_at' => $this->approved_at,
             'rejection_message' => $this->rejection_message,
+            'assigned_to_role' => $this->assigned_to_role,
             'form_type' => $this->form_type ?? $this->resource->form_type, // Fallback if not set
             
             // Trimmed relationships (only included if loaded)

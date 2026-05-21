@@ -10,6 +10,7 @@ function StatusProgressViewButton({
 	className = '',
 	title = 'View status progress',
 	variant = 'admin',
+	viewerRole,
 }) {
 	const [open, setOpen] = useState(false)
 
@@ -39,6 +40,7 @@ function StatusProgressViewButton({
 				open={open}
 				onClose={() => setOpen(false)}
 				application={application}
+				viewerRole={viewerRole}
 			/>
 		</>
 	)

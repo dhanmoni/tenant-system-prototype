@@ -1,20 +1,26 @@
 export const landingFaqItems = [
 	{
 		id: 'what-is-uin',
-		question: 'What is a Unique Identification Number (UIN) for tenancy?',
+		question: 'What is a UIN?',
 		answer:
-			'A UIN is the official registration number issued after your tenancy is recorded under the Assam Tenancy Act. It links your agreement, parties, and premises to the Rent Authority.',
+			'A Unique Identification Number (UIN) is issued when your tenancy application is approved. It is your official reference for that tenancy on this portal.',
 	},
 	{
 		id: 'documents-required',
-		question: 'Which documents do I need before applying?',
+		question: 'What do I need before applying?',
 		answer:
-			'A registered tenancy agreement (PDF), passport-size photograph, PAN card copy, and signature image for the initiating party. Keep district, circle office, and agreement date ready.',
+			'Registered tenancy agreement (PDF), passport-size photo, PAN card, signature,and agreement date ready.',
+	},
+	{
+		id: 'individual-joint',
+		question: 'When is the application Individual or Joint?',
+		answer:
+			'Agreements registered within the last two months need a Joint application (both parties). Older agreements, up to three months, can be Individual.',
 	},
 	{
 		id: 'track-status',
-		question: 'How do I track my application after submission?',
+		question: 'How do I track my application?',
 		answer:
-			'Sign in to your dashboard and open Application Status to view the current stage, movement history, and download acknowledgements when issued.',
+			'Sign in and open UIN Status or your dashboard to see the current stage and updates.',
 	},
 ]

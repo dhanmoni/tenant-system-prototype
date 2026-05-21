@@ -325,20 +325,20 @@ function Sidebar({ user, onLogout }) {
 						)}
 
 						{ADMIN_ROLES.includes(user.role) && (
-							<>
-								<NavLink
-									to="/dashboard/admin/tenancy"
-									className={linkClass}
-									title="Tenancy Records"
-								>
-									<Icon name="file" className="dashboard-link-icon" />
-									<span className="dashboard-link-text">Tenancy Records</span>
-								</NavLink>
-								<NavLink to="/dashboard/status" className={linkClass} title="UIN Status">
-									<Icon name="status" className="dashboard-link-icon" />
-									<span className="dashboard-link-text">UIN Status</span>
-								</NavLink>
-							</>
+							<NavLink
+								to="/dashboard/admin/tenancy"
+								className={linkClass}
+								title="Tenancy Records"
+							>
+								<Icon name="file" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">Tenancy Records</span>
+							</NavLink>
+						)}
+						{user.role === ROLES.DISTRICT_ADMIN && (
+							<NavLink to="/dashboard/status" className={linkClass} title="UIN Status">
+								<Icon name="status" className="dashboard-link-icon" />
+								<span className="dashboard-link-text">UIN Status</span>
+							</NavLink>
 						)}
 
 						{user.role === ROLES.SUPER_ADMIN && (

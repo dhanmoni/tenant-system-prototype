@@ -55,9 +55,6 @@ function PortalBenefitsSection() {
 						visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
 					}}
 				>
-					<motion.p className="landing-section-eyebrow" variants={reduceMotion ? undefined : introItemVariants}>
-						{portalBenefitsIntro.eyebrow}
-					</motion.p>
 					<motion.h2
 						id="portal-benefits-heading"
 						className="landing-section-title"
@@ -97,21 +94,12 @@ function PortalBenefitsSection() {
 										whileHover={
 											reduceMotion
 												? undefined
-												: {
-														y: -6,
-														scale: 1.02,
-														transition: { duration: 0.22, ease: easeOut },
-													}
+												: { y: -4, transition: { duration: 0.2, ease: easeOut } }
 										}
 									>
-										<motion.span
-											className="portal-benefits-card__icon"
-											aria-hidden
-											whileHover={reduceMotion ? undefined : { scale: 1.08 }}
-											transition={{ duration: 0.2 }}
-										>
+										<span className="portal-benefits-card__icon" aria-hidden>
 											<Icon className="h-5 w-5" strokeWidth={1.85} />
-										</motion.span>
+										</span>
 										<h3 className="portal-benefits-card__title">{card.title}</h3>
 										<ul className="portal-benefits-card__tags">
 											{card.tags.map((tag) => (
@@ -149,7 +137,7 @@ function PortalBenefitsSection() {
 						<div className="portal-benefits__media-frame">
 							<img
 								src={benefitsImage}
-								alt="Official presenting tenancy registration and certificate services to citizens"
+								alt="Citizens using online tenancy registration and UIN services"
 								className="portal-benefits__media-img"
 								loading="lazy"
 								decoding="async"

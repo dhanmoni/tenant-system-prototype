@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import ApplicationStatusProgress from './ApplicationStatusProgress'
 
-function ApplicationStatusProgressModal({ open, onClose, application }) {
+function ApplicationStatusProgressModal({ open, onClose, application, viewerRole }) {
 	const titleId = useId()
 
 	useEffect(() => {
@@ -49,7 +49,7 @@ function ApplicationStatusProgressModal({ open, onClose, application }) {
 					</button>
 				</div>
 				<div className="status-progress-modal__body">
-					<ApplicationStatusProgress application={application} />
+					<ApplicationStatusProgress application={application} viewerRole={viewerRole} />
 				</div>
 			</div>
 		</div>,

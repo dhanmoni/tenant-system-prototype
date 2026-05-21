@@ -104,8 +104,7 @@ function LandingHero({ navSlot }) {
 								Assam Tenancy Registration and Management System
 							</h1>
 							<p className="landing-hero-lead">
-								Register tenancies, apply for UIN certificates, and track applications online under
-								the Assam Tenancy Act.
+								Apply for UIN, use tenancy services, and track every application online.
 							</p>
 						</div>
 						<div className="landing-hero-actions">

@@ -45,9 +45,12 @@ function PortalServicesSection() {
 	const sectionInView = useInView(sectionRef, { once: true, margin: '-10% 0px -8% 0px' })
 	const animate = reduceMotion || sectionInView
 
+	const uinHighlight = portalServiceHighlights.find((item) => item.id === 'uin')
+	const authorityHighlights = portalServiceHighlights.filter((item) => item.id !== 'uin')
+	// Left column top → bottom: highest authority, then first level; right: second level, then UIN.
 	const columns = [
-		portalServiceHighlights.filter((_, i) => i % 2 === 0),
-		portalServiceHighlights.filter((_, i) => i % 2 === 1),
+		[authorityHighlights[0], authorityHighlights[2]].filter(Boolean),
+		[authorityHighlights[1], uinHighlight].filter(Boolean),
 	]
 
 	return (
@@ -143,7 +146,9 @@ function PortalServicesSection() {
 													<Icon className="portal-services-showcase-card__icon-svg" strokeWidth={1.65} />
 												</motion.span>
 												<p className="portal-services-showcase-card__tag">{item.tagline}</p>
-												<p className="portal-services-showcase-card__title">{item.shortLabel}</p>
+												<p className="portal-services-showcase-card__title">
+													{item.id === 'uin' ? item.shortLabel : item.title}
+												</p>
 											</MotionLink>
 										)
 									})}
@@ -161,12 +166,6 @@ function PortalServicesSection() {
 							visible: { transition: { staggerChildren: 0.08, delayChildren: 0.2 } },
 						}}
 					>
-						<motion.p
-							className="portal-services-showcase__promo-eyebrow"
-							variants={reduceMotion ? undefined : promoItemVariants}
-						>
-							{portalServicesIntro.eyebrow}
-						</motion.p>
 						<motion.h2
 							id="services-heading"
 							className="landing-section-title portal-services-showcase__promo-title"

@@ -5,32 +5,32 @@ export const portalBenefitsIntro = {
 	eyebrow: 'Citizen experience',
 	title: 'Benefits of this portal',
 	lead:
-		'The Assam Tenancy Registration Portal brings registration, certificates, and dispute filings together — so tenants, owners, and citizens spend less time at offices and more time with clear, trackable digital records.',
+		'Apply for UIN, use tenancy services, and follow every update on your applications — fewer office visits and clear digital records you can check anytime.',
 }
 
 export const portalBenefitCards = [
 	{
 		id: 'all-services',
-		title: 'All tenancy services in one place',
-		tags: ['UIN registration', 'Rent Authority', 'Rent Court', 'Rent Tribunal'],
+		title: 'All services together',
+		tags: ['Apply for UIN', 'Rent Authority', 'Rent Court', 'Rent Tribunal'],
 		icon: 'layers',
 	},
 	{
-		id: 'documents',
-		title: 'Certificates & records online',
-		tags: ['Tenancy certificate', 'Application status', 'Signed PDF', 'Secure storage'],
+		id: 'uin-records',
+		title: 'UIN & digital records',
+		tags: ['UIN on approval', 'Status history', 'Secure account'],
 		icon: 'file',
 	},
 	{
 		id: 'tracking',
-		title: 'Track every application',
-		tags: ['Real-time status', 'Application number', 'District office', 'Transparent process'],
+		title: 'Follow your applications',
+		tags: ['Live status', 'Application number', 'Office updates'],
 		icon: 'activity',
 	},
 	{
 		id: 'access',
-		title: 'Easy citizen access',
-		tags: ['Mobile OTP login', 'Apply from home', 'Assam Tenancy Act', '24×7 submission'],
+		title: 'Sign in from anywhere',
+		tags: ['Mobile OTP', 'Apply from home', 'Available 24×7'],
 		icon: 'smartphone',
 	},
 ]

@@ -1,28 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
-import {
-	FileText,
-	Award,
-	Users,
-	Scale,
-	CheckCircle2,
-	Clock,
-	Building2,
-	MapPin,
-	TrendingUp,
-	TrendingDown,
-} from 'lucide-react'
+import { FileText, Hash, Layers, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react'
 import { portalPublicStats, portalStatsMeta } from '../../data/portalPublicStats'
 
 const iconMap = {
 	applications_submitted: FileText,
-	certificates_issued: Award,
-	citizens_registered: Users,
-	disputes_raised: Scale,
-	matters_resolved: CheckCircle2,
-	pending_review: Clock,
-	rent_authority_filings: Building2,
-	districts_active: MapPin,
+	uins_issued: Hash,
+	service_filings: Layers,
+	disputes_resolved: CheckCircle2,
 }
 
 function formatStatValue(value) {
@@ -91,7 +76,6 @@ function StatCard({ stat, index, active }) {
 			</div>
 			<StatValue value={stat.value} active={active} />
 			<h3 className="landing-stat-label">{stat.label}</h3>
-			<p className="landing-stat-hint">{stat.hint}</p>
 		</motion.article>
 	)
 }
@@ -109,7 +93,6 @@ function PortalStatsSection() {
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div className="landing-stats-header">
 					<div className="max-w-3xl">
-						<p className="landing-section-eyebrow">{portalStatsMeta.eyebrow}</p>
 						<h2 id="portal-stats-heading" className="landing-section-title">
 							{portalStatsMeta.title}
 						</h2>
@@ -126,10 +109,6 @@ function PortalStatsSection() {
 						<StatCard key={stat.id} stat={stat} index={index} active={isInView} />
 					))}
 				</div>
-
-				<p className="landing-stats-demo-note mt-8 text-center text-sm text-slate-500">
-					{portalStatsMeta.demoNote}
-				</p>
 			</div>
 		</section>
 	)

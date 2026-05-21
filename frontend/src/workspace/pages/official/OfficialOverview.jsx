@@ -249,7 +249,10 @@ function OfficialOverview() {
 							<h2 className="ws-card-title">Recent applications</h2>
 						</div>
 						<div className="ws-card-body ws-card-body--pad ws-card-body--table">
-							<RecentApplicationsTable applications={stats?.recent_applications} />
+							<RecentApplicationsTable
+								applications={stats?.recent_applications}
+								showProgress={!isSuperAdmin}
+							/>
 						</div>
 					</section>
 

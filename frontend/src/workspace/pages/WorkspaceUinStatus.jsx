@@ -416,11 +416,13 @@ function StatusCategorySection({
 											</button>
 										) : (
 											<>
-												<StatusProgressViewButton
-													application={app}
-													variant="workspace"
-													title="View status progress"
-												/>
+												{!category.isTenancy ? (
+													<StatusProgressViewButton
+														application={app}
+														variant="workspace"
+														title="View status progress"
+													/>
+												) : null}
 												<button
 													type="button"
 													className="ws-status-action-btn ws-status-action-btn--view"

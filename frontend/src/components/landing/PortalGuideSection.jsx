@@ -19,20 +19,20 @@ const steps = [
 	},
 	{
 		num: '2',
-		title: 'Log in and apply',
-		text: 'Sign in, complete your application, and upload required documents.',
+		title: 'Log in and apply for UIN',
+		text: 'Sign in, complete your UIN application, and upload the required documents.',
 	},
 	{
 		num: '3',
-		title: 'Track and download',
-		text: 'Monitor status in real time and download your certificate.',
+		title: 'Follow your application',
+		text: 'Check status on your dashboard and get your UIN when approved.',
 	},
 ]
 
 const highlights = [
 	'Register and verify with mobile OTP',
-	'Track applications in real time',
-	'Download certificates online',
+	'Apply for UIN and file tenancy services',
+	'Track applications and status updates',
 ]
 
 const services = [
@@ -49,8 +49,8 @@ const services = [
 		icon: LogIn,
 	},
 	{
-		title: 'Apply for certificate',
-		description: 'Submit a tenancy certificate application after sign-in.',
+		title: 'Apply for UIN',
+		description: 'Submit a UIN application and upload documents after sign-in.',
 		authMode: 'login',
 		icon: FileText,
 		badge: 'Most used',
@@ -64,32 +64,34 @@ const services = [
 	},
 ]
 
-function ServiceAction({ service, index }) {
+function GuideServiceAction({ service, index }) {
 	const Icon = service.icon
-	const className = `citizen-services-action${service.featured ? ' citizen-services-action--featured' : ''}`
+	const className = `portal-guide-access-action${
+		service.featured ? ' portal-guide-access-action--featured' : ''
+	}`
 
 	const content = (
 		<>
-			<span className="citizen-services-action__icon" aria-hidden>
+			<span className="portal-guide-access-action__icon" aria-hidden>
 				<Icon className="h-5 w-5" strokeWidth={2.25} />
 			</span>
-			<span className="citizen-services-action__body">
-				<span className="citizen-services-action__title-row">
-					<span className="citizen-services-action__title">{service.title}</span>
+			<span className="portal-guide-access-action__body">
+				<span className="portal-guide-access-action__title-row">
+					<span className="portal-guide-access-action__title">{service.title}</span>
 					{service.badge ? (
-						<span className="citizen-services-action__badge">{service.badge}</span>
+						<span className="portal-guide-access-action__badge">{service.badge}</span>
 					) : null}
 				</span>
-				<span className="citizen-services-action__desc">{service.description}</span>
+				<span className="portal-guide-access-action__desc">{service.description}</span>
 			</span>
-			<ArrowRight className="citizen-services-action__arrow" aria-hidden strokeWidth={2.25} />
+			<ArrowRight className="portal-guide-access-action__arrow" aria-hidden strokeWidth={2.25} />
 		</>
 	)
 
 	return (
 		<motion.li
 			initial={{ opacity: 0, x: 12 }}
-			whileInView={{ opacity: 1, y: 0 }}
+			whileInView={{ opacity: 1, x: 0 }}
 			viewport={{ once: true, margin: '-40px' }}
 			transition={{ duration: 0.35, delay: index * 0.06 }}
 		>
@@ -123,13 +125,12 @@ function PortalGuideSection() {
 					transition={{ duration: 0.4 }}
 					className="mx-auto max-w-2xl text-center"
 				>
-					<p className="landing-section-eyebrow">Quick start</p>
 					<h2 id="portal-guide-heading" className="landing-section-title">
 						How it works
 					</h2>
 					<p className="landing-section-lead">
-						Register, apply, and manage tenancy services online — follow the steps below or open a
-						service directly.
+						Register, apply for UIN, track your application, and use tenancy services online —
+						follow the steps below or open a service directly.
 					</p>
 				</motion.div>
 
@@ -154,37 +155,40 @@ function PortalGuideSection() {
 					))}
 				</ol>
 
-				<div className="citizen-services-layout portal-guide-services">
+				<div className="portal-guide-access-layout">
 					<motion.aside
 						initial={{ opacity: 0, y: 20 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true }}
 						transition={{ duration: 0.45 }}
-						className="citizen-services-aside"
+						className="portal-guide-access-aside"
 						aria-label="Portal overview"
 					>
-						<div className="citizen-services-aside__header">
+						<div className="portal-guide-access-aside__header">
 							<ShieldCheck className="h-5 w-5 shrink-0" aria-hidden strokeWidth={2.25} />
 							<p>Quick access</p>
 						</div>
-						<div className="citizen-services-aside__body">
-							<h3 className="citizen-services-aside__title">
+						<div className="portal-guide-access-aside__body">
+							<h3 className="portal-guide-access-aside__title">
 								Everything in one place
 							</h3>
-							<ul className="citizen-services-aside__list">
+							<ul className="portal-guide-access-aside__list">
 								{highlights.map((item) => (
 									<li key={item}>{item}</li>
 								))}
 							</ul>
-							<p className="citizen-services-aside__hours">
+							<p className="portal-guide-access-aside__hours">
 								<Clock className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
 								<span>Online services available 24×7</span>
 							</p>
-							<div className="citizen-services-aside__actions">
-								<AuthNavLink mode="register" className="citizen-services-aside__btn-primary">
+							<div className="portal-guide-access-aside__actions">
+								<AuthNavLink
+									mode="register"
+									className="portal-guide-access-aside__btn-primary"
+								>
 									Create account
 								</AuthNavLink>
-								<a href="#services" className="citizen-services-aside__btn-secondary">
+								<a href="#services" className="portal-guide-access-aside__btn-secondary">
 									View services
 								</a>
 							</div>
@@ -196,15 +200,15 @@ function PortalGuideSection() {
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true }}
 						transition={{ duration: 0.45, delay: 0.08 }}
-						className="citizen-services-panel"
+						className="portal-guide-access-panel"
 					>
-						<div className="citizen-services-panel__header">
-							<p className="citizen-services-panel__label">Choose a service</p>
-							<p className="citizen-services-panel__hint">Tap an option to continue</p>
+						<div className="portal-guide-access-panel__header">
+							<p className="portal-guide-access-panel__label">Choose a service</p>
+							<p className="portal-guide-access-panel__hint">Tap an option to continue</p>
 						</div>
-						<ul className="citizen-services-panel__list">
+						<ul className="portal-guide-access-panel__list">
 							{services.map((service, index) => (
-								<ServiceAction key={service.title} service={service} index={index} />
+								<GuideServiceAction key={service.title} service={service} index={index} />
 							))}
 						</ul>
 					</motion.div>

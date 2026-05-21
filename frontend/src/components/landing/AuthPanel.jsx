@@ -1,4 +1,4 @@
-import { CheckCircle2, Phone, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, Phone } from 'lucide-react'
 
 function AuthAlert({ type, children }) {
 	if (!children) return null
@@ -109,15 +109,8 @@ function AuthPanel({
 	return (
 		<div
 			id="auth-card-section"
-			className="auth-panel overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg ring-1 ring-slate-200/80"
+			className="auth-panel auth-panel--get-started overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg ring-1 ring-slate-200/80"
 		>
-			<div className="flex items-center gap-2 border-b border-landing/15 bg-landing/5 px-5 py-3.5">
-				<ShieldCheck className="h-5 w-5 text-landing" aria-hidden />
-				<p className="text-xs font-bold uppercase tracking-[0.12em] text-landing">
-					Secure citizen access
-				</p>
-			</div>
-
 			<div className="p-4 sm:p-5">
 				<div
 					className="mb-5 flex rounded-lg bg-slate-100 p-1"
@@ -304,7 +297,11 @@ function AuthPanel({
 										value={regForm.phone}
 										onChange={onRegChange}
 										placeholder="10-digit mobile number"
+										autoComplete="tel"
 										inputMode="numeric"
+										pattern="[0-9]{10}"
+										maxLength={10}
+										title="Enter a 10-digit mobile number"
 										required
 									/>
 								</div>
@@ -391,7 +388,7 @@ function AuthPanel({
 				)}
 
 				<p className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">
-					Demo prototype — OTP is not sent to a real SMS gateway.
+					For your security, a one-time password is sent via SMS to your registered mobile number.
 				</p>
 			</div>
 		</div>

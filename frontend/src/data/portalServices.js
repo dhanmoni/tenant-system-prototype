@@ -1,8 +1,26 @@
 /**
  * Public-facing portal services copy — homepage highlights and /services page sections.
  */
-import { tenantServiceGroups } from './tenantServices'
+import { getTenancyAuthoritiesByHierarchy, tenantServiceGroups } from './tenantServices'
 
+const authorityHighlightTaglines = {
+	'rent-tribunal': 'Highest level',
+	'rent-court': 'Second level',
+	'rent-authority': 'First level',
+}
+
+function toAuthorityHighlight(group) {
+	return {
+		id: group.id,
+		title: group.title,
+		shortLabel: group.title.replace('Rent ', ''),
+		tagline: authorityHighlightTaglines[group.id],
+		description: group.description,
+		accent: `portal-services-showcase-card--${group.id.replace('rent-', '')}`,
+	}
+}
+
+/** Homepage showcase: UIN first, then authorities top → bottom (Tribunal → Court → Authority). */
 export const portalServiceHighlights = [
 	{
 		id: 'uin',
@@ -12,26 +30,14 @@ export const portalServiceHighlights = [
 		description: 'Register your tenancy and obtain a Unique Identification Number (UIN).',
 		accent: 'portal-services-showcase-card--uin',
 	},
-	...tenantServiceGroups.map((group) => ({
-		id: group.id,
-		title: group.title,
-		shortLabel: group.title.replace('Rent ', ''),
-		tagline:
-			group.id === 'rent-authority'
-				? 'First level'
-				: group.id === 'rent-court'
-					? 'Second level'
-					: 'Appellate level',
-		description: group.description,
-		accent: `portal-services-showcase-card--${group.id.replace('rent-', '')}`,
-	})),
+	...getTenancyAuthoritiesByHierarchy().map(toAuthorityHighlight),
 ]
 
 export const portalServicesIntro = {
-	eyebrow: 'Assam Tenancy Act',
-	title: 'Services on this portal',
+	eyebrow: 'Portal services',
+	title: 'Portal services',
 	lead:
-		'From registering a tenancy to filing disputes and appeals — every service is grouped by the authority that hears it under the Assam Tenancy Act.',
+		'This portal provides UIN registration and tenancy services with the Rent Authority, Rent Court, and Rent Tribunal.',
 }
 
 export const portalServiceSections = [
@@ -53,55 +59,55 @@ export const portalServiceSections = [
 		cta: { label: 'Apply after sign-in', hash: '/#login' },
 	},
 	{
-		id: 'rent-authority',
-		groupId: 'rent-authority',
-		title: 'Rent Authority services',
-		subtitle: 'Circle Officer or equivalent — Section 30',
+		id: 'rent-tribunal',
+		groupId: 'rent-tribunal',
+		title: 'Rent Tribunal services',
+		subtitle: 'District Judge or Additional District Judge — Section 34 (highest level)',
 		when:
-			'When you need to revise or fix rent or other charges, appoint a valuer, or raise disputes on rent, deposits, repairs, or withholding — before going to court.',
+			'When you are aggrieved by an order of the Rent Court and wish to file a further appeal.',
 		why:
-			'The Rent Authority is the first forum for most tenancy matters. Filing the correct form here is usually required before escalation to the Rent Court.',
+			'The Rent Tribunal is the highest forum under the Act and provides appellate review of Rent Court orders.',
 		how: [
-			'Sign in and open **All services** → **Rent Authority**.',
-			'Choose the form that matches your matter (rent revision, other charges, valuer, or Rule 11 disputes).',
-			'Fill the application, attach supporting documents, and submit.',
-			'Track processing from **UIN Status** or your dashboard inbox.',
+			'Obtain the Rent Court order you wish to challenge.',
+			'Open **All services** → **Rent Tribunal** and complete your appeal application.',
+			'Submit with grounds and supporting documents.',
+			'Track the appeal status from your dashboard.',
 		],
-		cta: { label: 'View Rent Authority forms', anchor: 'rent-authority-forms' },
+		cta: { label: 'View Rent Tribunal services', anchor: 'rent-tribunal-forms' },
 	},
 	{
 		id: 'rent-court',
 		groupId: 'rent-court',
 		title: 'Rent Court services',
-		subtitle: 'ADC or equivalent — Section 33',
+		subtitle: 'ADC or equivalent — Section 33 (second level)',
 		when:
 			'When you seek recovery or eviction of premises, or wish to appeal an order passed by the Rent Authority.',
 		why:
-			'Possession and eviction matters, and appeals against Rent Authority orders, are heard by the Rent Court. Use the prescribed form for your situation.',
+			'The Rent Court sits above the Rent Authority and hears possession, eviction, and appeals against Rent Authority orders.',
 		how: [
-			'Confirm whether your matter belongs here (possession, eviction, or appeal against RA order).',
-			'From **All services**, select **Rent Court** and open the relevant form.',
+			'Confirm whether your matter belongs here (possession, eviction, or appeal against Rent Authority order).',
+			'From **All services**, select **Rent Court** and open the relevant service.',
 			'Reference your earlier Rent Authority order or tenancy UIN where required.',
 			'Submit and monitor status online.',
 		],
-		cta: { label: 'View Rent Court forms', anchor: 'rent-court-forms' },
+		cta: { label: 'View Rent Court services', anchor: 'rent-court-forms' },
 	},
 	{
-		id: 'rent-tribunal',
-		groupId: 'rent-tribunal',
-		title: 'Rent Tribunal services',
-		subtitle: 'District Judge or Additional District Judge — Section 34',
+		id: 'rent-authority',
+		groupId: 'rent-authority',
+		title: 'Rent Authority services',
+		subtitle: 'Circle Officer or equivalent — Section 30 (first level)',
 		when:
-			'When you are aggrieved by an order of the Rent Court and wish to file a further appeal.',
+			'When you need to revise or fix rent or other charges, appoint a valuer, or raise disputes on rent, deposits, repairs, or withholding — before going to court.',
 		why:
-			'The Rent Tribunal provides appellate review of Rent Court orders to ensure fair and consistent outcomes across Assam.',
+			'The Rent Authority is the first level for most tenancy matters. Many cases start here before escalation to the Rent Court.',
 		how: [
-			'Obtain the Rent Court order you wish to challenge.',
-			'Open **All services** → **Rent Tribunal** → **Form VI**.',
-			'Complete the appeal with grounds and documents, then submit.',
-			'Track the appeal status from your dashboard.',
+			'Sign in and open **All services** → **Rent Authority**.',
+			'Choose the service that matches your matter (rent revision, other charges, valuer, or disputes).',
+			'Fill the application, attach supporting documents, and submit.',
+			'Track processing from **UIN Status** or your dashboard inbox.',
 		],
-		cta: { label: 'View Rent Tribunal forms', anchor: 'rent-tribunal-forms' },
+		cta: { label: 'View Rent Authority services', anchor: 'rent-authority-forms' },
 	},
 ]
 

@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api';
 import DataTable from '../../../components/dashboard/DataTable';
-import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton';
 import { useEffect, useState } from 'react';
 import { formatDate } from '../../../utils/formatters';
 import { ADMIN_ROLES } from '../../../constants/roles';
@@ -65,8 +64,8 @@ const TenancyRecords = ({ user }) => {
 			]}
 			actions={(record) => (
 				<div className="nav-actions table-row-actions">
-					<StatusProgressViewButton application={record} variant="admin" />
 					<button
+						type="button"
 						className="action-icon-btn info"
 						onClick={() => navigate(`/dashboard/admin/applications/${record.application_no}`)}
 					>

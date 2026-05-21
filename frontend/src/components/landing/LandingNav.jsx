@@ -36,14 +36,12 @@ function LandingNav({ variant = 'overlay' }) {
 
 	return (
 		<motion.nav
-			initial={{ opacity: 0, y: isStatic ? 0 : -12 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.4 }}
+			initial={false}
 			id="landing-primary-nav"
-			className={`landing-nav-host z-40${isStatic ? ' landing-nav-host--static' : ' absolute inset-x-0 top-0'}`}
+			className={`landing-nav-host${isStatic ? ' landing-nav-host--static' : ' landing-nav-host--overlay'}`}
 			aria-label="Main navigation"
 		>
-			<div className="landing-nav-mobile md:hidden">
+			<div className="landing-nav-mobile">
 				<div
 					className="landing-nav-mobile-a11y"
 					role="toolbar"
@@ -161,7 +159,7 @@ function LandingNav({ variant = 'overlay' }) {
 								<button
 									type="button"
 									onClick={scrollToPortal}
-									className={drawerLinkClass}
+									className="landing-nav-drawer-link"
 								>
 									Apply &amp; sign in
 								</button>
@@ -210,7 +208,7 @@ function LandingNav({ variant = 'overlay' }) {
 				</AnimatePresence>
 			</div>
 
-			<div className="landing-nav-overlay hidden md:block">
+			<div className="landing-nav-overlay">
 				<div className="landing-nav-shell">
 					<div className="landing-nav-shell-inner">
 						<div className="landing-nav-shell-links">

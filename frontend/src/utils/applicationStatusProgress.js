@@ -1,5 +1,7 @@
 import { STATUS, STATUS_LABELS } from '../constants/status'
 import { APPLICATION_TYPES } from '../constants/application'
+import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES } from '../constants/roles'
+import { ROLE_LABELS, getRoleLabel } from '../constants/roleLabels'
 
 const WORKFLOW_ORDER = [
 	STATUS.DRAFT,
@@ -256,7 +258,7 @@ function buildServiceFormSteps(application, currentStatus) {
 			title: 'Assistant review',
 			description: application.forwarded_by?.name
 				? `Forwarded by ${application.forwarded_by.name}`
-				: 'Verified by the assistant before principal review.',
+				: 'Verify the application, then forward to the principal officer or reject with a reason.',
 			timestamp: formatTimestamp(application.forwarded_at),
 			state: resolveState(STATUS.IN_REVIEW, currentStatus, false),
 			badge:
@@ -292,7 +294,9 @@ function buildServiceFormSteps(application, currentStatus) {
 		steps.push({
 			id: 'rejected',
 			title: 'Application rejected',
-			description: application.rejection_message || 'Reason shared with the applicant.',
+			description: application.rejection_message
+				? `Reason: ${application.rejection_message}`
+				: 'Reason shared with the applicant.',
 			timestamp: formatTimestamp(application.rejected_at),
 			state: 'warning',
 			badge: 'rejected',
@@ -316,12 +320,133 @@ function buildServiceFormSteps(application, currentStatus) {
 	return steps
 }
 
+function getForwardTargetLabel(application, viewerRole) {
+	const assigned = application.assigned_to_role
+	if (assigned && ROLE_LABELS[assigned]) {
+		return getRoleLabel(assigned)
+	}
+	if (viewerRole === ROLES.RA_ASSISTANT) return ROLE_LABELS[ROLES.RENT_AUTHORITY]
+	if (viewerRole === ROLES.RC_ASSISTANT) return ROLE_LABELS[ROLES.RENT_COURT]
+	if (viewerRole === ROLES.RT_ASSISTANT) return ROLE_LABELS[ROLES.RENT_TRIBUNAL]
+	return null
+}
+
+function isForwardedToOffice(application, currentStatus) {
+	return (
+		Boolean(application.forwarded_at) ||
+		currentStatus === STATUS.IN_REVIEW ||
+		[STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
+	)
+}
+
+function buildAssistantReviewDescription(application, viewerRole, currentStatus) {
+	const target = getForwardTargetLabel(application, viewerRole)
+	const forwarded = isForwardedToOffice(application, currentStatus)
+	const at = formatTimestamp(application.forwarded_at)
+
+	if (forwarded && target) {
+		const by = application.forwarded_by?.name
+			? ` Forwarded by ${application.forwarded_by.name}.`
+			: ''
+		return at
+			? `Forwarded to ${target} on ${at}.${by}`
+			: `Forwarded to ${target} for final review.${by}`
+	}
+
+	if (target) {
+		return `Not yet forwarded. After verification, send to ${target} or reject with a reason.`
+	}
+
+	return 'Verify the application, then forward or reject with a reason.'
+}
+
+function getPrincipalOfficeLabel(viewerRole) {
+	return ROLE_LABELS[viewerRole] || getRoleLabel(viewerRole) || 'Office'
+}
+
+function adaptStepsForViewer(steps, viewerRole, application, currentStatus) {
+	if (!viewerRole) return steps
+
+	let result = [...steps]
+
+	if (ASSISTANT_ROLES.includes(viewerRole)) {
+		const showCompleted = [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
+		const forwarded = isForwardedToOffice(application, currentStatus)
+
+		result = result
+			.filter((step) => {
+				if (step.id === 'principal') return false
+				if (step.id === 'completed' && !showCompleted) return false
+				const title = String(step.title || '').toLowerCase()
+				if (title.includes('principal officer')) return false
+				if (title === 'completed' && !showCompleted) return false
+				return true
+			})
+			.map((step) => {
+				if (step.id !== 'assistant') return step
+				const target = getForwardTargetLabel(application, viewerRole)
+				const forwarded = isForwardedToOffice(application, currentStatus)
+				return {
+					...step,
+					title:
+						forwarded && target ? `Forwarded to ${target}` : 'Assistant review',
+					description: buildAssistantReviewDescription(
+						application,
+						viewerRole,
+						currentStatus
+					),
+					state: forwarded
+						? 'completed'
+						: currentStatus === STATUS.SUBMITTED
+							? 'in_progress'
+							: step.state,
+					badge: forwarded
+						? 'completed'
+						: currentStatus === STATUS.SUBMITTED
+							? 'in-progress'
+							: step.badge,
+					timestamp: forwarded
+						? formatTimestamp(application.forwarded_at) || step.timestamp
+						: step.timestamp,
+				}
+			})
+	}
+
+	if (PRINCIPAL_ROLES.includes(viewerRole)) {
+		const office = getPrincipalOfficeLabel(viewerRole)
+
+		result = result
+			.filter((step) => {
+				const title = String(step.title || '').toLowerCase()
+				return !title.includes('principal officer')
+			})
+			.map((step) => {
+				if (step.id !== 'principal') return step
+
+				return {
+					...step,
+					id: 'officer-review',
+					title: `${office} review`,
+					description: application.approved_by?.name
+						? `Decision recorded by ${application.approved_by.name}.`
+						: currentStatus === STATUS.IN_REVIEW
+							? `Awaiting your decision as ${office}.`
+							: `Final scrutiny and approval by ${office}.`,
+				}
+			})
+	}
+
+	return result
+}
+
 /**
  * Build timeline steps for the status progress modal.
  * @param {object} application Row from list APIs
+ * @param {{ viewerRole?: string }} options Viewer role for role-specific timelines
  * @returns {{ steps: object[], currentLabel: string, applicationNo: string }}
  */
-export function buildApplicationStatusProgress(application = {}) {
+export function buildApplicationStatusProgress(application = {}, options = {}) {
+	const { viewerRole } = options
 	const currentStatus = normalizeStatus(application.status)
 	const isTenancy = isTenancyApplication(application)
 
@@ -333,6 +458,8 @@ export function buildApplicationStatusProgress(application = {}) {
 	} else {
 		steps = buildServiceFormSteps(application, currentStatus)
 	}
+
+	steps = adaptStepsForViewer(steps, viewerRole, application, currentStatus)
 
 	return {
 		steps,

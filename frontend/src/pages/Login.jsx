@@ -11,6 +11,7 @@ import PortalStatsSection from '../components/landing/PortalStatsSection'
 import PortalGuideSection from '../components/landing/PortalGuideSection'
 import PortalServicesSection from '../components/landing/PortalServicesSection'
 import PortalBenefitsSection from '../components/landing/PortalBenefitsSection'
+import PortalFaqSection from '../components/landing/PortalFaqSection'
 import NeedSupportSection from '../components/landing/NeedSupportSection'
 import GovernmentLogosCarousel from '../components/landing/GovernmentLogosCarousel'
 import LandingFooter from '../components/landing/LandingFooter'
@@ -132,7 +133,9 @@ function Login({ onLogin }) {
 	}
 
 	const handleRegChange = (e) => {
-		setRegForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+		const { name, value } = e.target
+		const nextValue = name === 'phone' ? sanitizeMobileInput(value) : value
+		setRegForm((prev) => ({ ...prev, [name]: nextValue }))
 	}
 
 	const handleRegSendOtp = () => {
@@ -281,10 +284,11 @@ function Login({ onLogin }) {
 
 				<div className="landing-body">
 					<GetStartedSection authPanelProps={authPanelProps} />
-					<PortalStatsSection />
 					<PortalServicesSection />
+					<PortalStatsSection />
 					<PortalBenefitsSection />
 					<PortalGuideSection />
+					<PortalFaqSection />
 					<NeedSupportSection />
 					<GovernmentLogosCarousel />
 					<LandingFooter />

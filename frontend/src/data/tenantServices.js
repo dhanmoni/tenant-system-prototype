@@ -7,6 +7,15 @@ import { APPLICATION_TYPES } from '../constants/application'
 /** UIN / tenancy certificate applications table */
 export const TENANCY_TABLE = 'tenancy_applications'
 
+/** Display order: highest forum first (Tribunal → Court → Authority). */
+export const TENANCY_AUTHORITY_HIERARCHY = ['rent-tribunal', 'rent-court', 'rent-authority']
+
+export function getTenancyAuthoritiesByHierarchy() {
+	return TENANCY_AUTHORITY_HIERARCHY.map((id) => tenantServiceGroups.find((g) => g.id === id)).filter(
+		Boolean,
+	)
+}
+
 export const tenantServiceGroups = [
 	{
 		id: 'rent-authority',

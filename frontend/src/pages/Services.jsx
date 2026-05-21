@@ -7,7 +7,7 @@ import {
 	portalServicesIntro,
 	serviceEscalationGuide,
 } from '../data/portalServices'
-import { tenantServiceGroups } from '../data/tenantServices'
+import { getTenancyAuthoritiesByHierarchy } from '../data/tenantServices'
 
 const sectionIcons = {
 	'uin-registration': FileCheck,
@@ -148,7 +148,7 @@ function Services() {
 					All authorities at a glance
 				</h2>
 				<ul className="services-page-summary__list">
-					{tenantServiceGroups.map((group) => (
+					{getTenancyAuthoritiesByHierarchy().map((group) => (
 						<li key={group.id} className="services-page-summary__item">
 							<strong>{group.title}</strong>
 							<span className="services-page-summary__meta">{group.authority}</span>

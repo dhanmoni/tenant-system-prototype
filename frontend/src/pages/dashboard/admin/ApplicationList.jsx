@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../api';
 import DataTable from '../../../components/dashboard/DataTable';
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton';
+import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal';
 import { useEffect, useState } from 'react';
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, ADMIN_ROLES } from '../../../constants/roles';
 import { STATUS_LABELS } from '../../../constants/status';
@@ -14,6 +15,8 @@ const ApplicationList = ({ user }) => {
 	const [actionLoading, setActionLoading] = useState(null);
 	const [rejectionMsg, setRejectionMsg] = useState('');
 	const [showRejectModal, setShowRejectModal] = useState(null);
+	const [showForwardModal, setShowForwardModal] = useState(null);
+	const [successModal, setSuccessModal] = useState(null);
 
 	const fetchApplications = async () => {
 		try {
@@ -36,11 +39,17 @@ const ApplicationList = ({ user }) => {
 		fetchApplications();
 	}, [user?.role]);
 
-	const handleForward = async (type, id) => {
-		if (!window.confirm('Are you sure you want to FORWARD this application?')) return;
+	const handleForward = async () => {
+		if (!showForwardModal) return;
+		const { type, id, application_no } = showForwardModal;
 		setActionLoading(id);
 		try {
 			await api.post(`/api/admin/applications/${type}/${id}/forward`);
+			setShowForwardModal(null);
+			setSuccessModal({
+				title: 'Application forwarded',
+				description: `${application_no} has been sent to the principal officer for final review.`,
+			});
 			fetchApplications();
 		} catch (error) {
 			alert('Failed to forward application');
@@ -63,13 +72,18 @@ const ApplicationList = ({ user }) => {
 	};
 
 	const handleReject = async () => {
-		if (!rejectionMsg) return alert('Please provide a rejection reason');
-		const { type, id } = showRejectModal;
+		const trimmed = rejectionMsg.trim();
+		if (!trimmed) return;
+		const { type, id, application_no } = showRejectModal;
 		setActionLoading(id);
 		try {
-			await api.post(`/api/admin/applications/${type}/${id}/reject`, { message: rejectionMsg });
+			await api.post(`/api/admin/applications/${type}/${id}/reject`, { message: trimmed });
 			setShowRejectModal(null);
 			setRejectionMsg('');
+			setSuccessModal({
+				title: 'Application rejected',
+				description: `${application_no} was rejected. Reason recorded: "${trimmed}"`,
+			});
 			fetchApplications();
 		} catch (error) {
 			alert('Failed to reject application');
@@ -141,7 +155,11 @@ const ApplicationList = ({ user }) => {
 				]}
 				actions={(app) => (
 					<div className="nav-actions table-row-actions">
-						<StatusProgressViewButton application={app} variant="admin" />
+						<StatusProgressViewButton
+							application={app}
+							variant="admin"
+							viewerRole={user?.role}
+						/>
 						<button
 							className="action-icon-btn info"
 							onClick={() => navigate(`/dashboard/admin/applications/${app.application_no}`)}
@@ -151,7 +169,13 @@ const ApplicationList = ({ user }) => {
 						{ASSISTANT_ROLES.includes(user?.role) && (
 							<button
 								className="action-icon-btn"
-								onClick={() => handleForward(app.form_type, app.id)}
+								onClick={() =>
+									setShowForwardModal({
+										type: app.form_type,
+										id: app.id,
+										application_no: app.application_no,
+									})
+								}
 								disabled={actionLoading === app.id}
 							>
 								{actionLoading === app.id ? '...' : 'Forward'}
@@ -169,7 +193,13 @@ const ApplicationList = ({ user }) => {
 						{(ASSISTANT_ROLES.includes(user?.role) || PRINCIPAL_ROLES.includes(user?.role)) && (
 							<button
 								className="action-icon-btn secondary"
-								onClick={() => setShowRejectModal({ type: app.form_type, id: app.id })}
+								onClick={() =>
+									setShowRejectModal({
+										type: app.form_type,
+										id: app.id,
+										application_no: app.application_no,
+									})
+								}
 								disabled={actionLoading === app.id}
 							>
 								Reject
@@ -180,25 +210,59 @@ const ApplicationList = ({ user }) => {
 				emptyMessage="No applications found."
 			/>
 
-			{showRejectModal && (
-				<div className="modal-overlay">
-					<div className="auth-card" style={{ maxWidth: '400px' }}>
-						<h3>Reject Application</h3>
-						<p>Provide a reason for rejection. This will be visible to the applicant.</p>
-						<textarea
-							value={rejectionMsg}
-							onChange={(e) => setRejectionMsg(e.target.value)}
-							placeholder="Enter rejection message..."
-							rows="4"
-							style={{ width: '100%', marginBottom: '16px', padding: '8px' }}
-						/>
-						<div className="nav-actions">
-							<button onClick={handleReject} disabled={actionLoading}>Confirm Rejection</button>
-							<button className="secondary" onClick={() => setShowRejectModal(null)}>Cancel</button>
-						</div>
-					</div>
-				</div>
-			)}
+			<WorkflowConfirmModal
+				open={Boolean(showForwardModal)}
+				onClose={() => setShowForwardModal(null)}
+				title="Forward application"
+				description={
+					showForwardModal
+						? `Send ${showForwardModal.application_no} to the principal officer for final review?`
+						: ''
+				}
+				primaryLabel={actionLoading ? 'Forwarding…' : 'Forward to principal'}
+				onPrimary={handleForward}
+				primaryDisabled={Boolean(actionLoading)}
+			/>
+
+			<WorkflowConfirmModal
+				open={Boolean(showRejectModal)}
+				onClose={() => {
+					setShowRejectModal(null);
+					setRejectionMsg('');
+				}}
+				title="Reject application"
+				description={
+					showRejectModal
+						? `Provide a reason for rejecting ${showRejectModal.application_no}. This will be shown to the applicant and in the progress timeline.`
+						: ''
+				}
+				primaryLabel={actionLoading ? 'Rejecting…' : 'Confirm rejection'}
+				primaryVariant="danger"
+				onPrimary={handleReject}
+				primaryDisabled={Boolean(actionLoading) || !rejectionMsg.trim()}
+			>
+				<label className="workflow-confirm-field">
+					<span className="workflow-confirm-field__label">Rejection reason (required)</span>
+					<textarea
+						className="workflow-confirm-field__input"
+						value={rejectionMsg}
+						onChange={(e) => setRejectionMsg(e.target.value)}
+						placeholder="Explain why this application is rejected…"
+						rows={4}
+						required
+					/>
+				</label>
+			</WorkflowConfirmModal>
+
+			<WorkflowConfirmModal
+				open={Boolean(successModal)}
+				onClose={() => setSuccessModal(null)}
+				title={successModal?.title || 'Done'}
+				description={successModal?.description}
+				primaryLabel="OK"
+				secondaryLabel="Close"
+				onPrimary={() => setSuccessModal(null)}
+			/>
 		</>
 
 	);

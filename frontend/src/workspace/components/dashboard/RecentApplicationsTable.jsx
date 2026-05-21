@@ -21,7 +21,7 @@ function statusClass(status) {
 	return 'ws-badge ws-badge--pending'
 }
 
-function RecentApplicationsTable({ applications = [], onRowClick }) {
+function RecentApplicationsTable({ applications = [], onRowClick, showProgress = true }) {
 	const navigate = useNavigate()
 
 	const handleRow = (app) => {
@@ -48,9 +48,11 @@ function RecentApplicationsTable({ applications = [], onRowClick }) {
 						<th scope="col">Applicant</th>
 						<th scope="col">Status</th>
 						<th scope="col">Date</th>
-						<th scope="col" className="ws-table-actions-col">
-							<span className="sr-only">Actions</span>
-						</th>
+						{showProgress ? (
+							<th scope="col" className="ws-table-actions-col">
+								<span className="sr-only">Actions</span>
+							</th>
+						) : null}
 					</tr>
 				</thead>
 				<tbody>
@@ -73,9 +75,11 @@ function RecentApplicationsTable({ applications = [], onRowClick }) {
 								</span>
 							</td>
 							<td>{formatDate(app.created_at)}</td>
-							<td className="ws-table-actions-cell" onClick={(e) => e.stopPropagation()}>
-								<StatusProgressViewButton application={app} variant="admin" />
-							</td>
+							{showProgress ? (
+								<td className="ws-table-actions-cell" onClick={(e) => e.stopPropagation()}>
+									<StatusProgressViewButton application={app} variant="admin" />
+								</td>
+							) : null}
 						</tr>
 					))}
 				</tbody>
