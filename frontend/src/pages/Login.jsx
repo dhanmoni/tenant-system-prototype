@@ -35,6 +35,8 @@ function Login({ onLogin }) {
 		email: '',
 		phone: '',
 		district_id: '',
+		gender: '',
+		date_of_birth: '',
 	})
 	const [regError, setRegError] = useState('')
 	const [regLoading, setRegLoading] = useState(false)
