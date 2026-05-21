@@ -274,7 +274,7 @@ function AuthPanel({
 									required
 								/>
 							</AuthField>
-							<AuthField label="Email" optional>
+							<AuthField label="Email">
 								<input
 									type="email"
 									name="email"
@@ -283,6 +283,7 @@ function AuthPanel({
 									onChange={onRegChange}
 									placeholder="you@example.com"
 									autoComplete="email"
+									required
 								/>
 							</AuthField>
 							<AuthField label="Mobile number">
@@ -322,6 +323,37 @@ function AuthPanel({
 									))}
 								</select>
 							</AuthField>
+							<div className="flex gap-4">
+								<div className="flex-1">
+									<AuthField label="Gender">
+										<select
+											name="gender"
+											className="auth-panel-input auth-panel-select"
+											value={regForm.gender}
+											onChange={onRegChange}
+											required
+										>
+											<option value="">Select gender</option>
+											<option value="Male">Male</option>
+											<option value="Female">Female</option>
+											<option value="Other">Other</option>
+										</select>
+									</AuthField>
+								</div>
+								<div className="flex-1">
+									<AuthField label="Date of Birth">
+										<input
+											type="date"
+											name="date_of_birth"
+											className="auth-panel-input"
+											value={regForm.date_of_birth}
+											onChange={onRegChange}
+											max={new Date().toISOString().split('T')[0]}
+											required
+										/>
+									</AuthField>
+								</div>
+							</div>
 							<button type="submit" className="auth-panel-btn-primary w-full" disabled={regLoading}>
 								{regLoading ? 'Processing…' : 'Create account & send OTP'}
 							</button>

@@ -16,7 +16,9 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'string', 'email', 'max:255'],
+            'gender' => ['required', 'string', 'in:Male,Female,Other'],
+            'date_of_birth' => ['required', 'date', 'before:today'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
@@ -26,7 +28,9 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $data['name'],
-            'email' => $data['email'] ?? null,
+            'gender' => $data['gender'],
+            'date_of_birth' => $data['date_of_birth'],
+            'email' => $data['email'],
             'role' => 'user',
             'district_id' => $data['district_id'],
             'phone' => $data['phone'],
