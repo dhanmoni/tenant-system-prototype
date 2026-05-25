@@ -3,7 +3,7 @@ export const landingFaqItems = [
 		id: 'what-is-uin',
 		question: 'What is a UIN?',
 		answer:
-			'A Unique Identification Number (UIN) is issued when your tenancy application is approved. It is your official reference for that tenancy on this portal.',
+			'A Unique Identification Number (UIN) is a number issued when you sumbit your tenancy application. It is your official reference for that tenancy on this portal.',
 	},
 	{
 		id: 'documents-required',
