@@ -2,40 +2,29 @@
  * Public-facing portal statistics for the landing page.
  * Replace values with a public API (e.g. GET /api/public-portal-stats) when available.
  */
-export const portalStatsMeta = {
-	eyebrow: 'Portal activity',
-	title: 'At a glance',
-	lead: '',
-	lastUpdatedLabel: 'Live portal data',
-}
-
 export const portalPublicStats = [
 	{
 		id: 'applications_submitted',
-		label: 'Applications submitted',
 		value: 12840,
-		trend: '+12% vs last month',
-		trendUp: true,
+		display: '12K+',
+		description: 'Tenancy and service applications filed through the portal statewide.',
 	},
 	{
 		id: 'uins_issued',
-		label: 'UIN generated',
 		value: 9215,
-		trend: '+8% vs last month',
-		trendUp: true,
+		display: '9K+',
+		description: 'Unique Identification Numbers issued to registered tenancies.',
 	},
 	{
 		id: 'service_filings',
-		label: 'Service applications',
 		value: 5120,
-		trend: '+9% vs last month',
-		trendUp: true,
+		display: '5K+',
+		description: 'Assam Tenancy Act forms submitted to Rent Authority, Court, and Tribunal.',
 	},
 	{
 		id: 'disputes_resolved',
-		label: 'Disputes resolved',
 		value: 1446,
-		trend: '+15% vs last month',
-		trendUp: true,
+		display: '1.4K+',
+		description: 'Disputes and appeals concluded through the digital workflow.',
 	},
 ]

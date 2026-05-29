@@ -2,9 +2,17 @@ import { useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Activity, FileCheck, Layers, Smartphone } from 'lucide-react'
 import { portalBenefitCards, portalBenefitsIntro } from '../../data/portalBenefits'
-import benefitsImage from '../../assets/img/img3.png'
-
-const easeOut = [0.22, 1, 0.36, 1]
+import benefitsImage from '../../assets/img/img5.png'
+import {
+	benefitsBodyVariants,
+	benefitsCardHover,
+	benefitsCardsGridVariants,
+	benefitsCardVariants,
+	benefitsIconHover,
+	benefitsMediaFrameVariants,
+	benefitsMediaVariants,
+} from '../../utils/landingMotion'
+import LandingSectionIntro from './LandingSectionIntro'
 
 const iconMap = {
 	layers: Layers,
@@ -13,93 +21,56 @@ const iconMap = {
 	smartphone: Smartphone,
 }
 
-const introItemVariants = {
-	hidden: { opacity: 0, y: 16 },
-	visible: {
-		opacity: 1,
-		y: 0,
-		transition: { duration: 0.45, ease: easeOut },
-	},
-}
-
-const cardVariants = {
-	hidden: { opacity: 0, y: 24, scale: 0.96 },
-	visible: (i) => ({
-		opacity: 1,
-		y: 0,
-		scale: 1,
-		transition: { duration: 0.5, ease: easeOut, delay: i * 0.1 },
-	}),
-}
-
 function PortalBenefitsSection() {
-	const sectionRef = useRef(null)
+	const bodyRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const inView = useInView(sectionRef, { once: true, margin: '-10% 0px -8% 0px' })
-	const animate = reduceMotion || inView
+	const bodyInView = useInView(bodyRef, { once: true, margin: '-14% 0px -10% 0px' })
+	const reveal = reduceMotion || bodyInView
 
 	return (
 		<section
-			ref={sectionRef}
 			id="portal-benefits"
 			className="portal-benefits landing-body landing-wallpaper-bg landing-wallpaper-bg--cream py-14 sm:py-16 lg:py-20"
 			aria-labelledby="portal-benefits-heading"
 		>
 			<div className="portal-benefits__inner mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<motion.div
+				<LandingSectionIntro
 					className="portal-benefits__intro"
-					initial={reduceMotion ? false : 'hidden'}
-					animate={animate ? 'visible' : 'hidden'}
-					variants={{
-						hidden: {},
-						visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
-					}}
-				>
-					<motion.h2
-						id="portal-benefits-heading"
-						className="landing-section-title"
-						variants={reduceMotion ? undefined : introItemVariants}
-					>
-						{portalBenefitsIntro.title}
-					</motion.h2>
-					<motion.p className="landing-section-lead" variants={reduceMotion ? undefined : introItemVariants}>
-						{portalBenefitsIntro.lead}
-					</motion.p>
-				</motion.div>
+					eyebrow={portalBenefitsIntro.eyebrow}
+					title={portalBenefitsIntro.title}
+					lead={portalBenefitsIntro.lead}
+					titleId="portal-benefits-heading"
+				/>
 
-				<div className="portal-benefits__body">
-					<motion.div
-						className="portal-benefits__cards"
-						initial={reduceMotion ? false : { opacity: 0, x: -24 }}
-						animate={animate ? { opacity: 1, x: 0 } : { opacity: 0, x: -24 }}
-						transition={{ duration: 0.55, ease: easeOut, delay: 0.12 }}
-					>
+				<motion.div
+					ref={bodyRef}
+					className="portal-benefits__body"
+					initial={reduceMotion ? false : 'hidden'}
+					animate={reveal ? 'visible' : 'hidden'}
+					variants={reduceMotion ? undefined : benefitsBodyVariants}
+				>
+					<div className="portal-benefits__cards">
 						<motion.div
 							className="portal-benefits__cards-grid"
-							initial={reduceMotion ? false : 'hidden'}
-							animate={animate ? 'visible' : 'hidden'}
-							variants={{
-								hidden: {},
-								visible: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
-							}}
+							variants={reduceMotion ? undefined : benefitsCardsGridVariants}
 						>
 							{portalBenefitCards.map((card, index) => {
 								const Icon = iconMap[card.icon] || Layers
 								return (
 									<motion.article
 										key={card.id}
-										className="portal-benefits-card"
+										className="portal-benefits-card portal-benefits-card--motion"
 										custom={index}
-										variants={reduceMotion ? undefined : cardVariants}
-										whileHover={
-											reduceMotion
-												? undefined
-												: { y: -4, transition: { duration: 0.2, ease: easeOut } }
-										}
+										variants={reduceMotion ? undefined : benefitsCardVariants}
+										whileHover={reduceMotion ? undefined : benefitsCardHover}
 									>
-										<span className="portal-benefits-card__icon" aria-hidden>
+										<motion.span
+											className="portal-benefits-card__icon"
+											aria-hidden
+											whileHover={reduceMotion ? undefined : benefitsIconHover}
+										>
 											<Icon className="h-5 w-5" strokeWidth={1.85} />
-										</span>
+										</motion.span>
 										<h3 className="portal-benefits-card__title">{card.title}</h3>
 										<ul className="portal-benefits-card__tags">
 											{card.tags.map((tag) => (
@@ -112,29 +83,46 @@ function PortalBenefitsSection() {
 								)
 							})}
 						</motion.div>
-					</motion.div>
+					</div>
 
 					<motion.div
 						className="portal-benefits__media"
-						initial={reduceMotion ? false : { opacity: 0, x: 28, scale: 0.98 }}
-						animate={animate ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, x: 28, scale: 0.98 }}
-						transition={{ duration: 0.55, ease: easeOut, delay: 0.18 }}
+						variants={reduceMotion ? undefined : benefitsMediaVariants}
 					>
 						<motion.div
 							className="portal-benefits__media-blob"
 							aria-hidden
+							initial={reduceMotion ? false : { opacity: 0, scale: 0.8 }}
 							animate={
-								reduceMotion || !animate
+								reduceMotion
 									? undefined
-									: { scale: [1, 1.04, 1], opacity: [0.75, 0.85, 0.75] }
+									: reveal
+										? {
+												opacity: 0.85,
+												scale: [1, 1.05, 1],
+											}
+										: { opacity: 0, scale: 0.8 }
 							}
 							transition={
 								reduceMotion
 									? undefined
-									: { duration: 7, repeat: Infinity, ease: 'easeInOut' }
+									: reveal
+										? {
+												opacity: { duration: 0.5 },
+												scale: {
+													duration: 9,
+													repeat: Infinity,
+													ease: 'easeInOut',
+													delay: 0.55,
+												},
+											}
+										: { duration: 0.35 }
 							}
 						/>
-						<div className="portal-benefits__media-frame">
+						<motion.div
+							className="portal-benefits__media-frame"
+							variants={reduceMotion ? undefined : benefitsMediaFrameVariants}
+						>
 							<img
 								src={benefitsImage}
 								alt="Citizens using online tenancy registration and UIN services"
@@ -142,9 +130,9 @@ function PortalBenefitsSection() {
 								loading="lazy"
 								decoding="async"
 							/>
-						</div>
+						</motion.div>
 					</motion.div>
-				</div>
+				</motion.div>
 			</div>
 		</section>
 	)

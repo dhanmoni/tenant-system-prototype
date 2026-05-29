@@ -17,10 +17,10 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female,Other'],
-            'date_of_birth' => ['required', 'date', 'before:today'],
+            'date_of_birth' => ['required', 'date', 'after:1900-01-01', 'before_or_equal:today'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
+            'password' => ['nullable', 'string', 'min:8'],
+            'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/', 'unique:users,phone'],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
         ]);
 

@@ -24,8 +24,8 @@ function About() {
 					<div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
 						<h2 className="landing-section-subtitle">Our mission</h2>
 						<p className="mt-3 text-sm leading-relaxed text-slate-600">
-							To make tenancy registration, certificate issuance, and dispute filing accessible
-							online — reducing visits to offices while keeping records transparent and
+							To make tenancy registration, acknowledgement issuance, and dispute filing accessible
+							online — reducing visits to offices while keeping records trackable and
 							verifiable for tenants and owners across Assam.
 						</p>
 					</div>
@@ -43,9 +43,9 @@ function About() {
 						<h2 className="landing-section-subtitle">What you can do here</h2>
 						<ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600">
 							<li>Register as a citizen with mobile OTP verification</li>
-							<li>Apply for tenancy certificates and track status online</li>
+							<li>Apply for tenancy and track status online</li>
 							<li>File forms before the Rent Authority, Rent Court, or Rent Tribunal</li>
-							<li>Download digitally signed certificates when approved</li>
+							<li>Download digitally signed acknowledgement when approved</li>
 						</ul>
 					</div>
 					<div className="flex flex-wrap gap-3">

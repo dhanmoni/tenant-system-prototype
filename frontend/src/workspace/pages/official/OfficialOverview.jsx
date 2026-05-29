@@ -17,7 +17,7 @@ import StatesOverviewTable from '../../components/dashboard/StatesOverviewTable'
 import FormTypeTable from '../../components/dashboard/FormTypeTable'
 import RecentApplicationsTable from '../../components/dashboard/RecentApplicationsTable'
 import RoleActionCards from '../../components/dashboard/RoleActionCards'
-import ActivityFeed from '../../components/dashboard/ActivityFeed'
+import SuperAdminDashboard from './SuperAdminDashboard'
 
 function OfficialOverview() {
 	const { user } = useOutletContext()
@@ -51,19 +51,6 @@ function OfficialOverview() {
 
 	const statCards = useMemo(() => {
 		const s = stats || {}
-		if (isSuperAdmin) {
-			return [
-				{ label: 'States', value: s.states_count, hint: 'Registered states / UTs' },
-				{ label: 'Districts', value: s.districts_count, hint: 'Across Assam' },
-				{ label: 'Offices', value: s.offices_count, hint: 'Circle offices' },
-				{ label: 'Users', value: s.users_count, hint: 'All accounts' },
-				{ label: 'UIN applications', value: s.tenancy_applications, hint: 'Tenancy applications' },
-				{ label: 'Form applications', value: s.service_applications, hint: 'Assam Tenancy Act forms' },
-				{ label: 'Pending review', value: s.pending_review, hint: 'Submitted', highlight: true },
-				{ label: 'In review', value: s.in_review, hint: 'With principals' },
-			]
-		}
-
 		const cards = [
 			{
 				label: 'District',
@@ -106,11 +93,22 @@ function OfficialOverview() {
 		}
 
 		return cards
-	}, [stats, isSuperAdmin, isDistrictAdmin, user])
+	}, [stats, isDistrictAdmin, user])
 
-	const showStatesTable = isSuperAdmin || isDistrictAdmin
+	const showStatesTable = isDistrictAdmin
 	const showDistrictMap = (stats?.district_breakdown?.length ?? 0) > 0
 	const showFormBreakdown = (stats?.form_type_breakdown?.length ?? 0) > 0
+
+	if (isSuperAdmin) {
+		return (
+			<SuperAdminDashboard
+				user={user}
+				stats={stats}
+				loading={loading}
+				error={error}
+			/>
+		)
+	}
 
 	return (
 		<div className="ws-page ws-official-dashboard">
@@ -137,9 +135,7 @@ function OfficialOverview() {
 							</div>
 						</div>
 						<p className="ws-dashboard-welcome-desc">
-							{isSuperAdmin
-								? 'Statewide overview of districts, users, and applications across Assam.'
-								: `District-scoped analytics for ${stats?.district_name || user?.district?.name || 'your office'}.`}
+							{`District-scoped analytics for ${stats?.district_name || user?.district?.name || 'your office'}.`}
 						</p>
 					</div>
 				</div>
@@ -177,9 +173,7 @@ function OfficialOverview() {
 							</div>
 							<div className="ws-card-body">
 								<p className="ws-dashboard-hint">
-									{isSuperAdmin
-										? 'All Assam Tenancy Act form submissions (statewide).'
-										: 'Applications in your district for your authority.'}
+									Applications in your district for your authority.
 								</p>
 								<StatusBarChart breakdown={stats?.applications_by_status} />
 							</div>
@@ -199,18 +193,12 @@ function OfficialOverview() {
 					{showDistrictMap ? (
 						<section className="ws-card">
 							<div className="ws-card-header">
-								<h2 className="ws-card-title">
-									{isSuperAdmin ? 'District coverage map' : 'Your district snapshot'}
-								</h2>
+								<h2 className="ws-card-title">Your district snapshot</h2>
 							</div>
 							<div className="ws-card-body ws-card-body--pad">
 								<DistrictCoverageMap
 									districts={stats.district_breakdown}
-									hint={
-										isSuperAdmin
-											? 'Click a district to view counts. Colour intensity reflects total applications.'
-											: 'Application volume for your assigned district.'
-									}
+									hint="Application volume for your assigned district."
 								/>
 							</div>
 						</section>
@@ -251,21 +239,10 @@ function OfficialOverview() {
 						<div className="ws-card-body ws-card-body--pad ws-card-body--table">
 							<RecentApplicationsTable
 								applications={stats?.recent_applications}
-								showProgress={!isSuperAdmin}
+								showProgress
 							/>
 						</div>
 					</section>
-
-					{isSuperAdmin ? (
-						<section className="ws-card">
-							<div className="ws-card-header">
-								<h2 className="ws-card-title">Recent activity</h2>
-							</div>
-							<div className="ws-card-body ws-card-body--pad">
-								<ActivityFeed />
-							</div>
-						</section>
-					) : null}
 				</>
 			)}
 		</div>

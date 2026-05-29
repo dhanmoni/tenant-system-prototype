@@ -3,8 +3,14 @@ import { Link } from 'react-router-dom'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ArrowRight, Building2, FileCheck, Gavel, Landmark } from 'lucide-react'
 import { portalServiceHighlights, portalServicesIntro } from '../../data/portalServices'
-
-const easeOut = [0.22, 1, 0.36, 1]
+import {
+	showcaseCardFromLeftVariants,
+	showcaseCardFromRightVariants,
+	showcaseCardHover,
+	showcaseColumnVariants,
+	showcaseGridVariants,
+} from '../../utils/landingMotion'
+import LandingSectionIntro from './LandingSectionIntro'
 
 const MotionLink = motion.create(Link)
 
@@ -19,31 +25,11 @@ const highlightIcons = {
 	'rent-tribunal': Landmark,
 }
 
-const cardVariants = {
-	hidden: { opacity: 0, y: 32, scale: 0.94, rotate: -1.5 },
-	visible: (i) => ({
-		opacity: 1,
-		y: 0,
-		scale: 1,
-		rotate: 0,
-		transition: { duration: 0.5, ease: easeOut, delay: i * 0.1 },
-	}),
-}
-
-const promoItemVariants = {
-	hidden: { opacity: 0, x: 20 },
-	visible: {
-		opacity: 1,
-		x: 0,
-		transition: { duration: 0.45, ease: easeOut },
-	},
-}
-
 function PortalServicesSection() {
-	const sectionRef = useRef(null)
+	const visualRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const sectionInView = useInView(sectionRef, { once: true, margin: '-10% 0px -8% 0px' })
-	const animate = reduceMotion || sectionInView
+	const cardsInView = useInView(visualRef, { once: true, margin: '-14% 0px -10% 0px' })
+	const reveal = reduceMotion || cardsInView
 
 	const uinHighlight = portalServiceHighlights.find((item) => item.id === 'uin')
 	const authorityHighlights = portalServiceHighlights.filter((item) => item.id !== 'uin')
@@ -55,7 +41,6 @@ function PortalServicesSection() {
 
 	return (
 		<section
-			ref={sectionRef}
 			id="services"
 			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white py-14 sm:py-16 lg:py-20"
 			aria-labelledby="services-heading"
@@ -64,84 +49,109 @@ function PortalServicesSection() {
 
 			<div className="portal-services-showcase__inner mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div className="portal-services-showcase__layout">
-					<motion.div
-						className="portal-services-showcase__visual"
-						initial={reduceMotion ? false : { opacity: 0, x: -32 }}
-						animate={animate ? { opacity: 1, x: 0 } : { opacity: 0, x: -32 }}
-						transition={{ duration: 0.55, ease: easeOut }}
-					>
+					<div ref={visualRef} className="portal-services-showcase__visual">
 						<motion.div
 							className="portal-services-showcase__blob portal-services-showcase__blob--animate"
 							aria-hidden
+							initial={reduceMotion ? false : { opacity: 0, scale: 0.82 }}
 							animate={
-								reduceMotion || !animate
+								reduceMotion
 									? undefined
-									: { scale: [1, 1.03, 1], rotate: [0, 2, 0] }
+									: reveal
+										? {
+												opacity: 1,
+												scale: [1, 1.045, 1],
+												rotate: [0, 2, 0],
+											}
+										: { opacity: 0, scale: 0.82 }
 							}
 							transition={
 								reduceMotion
 									? undefined
-									: { duration: 8, repeat: Infinity, ease: 'easeInOut' }
+									: reveal
+										? {
+												opacity: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+												scale: {
+													duration: 10,
+													repeat: Infinity,
+													ease: 'easeInOut',
+													delay: 0.5,
+												},
+												rotate: {
+													duration: 14,
+													repeat: Infinity,
+													ease: 'easeInOut',
+													delay: 0.5,
+												},
+											}
+										: { duration: 0.4 }
 							}
 						/>
 						<motion.div
 							className="portal-services-showcase__cards"
 							initial={reduceMotion ? false : 'hidden'}
-							animate={animate ? 'visible' : 'hidden'}
-							variants={{
-								hidden: {},
-								visible: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
-							}}
+							animate={reveal ? 'visible' : 'hidden'}
+							variants={reduceMotion ? undefined : showcaseGridVariants}
 						>
 							{columns.map((columnItems, colIndex) => (
 								<motion.div
 									key={colIndex === 0 ? 'left' : 'right'}
 									className={`portal-services-showcase__col${colIndex === 1 ? ' portal-services-showcase__col--offset portal-services-showcase__col--float' : ''}`}
 									role="list"
+									variants={reduceMotion ? undefined : showcaseColumnVariants}
 									animate={
-										reduceMotion || !animate || colIndex === 0
-											? undefined
-											: { y: [0, 10, 0] }
+										reveal && colIndex === 1 && !reduceMotion
+											? { y: [0, 12, 0] }
+											: undefined
 									}
 									transition={
 										reduceMotion
 											? undefined
-											: { duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }
+											: {
+													y: {
+														duration: 7,
+														repeat: Infinity,
+														ease: 'easeInOut',
+														delay: 1.1,
+													},
+												}
 									}
 								>
 									{columnItems.map((item, rowIndex) => {
-										const index = colIndex + rowIndex * 2
 										const Icon = highlightIcons[item.id] || FileCheck
 										const label = `${item.title}: ${item.description}`
+										const cardVariants =
+											colIndex === 0 ? showcaseCardFromLeftVariants : showcaseCardFromRightVariants
+										const staggerIndex = rowIndex + (item.id === 'uin' ? 0.35 : 0)
+
 										return (
 											<MotionLink
 												key={item.id}
 												to={highlightHref(item.id)}
 												role="listitem"
-												className={`portal-services-showcase-card portal-services-showcase-card--link ${item.accent}`}
-												custom={index}
+												className={`portal-services-showcase-card portal-services-showcase-card--link portal-services-showcase-card--motion${item.id === 'uin' ? ' portal-services-showcase-card--uin-tile' : ''} ${item.accent}`}
+												custom={staggerIndex}
 												variants={reduceMotion ? undefined : cardVariants}
-												initial={reduceMotion ? false : 'hidden'}
-												animate={animate ? 'visible' : 'hidden'}
-												whileHover={
-													reduceMotion
-														? undefined
-														: {
-																y: -8,
-																scale: 1.02,
-																transition: { duration: 0.22, ease: easeOut },
-															}
-												}
-												whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+												whileHover={reduceMotion ? undefined : showcaseCardHover}
+												whileTap={reduceMotion ? undefined : { scale: 0.97 }}
 												aria-label={label}
 											>
 												<motion.span
 													className="portal-services-showcase-card__icon"
 													aria-hidden
 													whileHover={
-														reduceMotion ? undefined : { scale: 1.08, rotate: 4 }
+														reduceMotion
+															? undefined
+															: {
+																	scale: 1.12,
+																	rotate: 6,
+																	transition: {
+																		type: 'spring',
+																		stiffness: 480,
+																		damping: 14,
+																	},
+																}
 													}
-													transition={{ duration: 0.2 }}
 												>
 													<Icon className="portal-services-showcase-card__icon-svg" strokeWidth={1.65} />
 												</motion.span>
@@ -155,48 +165,56 @@ function PortalServicesSection() {
 								</motion.div>
 							))}
 						</motion.div>
-					</motion.div>
+					</div>
 
-					<motion.div
-						className="portal-services-showcase__copy portal-services-showcase__copy--promo"
-						initial={reduceMotion ? false : 'hidden'}
-						animate={animate ? 'visible' : 'hidden'}
-						variants={{
-							hidden: {},
-							visible: { transition: { staggerChildren: 0.08, delayChildren: 0.2 } },
-						}}
-					>
-						<motion.h2
-							id="services-heading"
-							className="landing-section-title portal-services-showcase__promo-title"
-							variants={reduceMotion ? undefined : promoItemVariants}
+					<div className="portal-services-showcase__copy portal-services-showcase__copy--promo">
+						<LandingSectionIntro
+							className="portal-services-showcase__promo-intro"
+							eyebrow={portalServicesIntro.eyebrow}
+							title={portalServicesIntro.title}
+							lead={portalServicesIntro.lead}
+							titleId="services-heading"
+						/>
+						<motion.div
+							className="portal-services-showcase__cta-wrap"
+							initial={reduceMotion ? false : { opacity: 0, x: 28, y: 14 }}
+							whileInView={reduceMotion ? undefined : { opacity: 1, x: 0, y: 0 }}
+							viewport={{ once: true, margin: '-8% 0px -10% 0px' }}
+							transition={{
+								type: 'spring',
+								stiffness: 300,
+								damping: 24,
+								delay: 0.32,
+							}}
 						>
-							{portalServicesIntro.title}
-						</motion.h2>
-						<motion.p
-							className="portal-services-showcase__promo-lead"
-							variants={reduceMotion ? undefined : promoItemVariants}
-						>
-							{portalServicesIntro.lead}
-						</motion.p>
-						<motion.div variants={reduceMotion ? undefined : promoItemVariants}>
-							<Link to="/services" className="portal-services-showcase__cta portal-services-showcase__cta--promo">
+							<MotionLink
+								to="/services"
+								className="portal-services-showcase__cta portal-services-showcase__cta--promo"
+								whileHover={
+									reduceMotion
+										? undefined
+										: {
+												x: 2,
+												transition: { type: 'spring', stiffness: 400, damping: 22 },
+											}
+								}
+							>
 								Explore all services
 								<motion.span
 									className="portal-services-showcase__cta-icon"
 									aria-hidden
-									animate={reduceMotion || !animate ? undefined : { x: [0, 4, 0] }}
+									animate={reduceMotion ? undefined : { x: [0, 5, 0] }}
 									transition={
 										reduceMotion
 											? undefined
-											: { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
+											: { duration: 1.8, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.4 }
 									}
 								>
 									<ArrowRight className="h-4 w-4" strokeWidth={2.25} />
 								</motion.span>
-							</Link>
+							</MotionLink>
 						</motion.div>
-					</motion.div>
+					</div>
 				</div>
 			</div>
 		</section>

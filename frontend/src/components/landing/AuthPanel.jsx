@@ -109,11 +109,11 @@ function AuthPanel({
 	return (
 		<div
 			id="auth-card-section"
-			className="auth-panel auth-panel--get-started overflow-hidden"
+			className="auth-panel auth-panel--get-started auth-panel--modern overflow-hidden"
 		>
-			<div className="p-4 sm:p-5">
+			<div className="auth-panel-card-inner">
 				<div
-					className="auth-panel-tabs mb-5 flex p-1"
+					className="auth-panel-tabs flex"
 					role="tablist"
 					aria-label="Sign in or register"
 				>
@@ -142,7 +142,7 @@ function AuthPanel({
 				</div>
 
 				{mode === 'login' ? (
-					<>
+					<div className="auth-panel-body">
 						<StepPills
 							steps={[
 								{ id: 'phone', label: 'Phone' },
@@ -150,8 +150,14 @@ function AuthPanel({
 							]}
 							current={loginStep}
 						/>
-						<h2 className="auth-panel-title">Log in to your account</h2>
-						<p className="auth-panel-lead mb-4">Use your registered mobile number and OTP.</p>
+						<h2 className="auth-panel-title">
+							{otpSent ? 'Verify OTP' : 'Welcome back'}
+						</h2>
+						<p className="auth-panel-lead">
+							{otpSent
+								? 'Enter the code sent to your mobile number.'
+								: 'Sign in with your registered mobile number.'}
+						</p>
 
 						<AuthAlert type="success">{otpMessage}</AuthAlert>
 						<AuthAlert type="error">{loginError}</AuthAlert>
@@ -182,7 +188,7 @@ function AuthPanel({
 									</AuthField>
 									<button
 										type="button"
-										className="auth-panel-btn-primary w-full"
+										className="auth-panel-btn-primary auth-panel-btn-primary--cta w-full"
 										onClick={onSendOtp}
 										disabled={loginLoading}
 									>
@@ -233,7 +239,7 @@ function AuthPanel({
 									</div>
 									<button
 										type="submit"
-										className="auth-panel-btn-primary w-full"
+										className="auth-panel-btn-primary auth-panel-btn-primary--cta w-full"
 										disabled={loginLoading}
 									>
 										{loginLoading ? 'Signing in…' : 'Log in'}
@@ -241,9 +247,9 @@ function AuthPanel({
 								</>
 							)}
 						</form>
-					</>
+					</div>
 				) : regStep === 'details' ? (
-					<>
+					<div className="auth-panel-body">
 						<StepPills
 							steps={[
 								{ id: 'details', label: 'Your details' },
@@ -251,37 +257,39 @@ function AuthPanel({
 							]}
 							current={regStepIndex}
 						/>
-						<h2 className="auth-panel-title">Create your account</h2>
-						<p className="auth-panel-lead mb-4">
-							Register with your details. We will send an OTP to your mobile.
+						<h2 className="auth-panel-title">Create account</h2>
+						<p className="auth-panel-lead">
+							Fill in your details — we will send an OTP to verify your mobile.
 						</p>
 
 						<AuthAlert type="error">{regError}</AuthAlert>
 
 						<form onSubmit={onRegSubmit} className="auth-panel-form space-y-4">
-							<AuthField label="Full name">
-								<input
-									type="text"
-									name="name"
-									className="auth-panel-input"
-									value={regForm.name}
-									onChange={onRegChange}
-									placeholder="As per official ID"
-									required
-								/>
-							</AuthField>
-							<AuthField label="Email">
-								<input
-									type="email"
-									name="email"
-									className="auth-panel-input"
-									value={regForm.email}
-									onChange={onRegChange}
-									placeholder="you@example.com"
-									autoComplete="email"
-									required
-								/>
-							</AuthField>
+							<div className="auth-panel-field-row">
+								<AuthField label="Full name">
+									<input
+										type="text"
+										name="name"
+										className="auth-panel-input"
+										value={regForm.name}
+										onChange={onRegChange}
+										placeholder="Full name"
+										required
+									/>
+								</AuthField>
+								<AuthField label="Email">
+									<input
+										type="email"
+										name="email"
+										className="auth-panel-input"
+										value={regForm.email}
+										onChange={onRegChange}
+										placeholder="Email address"
+										autoComplete="email"
+										required
+									/>
+								</AuthField>
+							</div>
 							<AuthField label="Mobile number">
 								<div className="auth-panel-phone-wrap">
 									<span className="auth-panel-phone-prefix" aria-hidden>
@@ -319,9 +327,8 @@ function AuthPanel({
 									))}
 								</select>
 							</AuthField>
-							<div className="flex gap-4">
-								<div className="flex-1">
-									<AuthField label="Gender">
+							<div className="auth-panel-field-row">
+								<AuthField label="Gender">
 										<select
 											name="gender"
 											className="auth-panel-input auth-panel-select"
@@ -335,28 +342,29 @@ function AuthPanel({
 											<option value="Other">Other</option>
 										</select>
 									</AuthField>
-								</div>
-								<div className="flex-1">
-									<AuthField label="Date of Birth">
-										<input
-											type="date"
-											name="date_of_birth"
-											className="auth-panel-input"
-											value={regForm.date_of_birth}
-											onChange={onRegChange}
-											max={new Date().toISOString().split('T')[0]}
-											required
-										/>
-									</AuthField>
-								</div>
+								<AuthField label="Date of birth">
+									<input
+										type="date"
+										name="date_of_birth"
+										className="auth-panel-input"
+										value={regForm.date_of_birth}
+										onChange={onRegChange}
+										max={new Date().toISOString().split('T')[0]}
+										required
+									/>
+								</AuthField>
 							</div>
-							<button type="submit" className="auth-panel-btn-primary w-full" disabled={regLoading}>
-								{regLoading ? 'Processing…' : 'Create account & send OTP'}
+							<button
+								type="submit"
+								className="auth-panel-btn-primary auth-panel-btn-primary--cta w-full"
+								disabled={regLoading}
+							>
+								{regLoading ? 'Processing…' : 'Create account'}
 							</button>
 						</form>
-					</>
+					</div>
 				) : (
-					<>
+					<div className="auth-panel-body">
 						<StepPills
 							steps={[
 								{ id: 'details', label: 'Your details' },
@@ -365,7 +373,7 @@ function AuthPanel({
 							current={1}
 						/>
 						<h2 className="auth-panel-title">Verify your mobile</h2>
-						<p className="auth-panel-lead mb-4">Enter the OTP sent to +91 {regPendingPhone}.</p>
+						<p className="auth-panel-lead">Enter the OTP sent to +91 {regPendingPhone}.</p>
 
 						<AuthAlert type="success">{regOtpMessage}</AuthAlert>
 						<AuthAlert type="error">{regError}</AuthAlert>
@@ -408,14 +416,18 @@ function AuthPanel({
 									</button>
 								)}
 							</div>
-							<button type="submit" className="auth-panel-btn-primary w-full" disabled={regLoading}>
+							<button
+								type="submit"
+								className="auth-panel-btn-primary auth-panel-btn-primary--cta w-full"
+								disabled={regLoading}
+							>
 								{regLoading ? 'Verifying…' : 'Verify & log in'}
 							</button>
 						</form>
-					</>
+					</div>
 				)}
 
-				<p className="mt-5 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">
+				<p className="auth-panel-footnote">
 					For your security, a one-time password is sent via SMS to your registered mobile number.
 				</p>
 			</div>

@@ -3,11 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
 import { AuthPanelNavigationContext } from '../context/AuthPanelNavigationContext'
 import { authHashForMode, modeFromHash, scrollToAuthPanel } from '../utils/authPanelNav'
+import { formatApiErrors } from '../utils/formatApiErrors'
 import LandingNav from '../components/landing/LandingNav'
 import LandingHero from '../components/landing/LandingHero'
 import DailyUpdateTicker from '../components/landing/DailyUpdateTicker'
+import PortalStatsBar from '../components/landing/PortalStatsBar'
 import GetStartedSection from '../components/landing/GetStartedSection'
-import PortalStatsSection from '../components/landing/PortalStatsSection'
 import PortalGuideSection from '../components/landing/PortalGuideSection'
 import PortalServicesSection from '../components/landing/PortalServicesSection'
 import PortalBenefitsSection from '../components/landing/PortalBenefitsSection'
@@ -112,7 +113,7 @@ function Login({ onLogin }) {
 		setLoginError('')
 		setOtpMessage('')
 		if (!otpSent) {
-			setLoginError('Please send OTP first')
+			handleSendOtp()
 			return
 		}
 		setLoginLoading(true)
@@ -128,7 +129,7 @@ function Login({ onLogin }) {
 					: '/dashboard'
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
-			setLoginError(err?.response?.data?.message || 'Login failed')
+			setLoginError(formatApiErrors(err, 'Login failed'))
 		} finally {
 			setLoginLoading(false)
 		}
@@ -186,13 +187,39 @@ function Login({ onLogin }) {
 		}
 	}
 
+	const validateRegForm = () => {
+		if (!regForm.name?.trim()) return 'Please enter your full name.'
+		if (!regForm.email?.trim()) return 'Please enter your email address.'
+		if (!/^\d{10}$/.test(regForm.phone || '')) {
+			return 'Please enter a valid 10-digit mobile number.'
+		}
+		if (!regForm.district_id) return 'Please select your district.'
+		if (!regForm.gender) return 'Please select your gender.'
+		if (!regForm.date_of_birth) return 'Please enter your date of birth.'
+		return null
+	}
+
 	const handleRegSubmit = async (e) => {
 		e.preventDefault()
 		setRegError('')
+
+		const validationMessage = validateRegForm()
+		if (validationMessage) {
+			setRegError(validationMessage)
+			return
+		}
+
 		setRegLoading(true)
 		try {
 			await csrf()
-			await api.post('/api/register', regForm)
+			await api.post('/api/register', {
+				name: regForm.name.trim(),
+				email: regForm.email.trim(),
+				phone: regForm.phone,
+				gender: regForm.gender,
+				date_of_birth: regForm.date_of_birth,
+				district_id: Number(regForm.district_id),
+			})
 			setRegPendingPhone(regForm.phone)
 			setRegStep('otp')
 			setRegOtpSent(true)
@@ -200,11 +227,7 @@ function Login({ onLogin }) {
 			setRegOtp('')
 			setRegOtpMessage('Account created! OTP sent successfully.')
 		} catch (err) {
-			setRegError(
-				err?.response?.data?.message ||
-					err?.response?.data?.errors?.phone?.[0] ||
-					'Registration failed',
-			)
+			setRegError(formatApiErrors(err, 'Registration failed. Please check your details.'))
 		} finally {
 			setRegLoading(false)
 		}
@@ -287,7 +310,7 @@ function Login({ onLogin }) {
 				<div className="landing-body">
 					<GetStartedSection authPanelProps={authPanelProps} />
 					<PortalServicesSection />
-					<PortalStatsSection />
+					<PortalStatsBar />
 					<PortalBenefitsSection />
 					<PortalGuideSection />
 					<PortalFaqSection />

@@ -140,6 +140,13 @@ function App() {
 	const isPublicMarketingPage = !user && isPublicMarketingPath(location.pathname)
 	const usesLandingChrome = isLandingHome || isPublicMarketingPage
 	const mainContentTargetId = getMainContentTargetId(location.pathname)
+	/* Show homepage immediately on reload — session check runs in background */
+	const skipSessionBootLoader =
+		loading &&
+		(location.pathname === '/' ||
+			location.pathname === '/login' ||
+			isJoinEntry ||
+			isPublicMarketingPath(location.pathname))
 	/* Old marketing shell (carousel, topbar) — only on legacy public routes */
 	const showLegacyPublicChrome =
 		!user &&
@@ -259,7 +266,7 @@ function App() {
 		return () => clearTimeout(timer)
 	}, [portalEntering, location.pathname])
 
-	if (loading || portalEntering || loggingOut) {
+	if ((loading && !skipSessionBootLoader) || portalEntering || loggingOut) {
 		return (
 			<PortalLoadingScreen
 				title={

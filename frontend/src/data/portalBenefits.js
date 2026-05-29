@@ -2,7 +2,7 @@
  * Homepage “Benefits of this portal” cards (UMANG-inspired layout).
  */
 export const portalBenefitsIntro = {
-	eyebrow: 'Citizen experience',
+	// eyebrow: 'Citizen experience',
 	title: 'Portal Benefits',
 		// lead:
 		// 	'Register online and use tenancy services, and follow every update on your applications	.',

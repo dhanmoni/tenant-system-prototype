@@ -5,7 +5,7 @@ const policySections = [
 	{
 		title: 'Terms of use',
 		paragraphs: [
-			'This portal is provided by the Directorate of Town and Country Planning, Assam, for online tenancy registration and related citizen services. By using this website, you agree to use it only for lawful purposes connected with tenancy certificate applications and authorised departmental processes.',
+			'This portal is provided by the Directorate of Town and Country Planning, Assam, for online tenancy registration and related citizen services. By using this website, you agree to use it only for lawful purposes connected with tenancy applications and authorised departmental processes.',
 			'Unauthorized access, misuse of credentials, or submission of false information may lead to rejection of applications and action under applicable laws.',
 		],
 	},
@@ -16,13 +16,13 @@ const policySections = [
 			'Do not share your OTP or login credentials with others. Log out after using shared or public devices.',
 		],
 	},
-	{
-		title: 'Disclaimer',
-		paragraphs: [
-			'This prototype may contain demonstration data, illustrative timelines, and sample documents. For legal validity, refer to official gazette notifications, circulars, and the Assam Tenancy Act provisions as notified by the competent authority.',
-			'The department endeavours to keep information accurate but does not guarantee uninterrupted availability of the portal. Scheduled maintenance may temporarily affect access.',
-		],
-	},
+	// {
+	// 	title: 'Disclaimer',
+	// 	paragraphs: [
+	// 		'This prototype may contain demonstration data, illustrative timelines, and sample documents. For legal validity, refer to official gazette notifications, circulars, and the Assam Tenancy Act provisions as notified by the competent authority.',
+	// 		'The department endeavours to keep information accurate but does not guarantee uninterrupted availability of the portal. Scheduled maintenance may temporarily affect access.',
+	// 	],
+	// },
 	{
 		title: 'Accessibility',
 		paragraphs: [

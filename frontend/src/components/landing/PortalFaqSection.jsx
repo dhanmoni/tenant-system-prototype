@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
+import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { landingFaqItems } from '../../data/landingFaq'
+import LandingSectionIntro from './LandingSectionIntro'
 
 function FaqItem({ item, isOpen, onToggle }) {
 	const baseId = useId()
@@ -54,23 +56,35 @@ function PortalFaqSection() {
 			aria-labelledby="portal-faq-heading"
 		>
 			<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-				<div className="text-center">
-					<h2 id="portal-faq-heading" className="landing-section-title">
-						Frequently asked questions
-					</h2>
-					<p className="landing-section-lead mx-auto max-w-2xl">
-						{/* Quick answers about UIN applications, required documents, and tracking your status. */}
-					</p>
-				</div>
+				<LandingSectionIntro
+					align="center"
+					// eyebrow="Help centre"
+					title="Frequently asked questions"
+					lead="Quick answers about UIN applications, required documents, and tracking your status."
+					titleId="portal-faq-heading"
+				/>
 
 				<div className="landing-faq__list mt-8 sm:mt-10">
-					{landingFaqItems.map((item) => (
-						<FaqItem
+					{landingFaqItems.map((item, index) => (
+						<motion.div
 							key={item.id}
-							item={item}
-							isOpen={openFaqId === item.id}
-							onToggle={() => toggleFaq(item.id)}
-						/>
+							custom={index}
+							initial={{ opacity: 0, y: 16, scale: 0.98 }}
+							whileInView={{ opacity: 1, y: 0, scale: 1 }}
+							viewport={{ once: true, margin: '-30px' }}
+							transition={{
+								type: 'spring',
+								stiffness: 340,
+								damping: 22,
+								delay: index * 0.06,
+							}}
+						>
+							<FaqItem
+								item={item}
+								isOpen={openFaqId === item.id}
+								onToggle={() => toggleFaq(item.id)}
+							/>
+						</motion.div>
 					))}
 				</div>
 			</div>

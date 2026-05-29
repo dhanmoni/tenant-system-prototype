@@ -1,26 +1,55 @@
-/** Illustrative data for the public dashboard demo page */
+/**
+ * Illustrative data for the public transparency dashboard (NIC prototype).
+ * Align counts with homepage portalPublicStats where applicable.
+ */
+import { portalPublicStats } from './portalPublicStats'
 
 export const publicDashboardMeta = {
-	eyebrow: 'Open data',
+	eyebrow: 'Transparency',
 	title: 'Public dashboard',
-	lead: 'Illustrative portal statistics for transparency and awareness. Figures are for demonstration only until connected to live reporting.',
+	lead:
+		'Summary view of portal activity across Assam — tenancy registrations, UIN issuance, and filings before the Rent Authority, Rent Court, and Rent Tribunal. Figures below are sample data for demonstration until live reporting is connected.',
 	demoNote:
-		'All charts and counts on this page are sample data for the NIC prototype. Production deployment will source verified statistics from official records.',
+		'Prototype only: statistics are illustrative and do not reflect live departmental records. Production will publish verified figures from official reporting systems.',
+	lastUpdated: 'May 2026 (sample)',
 }
 
+const kpiLabels = {
+	applications_submitted: 'Applications submitted',
+	uins_issued: 'UINs issued',
+	service_filings: 'Tenancy Act filings',
+	disputes_resolved: 'Matters concluded',
+}
+
+/** Top-level KPI tiles — sourced from homepage public stats */
+export const publicDashboardKpis = portalPublicStats.map((stat) => ({
+	id: stat.id,
+	value: stat.value,
+	display: stat.display,
+	label: kpiLabels[stat.id] || stat.description,
+	hint: stat.description,
+}))
+
 export const monthlyApplications = [
-	{ month: 'Oct', value: 892 },
-	{ month: 'Nov', value: 1045 },
 	{ month: 'Dec', value: 978 },
 	{ month: 'Jan', value: 1120 },
 	{ month: 'Feb', value: 1186 },
-	{ month: 'Mar', value: 1284 },
+	{ month: 'Mar', value: 1248 },
+	{ month: 'Apr', value: 1312 },
+	{ month: 'May', value: 1284 },
 ]
 
 export const filingsByBody = [
 	{ id: 'authority', label: 'Rent Authority', value: 3404, pct: 52 },
 	{ id: 'court', label: 'Rent Court', value: 1896, pct: 29 },
 	{ id: 'tribunal', label: 'Rent Tribunal', value: 1240, pct: 19 },
+]
+
+export const applicationPipeline = [
+	{ label: 'UIN / registration received', value: 12840, pct: 100 },
+	{ label: 'Under departmental review', value: 3852, pct: 30 },
+	{ label: 'Acknowledgement issued', value: 9215, pct: 72 },
+	{ label: 'Returned for correction', value: 1307, pct: 10 },
 ]
 
 export const topDistricts = [
@@ -35,4 +64,10 @@ export const certificateStatus = [
 	{ label: 'Issued', value: 9215, pct: 72 },
 	{ label: 'Under review', value: 2318, pct: 18 },
 	{ label: 'Returned / draft', value: 1307, pct: 10 },
+]
+
+export const publicDashboardLinks = [
+	{ label: 'Browse all services', to: '/services' },
+	{ label: 'How to register & apply', to: '/#portal-guide' },
+	{ label: 'Login or create account', to: '/login' },
 ]

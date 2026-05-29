@@ -39,48 +39,26 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 			label: 'Public dashboard',
 			desc: 'Illustrative portal statistics & trends',
 		},
-		{
-			to: '/#portal-stats',
-			label: 'At a glance',
-			desc: 'Key portal indicators on the home page',
-			isHash: true,
-		},
 	]
 
 	if (variant === 'drawer') {
 		return (
 			<div className="landing-nav-drawer-dropdown">
 				<p className="landing-nav-drawer-dropdown-label">Dashboard</p>
-				{items.map((item) => {
-					const inner = (
-						<>
-							<LayoutDashboard className="h-4 w-4 shrink-0" aria-hidden />
-							<span>
-								<span className="block font-semibold">{item.label}</span>
-								<span className="block text-xs font-normal opacity-80">{item.desc}</span>
-							</span>
-						</>
-					)
-					return item.isHash ? (
-						<a
-							key={item.to}
-							href={item.to}
-							onClick={close}
-							className="landing-nav-drawer-dropdown-link"
-						>
-							{inner}
-						</a>
-					) : (
-						<Link
-							key={item.to}
-							to={item.to}
-							onClick={close}
-							className="landing-nav-drawer-dropdown-link"
-						>
-							{inner}
-						</Link>
-					)
-				})}
+				{items.map((item) => (
+					<Link
+						key={item.to}
+						to={item.to}
+						onClick={close}
+						className="landing-nav-drawer-dropdown-link"
+					>
+						<LayoutDashboard className="h-4 w-4 shrink-0" aria-hidden />
+						<span>
+							<span className="block font-semibold">{item.label}</span>
+							<span className="block text-xs font-normal opacity-80">{item.desc}</span>
+						</span>
+					</Link>
+				))}
 			</div>
 		)
 	}
@@ -111,37 +89,21 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 							className="landing-nav-dropdown-panel"
 							role="menu"
 						>
-							{items.map((item) =>
-								item.isHash ? (
-									<a
-										key={item.to}
-										href={item.to}
-										role="menuitem"
-										className="landing-nav-dropdown-item"
-										onClick={close}
-									>
-										<LayoutDashboard className="h-4 w-4 shrink-0 text-landing" aria-hidden />
-										<span>
-											<span className="landing-nav-dropdown-item-label">{item.label}</span>
-											<span className="landing-nav-dropdown-item-desc">{item.desc}</span>
-										</span>
-									</a>
-								) : (
-									<Link
-										key={item.to}
-										to={item.to}
-										role="menuitem"
-										className="landing-nav-dropdown-item"
-										onClick={close}
-									>
-										<LayoutDashboard className="h-4 w-4 shrink-0 text-landing" aria-hidden />
-										<span>
-											<span className="landing-nav-dropdown-item-label">{item.label}</span>
-											<span className="landing-nav-dropdown-item-desc">{item.desc}</span>
-										</span>
-									</Link>
-								),
-							)}
+							{items.map((item) => (
+								<Link
+									key={item.to}
+									to={item.to}
+									role="menuitem"
+									className="landing-nav-dropdown-item"
+									onClick={close}
+								>
+									<LayoutDashboard className="h-4 w-4 shrink-0 text-landing" aria-hidden />
+									<span>
+										<span className="landing-nav-dropdown-item-label">{item.label}</span>
+										<span className="landing-nav-dropdown-item-desc">{item.desc}</span>
+									</span>
+								</Link>
+							))}
 						</motion.div>
 					</div>
 				) : null}

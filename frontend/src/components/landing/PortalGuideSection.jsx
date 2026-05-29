@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import LandingSectionIntro from './LandingSectionIntro'
 import {
 	ArrowRight,
 	Clock,
@@ -118,30 +119,29 @@ function PortalGuideSection() {
 			<div id="how-to-apply" className="scroll-mt-28" tabIndex={-1} aria-hidden />
 
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<motion.div
-					initial={{ opacity: 0, y: 16 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true }}
-					transition={{ duration: 0.4 }}
-					className="mx-auto max-w-2xl text-center"
-				>
-					<h2 id="portal-guide-heading" className="landing-section-title">
-						How it works
-					</h2>
-					<p className="landing-section-lead">
-						{/* Register, apply for UIN, track your application, and use tenancy services online —
-						follow the steps below or open a service directly. */}
-					</p>
-				</motion.div>
+				<LandingSectionIntro
+					className="mx-auto max-w-2xl"
+					align="center"
+					// eyebrow="Getting started"
+					title="How it works"
+					lead="Register, apply for UIN, track your application, and use tenancy services online."
+					titleId="portal-guide-heading"
+				/>
 
 				<ol className="portal-guide-steps">
 					{steps.map((step, index) => (
 						<motion.li
 							key={step.num}
-							initial={{ opacity: 0, y: 14 }}
-							whileInView={{ opacity: 1, y: 0 }}
+							custom={index}
+							initial={{ opacity: 0, y: 20, scale: 0.96 }}
+							whileInView={{ opacity: 1, y: 0, scale: 1 }}
 							viewport={{ once: true, margin: '-40px' }}
-							transition={{ duration: 0.35, delay: index * 0.07 }}
+							transition={{
+								type: 'spring',
+								stiffness: 360,
+								damping: 22,
+								delay: index * 0.09,
+							}}
 							className="portal-guide-step"
 						>
 							<span className="portal-guide-step__num" aria-hidden>

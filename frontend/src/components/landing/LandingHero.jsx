@@ -92,7 +92,7 @@ function LandingHero({ navSlot }) {
 				<div className="landing-hero-overlay landing-hero-overlay--lr" aria-hidden />
 				<div className="landing-hero-overlay landing-hero-overlay--tb" aria-hidden />
 
-				<div className="landing-hero-inner relative z-10 mx-auto flex w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+				<div className="landing-hero-inner relative z-10 mx-auto flex w-full max-w-7xl px-10 sm:px-12 lg:px-10">
 					<motion.div
 						initial={{ opacity: 0, x: -28 }}
 						animate={{ opacity: 1, x: 0 }}
@@ -104,7 +104,7 @@ function LandingHero({ navSlot }) {
 								Assam Tenancy Registration and Management System
 							</h1>
 							<p className="landing-hero-lead">
-							Register and apply for services online with ease.
+							Register online, track your applications, and access services securely from one place.
 							</p>
 						</div>
 						<div className="landing-hero-actions">

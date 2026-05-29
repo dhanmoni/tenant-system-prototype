@@ -34,7 +34,7 @@ export const portalServiceHighlights = [
 ]
 
 export const portalServicesIntro = {
-	eyebrow: 'Portal services',
+	// eyebrow: 'Portal services',
 	title: 'Portal services',
 	lead:
 		'This portal provides registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
