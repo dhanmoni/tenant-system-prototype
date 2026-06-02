@@ -2,80 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Designation;
-use App\Models\District;
-use App\Models\Office;
-use App\Models\Role;
-use App\Models\State;
-use App\Models\TenancyApplication;
-use App\Models\User;
+use App\Constants\Roles;
+use App\Services\DashboardStatsService;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly DashboardStatsService $dashboardStats
+    ) {
+    }
+
     /**
-     * Dashboard statistics for system admin (counts only).
+     * Dashboard statistics for system admin.
      */
     public function stats(Request $request)
     {
         $user = $request->user();
-        if (!$user || $user->role !== 'system_admin') {
+        if (!$user || $user->role !== Roles::SUPER_ADMIN) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $applicationsByStatus = TenancyApplication::query()
-            ->selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
-        return response()->json([
-            'districts_count' => District::count(),
-            'offices_count' => Office::count(),
-            'users_count' => User::count(),
-            'roles_count' => Role::count(),
-            'designations_count' => Designation::count(),
-            'applications_count' => TenancyApplication::count(),
-            'applications_by_status' => $applicationsByStatus,
-        ]);
+        return response()->json($this->dashboardStats->superAdminStats());
     }
 
     /**
-     * Dashboard statistics for staff (counts + applications scoped by user/office).
+     * Dashboard statistics for officials and district administrators.
      */
     public function staffStats(Request $request)
     {
-        $user = $request->user();
-        $staffRoles = ['director', 'assistant_director', 'district_head', 'district_assistant'];
-        if (!$user || !in_array($user->role, $staffRoles, true)) {
+        $user = $request->user()->load('district');
+        if (!$user || $user->role === Roles::USER) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $appQuery = TenancyApplication::query();
-        if ($user->profile_type === 'landlord') {
-            $appQuery->where('landlord_email', $user->email);
-        } elseif ($user->profile_type === 'tenant') {
-            $appQuery->where('tenant_email', $user->email);
-        } else {
-            $appQuery->where(function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-                if (!empty($user->office_id)) {
-                    $q->orWhere('office_id', $user->office_id);
-                }
-            });
+        if (!$user->district_id && $user->role !== Roles::SUPER_ADMIN) {
+            return response()->json([
+                'message' => 'Your account is not assigned to a district. Contact the system administrator.',
+            ], 422);
         }
 
-        $applicationsByStatus = (clone $appQuery)
-            ->selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
-        return response()->json([
-            'districts_count' => District::count(),
-            'users_count' => User::count(),
-            'applications_count' => (clone $appQuery)->count(),
-            'applications_by_status' => $applicationsByStatus,
-        ]);
+        return response()->json($this->dashboardStats->staffStats($user));
     }
 }

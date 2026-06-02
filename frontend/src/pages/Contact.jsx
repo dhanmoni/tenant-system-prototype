@@ -1,50 +1,45 @@
 import { Link } from 'react-router-dom'
+import { MapPin, Phone, Mail } from 'lucide-react'
+import PublicPageLayout from '../components/landing/PublicPageLayout'
 
 function Contact() {
 	return (
-		<section className="contact-page" aria-labelledby="contact-heading">
-			<div className="contact-page-inner">
-				<nav className="contact-breadcrumb" aria-label="Breadcrumb">
-					<Link to="/">Home</Link>
-					<span className="contact-breadcrumb-sep" aria-hidden>
-						/
-					</span>
-					<span className="contact-breadcrumb-current">Contact Us</span>
-				</nav>
-
-				<header className="contact-header">
-					<p className="contact-eyebrow">Help &amp; support</p>
-					<h1 id="contact-heading">Contact Us</h1>
-					<p className="contact-lead">
-						Directorate of Town and Country Planning — NIC prototype portal for tenancy
-						certificate services. Details below are illustrative; replace with official
-						published contacts for production.
-					</p>
-				</header>
-
-				<div className="contact-help-strip" role="region" aria-label="Helpdesk">
-					<div className="contact-help-strip-row">
-						<strong>Demo helpdesk</strong>
-						<a className="contact-help-link" href="tel:18000000000">
+		<PublicPageLayout
+			eyebrow="Help & support"
+			title="Contact Us"
+			titleId="contact-heading"
+			breadcrumbLabel="Contact Us"
+			lead="Directorate of Town and Country Planning — reach the helpdesk or visit the office. Details below are for demonstration; replace with official published contacts for production."
+		>
+			<div className="contact-page">
+				<div
+					className="mb-10 rounded-xl border border-landing/20 bg-landing px-6 py-5 text-white shadow-md sm:px-8"
+					role="region"
+					aria-label="Helpdesk"
+				>
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+						<strong className="text-sm uppercase tracking-wide">Demo helpdesk</strong>
+						<a className="contact-helpdesk-link font-semibold underline underline-offset-2" href="tel:18000000000">
 							1800-000-0000
 						</a>
-						<span className="contact-help-dot" aria-hidden>
-							·
+						<span className="hidden text-white/50 sm:inline" aria-hidden>
+							|
 						</span>
-						<a className="contact-help-link" href="mailto:helpdesk.tcms@nic.in">
+						<a className="contact-helpdesk-link font-semibold underline underline-offset-2" href="mailto:helpdesk.tcms@nic.in">
 							helpdesk.tcms@nic.in
 						</a>
 					</div>
-					<p className="contact-help-hours">
-						Suggested hours (demo): Monday–Friday, 10:00–17:00 IST
-					</p>
+					<p className="mt-2 text-sm text-white/85">Suggested hours (demo): Monday–Friday, 10:00–17:00 IST</p>
 				</div>
 
-				<div className="contact-layout">
-					<div className="contact-details">
-						<div className="contact-block contact-block--emphasis">
-							<h3>Office address</h3>
-							<p>
+				<div className="grid gap-10 lg:grid-cols-2 lg:gap-12">
+					<div className="space-y-4">
+						<div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+							<div className="mb-3 flex items-center gap-2 text-landing">
+								<MapPin className="h-5 w-5" aria-hidden />
+								<h2 className="landing-section-subtitle">Office address</h2>
+							</div>
+							<p className="text-sm leading-relaxed text-slate-600">
 								Urban Affairs Complex
 								<br />
 								Sachivalaya Road, Dispur
@@ -52,57 +47,71 @@ function Contact() {
 								Guwahati, Assam 781006
 							</p>
 							<a
-								className="contact-inline-action"
+								className="contact-card-link mt-4 inline-flex text-sm font-semibold"
 								href="https://www.google.com/maps/search/?api=1&query=Directorate+of+Town+and+Country+Planning+Assam+Dispur"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								Open in Google Maps
+								Open in Google Maps →
 							</a>
 						</div>
-						<div className="contact-block">
-							<h3>Phone</h3>
-							<p>
-								<a className="contact-tel" href="tel:+913612234567">
-									+91 361 223 4567
-								</a>
-							</p>
+
+						<div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+							<div className="mb-3 flex items-center gap-2 text-landing">
+								<Phone className="h-5 w-5" aria-hidden />
+								<h2 className="landing-section-subtitle">Phone</h2>
+							</div>
+							<a className="contact-card-link contact-card-link--muted text-sm font-semibold" href="tel:+913612234567">
+								+91 361 223 4567
+							</a>
 						</div>
-						<div className="contact-block">
-							<h3>Email</h3>
-							<p>
-								<a className="contact-mail" href="mailto:support@assamtenancy.gov.in">
-									support@assamtenancy.gov.in
-								</a>
-							</p>
+
+						<div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+							<div className="mb-3 flex items-center gap-2 text-landing">
+								<Mail className="h-5 w-5" aria-hidden />
+								<h2 className="landing-section-subtitle">Email</h2>
+							</div>
+							<a
+								className="contact-card-link contact-card-link--muted text-sm font-semibold"
+								href="mailto:support@assamtenancy.gov.in"
+							>
+								support@assamtenancy.gov.in
+							</a>
 						</div>
-						<div className="contact-actions">
-							<Link className="contact-btn contact-btn--primary" to="/#login">
+
+						<div className="flex flex-wrap gap-3 pt-2">
+							<Link
+								to="/#login"
+								className="contact-action-btn contact-action-btn--primary rounded-full px-6 py-2.5 text-sm font-bold"
+							>
 								Back to login
 							</Link>
-							<Link className="contact-btn contact-btn--ghost" to="/#register">
+							<Link
+								to="/#register"
+								className="contact-action-btn contact-action-btn--outline rounded-full border-2 px-6 py-2.5 text-sm font-bold"
+							>
 								New registration
 							</Link>
 						</div>
 					</div>
-					<div className="contact-map-wrap">
-						<div className="contact-map-card" aria-label="Map to the office address">
+
+					<div>
+						<div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
 							<iframe
 								title="Office location map"
-								className="contact-map"
+								className="h-[320px] w-full border-0 sm:h-[400px]"
 								loading="lazy"
 								referrerPolicy="no-referrer-when-downgrade"
 								src="https://www.google.com/maps?q=Directorate%20of%20Town%20and%20Country%20Planning%2C%20Assam&output=embed"
 							/>
 						</div>
-						<p className="contact-map-note">
-							Map is for reference. Verify the exact location with the department before
-							visiting.
+						<p className="mt-3 text-xs leading-relaxed text-slate-500">
+							Map is for reference only. Verify the exact location with the department before visiting.
 						</p>
 					</div>
 				</div>
 			</div>
-		</section>
+		</PublicPageLayout>
 	)
 }
 

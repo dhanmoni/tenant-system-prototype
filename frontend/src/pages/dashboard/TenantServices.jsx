@@ -1,6 +1,6 @@
 import { NavLink, Navigate, useOutletContext } from 'react-router-dom'
 import { Icon } from '../../components/dashboard/Icons'
-import { tenantServiceGroups } from '../../data/tenantServices'
+import { getFormApplyLabel, tenantServiceGroups } from '../../data/tenantServices'
 
 function TenantServices() {
 	const { user } = useOutletContext()
@@ -49,7 +49,9 @@ function TenantServices() {
 											<span className="tenant-service-form-link-matter">{f.matter}</span>
 											<span className="tenant-service-form-link-rule">{f.rule}</span>
 										</span>
-										<span className="tenant-service-form-link-action">Apply</span>
+										<span className="tenant-service-form-link-action">
+											{getFormApplyLabel(f)}
+										</span>
 									</NavLink>
 								</li>
 							))}

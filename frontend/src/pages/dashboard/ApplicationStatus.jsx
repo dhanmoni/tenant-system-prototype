@@ -3,6 +3,8 @@ import { useOutletContext, useNavigate, useSearchParams } from 'react-router-dom
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
 import { formatDate } from '../../utils/formatters'
+import { STATUS, STATUS_LABELS } from '../../constants/status'
+import { APPLICATION_TYPES } from '../../constants/application'
 
 function ApplicationStatus() {
 	const { user } = useOutletContext()
@@ -56,6 +58,7 @@ function ApplicationStatus() {
 			const endpoint = user?.role === 'user' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
 			const { data } = await api.get(endpoint, { params })
 			const list = Array.isArray(data) ? data : (data?.data ?? [])
+			console.log('ApplicationStatus list:', list)
 			setStatusApplications(list)
 			setStatusPage(Number(data?.current_page) || 1)
 			setStatusTotalPages(Number(data?.last_page) || 1)
@@ -103,10 +106,17 @@ function ApplicationStatus() {
 
 	const formatStatusText = (status, applicationType = '') => {
 		const normalizedType = String(applicationType || '').toLowerCase()
-		const normalizedStatus = String(status || '').trim().toLowerCase()
-		if (normalizedStatus === 'submiited' || normalizedStatus === 'submitted') return 'Submitted'
-		if (normalizedType.includes('tenancy certificate') && normalizedStatus === 'under process') return 'Submitted'
-		return status || '-'
+		const normalizedStatus = String(status || '').trim().toUpperCase()
+
+		if (normalizedStatus === STATUS.SUBMITTED) return STATUS_LABELS[STATUS.SUBMITTED]
+		if (normalizedStatus === STATUS.IN_REVIEW) return STATUS_LABELS[STATUS.IN_REVIEW]
+		if (normalizedStatus === STATUS.REJECTED) return STATUS_LABELS[STATUS.REJECTED]
+
+		if (normalizedType.includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) && normalizedStatus === STATUS.UNDER_PROCESS) {
+			return STATUS_LABELS[STATUS.SUBMITTED]
+		}
+
+		return STATUS_LABELS[normalizedStatus] || status || '-'
 	}
 
 	const copyToClipboard = (text, identifier) => {
@@ -131,11 +141,13 @@ function ApplicationStatus() {
 	}
 
 	const tenancyCertificateRows = statusApplications.filter((app) =>
-		String(app.application_type || '').toLowerCase().includes('tenancy certificate')
+		String(app.application_type || '').toLowerCase().includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) ||
+		app.application_type === APPLICATION_TYPES.TENANCY_CERTIFICATE
 	)
 
 	const formRows = statusApplications.filter((app) =>
-		!String(app.application_type || '').toLowerCase().includes('tenancy certificate')
+		!String(app.application_type || '').toLowerCase().includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) &&
+		app.application_type !== APPLICATION_TYPES.TENANCY_CERTIFICATE
 	)
 
 	const categories = [
@@ -217,7 +229,7 @@ function ApplicationStatus() {
 																autoFocus
 															/>
 															<div className="popup-actions">
-																<button onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+																<button type="button" className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
 																<button className="btn-clear" onClick={() => { setStatusSearchAppNo(''); loadStatusApplications(1, { application_no: '' }); setActiveSearchColumn(null); }}>Clear</button>
 															</div>
 														</div>
@@ -225,36 +237,34 @@ function ApplicationStatus() {
 												</div>
 												<span className="resizer" onMouseDown={(e) => startResizing('status_app_no', e)} />
 											</th>
-											{isTenancyType && (
-												<th style={{ width: columnWidths['status_uid'] }}>
-													<div className="th-content">
-														<span>UID</span>
-														<button
-															className={`header-action-btn ${statusSearchUid ? 'active' : ''}`}
-															onClick={() => setActiveSearchColumn(activeSearchColumn === `cat-${idx}-uid` ? null : `cat-${idx}-uid`)}
-														>
-															<Icon name="search" className={`search-icon-svg ${activeSearchColumn === `cat-${idx}-uid` ? 'active' : ''}`} />
-														</button>
-														{activeSearchColumn === `cat-${idx}-uid` && (
-															<div className="header-search-popup">
-																<input
-																	type="text"
-																	value={statusSearchUid}
-																	onChange={(e) => setStatusSearchUid(e.target.value)}
-																	onKeyDown={(e) => e.key === 'Enter' && (loadStatusApplications(1), setActiveSearchColumn(null))}
-																	placeholder="Search UID..."
-																	autoFocus
-																/>
-																<div className="popup-actions">
-																	<button onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
-																	<button className="btn-clear" onClick={() => { setStatusSearchUid(''); loadStatusApplications(1, { uid: '' }); setActiveSearchColumn(null); }}>Clear</button>
-																</div>
+											<th style={{ width: columnWidths['status_uid'] }}>
+												<div className="th-content">
+													<span>Tenancy UIN</span>
+													<button
+														className={`header-action-btn ${statusSearchUid ? 'active' : ''}`}
+														onClick={() => setActiveSearchColumn(activeSearchColumn === `cat-${idx}-uid` ? null : `cat-${idx}-uid`)}
+													>
+														<Icon name="search" className={`search-icon-svg ${activeSearchColumn === `cat-${idx}-uid` ? 'active' : ''}`} />
+													</button>
+													{activeSearchColumn === `cat-${idx}-uid` && (
+														<div className="header-search-popup">
+															<input
+																type="text"
+																value={statusSearchUid}
+																onChange={(e) => setStatusSearchUid(e.target.value)}
+																onKeyDown={(e) => e.key === 'Enter' && (loadStatusApplications(1), setActiveSearchColumn(null))}
+																placeholder="Search UID..."
+																autoFocus
+															/>
+															<div className="popup-actions">
+																<button type="button" className="btn-find" onClick={() => { loadStatusApplications(1); setActiveSearchColumn(null); }}>Find</button>
+																<button className="btn-clear" onClick={() => { setStatusSearchUid(''); loadStatusApplications(1, { uid: '' }); setActiveSearchColumn(null); }}>Clear</button>
 															</div>
-														)}
-													</div>
-													<span className="resizer" onMouseDown={(e) => startResizing('status_uid', e)} />
-												</th>
-											)}
+														</div>
+													)}
+												</div>
+												<span className="resizer" onMouseDown={(e) => startResizing('status_uid', e)} />
+											</th>
 											<th style={{ width: columnWidths['status_date'] }}>
 												<div className="th-content sortable" onClick={() => handleStatusSort('created_at')}>
 													<span>Application Date</span>
@@ -279,9 +289,13 @@ function ApplicationStatus() {
 										{cat.items.map((app) => (
 											<tr key={app.row_key || app.id}>
 												<td>{app.application_no}</td>
-												{isTenancyType && <td>{app.uid || '-'}</td>}
+												<td>{app.uid || '-'}</td>
 												<td>{formatDate(app.created_at)}</td>
-												<td>{formatStatusText(app.status, app.application_type)}</td>
+												<td>
+													<span className={`status-pill ${app.status?.toLowerCase()}`}>
+														{formatStatusText(app.status, app.application_type)}
+													</span>
+												</td>
 												{isTenancyType && (
 													<td>
 														{app.initiator_completed && app.second_party_completed ? (
@@ -353,6 +367,15 @@ function ApplicationStatus() {
 													)}
 												</td>
 											</tr>
+											//{app.status === 'REJECTED' && app.rejection_message && (
+											//	<tr className="rejection-row">
+											//		<td colSpan={isTenancyType ? 6 : 5}>
+											//			<div className="rejection-alert">
+											//				<strong>Rejection Reason:</strong> {app.rejection_message}
+											//			</div>
+											//		</td>
+											//	</tr>
+											//)}
 										))}
 									</tbody>
 								</table>

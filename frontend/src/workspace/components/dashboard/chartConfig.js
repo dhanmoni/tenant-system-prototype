@@ -1,0 +1,56 @@
+import {
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	ArcElement,
+	Tooltip,
+	Legend,
+} from 'chart.js'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend)
+
+export const STATUS_CHART_COLORS = {
+	SUBMITTED: '#2563eb',
+	IN_REVIEW: '#d97706',
+	REJECTED: '#dc2626',
+	COMPLETED: '#16a34a',
+	OTHER: '#94a3b8',
+	DRAFT: '#8b5cf6',
+	PARTIAL: '#0d9488',
+}
+
+export const STATUS_CHART_LABELS = {
+	SUBMITTED: 'Submitted',
+	IN_REVIEW: 'In review',
+	REJECTED: 'Rejected',
+	COMPLETED: 'Completed',
+	OTHER: 'Other',
+	DRAFT: 'Draft',
+	PARTIAL: 'Awaiting party',
+}
+
+export const barChartOptions = {
+	responsive: true,
+	maintainAspectRatio: false,
+	plugins: { legend: { display: false } },
+	scales: {
+		y: {
+			beginAtZero: true,
+			ticks: { precision: 0 },
+			grid: { color: 'rgba(148, 163, 184, 0.25)' },
+		},
+		x: { grid: { display: false } },
+	},
+}
+
+export const doughnutChartOptions = {
+	responsive: true,
+	maintainAspectRatio: false,
+	plugins: {
+		legend: {
+			position: 'bottom',
+			labels: { boxWidth: 12, padding: 12, font: { size: 11 } },
+		},
+	},
+}

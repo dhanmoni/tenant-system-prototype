@@ -1,55 +1,80 @@
 import { Link } from 'react-router-dom'
+import { Home, LogIn, UserPlus, FileText, BookOpen, Mail, Map, ExternalLink } from 'lucide-react'
+import PublicPageLayout from '../components/landing/PublicPageLayout'
+
+const mainLinks = [
+	{ label: 'Home', to: '/', icon: Home, external: false },
+	{ label: 'Login', to: '/#login', icon: LogIn, external: false },
+	{ label: 'New registration', to: '/#register', icon: UserPlus, external: false },
+	{ label: 'Apply for certificate', to: '/#login', icon: FileText, external: false },
+]
+
+const infoLinks = [
+	{ label: 'Services', to: '/services', icon: FileText, external: false },
+	{ label: 'About us', to: '/about', icon: BookOpen, external: false },
+	{ label: 'Public dashboard', to: '/public-dashboard', icon: FileText, external: false },
+	{ label: 'Policies & Guidelines', to: '/policies', icon: BookOpen, external: false },
+	{ label: 'Contact Us', to: '/contact', icon: Mail, external: false },
+	{ label: 'Sitemap', to: '/sitemap', icon: Map, external: false },
+]
+
+const externalLinks = [
+	{ label: 'National Portal (India.gov.in)', href: 'https://www.india.gov.in/', icon: ExternalLink },
+	{ label: 'Digital India', href: 'https://www.digitalindia.gov.in/', icon: ExternalLink },
+	{ label: 'TCP Assam', href: 'https://tcp.assam.gov.in/', icon: ExternalLink },
+]
+
+function LinkGroup({ title, items, useHref = false }) {
+	return (
+		<div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+			<h2 className="landing-section-label mb-4 text-landing">{title}</h2>
+			<ul className="space-y-2">
+				{items.map((item) => {
+					const Icon = item.icon
+					return (
+						<li key={item.label}>
+							{useHref ? (
+								<a
+									href={item.href}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-slate-700 transition hover:bg-landing/5 hover:text-landing"
+								>
+									<Icon className="h-4 w-4 shrink-0" aria-hidden />
+									{item.label}
+								</a>
+							) : (
+								<Link
+									to={item.to}
+									className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-slate-700 transition hover:bg-landing/5 hover:text-landing"
+								>
+									<Icon className="h-4 w-4 shrink-0" aria-hidden />
+									{item.label}
+								</Link>
+							)}
+						</li>
+					)
+				})}
+			</ul>
+		</div>
+	)
+}
 
 function Sitemap() {
 	return (
-		<section className="sitemap-page" aria-labelledby="sitemap-heading">
-			<div className="sitemap-page-inner">
-				<nav className="sitemap-breadcrumb" aria-label="Breadcrumb">
-					<Link to="/">Home</Link>
-					<span className="sitemap-breadcrumb-sep" aria-hidden>
-						/
-					</span>
-					<span className="sitemap-breadcrumb-current">Sitemap</span>
-				</nav>
-
-				<header className="sitemap-header">
-					<p className="sitemap-eyebrow">Public navigation</p>
-					<h1 id="sitemap-heading">Sitemap</h1>
-					<p className="sitemap-lead">
-						Quick links for the Tenancy Certificate Management System prototype.
-					</p>
-				</header>
-
-				<div className="sitemap-grid">
-					<div className="sitemap-group">
-						<h3>Main</h3>
-						<ul>
-							<li><Link to="/">Home</Link></li>
-							<li><Link to="/#login">Login</Link></li>
-							<li><Link to="/#register">Registration</Link></li>
-						</ul>
-					</div>
-
-					<div className="sitemap-group">
-						<h3>Information</h3>
-						<ul>
-							<li><Link to="/policies">Policies</Link></li>
-							<li><Link to="/contact">Contact Us</Link></li>
-							<li><Link to="/sitemap">Sitemap</Link></li>
-						</ul>
-					</div>
-
-					<div className="sitemap-group">
-						<h3>External</h3>
-						<ul>
-							<li><a href="https://www.india.gov.in/" target="_blank" rel="noopener noreferrer">National Portal</a></li>
-							<li><a href="https://www.digitalindia.gov.in/" target="_blank" rel="noopener noreferrer">Digital India</a></li>
-							<li><a href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">TCP Assam</a></li>
-						</ul>
-					</div>
-				</div>
+		<PublicPageLayout
+			eyebrow="Public navigation"
+			title="Sitemap"
+			titleId="sitemap-heading"
+			breadcrumbLabel="Sitemap"
+			lead="Quick links to pages and services on the Assam Tenancy Registration Portal prototype."
+		>
+			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+				<LinkGroup title="Main" items={mainLinks} />
+				<LinkGroup title="Information" items={infoLinks} />
+				<LinkGroup title="External" items={externalLinks} useHref />
 			</div>
-		</section>
+		</PublicPageLayout>
 	)
 }
 

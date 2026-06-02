@@ -1,16 +1,21 @@
 import './App.css'
+import './workspace/styles/workspace.css'
 import { useEffect, useState } from 'react'
-import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import bannerImage from './assets/img/banner.png'
+import welcomeImage from './assets/img/img1.png'
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
-import DashboardLayout from './pages/dashboard/DashboardLayout'
-import DashboardHome from './pages/dashboard/DashboardHome'
-import Profile from './pages/dashboard/Profile'
-import ApplicationStatus from './pages/dashboard/ApplicationStatus'
+import {
+	WorkspaceLayout,
+	WorkspaceHome,
+	WorkspaceProfile,
+	WorkspaceLegacyFrame,
+	WorkspaceServices,
+	WorkspaceUinStatus,
+} from './workspace'
 import ApplicationDetails from './pages/dashboard/ApplicationDetails'
 import TenancyCertificate from './pages/dashboard/TenancyCertificate'
 import FormPortal from './pages/dashboard/FormPortal'
-import TenantServices from './pages/dashboard/TenantServices'
-
 // import StateManagement from './pages/dashboard/admin/StateManagement'
 import DistrictManagement from './pages/dashboard/admin/DistrictManagement'
 import OfficeManagement from './pages/dashboard/admin/OfficeManagement'
@@ -18,6 +23,9 @@ import UserManagement from './pages/dashboard/admin/UserManagement'
 import RoleManagement from './pages/dashboard/admin/RoleManagement'
 import DesignationManagement from './pages/dashboard/admin/DesignationManagement'
 import ActivityLog from './pages/dashboard/admin/ActivityLog'
+import ApplicationList from './pages/dashboard/admin/ApplicationList'
+import AdminApplicationDetailsPage from './pages/dashboard/admin/AdminApplicationDetailsPage'
+import TenancyRecords from './pages/dashboard/admin/TenancyRecords'
 
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -25,9 +33,36 @@ import UserDetail from './pages/UserDetail'
 import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
 import Contact from './pages/Contact'
+import About from './pages/About'
+import Services from './pages/Services'
+import PublicDashboard from './pages/PublicDashboard'
 import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
+
+/** Invite links: logged-in users → join form; others → new login (no legacy carousel flash). */
+function JoinEntryRedirect({ user }) {
+	const location = useLocation()
+	const joinTarget = `/dashboard/join${location.search}`
+	if (user) {
+		return <Navigate to={joinTarget} replace />
+	}
+	return (
+		<Navigate
+			to={{ pathname: '/login', search: location.search }}
+			state={{ from: { pathname: '/dashboard/join', search: location.search } }}
+			replace
+		/>
+	)
+}
+import AccessibilityWidget from './components/landing/AccessibilityWidget'
+import PortalLoadingScreen from './components/PortalLoadingScreen'
+import { LANDING_A11Y_EVENT } from './utils/landingA11y'
+import {
+	getMainContentTargetId,
+	handleSkipLinkClick,
+	isPublicMarketingPath,
+} from './utils/skipNavigation'
 import emblem from './assets/img/emblem-dark.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
@@ -35,14 +70,25 @@ import digitalIndiaLogo from './assets/img/digital-india.png'
 function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
+	const [portalEntering, setPortalEntering] = useState(false)
+	const [loggingOut, setLoggingOut] = useState(false)
+	const navigate = useNavigate()
 	const [fontScale, setFontScale] = useState('normal')
 	const [highContrast, setHighContrast] = useState(false)
+	const [highlightLinks, setHighlightLinks] = useState(false)
+	const [language, setLanguage] = useState('en')
 	const slides = [
+		{
+			title: 'Housing & tenancy in one place',
+			subtitle:
+				'Register tenancies, manage landlord–tenant records, and access department services with a modern, citizen-friendly portal.',
+			image: bannerImage,
+		},
 		{
 			title: 'Digital Tenancy Registration',
 			subtitle:
 				'Apply for tenancy certificates online, track your application status in real-time, and download digitally signed documents — all from one portal.',
-			image: '/TCP-Images/TCP-Office.jpg',
+			image: welcomeImage,
 		},
 		{
 			title: 'Property & tenancy records',
@@ -86,7 +132,28 @@ function App() {
 	}, [slides.length])
 
 	const location = useLocation()
-	const showCarousel = !user
+	const isDashboardRoute = location.pathname.startsWith('/dashboard')
+	const isJoinEntry = location.pathname === '/join'
+	const isLandingHome =
+		!user &&
+		(location.pathname === '/' || location.pathname === '/login' || isJoinEntry)
+	const isPublicMarketingPage = !user && isPublicMarketingPath(location.pathname)
+	const usesLandingChrome = isLandingHome || isPublicMarketingPage
+	const mainContentTargetId = getMainContentTargetId(location.pathname)
+	/* Show homepage immediately on reload — session check runs in background */
+	const skipSessionBootLoader =
+		loading &&
+		(location.pathname === '/' ||
+			location.pathname === '/login' ||
+			isJoinEntry ||
+			isPublicMarketingPath(location.pathname))
+	/* Old marketing shell (carousel, topbar) — only on legacy public routes */
+	const showLegacyPublicChrome =
+		!user &&
+		!usesLandingChrome &&
+		!isDashboardRoute &&
+		!loggingOut &&
+		!isJoinEntry
 
 	useEffect(() => {
 		try {
@@ -131,6 +198,15 @@ function App() {
 		}
 	}, [highContrast])
 
+	useEffect(() => {
+		const body = document.body
+		if (!body) return
+		body.classList.toggle('a11y-highlight-links', highlightLinks)
+		return () => {
+			body.classList.remove('a11y-highlight-links')
+		}
+	}, [highlightLinks])
+
 	const increaseFontScale = () => {
 		setFontScale((prev) => {
 			if (prev === 'normal') return 'large'
@@ -147,88 +223,182 @@ function App() {
 		})
 	}
 
+	useEffect(() => {
+		const onLandingA11y = (e) => {
+			const action = e.detail
+			if (action === 'increase') increaseFontScale()
+			else if (action === 'decrease') decreaseFontScale()
+			else if (action === 'reset') setFontScale('normal')
+			else if (action === 'contrast') setHighContrast((prev) => !prev)
+			else if (action === 'lang-en') setLanguage('en')
+			else if (action === 'lang-as') setLanguage('as')
+		}
+		window.addEventListener(LANDING_A11Y_EVENT, onLandingA11y)
+		return () => window.removeEventListener(LANDING_A11Y_EVENT, onLandingA11y)
+	}, [])
+
 	const handleLogout = async () => {
-		await api.post('/api/logout')
+		setLoggingOut(true)
+		try {
+			await api.post('/api/logout')
+		} catch {
+			// Clear local session even if the request fails
+		}
 		setUser(null)
+		setPortalEntering(false)
+		navigate('/', { replace: true })
 	}
 
-	if (loading) {
+	useEffect(() => {
+		if (loggingOut && isLandingHome) {
+			setLoggingOut(false)
+		}
+	}, [loggingOut, isLandingHome])
+
+	const handleUserLogin = (nextUser) => {
+		setPortalEntering(true)
+		setUser(nextUser)
+	}
+
+	useEffect(() => {
+		if (!portalEntering) return undefined
+		const timer = setTimeout(() => setPortalEntering(false), 900)
+		return () => clearTimeout(timer)
+	}, [portalEntering, location.pathname])
+
+	if ((loading && !skipSessionBootLoader) || portalEntering || loggingOut) {
 		return (
-			<div className="page page-center">
-				<div className="full-page-loader">
-					<div className="loader-spinner"></div>
-					<h2 className="loader-text">Loading...</h2>
-					<p className="muted">Please wait while we check your session.</p>
-				</div>
-			</div>
+			<PortalLoadingScreen
+				title={
+					loggingOut
+						? 'Signing out'
+						: portalEntering
+							? 'Opening your dashboard'
+							: 'Loading portal'
+				}
+				subtitle={
+					loggingOut
+						? 'Please wait while we return you to the home page.'
+						: portalEntering
+							? 'Please wait while we load your workspace.'
+							: 'Please wait while we check your session.'
+				}
+			/>
 		)
 	}
 
 	return (
 		<div
-			className={`page${!user ? ' page-landing' : location.pathname.startsWith('/dashboard') ? ' page-dashboard' : ''}`}
+			className={`page${!user && !isDashboardRoute ? ' page-landing' : ''}${usesLandingChrome ? ' page-landing-home page-public-marketing' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
 		>
-			<a className="skip-link" href="#main-content">Skip to main content</a>
-			<a className="skip-link" href="#primary-nav">Skip to navigation</a>
-			{/* Accessibility Bar */}
-			<div className="accessibility-bar">
+			<a
+				className="skip-link"
+				href={`#${mainContentTargetId}`}
+				onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
+			>
+				Skip to content
+			</a>
+			{/* Accessibility Bar — hidden on landing home mobile (see LandingNav utility bar) */}
+			<div
+				id="accessibility-bar"
+				className={`accessibility-bar${usesLandingChrome ? ' accessibility-bar--landing-mobile-hidden' : ''}`}
+			>
 				<div className="accessibility-bar-inner">
 					<div className="accessibility-gov">
-						<span className="accessibility-goi">Government of India</span>
-						<span className="accessibility-ministry">
-							Department of Housing And Urban Affairs
-						</span>
+						<img className="accessibility-emblem" src={emblem} alt="" aria-hidden />
+						<div className="accessibility-gov-text">
+							<p className="accessibility-gov-line">
+								<span>Government Of Assam</span>
+							</p>
+							<p className="accessibility-ministry">
+								Housing &amp; Urban Affairs
+							</p>
+							<p className="accessibility-directorate">
+								Directorate of Town and Country Planning
+							</p>
+						</div>
 					</div>
-					<div className="accessibility-bar-help" aria-label="Accessibility and help controls">
-						<a className="accessibility-skip-btn" href="#main-content">
-							Skip to main content
+					<div className="accessibility-toolbar" role="toolbar" aria-label="Accessibility options">
+						<a
+							className="accessibility-toolbar-link"
+							href={`#${mainContentTargetId}`}
+							onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
+						>
+							Skip to content
 						</a>
-						<button
-							type="button"
-							className="accessibility-control-btn"
-							onClick={decreaseFontScale}
-							title="Decrease text size"
-							aria-label="Decrease text size"
+						<span className="accessibility-toolbar-divider" aria-hidden />
+						<div className="accessibility-font-tools" role="group" aria-label="Font size">
+							<button
+								type="button"
+								className="accessibility-toolbar-btn"
+								onClick={increaseFontScale}
+								title="Increase text size"
+								aria-label="Increase text size"
+							>
+								A+
+							</button>
+							<button
+								type="button"
+								className={`accessibility-toolbar-btn${fontScale === 'normal' ? ' is-active' : ''}`}
+								onClick={() => setFontScale('normal')}
+								title="Reset text size"
+								aria-label="Reset text size"
+							>
+								A
+							</button>
+							<button
+								type="button"
+								className="accessibility-toolbar-btn"
+								onClick={decreaseFontScale}
+								title="Decrease text size"
+								aria-label="Decrease text size"
+							>
+								A-
+							</button>
+						</div>
+						<span className="accessibility-toolbar-divider" aria-hidden />
+						<div
+							className="accessibility-lang-tools"
+							role="group"
+							aria-label="Language — English active; Assamese coming soon"
 						>
-							A-
-						</button>
+							<button
+								type="button"
+								className={`accessibility-toolbar-btn${language === 'en' ? ' is-active' : ''}`}
+								onClick={() => setLanguage('en')}
+								aria-pressed={language === 'en'}
+								aria-label="English"
+								title="English"
+							>
+								EN
+							</button>
+							<button
+								type="button"
+								className="accessibility-toolbar-btn accessibility-toolbar-btn--soon"
+								disabled
+								aria-disabled="true"
+								aria-label="Assamese — coming soon"
+								title="Assamese translation coming soon (GIGW bilingual requirement)"
+							>
+								অসমীয়া
+							</button>
+						</div>
+						<span className="accessibility-toolbar-divider" aria-hidden />
 						<button
 							type="button"
-							className="accessibility-control-btn"
-							onClick={() => setFontScale('normal')}
-							title="Reset text size"
-							aria-label="Reset text size"
-						>
-							A
-						</button>
-						<button
-							type="button"
-							className="accessibility-control-btn"
-							onClick={increaseFontScale}
-							title="Increase text size"
-							aria-label="Increase text size"
-						>
-							A+
-						</button>
-						<button
-							type="button"
-							className={`accessibility-control-btn ${highContrast ? 'active' : ''}`}
+							className={`accessibility-toolbar-btn accessibility-toolbar-btn--text${highContrast ? ' is-active' : ''}`}
 							onClick={() => setHighContrast((prev) => !prev)}
 							title="Toggle high contrast"
 							aria-pressed={highContrast}
-							aria-label="Toggle high contrast mode"
 						>
-							High Contrast
+							High contrast
 						</button>
-						<span>Helpdesk (demo): 1800-000-0000</span>
-						<span className="accessibility-bar-help-sep">|</span>
-						<span>helpdesk.tcms@nic.in</span>
 					</div>
 				</div>
 			</div>
 
 			{/* Header (emblem + directorate title) — public only; hidden after login */}
-			{!user ? (
+			{showLegacyPublicChrome ? (
 				<header className="topbar">
 					<div className="brand">
 						<img className="emblem" src={emblem} alt="Indian national emblem" />
@@ -247,19 +417,21 @@ function App() {
 				</header>
 			) : null}
 
-			{!user ? <div className="landing-accent-stripe" aria-hidden /> : null}
+			{showLegacyPublicChrome ? <div className="landing-accent-stripe" aria-hidden /> : null}
 
 			{/* Main navigation – rent-portal style on landing; hidden on dashboard */}
-			{!(user && location.pathname.startsWith('/dashboard')) && (
+			{!usesLandingChrome && !isDashboardRoute && (
 				<div className="globalnav">
 					<div className="globalnav-inner">
 						{!user ? (
 							<span className="globalnav-portal-title"></span>
 						) : null}
-						<nav id="primary-nav" className={user ? 'nav-auth' : undefined}>
+						<nav id="public-primary-nav" className={user ? 'nav-auth' : undefined}>
 							{!user ? (
 								<>
 									<Link to="/">Home</Link>
+									<Link to="/about">About us</Link>
+									<Link to="/public-dashboard">Public dashboard</Link>
 									<Link to="/#login">Login</Link>
 									<Link to="/#register">Registration</Link>
 									<div className="contact-link-with-logo">
@@ -282,7 +454,7 @@ function App() {
 				</div>
 			)}
 
-			{showCarousel ? (
+			{showLegacyPublicChrome ? (
 				<section className="carousel carousel--rent-banner" aria-label="Tenant and owner highlights">
 					<div className="carousel-banner">
 						{slides.map((slide, index) => (
@@ -326,12 +498,15 @@ function App() {
 					<Route
 						path="/"
 						element={
-							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={setUser} />
+							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleUserLogin} />
 						}
 					/>
-					<Route path="/login" element={<Login onLogin={setUser} />} />
+					<Route path="/login" element={<Login onLogin={handleUserLogin} />} />
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
+					<Route path="/about" element={<About />} />
+					<Route path="/services" element={<Services />} />
+					<Route path="/public-dashboard" element={<PublicDashboard />} />
 					<Route path="/contact" element={<Contact />} />
 					<Route path="/sitemap" element={<Sitemap />} />
 					<Route
@@ -346,31 +521,85 @@ function App() {
 						path="/dashboard"
 						element={
 							<ProtectedRoute user={user}>
-								<DashboardLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
+								<WorkspaceLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
 							</ProtectedRoute>
 						}
 					>
-						<Route index element={<DashboardHome />} />
-						<Route path="profile" element={<Profile />} />
+						<Route index element={<WorkspaceHome />} />
+						<Route path="profile" element={<WorkspaceProfile />} />
 						<Route path="tenancy-certificate" element={<TenancyCertificate />} />
-						<Route path="status" element={<ApplicationStatus />} />
-						<Route path="status/:type/:applicationNo" element={<ApplicationDetails />} />
-						<Route path="services" element={<TenantServices />} />
-						<Route path=":formType" element={<FormPortal />} />
-						{/* Admin Routes */}
-						{/* <Route path="admin/state" element={<StateManagement />} /> */}
-						<Route path="admin/district" element={<DistrictManagement />} />
-						<Route path="admin/office" element={<OfficeManagement />} />
-						<Route path="admin/users" element={<UserManagement />} />
-						<Route path="admin/role" element={<RoleManagement />} />
-						<Route path="admin/designation" element={<DesignationManagement />} />
-						<Route path="admin/activity-log" element={<ActivityLog />} />
-						<Route path="join" element={<JoinApplication user={user} />} />
+						<Route path="status" element={<WorkspaceUinStatus />} />
+						<Route
+							path="status/:type/:applicationNo"
+							element={
+								<WorkspaceLegacyFrame title="Application details" subtitle="View submission">
+									<ApplicationDetails />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route path="services" element={<WorkspaceServices />} />
+						<Route
+							path=":formType"
+							element={
+								<WorkspaceLegacyFrame title="Application form" subtitle="Complete and submit">
+									<FormPortal />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/users"
+							element={
+								<WorkspaceLegacyFrame title="Users" subtitle="Staff and user management">
+									<UserManagement user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/inbox"
+							element={
+								<WorkspaceLegacyFrame title="Application inbox" subtitle="Verify and forward service applications">
+									<ApplicationList user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/applications"
+							element={
+								<WorkspaceLegacyFrame title="Service applications" subtitle="Rent Authority, Court, and Tribunal forms">
+									<ApplicationList user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/applications/:applicationNo"
+							element={<AdminApplicationDetailsPage />}
+						/>
+						<Route
+							path="admin/tenancy"
+							element={
+								<WorkspaceLegacyFrame title="Tenancy applications" subtitle="UIN applications">
+									<TenancyRecords user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="admin/districts"
+							element={
+								<WorkspaceLegacyFrame title="Districts" subtitle="Manage district master data">
+									<DistrictManagement user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
+						<Route
+							path="join"
+							element={
+								<WorkspaceLegacyFrame title="Join application" subtitle="Second party registration">
+									<JoinApplication user={user} />
+								</WorkspaceLegacyFrame>
+							}
+						/>
 					</Route>
-					<Route
-						path="/join"
-						element={<Navigate to={`/dashboard/join${location.search}`} replace />}
-					/>
+					<Route path="/join" element={<JoinEntryRedirect user={user} />} />
 					<Route
 						path="/users/:id"
 						element={
@@ -410,6 +639,20 @@ function App() {
 					</div>
 				</footer>
 			)} */}
+
+			{!user ? (
+				<AccessibilityWidget
+					fontScale={fontScale}
+					highContrast={highContrast}
+					highlightLinks={highlightLinks}
+					onIncreaseFont={increaseFontScale}
+					onDecreaseFont={decreaseFontScale}
+					onResetFont={() => setFontScale('normal')}
+					onToggleContrast={() => setHighContrast((prev) => !prev)}
+					onToggleHighlightLinks={() => setHighlightLinks((prev) => !prev)}
+					mainContentTargetId={mainContentTargetId}
+				/>
+			) : null}
 		</div>
 	)
 }

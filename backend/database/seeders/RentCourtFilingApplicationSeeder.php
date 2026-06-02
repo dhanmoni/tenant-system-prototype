@@ -21,7 +21,7 @@ class RentCourtFilingApplicationSeeder extends Seeder
             [
                 'user_id' => $tenantUser->id,
                 'rent_court_at' => 'Rent Court - Demo',
-                'tenancy_unique_identification_number' => 'TC-AS-2603-000001',
+                'tenancy_uin' => 'TC-AS-2603-000001',
 
                 'applicant_name' => $tenantUser->name ?? 'Tenant Demo',
                 'applicant_residential_address' => 'Residential address of the applicant, Assam (demo)',

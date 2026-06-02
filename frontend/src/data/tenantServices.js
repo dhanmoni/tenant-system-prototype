@@ -1,9 +1,21 @@
 /**
  * Grouped tenancy services and form routes (tenant / citizen portal).
- * Used by Services page, sidebar flyout, and form legal context.
- *
- * authority = jurisdiction line (Act section); rule / matter / formName match process-flow references.
+ * Each form maps to its own database table on the backend.
  */
+import { APPLICATION_TYPES } from '../constants/application'
+
+/** UIN / tenancy certificate applications table */
+export const TENANCY_TABLE = 'tenancy_applications'
+
+/** Display order: highest forum first (Tribunal → Court → Authority). */
+export const TENANCY_AUTHORITY_HIERARCHY = ['rent-tribunal', 'rent-court', 'rent-authority']
+
+export function getTenancyAuthoritiesByHierarchy() {
+	return TENANCY_AUTHORITY_HIERARCHY.map((id) => tenantServiceGroups.find((g) => g.id === id)).filter(
+		Boolean,
+	)
+}
+
 export const tenantServiceGroups = [
 	{
 		id: 'rent-authority',
@@ -12,21 +24,27 @@ export const tenantServiceGroups = [
 		authority: '(Rent Authority) Circle Officer or equivalent — Sec 30',
 		forms: [
 			{
-				to: '/dashboard/form-i-rent-revision',
+				formKey: APPLICATION_TYPES.RENT_REVISION,
+				tableName: 'rent_authority_form_i_applications',
+				to: `/dashboard/${APPLICATION_TYPES.RENT_REVISION}`,
 				label: 'Form I — Revision or fixation of rent',
 				formName: 'Form I',
 				matter: 'Revision or fixation of rent',
 				rule: 'Rule 5(1)',
 			},
 			{
-				to: '/dashboard/form-i-a-other-charges-revision',
+				formKey: APPLICATION_TYPES.OTHER_CHARGES_REVISION,
+				tableName: 'rent_authority_form_ia_applications',
+				to: `/dashboard/${APPLICATION_TYPES.OTHER_CHARGES_REVISION}`,
 				label: 'Form I-A — Revision or fixation of other charges',
 				formName: 'Form I-A',
 				matter: 'Revision or fixation of other charges',
 				rule: 'Rule 5(2)',
 			},
 			{
-				to: '/dashboard/form-i-b-valuer-appointment',
+				formKey: APPLICATION_TYPES.VALUER_APPOINTMENT,
+				tableName: 'rent_authority_form_ib_applications',
+				to: `/dashboard/${APPLICATION_TYPES.VALUER_APPOINTMENT}`,
 				label: 'Form I-B — Appointment of valuer',
 				formName: 'Form I-B',
 				matter:
@@ -34,7 +52,9 @@ export const tenantServiceGroups = [
 				rule: 'Rule 5(4)',
 			},
 			{
-				to: '/dashboard/form-6-rent-authority-filing',
+				formKey: APPLICATION_TYPES.RENT_AUTHORITY_FILING,
+				tableName: 'rent_authority_form_6_applications',
+				to: `/dashboard/${APPLICATION_TYPES.RENT_AUTHORITY_FILING}`,
 				label: 'Form IV — Matters under Rule 11',
 				formName: 'Form IV',
 				matter:
@@ -50,14 +70,18 @@ export const tenantServiceGroups = [
 		authority: '(Rent Court) ADC or equivalent — Sec 33',
 		forms: [
 			{
-				to: '/dashboard/form-4-rent-court-possession',
+				formKey: APPLICATION_TYPES.RENT_COURT_POSSESSION,
+				tableName: 'rent_court_form_4_applications',
+				to: `/dashboard/${APPLICATION_TYPES.RENT_COURT_POSSESSION}`,
 				label: 'Form II — Recovery of possession',
 				formName: 'Form II',
 				matter: 'For recovery of possession of premises from tenant',
 				rule: 'Rule 7',
 			},
 			{
-				to: '/dashboard/form-5-rent-court-filing',
+				formKey: APPLICATION_TYPES.RENT_COURT_FILING,
+				tableName: 'rent_court_form_5_applications',
+				to: `/dashboard/${APPLICATION_TYPES.RENT_COURT_FILING}`,
 				label: 'Form III — Eviction and recovery of possession',
 				formName: 'Form III',
 				matter:
@@ -65,7 +89,9 @@ export const tenantServiceGroups = [
 				rule: 'Rule 10',
 			},
 			{
-				to: '/dashboard/form-7-rent-court-appeal',
+				formKey: APPLICATION_TYPES.RENT_COURT_APPEAL,
+				tableName: 'rent_court_form_7_applications',
+				to: `/dashboard/${APPLICATION_TYPES.RENT_COURT_APPEAL}`,
 				label: 'Form V — Appeal against Rent Authority order',
 				formName: 'Form V',
 				matter:
@@ -82,7 +108,9 @@ export const tenantServiceGroups = [
 			'(Rent Tribunal) District Judge or Additional District Judge — Sec 34',
 		forms: [
 			{
-				to: '/dashboard/form-8-rent-tribunal-appeal',
+				formKey: APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL,
+				tableName: 'rent_tribunal_form_8_applications',
+				to: `/dashboard/${APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL}`,
 				label: 'Form VI — Appeal against Rent Court order',
 				formName: 'Form VI',
 				matter:
@@ -93,33 +121,40 @@ export const tenantServiceGroups = [
 	},
 ]
 
+/** Flat list of all service forms with group metadata */
+export function getAllServiceForms() {
+	return tenantServiceGroups.flatMap((group) =>
+		group.forms.map((form) => ({
+			...form,
+			groupId: group.id,
+			groupTitle: group.title,
+			authority: group.authority,
+		}))
+	)
+}
+
+/** Lookup form definition by route slug (formType param) */
+export function getServiceFormByKey(formKey) {
+	return getAllServiceForms().find((f) => f.formKey === formKey) || null
+}
+
+/** CTA on services listings, e.g. "Apply for Form I" */
+export function getFormApplyLabel(form) {
+	if (!form?.formName) return 'Apply for this form'
+	return `Apply for ${form.formName}`
+}
+
 /**
  * @param {string | undefined} formType Route param, e.g. `form-i-rent-revision`
- * @returns {null | {
- *   to: string,
- *   label: string,
- *   formName: string,
- *   matter: string,
- *   rule: string,
- *   authority: string,
- *   groupId: string,
- *   groupTitle: string,
- * }}
  */
 export function getFormServiceMeta(formType) {
 	if (!formType) return null
-	for (const group of tenantServiceGroups) {
-		for (const form of group.forms) {
-			const slug = form.to.replace(/^\/dashboard\//, '')
-			if (slug === formType) {
-				return {
-					...form,
-					authority: group.authority,
-					groupId: group.id,
-					groupTitle: group.title,
-				}
-			}
-		}
+	const form = getServiceFormByKey(formType)
+	if (!form) return null
+	return {
+		...form,
+		authority: form.authority,
+		groupId: form.groupId,
+		groupTitle: form.groupTitle,
 	}
-	return null
 }

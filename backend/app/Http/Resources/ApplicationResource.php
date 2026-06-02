@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ApplicationResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
+     */
+    public function toArray($request)
+    {
+        // Common fields to exclude from dynamic attributes
+        $commonFields = [
+            'id', 'application_no', 'user_id', 'status', 'created_at', 'updated_at', 
+            'district_id', 'forwarded_at', 'forwarded_by_user_id', 'rejected_at', 
+            'rejected_by_user_id', 'rejection_message', 'assigned_to_role', 
+            'approved_at', 'approved_by_user_id'
+        ];
+        
+        // Get all attributes of the model
+        $attributes = $this->resource->getAttributes();
+        
+        // Filter out common fields to get specific fields
+        $specificFields = array_diff_key($attributes, array_flip($commonFields));
+
+        return array_merge([
+            'id' => $this->id,
+            'application_no' => $this->application_no,
+            'status' => $this->status,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'forwarded_at' => $this->forwarded_at,
+            'rejected_at' => $this->rejected_at,
+            'approved_at' => $this->approved_at,
+            'rejection_message' => $this->rejection_message,
+            'assigned_to_role' => $this->assigned_to_role,
+            'form_type' => $this->form_type ?? $this->resource->form_type, // Fallback if not set
+            
+            // Trimmed relationships (only included if loaded)
+            'user' => $this->whenLoaded('user', function() {
+                return [
+                    'name' => $this->user->name,
+                    'email' => $this->user->email,
+                    'phone' => $this->user->phone,
+                ];
+            }),
+            
+            'district' => $this->whenLoaded('district', function() {
+                return [
+                    'name' => $this->district->name,
+                ];
+            }),
+            
+            'forwarded_by' => $this->whenLoaded('forwardedBy', function() {
+                return [
+                    'name' => $this->forwardedBy->name,
+                    'role' => $this->forwardedBy->role,
+                ];
+            }),
+            
+            'rejected_by' => $this->whenLoaded('rejectedBy', function() {
+                return [
+                    'name' => $this->rejectedBy->name,
+                ];
+            }),
+            
+            'approved_by' => $this->whenLoaded('approvedBy', function() {
+                return [
+                    'name' => $this->approvedBy->name,
+                ];
+            }),
+        ], $specificFields);
+    }
+}

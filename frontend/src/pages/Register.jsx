@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import { formatApiErrors } from '../utils/formatApiErrors'
 
 function Register({ onLogin }) {
 	const navigate = useNavigate()
@@ -51,11 +52,7 @@ function Register({ onLogin }) {
 			onLogin(data.user)
 			navigate('/dashboard')
 		} catch (err) {
-			const message =
-				err?.response?.data?.message ||
-				err?.response?.data?.errors?.email?.[0] ||
-				'Registration failed'
-			setError(message)
+			setError(formatApiErrors(err, 'Registration failed. Please check your details.'))
 		} finally {
 			setLoading(false)
 		}

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\RentCourtPossessionApplication;
+use App\Http\Resources\ApplicationResource;
+use App\Constants\Roles;
+use App\Constants\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -22,7 +25,7 @@ class RentCourtPossessionApplicationController extends Controller
             'applicant_name' => ['required', 'string', 'max:255'],
             'applicant_residential_address' => ['required', 'string'],
 
-            'tenant_unique_identification_number' => ['required', 'string', 'max:64'],
+            'tenancy_uin' => ['required', 'string', 'max:64'],
             'tenant_name' => ['nullable', 'string', 'max:255'],
 
             'jurisdiction_statement' => ['nullable', 'string'],
@@ -42,13 +45,19 @@ class RentCourtPossessionApplicationController extends Controller
             $signaturePath = $request->file('signature_image')->store('tenancy/signatures/rent-court-possession', 'public');
         }
 
+        $tenancy = \App\Models\TenancyApplication::where('uid', $data['tenancy_uin'])->first();
+        if (!$tenancy) {
+            return response()->json(['message' => 'Invalid Tenancy UID'], 422);
+        }
+
         $application = RentCourtPossessionApplication::create([
-            'application_no' => 'RC-' . Str::uuid()->toString(),
+            'application_no' => RentCourtPossessionApplication::generateApplicationNo($tenancy->district_id),
             'user_id' => $user->id,
+            'district_id' => $tenancy->district_id,
             'before_rent_court' => $data['before_rent_court'],
             'applicant_name' => $data['applicant_name'],
             'applicant_residential_address' => $data['applicant_residential_address'],
-            'tenant_unique_identification_number' => $data['tenant_unique_identification_number'],
+            'tenancy_uin' => $data['tenancy_uin'],
             'tenant_name' => $data['tenant_name'] ?? null,
             'jurisdiction_statement' => $data['jurisdiction_statement'] ?? null,
             'facts_of_case' => $data['facts_of_case'] ?? null,
@@ -59,7 +68,8 @@ class RentCourtPossessionApplicationController extends Controller
             'enclosures_list' => $data['enclosures_list'] ?? null,
             'signature_name' => $data['signature_name'],
             'signature_image_path' => $signaturePath,
-            'status' => 'SUBMITTED',
+            'status' => Status::SUBMITTED,
+            'assigned_to_role' => Roles::RC_ASSISTANT,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -83,7 +93,7 @@ class RentCourtPossessionApplicationController extends Controller
         }
 
         return response()->json([
-            'application' => $application,
+            'application' => new ApplicationResource($application),
         ]);
     }
 }

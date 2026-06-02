@@ -20,7 +20,7 @@ class RentRevisionApplicationSeeder extends Seeder
             ['application_no' => 'RR-' . now()->format('Ym') . '-000001'],
             [
                 'user_id' => $tenantUser->id,
-                'rent_authority_uid' => 'RAUID-' . now()->format('Ymd') . '-001',
+                'tenancy_uin' => 'RAUID-' . now()->format('Ymd') . '-001',
                 'tenancy_agreement_document_no' => 'DOC-TS-001',
                 'landlord_name' => 'Landlord Demo',
                 'landlord_address' => 'House No. 1, Demo Street, Assam',

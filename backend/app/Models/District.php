@@ -11,12 +11,20 @@ class District extends Model
 
     protected $fillable = [
         'name',
+        'code',
         'state_id',
-        'assistant_director_id',
-        'district_head_id',
+        'assistant_director_id', // Rent Authority
+        'district_head_id',      // Rent Court
+        'rent_tribunal_id',
+        'district_admin_id',
     ];
 
     public function assistantDirector()
+    {
+        return $this->belongsTo(User::class, 'assistant_director_id');
+    }
+
+    public function rentAuthority()
     {
         return $this->belongsTo(User::class, 'assistant_director_id');
     }
@@ -29,6 +37,21 @@ class District extends Model
     public function districtHead()
     {
         return $this->belongsTo(User::class, 'district_head_id');
+    }
+
+    public function rentCourt()
+    {
+        return $this->belongsTo(User::class, 'district_head_id');
+    }
+
+    public function rentTribunal()
+    {
+        return $this->belongsTo(User::class, 'rent_tribunal_id');
+    }
+
+    public function districtAdmin()
+    {
+        return $this->belongsTo(User::class, 'district_admin_id');
     }
 
     public function users()

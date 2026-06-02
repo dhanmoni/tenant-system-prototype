@@ -16,9 +16,11 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'string', 'email', 'max:255'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
+            'gender' => ['required', 'string', 'in:Male,Female,Other'],
+            'date_of_birth' => ['required', 'date', 'after:1900-01-01', 'before_or_equal:today'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['nullable', 'string', 'min:8'],
+            'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/', 'unique:users,phone'],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
         ]);
 
@@ -26,7 +28,9 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $data['name'],
-            'email' => $data['email'] ?? null,
+            'gender' => $data['gender'],
+            'date_of_birth' => $data['date_of_birth'],
+            'email' => $data['email'],
             'role' => 'user',
             'district_id' => $data['district_id'],
             'phone' => $data['phone'],
@@ -85,7 +89,7 @@ class AuthController extends Controller
         }
         if (
             !$user->approved_at &&
-            $user->role !== User::ROLE_SYSTEM_ADMIN &&
+            $user->role !== User::ROLE_SUPER_ADMIN &&
             $user->role !== 'user'
         ) {
             Auth::guard('web')->logout();

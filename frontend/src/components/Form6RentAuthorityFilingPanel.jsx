@@ -6,7 +6,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 
-	const [rentAuthorityUid, setRentAuthorityUid] = useState('')
+	const [tenancyUIN, setTenancyUIN] = useState('')
 
 	const [applicantName, setApplicantName] = useState('')
 	const [applicantResidentialAddress, setApplicantResidentialAddress] = useState('')
@@ -44,7 +44,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 			await csrf()
 			const formData = new FormData()
 
-			formData.append('rent_authority_uid', rentAuthorityUid.trim())
+			formData.append('tenancy_uin', tenancyUIN.trim())
 
 			formData.append('applicant_name', applicantName.trim())
 			formData.append(
@@ -118,11 +118,11 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 				}}
 			>
 				<label>
-					<span className="label-text required">Rent Authority - Unique Identification Number</span>
+					<span className="label-text required">Tenancy UIN</span>
 					<input
 						type="text"
-						value={rentAuthorityUid}
-						onChange={(e) => setRentAuthorityUid(e.target.value)}
+						value={tenancyUIN}
+						onChange={(e) => setTenancyUIN(e.target.value)}
 						required
 					/>
 				</label>

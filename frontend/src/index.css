@@ -1,4 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Lato:wght@300;400;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+	--color-landing: #a85824;
+	--color-landing-dark: #8a4519;
+	--color-landing-hover: #964f1f;
+	--color-landing-cream: #fff5eb;
+	--font-gov: 'Lato', 'Segoe UI', system-ui, sans-serif;
+	--font-hero: 'Lato', 'Segoe UI', system-ui, sans-serif;
+}
 
 :root {
 	font-family: 'Lato', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,6 +43,19 @@
 	/* Form fields: subtle grey (gov-style) */
 	--form-field-bg: #f1f3f5;
 	--form-field-border: #cfd8dc;
+	/* Landing page accent (terracotta + cream) */
+	--landing-accent: #a85824;
+	--landing-accent-dark: #8a4519;
+	--landing-accent-hover: #964f1f;
+	--landing-cream: #fff5eb;
+	--landing-text: #212529;
+	/* Warm dark tones for hero / ticker (pairs with terracotta, not cold navy) */
+	--landing-ink: #1f1612;
+	--landing-ink-mid: rgba(31, 22, 18, 0.42);
+	--landing-on-dark: #fff5eb;
+	--landing-on-dark-muted: rgba(255, 245, 235, 0.88);
+	--font-gov: 'Lato', 'Segoe UI', system-ui, sans-serif;
+	--font-hero: 'Lato', 'Segoe UI', system-ui, sans-serif;
 }
 
 *,

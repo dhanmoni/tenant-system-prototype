@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Office;
 use App\Models\TenancyApplication;
 use App\Models\User;
+use App\Constants\Roles;
+use App\Constants\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,13 @@ class TenancyApplicationController extends Controller
         }
 
         $tenancyApplication->load('office.district', 'villageWard');
+
+        if (
+            $tenancyApplication->status === Status::DRAFT
+            && (int) $tenancyApplication->user_id === (int) $user->id
+        ) {
+            return response()->json(['application' => $this->formatDraftApplication($tenancyApplication)]);
+        }
 
         return response()->json(['application' => $tenancyApplication]);
     }
@@ -159,22 +168,28 @@ class TenancyApplicationController extends Controller
             ];
 
             $movement = [[
-                'status' => 'PARTIAL',
+                'status' => Status::PARTIAL,
                 'current_with' => null,
                 'moved_at' => $now->toDateTimeString(),
             ]];
+
+            $districtId = null;
+            if (!empty($data['office_id'])) {
+                $districtId = Office::where('id', $data['office_id'])->value('district_id');
+            }
 
             return TenancyApplication::create(array_merge($data, $paths, [
                 'application_no' => $applicationNo,
                 'ref_code' => $refCode,
                 'user_id' => $user->id,
+                'district_id' => $districtId ?? $user->district_id,
                 'initiator_role' => $initiatorRole,
                 'initiator_completed' => true,
                 'second_party_completed' => false,
                 'landlord_user_id' => $initiatorRole === 'LANDLORD' ? $user->id : null,
                 'tenant_user_id' => $initiatorRole === 'TENANT' ? $user->id : null,
                 'application_type' => 'Tenancy Certificate',
-                'status' => 'PARTIAL',
+                'status' => Status::PARTIAL,
                 'current_with' => null,
                 'movement_history' => $movement,
             ]));
@@ -370,20 +385,20 @@ class TenancyApplicationController extends Controller
 
         $transactionResult = DB::transaction(function () use ($application, $updateData, $secondPartyRole, $now) {
             $uid = null;
-            $status = 'PARTIAL';
+            $status = Status::PARTIAL;
             if ($application->initiator_completed) {
                 // Pass the villageWard to get the correct state code for the UID
                 $uid = TenancyApplication::generateUid($application->villageWard, $application->office_id);
-                $status = 'COMPLETED';
+                $status = Status::COMPLETED;
                 $updateData['uid'] = $uid;
                 $updateData['status'] = $status;
-                $updateData['current_with'] = 'Rent Authority';
+                $updateData['current_with'] = Roles::RENT_AUTHORITY;
             }
 
             $movement = $application->movement_history ?? [];
             $movement[] = [
                 'status' => $status,
-                'current_with' => $status === 'COMPLETED' ? 'Rent Authority' : null,
+                'current_with' => $status === Status::COMPLETED ? Roles::RENT_AUTHORITY : null,
                 'moved_at' => $now->toDateTimeString(),
                 'action' => 'Second party (' . $secondPartyRole . ') joined',
             ];
@@ -401,7 +416,7 @@ class TenancyApplicationController extends Controller
         $status = $transactionResult['status'];
 
         return response()->json([
-            'message' => $status === 'COMPLETED'
+            'message' => $status === Status::COMPLETED
                 ? 'Application completed successfully. Both parties have submitted their details.'
                 : 'Your details have been submitted. Waiting for the other party.',
             'application_no' => $application->application_no,
@@ -698,6 +713,561 @@ class TenancyApplicationController extends Controller
         return response($html, 200)->header('Content-Type', 'text/html');
     }
 
+    public function adminIndex(Request $request)
+    {
+        $user = $request->user();
+        if (!in_array($user->role, [Roles::SUPER_ADMIN, Roles::DISTRICT_ADMIN])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $query = TenancyApplication::with('district');
+
+        if ($user->role === Roles::DISTRICT_ADMIN) {
+            $query->where('district_id', $user->district_id);
+        }
+
+        $perPage = (int) $request->input('per_page', 15);
+
+        $paginated = $query->orderBy('created_at', 'desc')->orderBy('id', 'desc')->paginate($perPage, [
+            'id',
+            'application_no',
+            'uid',
+            'created_at',
+            'status',
+            'landlord_name',
+            'tenant_name',
+            'district_id',
+        ]);
+
+        return response()->json([
+            'records' => $paginated->items(),
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+        ]);
+    }
+
+    public function currentDraft(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $draft = TenancyApplication::where('user_id', $user->id)
+            ->where('status', Status::DRAFT)
+            ->orderByDesc('updated_at')
+            ->first();
+
+        if (!$draft) {
+            return response()->json(['draft' => null]);
+        }
+
+        $draft->load('office', 'villageWard');
+
+        return response()->json(['draft' => $this->formatDraftApplication($draft)]);
+    }
+
+    public function createDraft(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $existing = TenancyApplication::where('user_id', $user->id)
+            ->where('status', Status::DRAFT)
+            ->first();
+        if ($existing) {
+            return $this->updateDraft($request, $existing);
+        }
+
+        $data = $this->validateDraftStep($request, 1, null);
+        $this->assertRegistrationEligible($data['registration_date'] ?? null);
+
+        $application = DB::transaction(function () use ($data, $user) {
+            $initiatorRole = $data['initiator_role'];
+            $districtId = null;
+            if (!empty($data['office_id'])) {
+                $districtId = Office::where('id', $data['office_id'])->value('district_id');
+            }
+
+            return TenancyApplication::create(array_merge($data, [
+                'application_no' => $this->generateApplicationNo(),
+                'user_id' => $user->id,
+                'district_id' => $districtId ?? $user->district_id,
+                'initiator_role' => $initiatorRole,
+                'initiator_completed' => false,
+                'second_party_completed' => false,
+                'landlord_user_id' => $initiatorRole === 'LANDLORD' ? $user->id : null,
+                'tenant_user_id' => $initiatorRole === 'TENANT' ? $user->id : null,
+                'application_type' => 'Tenancy Certificate',
+                'status' => Status::DRAFT,
+                'wizard_step' => 1,
+                'current_with' => null,
+                'movement_history' => [],
+            ]));
+        });
+
+        return response()->json([
+            'message' => 'Draft saved.',
+            'draft' => $this->formatDraftApplication($application->fresh()),
+        ], 201);
+    }
+
+    public function updateDraft(Request $request, TenancyApplication $tenancyApplication)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if ((int) $tenancyApplication->user_id !== (int) $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($tenancyApplication->status !== Status::DRAFT) {
+            return response()->json(['message' => 'Only draft applications can be updated this way.'], 403);
+        }
+
+        $step = max(1, min(4, (int) $request->input('wizard_step', $tenancyApplication->wizard_step ?? 1)));
+        $data = $this->validateDraftStep($request, $step, $tenancyApplication);
+
+        if (!empty($data['registration_date'])) {
+            $this->assertRegistrationEligible($data['registration_date']);
+        }
+
+        $paths = $this->collectDraftUploads($request, $tenancyApplication);
+        $nextStep = max((int) ($tenancyApplication->wizard_step ?? 1), $step);
+
+        $districtId = $tenancyApplication->district_id;
+        if (!empty($data['office_id'])) {
+            $districtId = Office::where('id', $data['office_id'])->value('district_id');
+        }
+
+        $tenancyApplication->update(array_merge($data, $paths, [
+            'wizard_step' => $nextStep,
+            'district_id' => $districtId ?? $tenancyApplication->district_id,
+        ]));
+
+        return response()->json([
+            'message' => 'Draft saved.',
+            'draft' => $this->formatDraftApplication($tenancyApplication->fresh()),
+        ]);
+    }
+
+    public function submitDraft(Request $request, TenancyApplication $tenancyApplication)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if ((int) $tenancyApplication->user_id !== (int) $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($tenancyApplication->status !== Status::DRAFT) {
+            return response()->json(['message' => 'This application has already been submitted.'], 403);
+        }
+
+        $data = $request->validate([
+            'registration_date' => ['required', 'date', 'before_or_equal:today'],
+            'office_id' => ['nullable', 'integer', 'exists:offices,id'],
+            'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
+            'apply_type' => ['required', 'string', 'max:32'],
+            'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT,PROPERTY_MANAGER'],
+            'landlord_name' => ['required', 'string', 'max:255'],
+            'landlord_address' => ['nullable', 'string'],
+            'landlord_email' => [$request->input('initiator_role') === 'LANDLORD' ? 'required' : 'nullable', 'email'],
+            'landlord_phone' => ['required', 'string', 'max:30'],
+            'landlord_pan' => ['nullable', 'string', 'max:30'],
+            'manager_name' => ['nullable', 'string', 'max:255'],
+            'manager_address' => ['nullable', 'string'],
+            'manager_email' => [$request->input('initiator_role') === 'PROPERTY_MANAGER' ? 'required' : 'nullable', 'email'],
+            'manager_phone' => ['nullable', 'string', 'max:30'],
+            'manager_pan' => ['nullable', 'string', 'max:30'],
+            'tenant_name' => ['required', 'string', 'max:255'],
+            'tenant_address' => ['nullable', 'string'],
+            'tenant_email' => [$request->input('initiator_role') === 'TENANT' ? 'required' : 'nullable', 'email'],
+            'tenant_phone' => ['required', 'string', 'max:30'],
+            'tenant_pan' => ['nullable', 'string', 'max:30'],
+            'landlord_aadhar' => ['nullable', 'string', 'max:20'],
+            'manager_aadhar' => ['nullable', 'string', 'max:20'],
+            'tenant_aadhar' => ['nullable', 'string', 'max:20'],
+            'tenant_previous_tenancy' => ['nullable', 'string'],
+            'property_possession_date' => ['required', 'date'],
+            'property_rent_payable' => ['required', 'numeric', 'min:0'],
+            'property_premises_description' => ['nullable', 'string'],
+            'property_furniture_description' => ['nullable', 'string'],
+            'property_charge_electricity' => ['nullable', 'string', 'max:255'],
+            'property_charge_water' => ['nullable', 'string', 'max:255'],
+            'property_charge_furnishing' => ['nullable', 'string', 'max:255'],
+            'property_charge_other_services' => ['nullable', 'string', 'max:255'],
+            'property_tenancy_duration' => ['required', 'string', 'max:255'],
+            'agreement_pdf' => ['nullable', 'file', 'mimes:pdf'],
+            'landlord_photo' => ['nullable', 'image'],
+            'landlord_signature' => ['nullable', 'image'],
+            'tenant_photo' => ['nullable', 'image'],
+            'tenant_signature' => ['nullable', 'image'],
+            'landlord_photo_path' => ['nullable', 'string', 'max:255'],
+            'tenant_photo_path' => ['nullable', 'string', 'max:255'],
+            'landlord_pan_file' => ['nullable', 'file'],
+            'tenant_pan_file' => ['nullable', 'file'],
+            'manager_pan_file' => ['nullable', 'file'],
+            'force_new' => ['nullable', 'boolean'],
+        ]);
+
+        $this->assertRegistrationEligible($data['registration_date']);
+
+        $salt = $request->boolean('force_new') ? (string) Carbon::now()->timestamp : null;
+        $refCode = TenancyApplication::generateRefCode(
+            $data['landlord_phone'],
+            $data['tenant_phone'],
+            $data['registration_date'],
+            $data['village_ward_id'],
+            $salt
+        );
+
+        $existing = TenancyApplication::where('ref_code', $refCode)
+            ->where('id', '!=', $tenancyApplication->id)
+            ->first();
+        if ($existing && !$request->boolean('force_new')) {
+            return response()->json([
+                'conflict' => true,
+                'message' => 'An application with the same details already exists.',
+                'ref_code' => $refCode,
+                'existing_application' => [
+                    'id' => $existing->id,
+                    'application_no' => $existing->application_no,
+                    'status' => $existing->status,
+                    'initiator_role' => $existing->initiator_role,
+                    'initiator_completed' => $existing->initiator_completed,
+                    'second_party_completed' => $existing->second_party_completed,
+                ],
+            ], 409);
+        }
+
+        $initiatorRole = $data['initiator_role'];
+        $paths = $this->collectDraftUploads($request, $tenancyApplication, true);
+        $now = Carbon::now();
+        $movement = [[
+            'status' => Status::PARTIAL,
+            'current_with' => null,
+            'moved_at' => $now->toDateTimeString(),
+        ]];
+
+        $districtId = null;
+        if (!empty($data['office_id'])) {
+            $districtId = Office::where('id', $data['office_id'])->value('district_id');
+        }
+
+        $tenancyApplication->update(array_merge($data, $paths, [
+            'ref_code' => $refCode,
+            'district_id' => $districtId ?? $tenancyApplication->district_id,
+            'initiator_role' => $initiatorRole,
+            'initiator_completed' => true,
+            'second_party_completed' => false,
+            'landlord_user_id' => $initiatorRole === 'LANDLORD' ? $user->id : $tenancyApplication->landlord_user_id,
+            'tenant_user_id' => $initiatorRole === 'TENANT' ? $user->id : $tenancyApplication->tenant_user_id,
+            'status' => Status::PARTIAL,
+            'wizard_step' => 5,
+            'current_with' => null,
+            'movement_history' => $movement,
+        ]));
+
+        $frontendUrl = config('app.frontend_url', $request->getSchemeAndHttpHost());
+        $joinLink = $frontendUrl . '/join?ref=' . $tenancyApplication->ref_code;
+
+        return response()->json([
+            'id' => $tenancyApplication->id,
+            'application_no' => $tenancyApplication->application_no,
+            'ref_code' => $tenancyApplication->ref_code,
+            'join_link' => $joinLink,
+            'submitted_at' => $tenancyApplication->updated_at->toDateTimeString(),
+            'application' => $tenancyApplication->fresh(),
+        ]);
+    }
+
+    private function validateDraftStep(Request $request, int $step, ?TenancyApplication $existing = null): array
+    {
+        if ($existing) {
+            $this->mergeDraftRequestFromExisting($request, $existing, $step);
+        }
+
+        $rules = [
+            'wizard_step' => ['sometimes', 'integer', 'min:1', 'max:4'],
+        ];
+
+        if ($step === 1) {
+            $rules = array_merge($rules, [
+                'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT'],
+                'registration_date' => ['required', 'date', 'before_or_equal:today'],
+                'office_id' => ['required', 'integer', 'exists:offices,id'],
+                'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
+                'apply_type' => ['required', 'string', 'max:32'],
+            ]);
+        }
+
+        if ($step === 2) {
+            $initiatorRole = $request->input('initiator_role', $existing?->initiator_role);
+            $rules = array_merge($rules, [
+                'initiator_role' => ['sometimes', 'string', 'in:LANDLORD,TENANT'],
+                'landlord_name' => ['required', 'string', 'max:255'],
+                'landlord_address' => ['nullable', 'string'],
+                'landlord_email' => [$initiatorRole === 'LANDLORD' ? 'required' : 'nullable', 'email'],
+                'landlord_phone' => ['required', 'string', 'max:30'],
+                'landlord_pan' => ['nullable', 'string', 'max:30'],
+                'manager_name' => ['nullable', 'string', 'max:255'],
+                'manager_address' => ['nullable', 'string'],
+                'manager_email' => ['nullable', 'email'],
+                'manager_phone' => ['nullable', 'string', 'max:30'],
+                'manager_pan' => ['nullable', 'string', 'max:30'],
+                'tenant_name' => ['required', 'string', 'max:255'],
+                'tenant_address' => ['nullable', 'string'],
+                'tenant_email' => [$initiatorRole === 'TENANT' ? 'required' : 'nullable', 'email'],
+                'tenant_phone' => ['required', 'string', 'max:30'],
+                'tenant_pan' => ['nullable', 'string', 'max:30'],
+                'landlord_aadhar' => ['nullable', 'string', 'max:20'],
+                'manager_aadhar' => ['nullable', 'string', 'max:20'],
+                'tenant_aadhar' => ['nullable', 'string', 'max:20'],
+                'tenant_previous_tenancy' => ['nullable', 'string'],
+                'property_possession_date' => ['required', 'date'],
+                'property_rent_payable' => ['required', 'numeric', 'min:0'],
+                'property_premises_description' => ['nullable', 'string'],
+                'property_furniture_description' => ['nullable', 'string'],
+                'property_charge_electricity' => ['nullable', 'string', 'max:255'],
+                'property_charge_water' => ['nullable', 'string', 'max:255'],
+                'property_charge_furnishing' => ['nullable', 'string', 'max:255'],
+                'property_charge_other_services' => ['nullable', 'string', 'max:255'],
+                'property_tenancy_duration' => ['required', 'string', 'max:255'],
+            ]);
+        }
+
+        if ($step >= 3) {
+            $rules = array_merge($rules, [
+                'agreement_pdf' => ['nullable', 'file', 'mimes:pdf'],
+                'landlord_photo' => ['nullable', 'image'],
+                'landlord_signature' => ['nullable', 'image'],
+                'tenant_photo' => ['nullable', 'image'],
+                'tenant_signature' => ['nullable', 'image'],
+                'landlord_pan_file' => ['nullable', 'file'],
+                'tenant_pan_file' => ['nullable', 'file'],
+                'manager_pan_file' => ['nullable', 'file'],
+            ]);
+        }
+
+        return $request->validate($rules);
+    }
+
+    /**
+     * For multipart draft updates, fill missing fields from the saved record so
+     * revisiting an earlier stage does not fail validation.
+     */
+    private function mergeDraftRequestFromExisting(Request $request, TenancyApplication $existing, int $step): void
+    {
+        $merge = [];
+
+        $stepOneFields = [
+            'initiator_role',
+            'registration_date',
+            'office_id',
+            'village_ward_id',
+            'apply_type',
+        ];
+
+        foreach ($stepOneFields as $field) {
+            if (!$request->has($field) && $existing->{$field} !== null && $existing->{$field} !== '') {
+                $merge[$field] = $existing->{$field};
+            }
+        }
+
+        if ($step >= 2) {
+            $stepTwoFields = [
+                'landlord_name',
+                'landlord_address',
+                'landlord_email',
+                'landlord_phone',
+                'landlord_pan',
+                'landlord_aadhar',
+                'manager_name',
+                'manager_address',
+                'manager_email',
+                'manager_phone',
+                'manager_pan',
+                'manager_aadhar',
+                'tenant_name',
+                'tenant_address',
+                'tenant_email',
+                'tenant_phone',
+                'tenant_pan',
+                'tenant_aadhar',
+                'tenant_previous_tenancy',
+                'property_possession_date',
+                'property_rent_payable',
+                'property_premises_description',
+                'property_furniture_description',
+                'property_charge_electricity',
+                'property_charge_water',
+                'property_charge_furnishing',
+                'property_charge_other_services',
+                'property_tenancy_duration',
+            ];
+
+            foreach ($stepTwoFields as $field) {
+                if (!$request->has($field) && $existing->{$field} !== null && $existing->{$field} !== '') {
+                    $merge[$field] = $existing->{$field};
+                }
+            }
+        }
+
+        if (!empty($merge)) {
+            $request->merge($merge);
+        }
+    }
+
+    private function collectDraftUploads(Request $request, TenancyApplication $application, bool $requireAgreement = false): array
+    {
+        $paths = [
+            'agreement_pdf_path' => $this->storeUpload($request, 'agreement_pdf', 'tenancy/agreements')
+                ?: $application->agreement_pdf_path,
+            'landlord_photo_path' => $this->storeUpload($request, 'landlord_photo', 'tenancy/photos')
+                ?: $application->landlord_photo_path,
+            'landlord_signature_path' => $this->storeUpload($request, 'landlord_signature', 'tenancy/signatures')
+                ?: $application->landlord_signature_path,
+            'landlord_pan_path' => $this->storeUpload($request, 'landlord_pan_file', 'tenancy/documents')
+                ?: $application->landlord_pan_path,
+            'tenant_photo_path' => $this->storeUpload($request, 'tenant_photo', 'tenancy/photos')
+                ?: $application->tenant_photo_path,
+            'tenant_signature_path' => $this->storeUpload($request, 'tenant_signature', 'tenancy/signatures')
+                ?: $application->tenant_signature_path,
+            'tenant_pan_path' => $this->storeUpload($request, 'tenant_pan_file', 'tenancy/documents')
+                ?: $application->tenant_pan_path,
+            'manager_pan_path' => $this->storeUpload($request, 'manager_pan_file', 'tenancy/documents')
+                ?: $application->manager_pan_path,
+        ];
+
+        if ($requireAgreement && empty($paths['agreement_pdf_path'])) {
+            throw ValidationException::withMessages([
+                'agreement_pdf' => ['Registered tenancy agreement (PDF) is required.'],
+            ]);
+        }
+
+        $role = strtoupper((string) $application->initiator_role);
+        if ($requireAgreement) {
+            if ($role === 'TENANT') {
+                if (empty($paths['tenant_photo_path']) || empty($paths['tenant_signature_path']) || empty($paths['tenant_pan_path'])) {
+                    throw ValidationException::withMessages([
+                        'uploads' => ['Tenant photo, signature, and PAN document are required.'],
+                    ]);
+                }
+            } elseif (empty($paths['landlord_photo_path']) || empty($paths['landlord_signature_path']) || empty($paths['landlord_pan_path'])) {
+                throw ValidationException::withMessages([
+                    'uploads' => ['Landlord photo, signature, and PAN document are required.'],
+                ]);
+            }
+        }
+
+        return $paths;
+    }
+
+    private function assertRegistrationEligible(?string $registrationDate): void
+    {
+        if (!$registrationDate) {
+            return;
+        }
+
+        $regDate = Carbon::parse($registrationDate);
+        $monthsDiff = Carbon::now()->diffInMonths($regDate, false);
+        if ($monthsDiff > 3) {
+            throw ValidationException::withMessages([
+                'registration_date' => ['The tenancy agreement registration date must be within the last 3 months.'],
+            ]);
+        }
+    }
+
+    private function generateApplicationNo(): string
+    {
+        $now = Carbon::now();
+        $prefix = 'APP-' . $now->format('Ym');
+
+        $latest = TenancyApplication::where('application_no', 'like', $prefix . '-%')
+            ->whereRaw("application_no ~ '^[A-Z]+-[0-9]{6}-[0-9]+$'")
+            ->orderByDesc('application_no')
+            ->lockForUpdate()
+            ->first();
+
+        $next = 1;
+        if ($latest) {
+            $parts = explode('-', $latest->application_no);
+            $next = ((int) end($parts)) + 1;
+        }
+
+        return $prefix . '-' . str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+    }
+
+    private function formatDraftApplication(TenancyApplication $application): array
+    {
+        $storageBase = rtrim(config('app.url', ''), '/') . '/storage/';
+
+        $fileUrl = static function (?string $path) use ($storageBase) {
+            return $path ? $storageBase . ltrim($path, '/') : null;
+        };
+
+        return [
+            'id' => $application->id,
+            'application_no' => $application->application_no,
+            'wizard_step' => (int) ($application->wizard_step ?? 1),
+            'status' => $application->status,
+            'initiator_role' => $application->initiator_role,
+            'registration_date' => $application->registration_date,
+            'office_id' => $application->office_id,
+            'village_ward_id' => $application->village_ward_id,
+            'apply_type' => $application->apply_type,
+            'landlord_name' => $application->landlord_name,
+            'landlord_address' => $application->landlord_address,
+            'landlord_email' => $application->landlord_email,
+            'landlord_phone' => $application->landlord_phone,
+            'landlord_pan' => $application->landlord_pan,
+            'landlord_aadhar' => $application->landlord_aadhar,
+            'manager_name' => $application->manager_name,
+            'manager_address' => $application->manager_address,
+            'manager_email' => $application->manager_email,
+            'manager_phone' => $application->manager_phone,
+            'manager_pan' => $application->manager_pan,
+            'manager_aadhar' => $application->manager_aadhar,
+            'tenant_name' => $application->tenant_name,
+            'tenant_address' => $application->tenant_address,
+            'tenant_email' => $application->tenant_email,
+            'tenant_phone' => $application->tenant_phone,
+            'tenant_pan' => $application->tenant_pan,
+            'tenant_aadhar' => $application->tenant_aadhar,
+            'tenant_previous_tenancy' => $application->tenant_previous_tenancy,
+            'property_possession_date' => $application->property_possession_date,
+            'property_rent_payable' => $application->property_rent_payable,
+            'property_premises_description' => $application->property_premises_description,
+            'property_furniture_description' => $application->property_furniture_description,
+            'property_charge_electricity' => $application->property_charge_electricity,
+            'property_charge_water' => $application->property_charge_water,
+            'property_charge_furnishing' => $application->property_charge_furnishing,
+            'property_charge_other_services' => $application->property_charge_other_services,
+            'property_tenancy_duration' => $application->property_tenancy_duration,
+            'agreement_pdf_url' => $fileUrl($application->agreement_pdf_path),
+            'landlord_photo_url' => $fileUrl($application->landlord_photo_path),
+            'landlord_signature_url' => $fileUrl($application->landlord_signature_path),
+            'landlord_pan_url' => $fileUrl($application->landlord_pan_path),
+            'tenant_photo_url' => $fileUrl($application->tenant_photo_path),
+            'tenant_signature_url' => $fileUrl($application->tenant_signature_path),
+            'tenant_pan_url' => $fileUrl($application->tenant_pan_path),
+            'office' => $application->office,
+            'village_ward' => $application->villageWard,
+            'updated_at' => $application->updated_at?->toDateTimeString(),
+        ];
+    }
+
     private function storeUpload(Request $request, string $key, string $path): ?string
     {
         if (!$request->hasFile($key)) {
@@ -760,6 +1330,10 @@ class TenancyApplicationController extends Controller
 
     private function userCanAccess($user, TenancyApplication $application): bool
     {
+        if ($user->role === \App\Constants\Roles::SUPER_ADMIN) {
+            return true;
+        }
+
         // Check landlord/tenant user ID match
         if ($application->landlord_user_id && (int) $application->landlord_user_id === (int) $user->id) {
             return true;
@@ -784,8 +1358,7 @@ class TenancyApplicationController extends Controller
             return true;
         }
 
-        $staffRoles = [User::ROLE_DIRECTOR, User::ROLE_ASSISTANT_DIRECTOR, User::ROLE_DISTRICT_HEAD, User::ROLE_DISTRICT_ASSISTANT];
-        if (in_array($user->role, $staffRoles, true) && !empty($user->district_id) && !empty($application->office_id)) {
+        if ($user->role === \App\Constants\Roles::DISTRICT_ADMIN && !empty($user->district_id) && !empty($application->office_id)) {
             $office = Office::find($application->office_id);
             return $office && (int) $office->district_id === (int) $user->district_id;
         }

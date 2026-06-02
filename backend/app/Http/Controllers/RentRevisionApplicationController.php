@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\RentRevisionApplication;
+use App\Http\Resources\ApplicationResource;
+use App\Constants\Roles;
+use App\Constants\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +21,7 @@ class RentRevisionApplicationController extends Controller
         }
 
         $data = $request->validate([
-            'rent_authority_uid' => ['required', 'string', 'max:64'],
+            'tenancy_uin' => ['required', 'string', 'max:64'],
             'tenancy_agreement_document_no' => ['nullable', 'string', 'max:255'],
 
             'landlord_name' => ['required', 'string', 'max:255'],
@@ -47,10 +50,16 @@ class RentRevisionApplicationController extends Controller
             $signaturePath = $request->file('signature_image')->store('tenancy/signatures/rent-revision', 'public');
         }
 
+        $tenancy = \App\Models\TenancyApplication::where('uid', $data['tenancy_uin'])->first();
+        if (!$tenancy) {
+            return response()->json(['message' => 'Invalid Tenancy UID'], 422);
+        }
+
         $application = RentRevisionApplication::create([
-            'application_no' => Str::uuid()->toString(),
+            'application_no' => RentRevisionApplication::generateApplicationNo($tenancy->district_id),
             'user_id' => $user->id,
-            'rent_authority_uid' => $data['rent_authority_uid'],
+            'district_id' => $tenancy->district_id,
+            'tenancy_uin' => $data['tenancy_uin'],
             'tenancy_agreement_document_no' => $data['tenancy_agreement_document_no'] ?? null,
             'landlord_name' => $data['landlord_name'],
             'landlord_address' => $data['landlord_address'],
@@ -65,7 +74,8 @@ class RentRevisionApplicationController extends Controller
             'signed_by' => $data['signed_by'] ?? null,
             'signature_name' => $data['signature_name'],
             'signature_image_path' => $signaturePath,
-            'status' => 'SUBMITTED',
+            'status' => Status::SUBMITTED,
+            'assigned_to_role' => Roles::RA_ASSISTANT,
         ]);
 
         return response()->json([
@@ -87,7 +97,7 @@ class RentRevisionApplicationController extends Controller
         }
 
         return response()->json([
-            'application' => $application,
+            'application' => new ApplicationResource($application),
         ]);
     }
 }

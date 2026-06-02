@@ -1,0 +1,217 @@
+/* Admin application review (workspace dashboard) */
+.admin-app-details {
+	width: 100%;
+	max-width: 960px;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.admin-app-details__alert {
+	width: 100%;
+}
+
+.admin-app-details__toolbar {
+	display: flex;
+	align-items: center;
+}
+
+.admin-app-details__back {
+	display: inline-flex !important;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.admin-app-details__back-icon {
+	width: 1rem;
+	height: 1rem;
+	transform: rotate(180deg);
+}
+
+.admin-app-details__hero {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem 1.5rem;
+	padding: 1.25rem 1.5rem;
+	background: var(--ws-surface, #fff);
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 12px;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.admin-app-details__hero-main {
+	min-width: 0;
+	flex: 1 1 16rem;
+}
+
+.admin-app-details__eyebrow {
+	margin: 0 0 0.35rem;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	color: var(--ws-accent, #0d47a1);
+	line-height: 1.35;
+}
+
+.admin-app-details__ref {
+	margin: 0;
+	font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+	font-size: 1.35rem;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	color: var(--ws-text, #0f172a);
+	line-height: 1.25;
+	word-break: break-all;
+}
+
+.admin-app-details__meta {
+	margin: 0.5rem 0 0;
+	font-size: 0.875rem;
+	color: var(--ws-muted, #64748b);
+	line-height: 1.45;
+}
+
+.admin-app-details__meta-sep {
+	margin: 0 0.35rem;
+	opacity: 0.6;
+}
+
+.admin-app-details__card {
+	background: var(--ws-surface, #fff);
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 12px;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+	overflow: hidden;
+}
+
+.admin-app-details__section-title {
+	margin: 0;
+	padding: 0.9rem 1.25rem;
+	font-size: 0.9375rem;
+	font-weight: 700;
+	color: var(--ws-text, #1e293b);
+	background: var(--ws-surface-muted, #f8fafc);
+	border-bottom: 1px solid var(--ws-border, #e2e8f0);
+}
+
+.admin-app-details__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.admin-app-details__field {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0.25rem;
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--ws-border, #e2e8f0);
+}
+
+@media (min-width: 721px) {
+	.admin-app-details__field:nth-child(odd) {
+		border-right: 1px solid var(--ws-border, #e2e8f0);
+	}
+
+	.admin-app-details__field:nth-last-child(-n + 2):nth-child(odd) {
+		border-bottom: none;
+	}
+
+	.admin-app-details__field:nth-last-child(1):nth-child(even) {
+		border-bottom: none;
+	}
+}
+
+.admin-app-details__field dt {
+	margin: 0;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-app-details__field dd {
+	margin: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--ws-text, #0f172a);
+	line-height: 1.5;
+	word-break: break-word;
+}
+
+.admin-app-details__empty {
+	color: var(--ws-muted, #94a3b8);
+	font-weight: 500;
+}
+
+.admin-app-details__media {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
+.admin-app-details__img {
+	max-width: 220px;
+	border-radius: 8px;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	cursor: zoom-in;
+}
+
+.admin-app-details__link {
+	color: var(--ws-accent, #0d47a1);
+	font-size: 0.875rem;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.admin-app-details__link:hover {
+	text-decoration: underline;
+}
+
+.admin-app-details__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.75rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--ws-border, #e2e8f0);
+}
+
+.page.page-dashboard .ws-root .admin-app-details__actions .ws-btn--danger {
+	background: #b91c1c;
+	border-color: #b91c1c;
+	color: #fff;
+}
+
+.page.page-dashboard .ws-root .admin-app-details__actions .ws-btn--danger:hover:not(:disabled) {
+	background: #991b1b;
+	border-color: #991b1b;
+}
+
+@media (max-width: 720px) {
+	.admin-app-details__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.admin-app-details__field {
+		border-right: none;
+	}
+
+	.admin-app-details__field:last-child {
+		border-bottom: none;
+	}
+
+	.admin-app-details__actions {
+		flex-direction: column;
+	}
+
+	.admin-app-details__actions .ws-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}

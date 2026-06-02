@@ -11,7 +11,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 	const [applicantName, setApplicantName] = useState('')
 	const [applicantResidentialAddress, setApplicantResidentialAddress] = useState('')
 
-	const [tenantUniqueId, setTenantUniqueId] = useState('')
+	const [tenancyUIN, setTenancyUIN] = useState('')
 	const [tenantName, setTenantName] = useState('')
 
 	const [jurisdictionStatement, setJurisdictionStatement] = useState('')
@@ -47,7 +47,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 			formData.append('applicant_name', applicantName.trim())
 			formData.append('applicant_residential_address', applicantResidentialAddress.trim())
 
-			formData.append('tenant_unique_identification_number', tenantUniqueId.trim())
+			formData.append('tenancy_uin', tenancyUIN.trim())
 			if (tenantName.trim()) formData.append('tenant_name', tenantName.trim())
 
 			if (jurisdictionStatement.trim()) formData.append('jurisdiction_statement', jurisdictionStatement.trim())
@@ -123,7 +123,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 
 					<label>
 						<span className="label-text required">Tenant Unique Identification Number</span>
-						<input type="text" value={tenantUniqueId} onChange={(e) => setTenantUniqueId(e.target.value)} required />
+						<input type="text" value={tenancyUIN} onChange={(e) => setTenancyUIN(e.target.value)} required />
 					</label>
 					<label>
 						<span className="label-text">Tenant name (optional)</span>

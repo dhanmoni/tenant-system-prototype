@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\RentCourtAppealApplication;
+use App\Http\Resources\ApplicationResource;
+use App\Constants\Roles;
+use App\Constants\Status;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -19,7 +22,7 @@ class RentCourtAppealApplicationController extends Controller
         $data = $request->validate([
             // Header
             'rent_court_at' => ['required', 'string', 'max:255'],
-            'tenancy_unique_identification_number' => ['required', 'string', 'max:64'],
+            'tenancy_uin' => ['required', 'string', 'max:64'],
 
             // Appellant
             'appellant_name' => ['required', 'string', 'max:255'],
@@ -50,19 +53,21 @@ class RentCourtAppealApplicationController extends Controller
                 ->store('tenancy/signatures/rent-court-appeal', 'public');
         }
 
+        $tenancy = \App\Models\TenancyApplication::where('uid', $data['tenancy_uin'])->first();
+        if (!$tenancy) {
+            return response()->json(['message' => 'Invalid Tenancy UID'], 422);
+        }
+
         $application = RentCourtAppealApplication::create([
-            'application_no' => 'RCA-' . Str::uuid()->toString(),
+            'application_no' => RentCourtAppealApplication::generateApplicationNo($tenancy->district_id),
             'user_id' => $user->id,
-
+            'district_id' => $tenancy->district_id,
             'rent_court_at' => $data['rent_court_at'],
-            'tenancy_unique_identification_number' => $data['tenancy_unique_identification_number'],
-
+            'tenancy_uin' => $data['tenancy_uin'],
             'appellant_name' => $data['appellant_name'],
             'appellant_residential_address' => $data['appellant_residential_address'],
-
             'respondent_name' => $data['respondent_name'],
             'respondent_residential_address' => $data['respondent_residential_address'],
-
             'order_particulars_against_which_appeal_made' => $data['order_particulars_against_which_appeal_made'] ?? null,
             'jurisdiction_of_rent_court' => $data['jurisdiction_of_rent_court'] ?? null,
             'limitation' => $data['limitation'] ?? null,
@@ -71,10 +76,10 @@ class RentCourtAppealApplicationController extends Controller
             'relief_sought' => $data['relief_sought'] ?? null,
             'interim_order_sought' => $data['interim_order_sought'] ?? null,
             'list_of_enclosures' => $data['list_of_enclosures'] ?? null,
-
             'signature_name' => $data['signature_name'],
             'signature_image_path' => $signaturePath,
-            'status' => 'SUBMITTED',
+            'status' => Status::SUBMITTED,
+            'assigned_to_role' => Roles::RC_ASSISTANT,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
@@ -98,7 +103,7 @@ class RentCourtAppealApplicationController extends Controller
         }
 
         return response()->json([
-            'application' => $application,
+            'application' => new ApplicationResource($application),
         ]);
     }
 }
