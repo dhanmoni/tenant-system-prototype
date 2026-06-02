@@ -67,13 +67,13 @@ function GetStartedSection({ authPanelProps }) {
 								className="get-started-headline__primary"
 								variants={reduceMotion ? undefined : introTitleVariants}
 							>
-								The right place
+								One place to manage
 							</motion.span>
 							<motion.span
 								className="get-started-headline__accent"
 								variants={reduceMotion ? undefined : introTitleVariants}
 							>
-								for your tenancy needs.
+								all your tenancy needs.
 							</motion.span>
 						</motion.h2>
 						<motion.span
