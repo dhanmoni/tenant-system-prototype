@@ -1068,7 +1068,7 @@ body:has(.page.page-dashboard) {
 }
 
 .landing-nav-overlay a.landing-nav-cta--primary:hover {
-	background-color: var(--landing-accent-dark) !important;
+	background-color: var(--landing-accent-hover) !important;
 }
 
 .landing-nav-overlay a.landing-nav-cta--outline {
@@ -1080,7 +1080,7 @@ body:has(.page.page-dashboard) {
 
 .landing-nav-overlay a.landing-nav-cta--outline:hover {
 	background-color: color-mix(in srgb, var(--landing-accent) 10%, #fff) !important;
-	color: var(--landing-accent-dark) !important;
+	color: var(--landing-accent-hover) !important;
 }
 
 /* Stats strip — below portal services section */
@@ -2017,7 +2017,7 @@ body.a11y-highlight-links button:not(.accessibility-toolbar-btn):not(.landing-he
 }
 
 .landing-hero-cta--primary:hover:not(:disabled) {
-	background-color: var(--landing-accent-dark) !important;
+	background-color: var(--landing-accent-hover) !important;
 	transform: translateY(-1px);
 }
 
@@ -3187,8 +3187,8 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 }
 
 .get-started-section .auth-panel-btn-primary:hover:not(:disabled) {
-	background: var(--landing-accent-dark) !important;
-	border-color: var(--landing-accent-dark) !important;
+	background: var(--landing-accent-hover) !important;
+	border-color: var(--landing-accent-hover) !important;
 	filter: none;
 	transform: translateY(-1px);
 	box-shadow: none;
@@ -3515,7 +3515,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 }
 
 .citizen-services-aside__btn-primary:hover {
-	background: color-mix(in srgb, var(--landing-accent) 88%, #000);
+	background: var(--landing-accent-hover);
 	color: #fff;
 }
 
@@ -3902,7 +3902,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 }
 
 .portal-guide-access-aside__btn-primary:hover {
-	background: color-mix(in srgb, var(--landing-accent) 88%, #000);
+	background: var(--landing-accent-hover);
 	color: #fff;
 }
 
@@ -4798,7 +4798,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 }
 
 .portal-services-showcase__cta:hover {
-	background: var(--landing-accent-dark);
+	background: var(--landing-accent-hover);
 	color: #fff !important;
 	transform: translateY(-1px);
 	box-shadow: none;
@@ -7228,7 +7228,7 @@ body.ux4g-a11y-panel-open {
 
 .landing-page-home .auth-card--rent-portal form button:hover:not(:disabled),
 .landing-page-home .auth-card--rent-portal .btn-send-otp:hover:not(:disabled) {
-	background: var(--landing-accent-dark) !important;
+	background: var(--landing-accent-hover) !important;
 }
 
 .landing-page-home .auth-card--rent-portal p.muted a {
