@@ -148,7 +148,145 @@ export const showcaseCardHover = {
 	transition: { type: 'spring', stiffness: 420, damping: 22 },
 }
 
-/** Portal benefits — cards + media split layout */
+/** Landing hero — one-time intro on copy; carousel slides horizontally */
+const heroIntroEase = [0.22, 1, 0.36, 1]
+
+export const heroSlideVariants = {
+	enter: (direction = 1) => ({
+		x: direction >= 0 ? '100%' : '-100%',
+		opacity: 1,
+	}),
+	center: {
+		x: 0,
+		opacity: 1,
+		transition: { duration: 0.95, ease: heroIntroEase },
+	},
+	exit: (direction = 1) => ({
+		x: direction >= 0 ? '-100%' : '100%',
+		opacity: 1,
+		transition: { duration: 0.9, ease: [0.4, 0, 0.2, 1] },
+	}),
+}
+
+export const heroCopyContainerVariants = {
+	hidden: {},
+	visible: {
+		transition: { staggerChildren: 0.14, delayChildren: 0.25 },
+	},
+}
+
+export const heroTitleVariants = {
+	hidden: { opacity: 0, x: -28 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		transition: { duration: 0.8, ease: heroIntroEase },
+	},
+}
+
+export const heroLeadVariants = {
+	hidden: { opacity: 0, x: -18 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		transition: { duration: 0.7, ease: heroIntroEase },
+	},
+}
+
+export const heroActionsContainerVariants = {
+	hidden: {},
+	visible: {
+		transition: { staggerChildren: 0.1, delayChildren: 0.06 },
+	},
+}
+
+export const heroActionItemVariants = {
+	hidden: { opacity: 0, y: 14 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: { duration: 0.55, ease: heroIntroEase },
+	},
+}
+
+export const heroAccentLineVariants = {
+	hidden: { scaleX: 0, opacity: 0 },
+	visible: {
+		scaleX: 1,
+		opacity: 1,
+		transition: { duration: 0.65, ease: heroIntroEase, delay: 0.15 },
+	},
+}
+
+/** Portal benefits — minimal list layout */
+const benefitsEase = [0.25, 0.46, 0.45, 0.94]
+
+export const benefitsListVariants = {
+	hidden: {},
+	visible: {
+		transition: { staggerChildren: 0.15, delayChildren: 0.08 },
+	},
+}
+
+export const benefitsListRuleVariants = {
+	hidden: { opacity: 0, scaleX: 0.3 },
+	visible: {
+		opacity: 1,
+		scaleX: 1,
+		transition: { duration: 0.55, ease: benefitsEase },
+	},
+}
+
+export const benefitsItemVariants = {
+	hidden: { opacity: 0, x: 36 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 280,
+			damping: 32,
+			mass: 0.9,
+			staggerChildren: 0.1,
+			delayChildren: 0.03,
+		},
+	},
+}
+
+export const benefitsItemDividerVariants = {
+	hidden: { opacity: 0 },
+	visible: {
+		opacity: 1,
+		transition: { duration: 0.35, ease: 'easeOut' },
+	},
+}
+
+export const benefitsItemRowVariants = {
+	hidden: {},
+	visible: {
+		transition: { staggerChildren: 0.08, delayChildren: 0.04 },
+	},
+}
+
+export const benefitsItemIconVariants = {
+	hidden: { opacity: 0, scale: 0.75 },
+	visible: {
+		opacity: 1,
+		scale: 1,
+		transition: { duration: 0.45, ease: benefitsEase },
+	},
+}
+
+export const benefitsItemContentVariants = {
+	hidden: { opacity: 0, y: 18 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: { duration: 0.5, ease: benefitsEase },
+	},
+}
+
+/** Portal benefits — cards + media split layout (legacy) */
 export const benefitsBodyVariants = {
 	hidden: {},
 	visible: {

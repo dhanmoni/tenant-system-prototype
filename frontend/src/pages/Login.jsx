@@ -311,7 +311,7 @@ function Login({ onLogin }) {
 					<GetStartedSection authPanelProps={authPanelProps} />
 					<PortalServicesSection />
 					<PortalStatsBar />
-					<PortalBenefitsSection />
+					<PortalBenefitsSection className="portal-benefits--after-stats" />
 					<PortalGuideSection />
 					<PortalFaqSection />
 					<NeedSupportSection />

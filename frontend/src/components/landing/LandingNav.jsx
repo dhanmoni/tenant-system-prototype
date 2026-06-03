@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import NavDashboardMenu from './NavDashboardMenu'
-import emblem from '../../assets/img/emblem-dark.png'
+import tcpLogo from '../../assets/img/TCP logo.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
 import { emitLandingA11y } from '../../utils/landingA11y'
 
@@ -121,7 +121,7 @@ function LandingNav({ variant = 'overlay' }) {
 
 				<div className="landing-nav-mobile-brand">
 					<Link to="/" onClick={closeMenu} className="landing-nav-brand">
-						<img src={emblem} alt="" className="landing-nav-emblem" aria-hidden />
+						<img src={tcpLogo} alt="" className="landing-nav-emblem" aria-hidden />
 						<span className="landing-nav-brand-text">
 							<span className="landing-nav-brand-line">Government of Assam</span>
 							<span className="landing-nav-brand-line landing-nav-brand-line--strong">

@@ -12,7 +12,12 @@ function LogoCard({ portal }) {
 			title={`${portal.name} (opens in new tab)`}
 		>
 			{portal.logo ? (
-				<img src={portal.logo} alt={portal.alt} className="gov-logos-carousel__img" loading="lazy" />
+				<img
+					src={portal.logo}
+					alt={portal.alt}
+					className={`gov-logos-carousel__img${portal.imgClass ? ` ${portal.imgClass}` : ''}`}
+					loading="lazy"
+				/>
 			) : (
 				<span className="gov-logos-carousel__label">{portal.label ?? portal.name}</span>
 			)}

@@ -2,10 +2,20 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
+import {
+	heroAccentLineVariants,
+	heroActionItemVariants,
+	heroActionsContainerVariants,
+	heroCopyContainerVariants,
+	heroLeadVariants,
+	heroSlideVariants,
+	heroTitleVariants,
+} from '../../utils/landingMotion'
 import heroCommunityHomes from '../../assets/img/img12.png'
 import heroPortalSlide from '../../assets/img/img10.png'
 import heroTenancyHandover from '../../assets/img/img8.png'
 import heroFamilyHome from '../../assets/img/img11.png'
+import HeroRotatingLead from './HeroRotatingLead'
 
 const heroSlides = [
 	{
@@ -34,12 +44,22 @@ const SLIDE_INTERVAL_MS = 6000
 
 function LandingHero({ navSlot }) {
 	const [activeIndex, setActiveIndex] = useState(0)
+	const [slideDirection, setSlideDirection] = useState(1)
 	const [isPaused, setIsPaused] = useState(false)
 	const reduceMotion = useReducedMotion()
+
+	const goToSlideIndex = (index, direction) => {
+		const nextIndex =
+			((index % heroSlides.length) + heroSlides.length) % heroSlides.length
+		if (nextIndex === activeIndex) return
+		setSlideDirection(direction)
+		setActiveIndex(nextIndex)
+	}
 
 	useEffect(() => {
 		if (reduceMotion || heroSlides.length <= 1 || isPaused) return undefined
 		const timer = setInterval(() => {
+			setSlideDirection(1)
 			setActiveIndex((prev) => (prev + 1) % heroSlides.length)
 		}, SLIDE_INTERVAL_MS)
 		return () => clearInterval(timer)
@@ -51,22 +71,25 @@ function LandingHero({ navSlot }) {
 	}
 
 	const goToSlide = (index) => {
-		setActiveIndex(((index % heroSlides.length) + heroSlides.length) % heroSlides.length)
+		const nextIndex =
+			((index % heroSlides.length) + heroSlides.length) % heroSlides.length
+		if (nextIndex === activeIndex) return
+		const direction = nextIndex > activeIndex ? 1 : -1
+		goToSlideIndex(nextIndex, direction)
 	}
 
 	const goToPreviousSlide = () => {
-		setActiveIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)
+		goToSlideIndex(
+			(activeIndex - 1 + heroSlides.length) % heroSlides.length,
+			-1,
+		)
 	}
 
 	const goToNextSlide = () => {
-		setActiveIndex((prev) => (prev + 1) % heroSlides.length)
+		goToSlideIndex((activeIndex + 1) % heroSlides.length, 1)
 	}
 
 	const activeSlide = heroSlides[activeIndex]
-
-	const slideTransition = reduceMotion
-		? { duration: 0 }
-		: { duration: 1.1, ease: [0.4, 0, 0.2, 1] }
 
 	return (
 		<section
@@ -75,53 +98,73 @@ function LandingHero({ navSlot }) {
 		>
 			{navSlot}
 			<div className="landing-hero-media">
-				<AnimatePresence mode="sync" initial={false}>
+				<AnimatePresence initial={false} custom={slideDirection}>
 					<motion.img
 						key={activeSlide.src}
 						src={activeSlide.src}
 						alt=""
 						className="absolute inset-0 h-full w-full object-cover"
 						style={{ objectPosition: activeSlide.objectPosition }}
-						initial={reduceMotion ? false : { opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={reduceMotion ? undefined : { opacity: 0 }}
-						transition={slideTransition}
+						custom={slideDirection}
+						variants={reduceMotion ? undefined : heroSlideVariants}
+						initial={reduceMotion ? false : 'enter'}
+						animate={reduceMotion ? { opacity: 1, x: 0 } : 'center'}
+						exit={reduceMotion ? undefined : 'exit'}
 					/>
 				</AnimatePresence>
 				<span className="sr-only">{activeSlide.alt}</span>
 				<div className="landing-hero-overlay landing-hero-overlay--lr" aria-hidden />
 				<div className="landing-hero-overlay landing-hero-overlay--tb" aria-hidden />
 
-				<div className="landing-hero-inner relative z-10 mx-auto flex w-full max-w-7xl px-10 sm:px-12 lg:px-10">
+				<div className="landing-hero-inner relative z-10 mx-auto flex w-full max-w-7xl px-6 sm:px-10 lg:px-12">
 					<motion.div
-						initial={{ opacity: 0, x: -28 }}
-						animate={{ opacity: 1, x: 0 }}
-						transition={{ duration: 0.6, ease: 'easeOut' }}
 						className="landing-hero-copy"
+						variants={reduceMotion ? undefined : heroCopyContainerVariants}
+						initial={reduceMotion ? false : 'hidden'}
+						animate={reduceMotion ? undefined : 'visible'}
 					>
-						<div className="landing-hero-copy__text">
-							<h1 id="hero-heading" className="landing-hero-title">
-								Assam Tenancy Registration and Management System
-							</h1>
-							<p className="landing-hero-lead">
-							Register online, track your applications, and access services securely from one place.
-							</p>
-						</div>
-						<div className="landing-hero-actions">
-							<AuthNavLink
-								mode="login"
-								className="landing-hero-cta landing-hero-cta--primary"
+							<div className="landing-hero-copy__text">
+								<motion.h1
+									id="hero-heading"
+									className="landing-hero-title"
+									variants={reduceMotion ? undefined : heroTitleVariants}
+								>
+									Assam Tenancy Registration and Management System
+									<motion.span
+										className="landing-hero-title__accent"
+										variants={reduceMotion ? undefined : heroAccentLineVariants}
+										aria-hidden
+									/>
+								</motion.h1>
+								<motion.p
+									className="landing-hero-lead landing-hero-lead--rotating"
+									variants={reduceMotion ? undefined : heroLeadVariants}
+								>
+									<HeroRotatingLead />
+								</motion.p>
+							</div>
+							<motion.div
+								className="landing-hero-actions"
+								variants={reduceMotion ? undefined : heroActionsContainerVariants}
 							>
-								Apply Now
-							</AuthNavLink>
-							<a
-								href="#portal-guide"
-								onClick={scrollToHowToApply}
-								className="landing-hero-cta landing-hero-cta--ghost"
-							>
-								How to apply
-							</a>
-						</div>
+								<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
+									<AuthNavLink
+										mode="login"
+										className="landing-hero-cta landing-hero-cta--primary"
+									>
+										Apply Now
+									</AuthNavLink>
+								</motion.div>
+								<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
+									<a
+										href="#portal-guide"
+										onClick={scrollToHowToApply}
+										className="landing-hero-cta landing-hero-cta--ghost"
+									>
+										How to apply
+									</a>
+								</motion.div>
+							</motion.div>
 					</motion.div>
 				</div>
 
@@ -180,4 +223,3 @@ function LandingHero({ navSlot }) {
 }
 
 export default LandingHero
-
