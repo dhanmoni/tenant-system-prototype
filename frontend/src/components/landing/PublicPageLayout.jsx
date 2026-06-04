@@ -22,7 +22,7 @@ function PublicPageLayout({
 				{showHero ? <PublicPageHero slides={heroSlides} /> : null}
 			</header>
 
-			<div className="public-page landing-body landing-wallpaper-bg landing-wallpaper-bg--cream min-h-[40vh]">
+			<div className="public-page landing-body landing-wallpaper-bg landing-wallpaper-bg--white min-h-[40vh]">
 				<div className="public-page__content">
 					<nav className="public-page__breadcrumb" aria-label="Breadcrumb">
 						<Link to="/" className="public-page__breadcrumb-link">

@@ -1,36 +1,28 @@
-/**
- * Homepage “Benefits of this portal” cards (UMANG-inspired layout).
- */
+/** Homepage — Portal Benefits (minimal list layout) */
 export const portalBenefitsIntro = {
-	// eyebrow: 'Citizen experience',
 	title: 'Portal Benefits',
-		// lead:
-		// 	'Register online and use tenancy services, and follow every update on your applications	.',
+	lead: 'Manage all your tenancy services from one secure digital platform.',
 }
 
-export const portalBenefitCards = [
+export const portalBenefitItems = [
 	{
-		id: 'all-services',
+		id: 'services',
+		icon: 'landmark',
 		title: 'Services',
-		tags: ['Apply UIN Online', 'Rent Authority', 'Rent Court', 'Rent Tribunal'],
-		icon: 'layers',
-	},
-	{
-		id: 'uin-records',
-		title: 'Digital records',
-		tags: ['Online application', 'Status history', 'Secure account'],
-		icon: 'file',
+		description:
+			'Apply for UIN, access Rent Authority, Rent Court and Tribunal services.',
 	},
 	{
 		id: 'tracking',
-		title: 'Follow your applications',
-		tags: ['Live status', 'Status updates', 'application updates'],
-		icon: 'activity',
+		icon: 'clipboardList',
+		title: 'Application Tracking',
+		description:
+			'Monitor application progress, status updates and history from one place.',
 	},
 	{
-		id: 'access',
-		title: 'Easy access',
-		tags: [ 'Apply online', 'Available 24×7'],
-		icon: 'smartphone',
+		id: 'records',
+		icon: 'shieldCheck',
+		title: 'Secure Digital Records',
+		description: 'Access applications and documents securely anytime.',
 	},
 ]

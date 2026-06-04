@@ -34,6 +34,7 @@ import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
 import Contact from './pages/Contact'
 import About from './pages/About'
+import Resources from './pages/Resources'
 import Services from './pages/Services'
 import PublicDashboard from './pages/PublicDashboard'
 import Sitemap from './pages/Sitemap'
@@ -63,7 +64,7 @@ import {
 	handleSkipLinkClick,
 	isPublicMarketingPath,
 } from './utils/skipNavigation'
-import emblem from './assets/img/emblem-dark.png'
+import tcpLogo from './assets/img/TCP logo.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
 
@@ -305,7 +306,7 @@ function App() {
 			>
 				<div className="accessibility-bar-inner">
 					<div className="accessibility-gov">
-						<img className="accessibility-emblem" src={emblem} alt="" aria-hidden />
+						<img className="accessibility-emblem" src={tcpLogo} alt="" aria-hidden />
 						<div className="accessibility-gov-text">
 							<p className="accessibility-gov-line">
 								<span>Government Of Assam</span>
@@ -401,7 +402,7 @@ function App() {
 			{showLegacyPublicChrome ? (
 				<header className="topbar">
 					<div className="brand">
-						<img className="emblem" src={emblem} alt="Indian national emblem" />
+						<img className="emblem" src={tcpLogo} alt="Directorate of Town and Country Planning, Assam" />
 						<div className="brand-text">
 							<span className="brand-title">
 								DIRECTORATE OF TOWN AND COUNTRY PLANNING
@@ -504,6 +505,7 @@ function App() {
 					<Route path="/login" element={<Login onLogin={handleUserLogin} />} />
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
+					<Route path="/resources" element={<Resources />} />
 					<Route path="/about" element={<About />} />
 					<Route path="/services" element={<Services />} />
 					<Route path="/public-dashboard" element={<PublicDashboard />} />

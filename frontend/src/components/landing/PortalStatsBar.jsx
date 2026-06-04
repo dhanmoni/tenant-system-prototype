@@ -1,17 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { Building2, CircleCheckBig, FileStack, IdCard } from 'lucide-react'
 import { portalPublicStats } from '../../data/portalPublicStats'
 
-const columnVariants = {
-	hidden: { opacity: 0, y: 28 },
+const statIcons = {
+	fileStack: FileStack,
+	idCard: IdCard,
+	landmark: Building2,
+	circleCheck: CircleCheckBig,
+}
+
+const itemVariants = {
+	hidden: { opacity: 0, y: 16 },
 	visible: (i) => ({
 		opacity: 1,
 		y: 0,
 		transition: {
 			type: 'spring',
 			stiffness: 320,
-			damping: 22,
-			delay: i * 0.1,
+			damping: 24,
+			delay: i * 0.08,
 		},
 	}),
 }
@@ -60,12 +68,10 @@ function AnimatedFigure({ stat, active }) {
 
 	return (
 		<motion.span
-			className="portal-stats-strip__figure"
-			initial={reduceMotion ? false : { opacity: 0, scale: 0.8 }}
+			className="portal-stats-card__figure"
+			initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
 			animate={
-				reduceMotion || active
-					? { opacity: 1, scale: 1 }
-					: { opacity: 0, scale: 0.8 }
+				reduceMotion || active ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }
 			}
 			transition={{ type: 'spring', stiffness: 380, damping: 20 }}
 		>
@@ -76,41 +82,49 @@ function AnimatedFigure({ stat, active }) {
 
 function PortalStatsBar() {
 	const stripRef = useRef(null)
-	const isInView = useInView(stripRef, { once: true, margin: '-15%' })
+	const isInView = useInView(stripRef, { once: true, margin: '-12%' })
 	const reduceMotion = useReducedMotion()
 
 	return (
-		<div
+		<section
 			ref={stripRef}
-			className="portal-stats-strip landing-body"
+			className="portal-stats-card portal-stats-card--bridge"
 			aria-label="Portal statistics"
 		>
-			<div className="portal-stats-strip__inner mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				{portalPublicStats.map((stat, index) => (
-					<motion.div
-						key={stat.id}
-						className="portal-stats-strip__col"
-						custom={index}
-						initial={reduceMotion ? false : 'hidden'}
-						whileInView={reduceMotion ? undefined : 'visible'}
-						viewport={{ once: true, margin: '-40px' }}
-						variants={reduceMotion ? undefined : columnVariants}
-						whileHover={reduceMotion ? undefined : { y: -3 }}
-					>
-						<AnimatedFigure stat={stat} active={isInView} />
-						<motion.p
-							className="portal-stats-strip__desc"
-							initial={reduceMotion ? false : { opacity: 0 }}
-							whileInView={reduceMotion ? undefined : { opacity: 1 }}
-							viewport={{ once: true }}
-							transition={{ duration: 0.45, delay: 0.15 + index * 0.08 }}
-						>
-							{stat.description}
-						</motion.p>
-					</motion.div>
-				))}
+			<div className="portal-stats-card__wrap mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+				<motion.div
+					className="portal-stats-card__panel"
+					initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+					whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+					viewport={{ once: true, margin: '-40px' }}
+					transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+				>
+					{portalPublicStats.map((stat, index) => {
+						const Icon = statIcons[stat.icon] || FileStack
+						return (
+							<motion.div
+								key={stat.id}
+								className="portal-stats-card__item"
+								custom={index}
+								initial={reduceMotion ? false : 'hidden'}
+								whileInView={reduceMotion ? undefined : 'visible'}
+								viewport={{ once: true, margin: '-40px' }}
+								variants={reduceMotion ? undefined : itemVariants}
+							>
+								<span className="portal-stats-card__icon" aria-hidden>
+									<Icon className="portal-stats-card__icon-svg" strokeWidth={1.5} />
+								</span>
+								<div className="portal-stats-card__body">
+									<AnimatedFigure stat={stat} active={isInView} />
+									<p className="portal-stats-card__label">{stat.label}</p>
+									<p className="sr-only">{stat.description}</p>
+								</div>
+							</motion.div>
+						)
+					})}
+				</motion.div>
 			</div>
-		</div>
+		</section>
 	)
 }
 

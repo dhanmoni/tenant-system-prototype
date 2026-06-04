@@ -90,7 +90,7 @@ function WorkspaceServices() {
 
 			<header className="ws-services-head">
 				<div className="ws-services-head-text">
-					<h1 className="ws-services-title">Assam Tenancy Act services</h1>
+					<h1 className="ws-services-title">Services under the Assam Tenancy Act 2021</h1>
 					<p className="ws-services-lead">
 						Browse forms by competent authority. Select a row to open the application.
 					</p>

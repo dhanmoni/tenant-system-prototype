@@ -2,10 +2,21 @@
 @import "tailwindcss";
 
 @theme {
-	--color-landing: #a85824;
-	--color-landing-dark: #8a4519;
-	--color-landing-hover: #964f1f;
-	--color-landing-cream: #fff5eb;
+	--color-light-caramel-50: #fdf2e7;
+	--color-light-caramel-100: #fce6cf;
+	--color-light-caramel-200: #f8cca0;
+	--color-light-caramel-300: #f5b370;
+	--color-light-caramel-400: #f29940;
+	--color-light-caramel-500: #ef7a00;
+	--color-light-caramel-600: #bf660d;
+	--color-light-caramel-700: #8f4c0a;
+	--color-light-caramel-800: #5f3307;
+	--color-light-caramel-900: #301a03;
+	--color-light-caramel-950: #211202;
+	--color-landing: var(--color-light-caramel-500);
+	--color-landing-dark: var(--color-light-caramel-700);
+	--color-landing-hover: var(--color-light-caramel-600);
+	--color-landing-cream: var(--color-light-caramel-50);
 	--font-gov: 'Lato', 'Segoe UI', system-ui, sans-serif;
 	--font-hero: 'Lato', 'Segoe UI', system-ui, sans-serif;
 }
@@ -43,17 +54,27 @@
 	/* Form fields: subtle grey (gov-style) */
 	--form-field-bg: #f1f3f5;
 	--form-field-border: #cfd8dc;
-	/* Landing page accent (terracotta + cream) */
-	--landing-accent: #a85824;
-	--landing-accent-dark: #8a4519;
-	--landing-accent-hover: #964f1f;
-	--landing-cream: #fff5eb;
-	--landing-text: #212529;
-	/* Warm dark tones for hero / ticker (pairs with terracotta, not cold navy) */
-	--landing-ink: #1f1612;
-	--landing-ink-mid: rgba(31, 22, 18, 0.42);
-	--landing-on-dark: #fff5eb;
-	--landing-on-dark-muted: rgba(255, 245, 235, 0.88);
+	/* Landing page light caramel palette */
+	--color-light-caramel-50: #fdf2e7;
+	--color-light-caramel-100: #fce6cf;
+	--color-light-caramel-200: #f8cca0;
+	--color-light-caramel-300: #f5b370;
+	--color-light-caramel-400: #f29940;
+	--color-light-caramel-500: #ee8011;
+	--color-light-caramel-600: #bf660d;
+	--color-light-caramel-700: #8f4c0a;
+	--color-light-caramel-800: #5f3307;
+	--color-light-caramel-900: #301a03;
+	--color-light-caramel-950: #211202;
+	--landing-accent: var(--color-light-caramel-500);
+	--landing-accent-dark: var(--color-light-caramel-700);
+	--landing-accent-hover: var(--color-light-caramel-600);
+	--landing-cream: var(--color-light-caramel-50);
+	--landing-text: var(--color-light-caramel-900);
+	--landing-ink: var(--color-light-caramel-950);
+	--landing-ink-mid: color-mix(in srgb, var(--landing-ink) 42%, transparent);
+	--landing-on-dark: var(--color-light-caramel-50);
+	--landing-on-dark-muted: color-mix(in srgb, var(--color-light-caramel-50) 88%, transparent);
 	--font-gov: 'Lato', 'Segoe UI', system-ui, sans-serif;
 	--font-hero: 'Lato', 'Segoe UI', system-ui, sans-serif;
 }
