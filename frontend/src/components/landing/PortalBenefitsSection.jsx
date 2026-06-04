@@ -1,8 +1,10 @@
 import { useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ClipboardList, Landmark, ShieldCheck } from 'lucide-react'
+import benefitsImage from '../../assets/img/img5.png'
 import { portalBenefitItems, portalBenefitsIntro } from '../../data/portalBenefits'
 import {
+	benefitsBodyVariants,
 	benefitsItemContentVariants,
 	benefitsItemDividerVariants,
 	benefitsItemIconVariants,
@@ -10,6 +12,7 @@ import {
 	benefitsItemVariants,
 	benefitsListRuleVariants,
 	benefitsListVariants,
+	benefitsMediaVariants,
 } from '../../utils/landingMotion'
 import LandingSectionIntro from './LandingSectionIntro'
 
@@ -43,57 +46,75 @@ function PortalBenefitsSection({ className = '' }) {
 					/>
 
 					<motion.div
-						className="portal-benefits__list-wrap"
+						className="portal-benefits__body"
 						initial={reduceMotion ? false : 'hidden'}
 						animate={reveal ? 'visible' : 'hidden'}
-						variants={reduceMotion ? undefined : benefitsListVariants}
+						variants={reduceMotion ? undefined : benefitsBodyVariants}
 					>
 						<motion.div
-							className="portal-benefits__list-rule"
-							aria-hidden
-							variants={reduceMotion ? undefined : benefitsListRuleVariants}
-						/>
+							className="portal-benefits__list-wrap"
+							variants={reduceMotion ? undefined : benefitsListVariants}
+						>
+							<motion.div
+								className="portal-benefits__list-rule"
+								aria-hidden
+								variants={reduceMotion ? undefined : benefitsListRuleVariants}
+							/>
 
-						<ul className="portal-benefits__list">
-							{portalBenefitItems.map((item) => {
-								const Icon = iconMap[item.icon] || Landmark
-								return (
-									<motion.li
-										key={item.id}
-										className={`portal-benefits-item portal-benefits-item--${item.id}`}
-										variants={reduceMotion ? undefined : benefitsItemVariants}
-									>
-										<motion.div
-											className="portal-benefits-item__divider"
-											aria-hidden
-											variants={reduceMotion ? undefined : benefitsItemDividerVariants}
-										/>
-										<motion.div
-											className="portal-benefits-item__row"
-											variants={reduceMotion ? undefined : benefitsItemRowVariants}
+							<ul className="portal-benefits__list">
+								{portalBenefitItems.map((item) => {
+									const Icon = iconMap[item.icon] || Landmark
+									return (
+										<motion.li
+											key={item.id}
+											className={`portal-benefits-item portal-benefits-item--${item.id}`}
+											variants={reduceMotion ? undefined : benefitsItemVariants}
 										>
-											<motion.span
-												className="portal-benefits-item__icon"
-												aria-hidden
-												variants={reduceMotion ? undefined : benefitsItemIconVariants}
-											>
-												<Icon
-													className="portal-benefits-item__icon-svg"
-													strokeWidth={1.75}
-												/>
-											</motion.span>
 											<motion.div
-												className="portal-benefits-item__content"
-												variants={reduceMotion ? undefined : benefitsItemContentVariants}
+												className="portal-benefits-item__divider"
+												aria-hidden
+												variants={reduceMotion ? undefined : benefitsItemDividerVariants}
+											/>
+											<motion.div
+												className="portal-benefits-item__row"
+												variants={reduceMotion ? undefined : benefitsItemRowVariants}
 											>
-												<h3 className="portal-benefits-item__title">{item.title}</h3>
-												<p className="portal-benefits-item__desc">{item.description}</p>
+												<motion.span
+													className="portal-benefits-item__icon"
+													aria-hidden
+													variants={reduceMotion ? undefined : benefitsItemIconVariants}
+												>
+													<Icon
+														className="portal-benefits-item__icon-svg"
+														strokeWidth={1.75}
+													/>
+												</motion.span>
+												<motion.div
+													className="portal-benefits-item__content"
+													variants={reduceMotion ? undefined : benefitsItemContentVariants}
+												>
+													<h3 className="portal-benefits-item__title">{item.title}</h3>
+													<p className="portal-benefits-item__desc">{item.description}</p>
+												</motion.div>
 											</motion.div>
-										</motion.div>
-									</motion.li>
-								)
-							})}
-						</ul>
+										</motion.li>
+									)
+								})}
+							</ul>
+						</motion.div>
+
+						<motion.figure
+							className="portal-benefits__media"
+							variants={reduceMotion ? undefined : benefitsMediaVariants}
+						>
+							<img
+								src={benefitsImage}
+								alt="Citizens using online tenancy registration and UIN services"
+								className="portal-benefits__media-img"
+								loading="lazy"
+								decoding="async"
+							/>
+						</motion.figure>
 					</motion.div>
 				</div>
 			</div>

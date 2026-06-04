@@ -179,6 +179,9 @@ function LandingNav({ variant = 'overlay' }) {
 								<Link to="/policies" onClick={closeMenu} className={drawerLinkClass('/policies')}>
 									Policies &amp; Guidelines
 								</Link>
+								<Link to="/resources" onClick={closeMenu} className={drawerLinkClass('/resources')}>
+									Resources
+								</Link>
 								<div className="landing-nav-drawer-ctas">
 									<AuthNavLink
 										mode="login"
@@ -228,6 +231,9 @@ function LandingNav({ variant = 'overlay' }) {
 							<Link to="/policies" className={shellLinkClass('/policies')}>
 								<span className="landing-nav-shell-link-long">Policies &amp; Guidelines</span>
 								<span className="landing-nav-shell-link-short">Policies</span>
+							</Link>
+							<Link to="/resources" className={shellLinkClass('/resources')}>
+								Resources
 							</Link>
 						</div>
 						<div className="landing-nav-cta-group">

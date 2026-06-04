@@ -5128,19 +5128,54 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	}
 }
 
+.portal-benefits__body {
+	display: grid;
+	gap: 2rem;
+	align-items: start;
+}
+
+@media (min-width: 1024px) {
+	.portal-benefits__body {
+		grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+		gap: 2.5rem 3rem;
+		align-items: center;
+	}
+}
+
+@media (min-width: 1280px) {
+	.portal-benefits__body {
+		grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+		gap: 3rem 4rem;
+	}
+}
+
 .portal-benefits__list-wrap {
 	overflow: visible;
 	width: 100%;
-	max-width: 44rem;
-	margin: 0 auto;
+	max-width: none;
+	margin: 0;
 	text-align: left;
+	will-change: transform, opacity;
+}
+
+@media (max-width: 1023px) {
+	.portal-benefits__list-wrap {
+		max-width: 44rem;
+		margin: 0 auto;
+	}
 }
 
 .portal-benefits__list-rule {
 	height: 1px;
 	margin-bottom: 0;
 	background: color-mix(in srgb, var(--landing-accent) 14%, #e8dfd6);
-	transform-origin: center center;
+	transform-origin: left center;
+}
+
+@media (max-width: 1023px) {
+	.portal-benefits__list-rule {
+		transform-origin: center center;
+	}
 }
 
 .portal-benefits__list {
@@ -5159,7 +5194,13 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	height: 1px;
 	margin: 0;
 	background: color-mix(in srgb, var(--landing-accent) 12%, #ebe3da);
-	transform-origin: center center;
+	transform-origin: left center;
+}
+
+@media (max-width: 1023px) {
+	.portal-benefits-item__divider {
+		transform-origin: center center;
+	}
 }
 
 .portal-benefits-item:first-child .portal-benefits-item__divider {
@@ -5193,7 +5234,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	width: 2.5rem;
 	height: 2.5rem;
 	border-radius: 50%;
-	background: var(--benefit-icon-bg, color-mix(in srgb, var(--landing-accent) 12%, var(--landing-cream)));
+	background: var(--benefit-icon-bg, var(--color-light-caramel-100));
 	color: var(--benefit-icon-color, var(--landing-accent));
 	transition:
 		background-color 0.25s ease,
@@ -5201,19 +5242,23 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 		box-shadow 0.25s ease;
 }
 
+/* Shared circle fill; icon stroke steps through caramel scale */
 .portal-benefits-item--services {
-	--benefit-icon-bg: var(--color-light-caramel-100);
-	--benefit-icon-color: var(--color-light-caramel-700);
+	--benefit-icon-bg: color-mix(in srgb, var(--color-light-caramel-100) 88%, #fff);
+	--benefit-icon-color: var(--landing-accent);
+	--benefit-icon-ring: color-mix(in srgb, var(--landing-accent) 28%, transparent);
 }
 
 .portal-benefits-item--tracking {
-	--benefit-icon-bg: color-mix(in srgb, var(--color-light-caramel-200) 70%, #fff);
-	--benefit-icon-color: var(--color-light-caramel-800);
+	--benefit-icon-bg: color-mix(in srgb, var(--color-light-caramel-100) 88%, #fff);
+	--benefit-icon-color: var(--color-light-caramel-600);
+	--benefit-icon-ring: color-mix(in srgb, var(--color-light-caramel-600) 28%, transparent);
 }
 
 .portal-benefits-item--records {
-	--benefit-icon-bg: color-mix(in srgb, var(--color-light-caramel-300) 40%, var(--color-light-caramel-50));
-	--benefit-icon-color: var(--color-light-caramel-700);
+	--benefit-icon-bg: color-mix(in srgb, var(--color-light-caramel-100) 88%, #fff);
+	--benefit-icon-color: var(--color-light-caramel-800);
+	--benefit-icon-ring: color-mix(in srgb, var(--color-light-caramel-800) 22%, transparent);
 }
 
 .portal-benefits-item__icon-svg {
@@ -5235,19 +5280,20 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 
 @media (hover: hover) {
 	.portal-benefits-item:hover .portal-benefits-item__icon {
-		box-shadow: 0 0 0 4px color-mix(in srgb, var(--benefit-icon-bg, var(--landing-cream)) 80%, transparent);
+		background: var(--color-light-caramel-200);
+		box-shadow: 0 0 0 4px var(--benefit-icon-ring, color-mix(in srgb, var(--landing-accent) 20%, transparent));
 	}
 
 	.portal-benefits-item--services:hover {
-		--benefit-icon-bg: var(--color-light-caramel-200);
+		--benefit-icon-color: var(--landing-accent-hover);
 	}
 
 	.portal-benefits-item--tracking:hover {
-		--benefit-icon-bg: var(--color-light-caramel-200);
+		--benefit-icon-color: var(--color-light-caramel-700);
 	}
 
 	.portal-benefits-item--records:hover {
-		--benefit-icon-bg: var(--color-light-caramel-200);
+		--benefit-icon-color: var(--color-light-caramel-900);
 	}
 }
 
@@ -5283,6 +5329,48 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 @media (min-width: 640px) {
 	.portal-benefits-item__desc {
 		font-size: 1rem;
+	}
+}
+
+.portal-benefits__media {
+	position: relative;
+	margin: 0;
+	width: 100%;
+	max-width: 22rem;
+	margin-inline: auto;
+}
+
+.portal-benefits__media-img {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 1rem;
+	aspect-ratio: 4 / 5;
+	object-fit: cover;
+	object-position: center 20%;
+	border: 1px solid color-mix(in srgb, var(--landing-accent) 14%, #e8dfd6);
+	box-shadow: 0 16px 40px -24px color-mix(in srgb, var(--landing-ink) 22%, transparent);
+}
+
+@media (min-width: 640px) {
+	.portal-benefits__media {
+		max-width: 26rem;
+	}
+
+	.portal-benefits__media-img {
+		border-radius: 1.125rem;
+	}
+}
+
+@media (min-width: 1024px) {
+	.portal-benefits__media {
+		max-width: none;
+		margin-inline: 0;
+	}
+
+	.portal-benefits__media-img {
+		border-radius: 1.25rem;
+		min-height: 20rem;
 	}
 }
 
@@ -7130,8 +7218,129 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 }
 
 .gov-plain-page__map-note {
-	margin: 0;
+	margin: 0.75rem 0 0;
 	font-size: 0.875rem;
+	color: #64748b;
+}
+
+/* Resources — placeholder draft downloads */
+.gov-resources__notice {
+	margin: 0 0 2rem;
+	padding: 0.85rem 1rem;
+	border-radius: 0.5rem;
+	border: 1px solid color-mix(in srgb, var(--landing-accent) 22%, #e8dfd6);
+	background: color-mix(in srgb, var(--landing-accent) 6%, var(--landing-cream));
+	font-size: 0.9375rem;
+	line-height: 1.55;
+	color: #475569;
+}
+
+.gov-resources__group {
+	margin-bottom: 2.5rem;
+}
+
+.gov-resources__list {
+	margin: 1rem 0 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid color-mix(in srgb, var(--landing-accent) 12%, #e8dfd6);
+	border-radius: 0.65rem;
+	overflow: hidden;
+}
+
+.gov-resources__item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.85rem 1rem;
+	padding: 1rem 1.1rem;
+	border-bottom: 1px solid color-mix(in srgb, var(--landing-accent) 10%, #ebe3da);
+	background: #fff;
+}
+
+.gov-resources__item:last-child {
+	border-bottom: none;
+}
+
+@media (min-width: 640px) {
+	.gov-resources__item {
+		flex-wrap: nowrap;
+		align-items: center;
+		padding: 1.1rem 1.25rem;
+	}
+}
+
+.gov-resources__item-icon {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--landing-accent) 10%, var(--landing-cream));
+	color: var(--landing-accent);
+}
+
+.gov-resources__item-icon-svg {
+	width: 1.25rem;
+	height: 1.25rem;
+}
+
+.gov-resources__item-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.gov-resources__item-title {
+	margin: 0 0 0.25rem;
+	font-size: 1rem;
+	font-weight: 700;
+	line-height: 1.35;
+	color: var(--landing-text);
+}
+
+.gov-resources__item-desc {
+	margin: 0 0 0.35rem;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: #64748b;
+}
+
+.gov-resources__item-meta {
+	margin: 0;
+	font-size: 0.8125rem;
+	color: #64748b;
+}
+
+.gov-resources__item-sep {
+	margin: 0 0.35rem;
+}
+
+.gov-resources__item-status {
+	font-weight: 600;
+	color: var(--landing-accent-dark);
+}
+
+.gov-resources__download {
+	flex-shrink: 0;
+	margin-left: auto;
+	padding: 0.5rem 1rem;
+	border-radius: 0.45rem;
+	border: 1px solid color-mix(in srgb, var(--landing-accent) 20%, #d4c4b8);
+	background: color-mix(in srgb, var(--landing-accent) 8%, #fff);
+	font-family: var(--font-gov);
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--landing-accent-dark);
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+@media (max-width: 639px) {
+	.gov-resources__download {
+		width: 100%;
+	}
 }
 
 /* Government HTML sitemap — nested bullet tree */

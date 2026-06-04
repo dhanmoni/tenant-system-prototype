@@ -218,70 +218,82 @@ export const heroAccentLineVariants = {
 	},
 }
 
-/** Portal benefits — minimal list layout */
-const benefitsEase = [0.25, 0.46, 0.45, 0.94]
+/** Portal benefits — minimal list layout (left column) */
+const benefitsEase = [0.22, 1, 0.36, 1]
 
 export const benefitsListVariants = {
-	hidden: {},
-	visible: {
-		transition: { staggerChildren: 0.15, delayChildren: 0.08 },
-	},
-}
-
-export const benefitsListRuleVariants = {
-	hidden: { opacity: 0, scaleX: 0.3 },
-	visible: {
-		opacity: 1,
-		scaleX: 1,
-		transition: { duration: 0.55, ease: benefitsEase },
-	},
-}
-
-export const benefitsItemVariants = {
-	hidden: { opacity: 0, x: 36 },
+	hidden: { opacity: 0, x: -28 },
 	visible: {
 		opacity: 1,
 		x: 0,
 		transition: {
-			type: 'spring',
-			stiffness: 280,
-			damping: 32,
-			mass: 0.9,
-			staggerChildren: 0.1,
-			delayChildren: 0.03,
+			duration: 0.65,
+			ease: benefitsEase,
+			staggerChildren: 0.12,
+			delayChildren: 0.06,
+		},
+	},
+}
+
+export const benefitsListRuleVariants = {
+	hidden: { opacity: 0, scaleX: 0 },
+	visible: {
+		opacity: 1,
+		scaleX: 1,
+		transition: { duration: 0.6, ease: benefitsEase },
+	},
+}
+
+export const benefitsItemVariants = {
+	hidden: { opacity: 0, x: -24 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		transition: {
+			duration: 0.55,
+			ease: benefitsEase,
+			staggerChildren: 0.07,
+			delayChildren: 0.05,
 		},
 	},
 }
 
 export const benefitsItemDividerVariants = {
-	hidden: { opacity: 0 },
+	hidden: { opacity: 0, scaleX: 0 },
 	visible: {
 		opacity: 1,
-		transition: { duration: 0.35, ease: 'easeOut' },
+		scaleX: 1,
+		transition: { duration: 0.45, ease: benefitsEase },
 	},
 }
 
 export const benefitsItemRowVariants = {
 	hidden: {},
 	visible: {
-		transition: { staggerChildren: 0.08, delayChildren: 0.04 },
+		transition: { staggerChildren: 0.08, delayChildren: 0.02 },
 	},
 }
 
 export const benefitsItemIconVariants = {
-	hidden: { opacity: 0, scale: 0.75 },
+	hidden: { opacity: 0, x: -14, scale: 0.85 },
 	visible: {
 		opacity: 1,
+		x: 0,
 		scale: 1,
-		transition: { duration: 0.45, ease: benefitsEase },
+		transition: {
+			type: 'spring',
+			stiffness: 380,
+			damping: 26,
+			mass: 0.8,
+		},
 	},
 }
 
 export const benefitsItemContentVariants = {
-	hidden: { opacity: 0, y: 18 },
+	hidden: { opacity: 0, x: -18 },
 	visible: {
 		opacity: 1,
-		y: 0,
+		x: 0,
 		transition: { duration: 0.5, ease: benefitsEase },
 	},
 }

@@ -34,6 +34,7 @@ import JoinApplication from './pages/JoinApplication'
 import Policies from './pages/Policies'
 import Contact from './pages/Contact'
 import About from './pages/About'
+import Resources from './pages/Resources'
 import Services from './pages/Services'
 import PublicDashboard from './pages/PublicDashboard'
 import Sitemap from './pages/Sitemap'
@@ -504,6 +505,7 @@ function App() {
 					<Route path="/login" element={<Login onLogin={handleUserLogin} />} />
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
+					<Route path="/resources" element={<Resources />} />
 					<Route path="/about" element={<About />} />
 					<Route path="/services" element={<Services />} />
 					<Route path="/public-dashboard" element={<PublicDashboard />} />

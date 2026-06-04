@@ -73,7 +73,7 @@ function GetStartedSection({ authPanelProps }) {
 								className="get-started-headline__accent"
 								variants={reduceMotion ? undefined : introTitleVariants}
 							>
-								all your tenancy needs.
+								all your tenancy issues.
 							</motion.span>
 						</motion.h2>
 						<motion.span
@@ -87,7 +87,7 @@ function GetStartedSection({ authPanelProps }) {
 						variants={reduceMotion ? undefined : introLeadVariants}
 					>
 						Register or sign in with your mobile number to apply for services, track
-						applications, and manage tenancy matters — all in one government portal.
+						applications, and manage tenancy matters — all in one Government portal.
 					</motion.p>
 					<ul className="get-started-promo-features">
 						{PROMO_FEATURES.map((item, index) => (

@@ -26,6 +26,7 @@ export const sitemapTree = [
 	},
 	{ label: 'Public dashboard', to: '/public-dashboard' },
 	{ label: 'Policies & guidelines', to: '/policies' },
+	{ label: 'Resources', to: '/resources' },
 	{ label: 'Contact us', to: '/contact' },
 	{ label: 'Sign in', to: '/login' },
 	// { label: 'Sitemap', to: '/sitemap' },

@@ -17,6 +17,7 @@ const resourceLinks = [
 	{ label: 'Public dashboard', to: '/public-dashboard' },
 	{ label: 'Services', to: '/services' },
 	{ label: 'Policies & guidelines', to: '/policies' },
+	{ label: 'Resources', to: '/resources' },
 	{ label: 'Contact us', to: '/contact' },
 	{ label: 'Sitemap', to: '/sitemap' },
 ]
