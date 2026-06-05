@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
-import { STATUS, STATUS_LABELS } from '../../../constants/status'
-import { APPLICATION_LABELS } from '../../../constants/application'
-import { ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
+import { STATUS } from '../../../constants/status'
+import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
+import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES } from '../../../constants/roles'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
 import { formatDate, formatDateTime } from '../../../utils/formatters'
 import './ApplicationDetails.css'
@@ -17,11 +17,25 @@ const EXCLUDED_FIELDS = new Set([
 	'forwarded_by_user_id',
 	'rejected_by_user_id',
 	'approved_by_user_id',
+	'forwarded_by',
+	'rejected_by',
+	'approved_by',
 	'movement_history',
 	'created_at',
 	'updated_at',
 	'deleted_at',
 	'assigned_to_role',
+	'ref_code',
+	'wizard_step',
+	'current_with',
+	'initiator_role',
+	'initiator_completed',
+	'second_party_completed',
+	'landlord_user_id',
+	'tenant_user_id',
+	'office_id',
+	'village_ward_id',
+	'application_type',
 ])
 
 const WORKFLOW_FIELDS = new Set([
@@ -31,7 +45,46 @@ const WORKFLOW_FIELDS = new Set([
 	'rejection_message',
 ])
 
-const SUMMARY_FIELDS = ['district', 'form_type']
+const SUMMARY_FIELDS = ['district', 'form_type', 'status']
+
+const UIN_FIELDS = new Set([
+	'tenancy_uin',
+	'rent_authority_uid',
+	'rent_court_uid',
+	'uid',
+])
+
+const NON_EDITABLE_KEYS = new Set([
+	...EXCLUDED_FIELDS,
+	...UIN_FIELDS,
+	'application_no',
+	'status',
+	'district_id',
+	'form_type',
+	'forwarded_at',
+	'rejected_at',
+	'approved_at',
+	'rejection_message',
+	'ref_code',
+	'wizard_step',
+	'current_with',
+	'initiator_role',
+	'initiator_completed',
+	'second_party_completed',
+	'landlord_user_id',
+	'tenant_user_id',
+	'office_id',
+	'village_ward_id',
+	'application_type',
+])
+
+const TENANCY_FIELD_SECTIONS = [
+	{ title: 'Registration', prefixes: ['registration_date', 'apply_type'] },
+	{ title: 'Landlord details', prefixes: ['landlord_'] },
+	{ title: 'Tenant details', prefixes: ['tenant_'] },
+	{ title: 'Manager details', prefixes: ['manager_'] },
+	{ title: 'Property & charges', prefixes: ['property_'] },
+]
 
 function hasDisplayValue(value) {
 	if (value === null || value === undefined || value === '') return false
@@ -41,7 +94,12 @@ function hasDisplayValue(value) {
 }
 
 function labelize(key) {
-	if (key === 'rent_authority_uid' || key === 'rent_court_uid' || key === 'tenancy_uin') {
+	if (
+		key === 'rent_authority_uid' ||
+		key === 'rent_court_uid' ||
+		key === 'tenancy_uin' ||
+		key === 'uid'
+	) {
 		return 'Tenancy UIN'
 	}
 	if (key === 'form_type') return 'Form type'
@@ -52,14 +110,73 @@ function labelize(key) {
 		.join(' ')
 }
 
+function isFileField(key) {
+	return /path|image|pdf/i.test(key)
+}
+
+function isEditableField(key) {
+	return !NON_EDITABLE_KEYS.has(key) && !isFileField(key)
+}
+
+function getUinValue(app) {
+	if (!app) return null
+	for (const key of UIN_FIELDS) {
+		if (hasDisplayValue(app[key])) return app[key]
+	}
+	return null
+}
+
+function groupDetailFields(fields, formType) {
+	if (formType !== APPLICATION_TYPES.TENANCY_CERTIFICATE) {
+		return [{ title: 'Application details', fields }]
+	}
+
+	const sections = TENANCY_FIELD_SECTIONS.map((section) => ({
+		title: section.title,
+		fields: fields.filter(([key]) =>
+			section.prefixes.some(
+				(prefix) => key === prefix || key.startsWith(prefix)
+			)
+		),
+	})).filter((section) => section.fields.length > 0)
+
+	const assigned = new Set(sections.flatMap((s) => s.fields.map(([key]) => key)))
+	const other = fields.filter(([key]) => !assigned.has(key))
+	if (other.length > 0) {
+		sections.push({ title: 'Other details', fields: other })
+	}
+
+	return sections.length > 0 ? sections : [{ title: 'Application details', fields }]
+}
+
+function buildEditForm(app) {
+	if (!app) return {}
+	const form = {}
+	for (const [key, value] of Object.entries(app)) {
+		if (isEditableField(key)) {
+			form[key] = value ?? ''
+		}
+	}
+	return form
+}
+
 const AdminApplicationDetails = () => {
 	const { applicationNo } = useParams()
 	const navigate = useNavigate()
+	const location = useLocation()
 	const { user } = useOutletContext()
+	const fromTenancy = location.state?.from === 'tenancy'
+	const listPath = fromTenancy ? '/dashboard/admin/tenancy' : '/dashboard/admin/applications'
+	const listLabel = fromTenancy ? 'tenancy applications' : 'applications'
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 	const [actionLoading, setActionLoading] = useState(false)
+	const [isEditing, setIsEditing] = useState(false)
+	const [editForm, setEditForm] = useState({})
+	const [saveError, setSaveError] = useState('')
+
+	const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN
 
 	useEffect(() => {
 		fetchDetails()
@@ -97,6 +214,46 @@ const AdminApplicationDetails = () => {
 		}
 	}
 
+	const startEditing = () => {
+		setEditForm(buildEditForm(application))
+		setSaveError('')
+		setIsEditing(true)
+	}
+
+	const cancelEditing = () => {
+		setIsEditing(false)
+		setEditForm({})
+		setSaveError('')
+	}
+
+	const handleFieldChange = (key, value) => {
+		setEditForm((prev) => ({ ...prev, [key]: value }))
+	}
+
+	const handleSave = async () => {
+		setSaveError('')
+		setActionLoading(true)
+		try {
+			const payload = {}
+			for (const [key, value] of Object.entries(editForm)) {
+				if (isEditableField(key)) {
+					payload[key] = value === '' ? null : value
+				}
+			}
+			const { data } = await api.put(
+				`/api/admin/applications/${application.form_type}/${application.id}`,
+				payload
+			)
+			setApplication(data.application)
+			setIsEditing(false)
+			setEditForm({})
+		} catch (err) {
+			setSaveError(err?.response?.data?.message || 'Failed to save changes.')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
 	const formLabel = useMemo(() => {
 		if (!application?.form_type) return 'Application'
 		return (
@@ -105,21 +262,19 @@ const AdminApplicationDetails = () => {
 		)
 	}, [application?.form_type])
 
-	const { summaryFields, workflowFields, detailFields } = useMemo(() => {
+	const { workflowFields, detailFields } = useMemo(() => {
 		if (!application) {
-			return { summaryFields: [], workflowFields: [], detailFields: [] }
+			return { workflowFields: [], detailFields: [] }
 		}
 
 		const entries = Object.entries(application).filter(([key]) => !EXCLUDED_FIELDS.has(key))
-		const summary = []
 		const workflow = []
 		const details = []
 
 		for (const [key, value] of entries) {
-			if (['application_no', 'status'].includes(key)) continue
+			if (['application_no'].includes(key)) continue
 
-			if (SUMMARY_FIELDS.includes(key)) {
-				summary.push([key, value])
+			if (SUMMARY_FIELDS.includes(key) || UIN_FIELDS.has(key)) {
 				continue
 			}
 
@@ -131,23 +286,13 @@ const AdminApplicationDetails = () => {
 			details.push([key, value])
 		}
 
-		const uinIndex = details.findIndex(
-			([key]) =>
-				key === 'rent_authority_uid' || key === 'rent_court_uid' || key === 'tenancy_uin'
-		)
-		if (uinIndex !== -1) {
-			const [uinField] = details.splice(uinIndex, 1)
-			details.unshift(uinField)
-		}
-
 		return {
-			summaryFields: summary,
 			workflowFields: workflow,
 			detailFields: details,
 		}
 	}, [application])
 
-	const renderValue = (key, value) => {
+	const renderValue = useCallback((key, value) => {
 		if (!hasDisplayValue(value)) return <span className="admin-app-details__empty">—</span>
 		if (typeof value === 'boolean') return value ? 'Yes' : 'No'
 
@@ -203,17 +348,83 @@ const AdminApplicationDetails = () => {
 		}
 
 		return String(value)
+	}, [])
+
+	const renderEditInput = (key, value) => {
+		const raw = editForm[key] ?? value ?? ''
+		if (typeof raw === 'boolean') {
+			return (
+				<select
+					className="admin-app-details__input"
+					value={String(raw)}
+					onChange={(e) => handleFieldChange(key, e.target.value === 'true')}
+				>
+					<option value="true">Yes</option>
+					<option value="false">No</option>
+				</select>
+			)
+		}
+
+		if (typeof raw === 'number' || key.includes('rent') || key.includes('amount') || key.includes('charge')) {
+			return (
+				<input
+					type="text"
+					className="admin-app-details__input"
+					value={raw}
+					onChange={(e) => handleFieldChange(key, e.target.value)}
+				/>
+			)
+		}
+
+		if (String(raw).length > 120 || key.includes('reason') || key.includes('description') || key.includes('address')) {
+			return (
+				<textarea
+					className="admin-app-details__input admin-app-details__textarea"
+					value={raw}
+					rows={3}
+					onChange={(e) => handleFieldChange(key, e.target.value)}
+				/>
+			)
+		}
+
+		return (
+			<input
+				type="text"
+				className="admin-app-details__input"
+				value={raw}
+				onChange={(e) => handleFieldChange(key, e.target.value)}
+			/>
+		)
 	}
 
-	const renderFieldGrid = (fields) => (
-		<dl className="admin-app-details__grid">
-			{fields.map(([key, value]) => (
-				<div className="admin-app-details__field" key={key}>
-					<dt>{labelize(key)}</dt>
-					<dd>{renderValue(key, value)}</dd>
-				</div>
-			))}
-		</dl>
+	const renderFieldGrid = (fields, editable = false, dense = false) => {
+		const visibleFields = editable
+			? fields.filter(([key]) => isEditableField(key))
+			: fields
+
+		if (visibleFields.length === 0) return null
+
+		return (
+			<dl
+				className={`admin-app-details__grid${
+					dense ? ' admin-app-details__grid--dense' : ''
+				}${editable ? ' admin-app-details__grid--edit' : ''}`}
+			>
+				{visibleFields.map(([key, value]) => (
+					<div className="admin-app-details__field" key={key}>
+						<dt>{labelize(key)}</dt>
+						<dd>{editable ? renderEditInput(key, value) : renderValue(key, value)}</dd>
+					</div>
+				))}
+			</dl>
+		)
+	}
+
+	const renderStat = (label, content) => (
+		<div className="admin-app-details__stat" key={label}>
+			<span className="admin-app-details__stat-label">{label}</span>
+			<span className="admin-app-details__stat-value">{content}</span>
+		</div>
 	)
 
 	if (loading) {
@@ -238,6 +449,8 @@ const AdminApplicationDetails = () => {
 
 	const statusClass = adminStatusBadgeClass(application.status)
 	const statusText = adminStatusLabel(application.status)
+	const isTenancy = application.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE
+	const detailSections = groupDetailFields(detailFields, application.form_type)
 
 	return (
 		<div className="admin-app-details">
@@ -245,45 +458,160 @@ const AdminApplicationDetails = () => {
 				<button
 					type="button"
 					className="ws-btn ws-btn--outline ws-btn--sm admin-app-details__back"
-					onClick={() => navigate('/dashboard/admin/applications')}
+					onClick={() => navigate(listPath)}
 				>
 					<Icon name="collapse" className="admin-app-details__back-icon" />
-					Back to applications
+					Back to {listLabel}
 				</button>
+
+				<div className="admin-app-details__toolbar-actions">
+					{isSuperAdmin && !isEditing ? (
+						<button
+							type="button"
+							className="ws-btn ws-btn--primary ws-btn--sm"
+							onClick={startEditing}
+						>
+							<Icon name="edit" />
+							Edit application
+						</button>
+					) : null}
+					{isEditing ? (
+						<>
+							<button
+								type="button"
+								className="ws-btn ws-btn--outline ws-btn--sm"
+								onClick={cancelEditing}
+								disabled={actionLoading}
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								className="ws-btn ws-btn--primary ws-btn--sm"
+								onClick={handleSave}
+								disabled={actionLoading}
+							>
+								{actionLoading ? 'Saving…' : 'Save changes'}
+							</button>
+						</>
+					) : null}
+				</div>
 			</div>
 
-			<header className="admin-app-details__hero">
+			{saveError ? (
+				<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
+					{saveError}
+				</div>
+			) : null}
+
+			{isEditing ? (
+				<div className="admin-app-details__edit-banner" role="status">
+					Editing submitted form details only. Application number, UIN, status, district,
+					workflow history, and uploaded documents cannot be changed here.
+				</div>
+			) : null}
+
+			<header className="admin-app-details__hero ws-card">
 				<div className="admin-app-details__hero-main">
 					<p className="admin-app-details__eyebrow">{formLabel}</p>
-					<h2 className="admin-app-details__ref">{application.application_no}</h2>
-					<p className="admin-app-details__meta">
-						{STATUS_LABELS[application.status] || application.status}
-						{application.district?.name ? (
-							<>
-								<span className="admin-app-details__meta-sep" aria-hidden>
-									·
-								</span>
-								{application.district.name} district
-							</>
+					<div className="admin-app-details__hero-row">
+						<h2 className="admin-app-details__ref">{application.application_no}</h2>
+						{!isEditing ? (
+							<span className={statusClass}>{statusText}</span>
 						) : null}
-					</p>
+					</div>
+					<div className="admin-app-details__chips">
+						{getUinValue(application) ? (
+							<span className="admin-app-details__chip admin-app-details__chip--uin">
+								UIN {getUinValue(application)}
+							</span>
+						) : null}
+						{application.district?.name ? (
+							<span className="admin-app-details__chip">{application.district.name}</span>
+						) : null}
+						<span className="admin-app-details__chip">
+							Submitted {formatDate(application.created_at)}
+						</span>
+					</div>
 				</div>
-				<span className={statusClass}>{statusText}</span>
 			</header>
 
-			{(summaryFields.length > 0 || workflowFields.length > 0) && (
-				<section className="admin-app-details__card">
-					<h3 className="admin-app-details__section-title">Overview</h3>
-					{renderFieldGrid([...summaryFields, ...workflowFields])}
-				</section>
-			)}
+			{(application.user || isTenancy || workflowFields.length > 0) && !isEditing ? (
+				<div className="admin-app-details__meta-row">
+					{application.user ? (
+						<div className="admin-app-details__contact">
+							<div className="admin-app-details__contact-icon" aria-hidden>
+								<Icon name="user" />
+							</div>
+							<div className="admin-app-details__contact-body">
+								<span className="admin-app-details__contact-name">
+									{application.user.name || 'Applicant'}
+								</span>
+								<span className="admin-app-details__contact-meta">
+									{[application.user.email, application.user.phone].filter(Boolean).join(' · ')}
+								</span>
+							</div>
+						</div>
+					) : null}
+					{isTenancy && !application.user ? (
+						<>
+							{hasDisplayValue(application.landlord_name) ? (
+								<div className="admin-app-details__contact">
+									<div className="admin-app-details__contact-icon" aria-hidden>
+										<Icon name="user" />
+									</div>
+									<div className="admin-app-details__contact-body">
+										<span className="admin-app-details__contact-name">
+											Landlord: {application.landlord_name}
+										</span>
+										<span className="admin-app-details__contact-meta">
+											{[application.landlord_email, application.landlord_phone]
+												.filter(Boolean)
+												.join(' · ')}
+										</span>
+									</div>
+								</div>
+							) : null}
+							{hasDisplayValue(application.tenant_name) ? (
+								<div className="admin-app-details__contact">
+									<div className="admin-app-details__contact-icon" aria-hidden>
+										<Icon name="user" />
+									</div>
+									<div className="admin-app-details__contact-body">
+										<span className="admin-app-details__contact-name">
+											Tenant: {application.tenant_name}
+										</span>
+										<span className="admin-app-details__contact-meta">
+											{[application.tenant_email, application.tenant_phone]
+												.filter(Boolean)
+												.join(' · ')}
+										</span>
+									</div>
+								</div>
+							) : null}
+						</>
+					) : null}
+					{workflowFields.map(([key, value]) =>
+						renderStat(labelize(key), renderValue(key, value))
+					)}
+				</div>
+			) : null}
 
-			{detailFields.length > 0 && (
-				<section className="admin-app-details__card">
-					<h3 className="admin-app-details__section-title">Application details</h3>
-					{renderFieldGrid(detailFields)}
-				</section>
-			)}
+			{detailSections.map((section) => {
+				const hasContent = isEditing
+					? section.fields.some(([key]) => isEditableField(key))
+					: section.fields.length > 0
+				if (!hasContent) return null
+
+				return (
+					<section className="admin-app-details__card ws-card" key={section.title}>
+						<h3 className="admin-app-details__section-title">
+							{isEditing ? `Edit — ${section.title.toLowerCase()}` : section.title}
+						</h3>
+						{renderFieldGrid(section.fields, isEditing, true)}
+					</section>
+				)
+			})}
 
 			{(ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED) ||
 			(PRINCIPAL_ROLES.includes(user?.role) && application.status === STATUS.IN_REVIEW) ? (

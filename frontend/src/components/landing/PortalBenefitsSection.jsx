@@ -32,7 +32,7 @@ function PortalBenefitsSection({ className = '' }) {
 		<section
 			ref={sectionRef}
 			id="portal-benefits"
-			className={`portal-benefits landing-body landing-wallpaper-bg landing-wallpaper-bg--cream py-14 sm:py-16 lg:py-20${className ? ` ${className}` : ''}`}
+			className={`portal-benefits landing-body landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 py-14 sm:py-16 lg:py-20${className ? ` ${className}` : ''}`}
 			aria-labelledby="portal-benefits-heading"
 		>
 			<div className="portal-benefits__shell mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

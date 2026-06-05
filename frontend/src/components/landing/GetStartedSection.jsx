@@ -40,7 +40,7 @@ function GetStartedSection({ authPanelProps }) {
 	return (
 		<section
 			id="portal-content"
-			className="get-started-section get-started-section--modern"
+			className="get-started-section get-started-section--modern scroll-mt-28"
 			aria-labelledby="get-started-heading"
 		>
 			<div className="get-started-shell">

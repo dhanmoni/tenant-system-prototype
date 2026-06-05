@@ -22,7 +22,7 @@ function FaqItem({ item, isOpen, onToggle }) {
 				>
 					<span className="landing-faq__question">{item.question}</span>
 					<ChevronDown
-						className={`landing-faq__chevron h-4 w-4 shrink-0${isOpen ? ' is-open' : ''}`}
+						className={`landing-faq__chevron shrink-0${isOpen ? ' is-open' : ''}`}
 						aria-hidden
 					/>
 				</button>

@@ -14,7 +14,7 @@ import {
 import heroCommunityHomes from '../../assets/img/img12.png'
 import heroPortalSlide from '../../assets/img/img10.png'
 import heroTenancyHandover from '../../assets/img/img8.png'
-import heroFamilyHome from '../../assets/img/img11.png'
+import heroFamilyHome from '../../assets/img/img5.png'
 import HeroRotatingLead from './HeroRotatingLead'
 
 const heroSlides = [
@@ -93,6 +93,7 @@ function LandingHero({ navSlot }) {
 
 	return (
 		<section
+			id="landing-hero"
 			className="landing-hero relative isolate overflow-hidden"
 			aria-label="Portal introduction"
 		>

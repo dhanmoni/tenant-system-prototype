@@ -88,7 +88,8 @@ function PortalStatsBar() {
 	return (
 		<section
 			ref={stripRef}
-			className="portal-stats-card portal-stats-card--bridge"
+			id="portal-stats"
+			className="portal-stats-card portal-stats-card--bridge scroll-mt-28"
 			aria-label="Portal statistics"
 		>
 			<div className="portal-stats-card__wrap mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

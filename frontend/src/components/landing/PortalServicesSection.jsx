@@ -42,7 +42,7 @@ function PortalServicesSection() {
 	return (
 		<section
 			id="services"
-			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white py-14 sm:py-16 lg:py-20"
+			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 py-14 sm:py-16 lg:py-20"
 			aria-labelledby="services-heading"
 		>
 			<div id="tenancy-authorities" className="scroll-mt-28" tabIndex={-1} aria-hidden />
