@@ -39,6 +39,7 @@ class ApplicationResource extends JsonResource
             'approved_at' => $this->approved_at,
             'rejection_message' => $this->rejection_message,
             'assigned_to_role' => $this->assigned_to_role,
+            'district_id' => $this->district_id,
             'form_type' => $this->form_type ?? $this->resource->form_type, // Fallback if not set
             
             // Trimmed relationships (only included if loaded)
@@ -52,6 +53,7 @@ class ApplicationResource extends JsonResource
             
             'district' => $this->whenLoaded('district', function() {
                 return [
+                    'id' => $this->district->id,
                     'name' => $this->district->name,
                 ];
             }),

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
-import { Icon } from '../../components/dashboard/Icons'
 import { buildTenancyFormData, applyDraftToForm } from '../../utils/tenancyDraft'
+import {
+	completeServiceFormSubmit,
+	getTenancySubmitSuccessMessage,
+} from '../../utils/serviceFormSubmit'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
@@ -17,7 +20,6 @@ function TenancyCertificate() {
 	const [success, setSuccess] = useState('')
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
 	const [draftSaving, setDraftSaving] = useState(false)
-	const [tenancyReceipt, setTenancyReceipt] = useState(null)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
 	const [draftLoaded, setDraftLoaded] = useState(false)
@@ -26,6 +28,7 @@ function TenancyCertificate() {
 	// Payment State
 	const [paymentComplete, setPaymentComplete] = useState(false)
 	const [paymentSimulating, setPaymentSimulating] = useState(false)
+	const [paymentGrn, setPaymentGrn] = useState('')
 
 	// Step 1: Office/Registration
 	const [tenancyRegistrationDate, setTenancyRegistrationDate] = useState('')
@@ -270,7 +273,8 @@ function TenancyCertificate() {
 		setTenantSignatureFile(null); setTenantSignaturePreview(''); setManagerName(''); setManagerAddress(''); setManagerEmail(''); setManagerPhone(''); setManagerPan('');
 		setTenantPreviousTenancy(''); setPropertyPossessionDate(''); setPropertyRentPayable(''); setPropertyPremisesDescription(''); setPropertyFurnitureDescription('');
 		setPropertyChargeElectricity(''); setPropertyChargeWater(''); setPropertyChargeFurnishing(''); setPropertyChargeOtherServices(''); setPropertyTenancyDuration('');
-		setPropertyTenancyEndDate(''); setTenancyReceipt(null); setSuccess(''); setError(''); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyDistrictId('');
+		setPropertyTenancyEndDate(''); setSuccess(''); setError(''); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyDistrictId('');
+		setPaymentComplete(false); setPaymentSimulating(false); setPaymentGrn(''); setDeclarationChecked(false);
 		setInitiatorRole(profileType === 'landlord' ? 'LANDLORD' : profileType === 'tenant' ? 'TENANT' : '')
 	}
 
@@ -295,6 +299,7 @@ function TenancyCertificate() {
 		setTimeout(() => {
 			setPaymentSimulating(false)
 			setPaymentComplete(true)
+			setPaymentGrn(String(Math.floor(Math.random() * 1000000000)))
 		}, 1500)
 	}
 
@@ -496,11 +501,11 @@ function TenancyCertificate() {
 				})
 				data = res.data
 			}
-			setTenancyReceipt(data)
-			setSuccess('Application submitted successfully.')
-			setTenancyStep(5)
-			setSavedWizardStep(5)
 			setConflictData(null)
+			completeServiceFormSubmit(
+				navigate,
+				getTenancySubmitSuccessMessage(data, applyType)
+			)
 		} catch (err) {
 			const data = err?.response?.data
 			if (err?.response?.status === 409 && data?.conflict) {
@@ -527,8 +532,7 @@ function TenancyCertificate() {
 	]
 
 	const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
-	const formLocked = Boolean(tenancyReceipt)
-	const maxReachableStep = tenancyReceipt ? 5 : Math.min(4, Math.max(tenancyStep, savedWizardStep + 1))
+	const maxReachableStep = Math.min(4, Math.max(tenancyStep, savedWizardStep + 1))
 
 	const scrollFormToTop = useCallback(() => {
 		const main = document.getElementById('dashboard-primary-content')
@@ -544,7 +548,6 @@ function TenancyCertificate() {
 	}, [tenancyStep, scrollFormToTop])
 
 	const goToStep = (stepId) => {
-		if (formLocked) return
 		if (stepId < 1 || stepId > 4) return
 		if (stepId > maxReachableStep) return
 		setTenancyStep(stepId)
@@ -595,100 +598,110 @@ function TenancyCertificate() {
 				<p className="ws-uin-apply-lead">
 					Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
 				</p>
-				{draftApplicationNo && !tenancyReceipt ? (
+				{draftApplicationNo ? (
 					<p className="ws-uin-apply-draft-id">
 						Draft: <strong>{draftApplicationNo}</strong>
 					</p>
 				) : null}
 			</header>
 
-			{tenancyStep === 1 && (
-				<>
-					<div className="tenancy-criteria-box">
-						<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
-						<p className="tenancy-criteria-intro">You may apply only if the following conditions are satisfied:</p>
-						<ul className="tenancy-criteria-list">
-							<li className={applyType ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
-								<span className="tenancy-criteria-icon">{applyType ? '✓' : '○'}</span>
-								<span>Application type: {applyType || 'Waiting for date...'}</span>
-							</li>
-							<li className={tenancyOfficeId ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
-								<span className="tenancy-criteria-icon">{tenancyOfficeId ? '✓' : '○'}</span>
-								<span>Circle office must be selected.</span>
-							</li>
-						</ul>
-						{tenancyRegistrationDate && (
-							<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
-								{eligibilityMet ? <p><strong>You are eligible</strong> to apply. Type: <strong>{applyType}</strong></p> : registrationTooOld ? <p><strong>Not eligible,</strong> as agreement date is more than 3 months old.</p> : null}
+			<div className="ws-uin-apply-body">
+				<aside className="ws-uin-wizard-rail" aria-label="Application stages">
+					<p className="ws-uin-wizard-rail-title">Stages</p>
+					<ol className="ws-uin-wizard-steps">
+						{tenancySteps.map((step, idx) => {
+							const done = tenancyStep > step.id || savedWizardStep >= step.id
+							const active = tenancyStep === step.id
+							const reachable = step.id <= maxReachableStep
+							return (
+								<li
+									key={step.id}
+									className={`ws-uin-wizard-step${active ? ' is-active' : ''}${done ? ' is-done' : ''}${!reachable ? ' is-locked' : ''}`}
+								>
+									<button
+										type="button"
+										className="ws-uin-wizard-step-btn"
+										disabled={!reachable}
+										aria-current={active ? 'step' : undefined}
+										onClick={() => goToStep(step.id)}
+									>
+										<span className="ws-uin-wizard-step-num">{done && !active ? '✓' : step.id}</span>
+										<span className="ws-uin-wizard-step-label">{step.label}</span>
+									</button>
+									{idx < tenancySteps.length - 1 ? (
+										<span className="ws-uin-wizard-step-line" aria-hidden />
+									) : null}
+								</li>
+							)
+						})}
+					</ol>
+				</aside>
+
+				<div className="ws-uin-apply-main">
+					{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
+
+					{conflictData && (
+						<div className="conflict-notice-box">
+							<p>An application with these details already exists (Application No: <strong>{conflictData.existing_application?.application_no}</strong>).</p>
+							<div className="conflict-actions">
+								<button type="button" className="secondary" onClick={() => navigate(`/dashboard/status?app_no=${conflictData.existing_application?.application_no}`)}>View Existing Application</button>
+								<button type="button" className="danger" onClick={() => submitTenancyApplication(true)}>Start Fresh Application Anyway</button>
 							</div>
-						)}
-					</div>
-					<div className="tenancy-required-docs">
-						<h3>Required documents</h3>
-						<ul>
-							<li>Registered tenancy agreement (PDF)</li>
-							<li>Passport-size photograph</li>
-							<li>PAN Card</li>
-							<li>Signature</li>
-						</ul>
-					</div>
-				</>
-			)}
+						</div>
+					)}
 
-			<ol className="ws-uin-wizard-steps" aria-label="Application stages">
-				{tenancySteps.map((step, idx) => {
-					const done = tenancyStep > step.id || savedWizardStep >= step.id
-					const active = tenancyStep === step.id
-					const reachable = step.id <= maxReachableStep
-					return (
-						<li
-							key={step.id}
-							className={`ws-uin-wizard-step${active ? ' is-active' : ''}${done ? ' is-done' : ''}${!reachable ? ' is-locked' : ''}`}
-						>
-							<button
-								type="button"
-								className="ws-uin-wizard-step-btn"
-								disabled={!reachable || formLocked}
-								aria-current={active ? 'step' : undefined}
-								onClick={() => goToStep(step.id)}
-							>
-								<span className="ws-uin-wizard-step-num">{done && !active ? '✓' : step.id}</span>
-								<span className="ws-uin-wizard-step-label">{step.label}</span>
-							</button>
-							{idx < tenancySteps.length - 1 ? (
-								<span className="ws-uin-wizard-step-line" aria-hidden />
-							) : null}
-						</li>
-					)
-				})}
-			</ol>
+					{success ? <div className="ws-alert ws-alert--success">{success}</div> : null}
 
-			{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
+					{!draftLoaded ? (
+						<div className="ws-uin-apply-loading">Loading your application…</div>
+					) : null}
 
-			{conflictData && (
-				<div className="conflict-notice-box">
-					<p>An application with these details already exists (Application No: <strong>{conflictData.existing_application?.application_no}</strong>).</p>
-					<div className="conflict-actions">
-						<button type="button" className="secondary" onClick={() => navigate(`/dashboard/status?app_no=${conflictData.existing_application?.application_no}`)}>View Existing Application</button>
-						<button type="button" className="danger" onClick={() => submitTenancyApplication(true)}>Start Fresh Application Anyway</button>
-					</div>
-				</div>
-			)}
-
-			{success ? <div className="ws-alert ws-alert--success">{success}</div> : null}
-
-			{!draftLoaded ? (
-				<div className="ws-uin-apply-loading">Loading your application…</div>
-			) : null}
-
-			{draftLoaded ? (
-			<form className="tenancy-form ws-uin-apply-form" onSubmit={handleContinue}>
+					{draftLoaded ? (
+			<form
+				className={`tenancy-form ws-uin-apply-form${tenancyStep === 4 ? ' ws-uin-apply-form--preview-step' : ''}`}
+				onSubmit={handleContinue}
+			>
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
+						<div className="tenancy-criteria-box">
+							<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
+							<p className="tenancy-criteria-intro">You may apply only if the following conditions are satisfied:</p>
+							<ul className="tenancy-criteria-list">
+								<li className={applyType ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
+									<span className="tenancy-criteria-icon">{applyType ? '✓' : '○'}</span>
+									<span>Application type: {applyType || 'Waiting for date...'}</span>
+								</li>
+								<li className={tenancyOfficeId ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
+									<span className="tenancy-criteria-icon">{tenancyOfficeId ? '✓' : '○'}</span>
+									<span>Circle office must be selected.</span>
+								</li>
+							</ul>
+							{tenancyRegistrationDate ? (
+								<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
+									{eligibilityMet ? (
+										<p>
+											<strong>You are eligible</strong> to apply. Type: <strong>{applyType}</strong>
+											{applyType === 'Joint' ? ' — the other party will complete their details after you submit.' : null}
+										</p>
+									) : registrationTooOld ? (
+										<p><strong>Not eligible,</strong> as agreement date is more than 3 months old.</p>
+									) : null}
+								</div>
+							) : null}
+						</div>
+						<div className="tenancy-required-docs">
+							<h3 className="tenancy-docs-title">Required documents</h3>
+							<ul>
+								<li>Registered tenancy agreement (PDF)</li>
+								<li>Passport-size photograph</li>
+								<li>PAN Card</li>
+								<li>Signature</li>
+							</ul>
+						</div>
 						<div className="form-grid">
 							<label>
 								<span className="label-text required">Initiating as</span>
-								<select value={initiatorRole} onChange={e => setInitiatorRole(e.target.value)} required disabled={formLocked}>
+								<select value={initiatorRole} onChange={e => setInitiatorRole(e.target.value)} required>
 									<option value="">Select Role</option>
 									<option value="LANDLORD">Landlord</option>
 									<option value="TENANT">Tenant</option>
@@ -697,11 +710,11 @@ function TenancyCertificate() {
 
 							<label>
 								<span className="label-text required">Date of Agreement</span>
-								<input type="date" value={tenancyRegistrationDate} onChange={e => setTenancyRegistrationDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required disabled={formLocked} max={new Date().toISOString().split('T')[0]} />
+								<input type="date" value={tenancyRegistrationDate} onChange={e => setTenancyRegistrationDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required max={new Date().toISOString().split('T')[0]} />
 							</label>
 							<label>
 								<span className="label-text required">District</span>
-								<select value={tenancyDistrictId} onChange={e => { setTenancyDistrictId(e.target.value); setTenancyVillageWardId(''); setTenancyVillageWards([]); loadTenancyVillageWards(e.target.value); }} required disabled={formLocked}>
+								<select value={tenancyDistrictId} onChange={e => { setTenancyDistrictId(e.target.value); setTenancyVillageWardId(''); setTenancyVillageWards([]); loadTenancyVillageWards(e.target.value); }} required>
 									<option value="">Select District</option>
 									{tenancyDistricts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
 								</select>
@@ -709,7 +722,7 @@ function TenancyCertificate() {
 
 							<label>
 								<span className="label-text required">Village / Ward</span>
-								<select value={tenancyVillageWardId} onChange={e => setTenancyVillageWardId(e.target.value)} required disabled={formLocked || !tenancyDistrictId}>
+								<select value={tenancyVillageWardId} onChange={e => setTenancyVillageWardId(e.target.value)} required disabled={!tenancyDistrictId}>
 									<option value="">Select Village/Ward</option>
 									{tenancyVillageWards.map(vw => <option key={vw.id} value={vw.id}>{vw.name}</option>)}
 								</select>
@@ -717,7 +730,7 @@ function TenancyCertificate() {
 
 							<label>
 								<span className="label-text required">Circle Office:</span>
-								<select value={tenancyOfficeId} onChange={e => setTenancyOfficeId(e.target.value)} required disabled={formLocked}>
+								<select value={tenancyOfficeId} onChange={e => setTenancyOfficeId(e.target.value)} required>
 									<option value="">Select Office</option>
 									{tenancyOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
 								</select>
@@ -740,114 +753,114 @@ function TenancyCertificate() {
 							<div className="form-group-row" style={{ marginTop: '20px' }}>
 								<label><span className="label-text required">1. Name and address of the landlord</span></label>
 								<div className="form-grid">
-									<input type="text" placeholder="Landlord Name" value={landlordName} onChange={e => setLandlordName(e.target.value)} required disabled={formLocked} />
-									<textarea placeholder="Address" value={landlordAddress} onChange={e => setLandlordAddress(e.target.value)} required disabled={formLocked} />
+									<input type="text" placeholder="Landlord Name" value={landlordName} onChange={e => setLandlordName(e.target.value)} required />
+									<textarea placeholder="Address" value={landlordAddress} onChange={e => setLandlordAddress(e.target.value)} required />
 								</div>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text">2. Name and address of the Property Manager (if any)</span></label>
 								<div className="form-grid">
-									<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} disabled={formLocked} />
-									<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} disabled={formLocked} />
+									<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} />
+									<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} />
 								</div>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">3. Name and address of the tenant, including email and contact details</span></label>
 								<div className="form-grid">
-									<input type="text" placeholder="Tenant Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required disabled={formLocked} />
-									<textarea placeholder="Address" value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required disabled={formLocked} />
+									<input type="text" placeholder="Tenant Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required />
+									<textarea placeholder="Address" value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required />
 								</div>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text">4. Description of previous tenancy, if any</span>
-									<textarea value={tenantPreviousTenancy} onChange={e => setTenantPreviousTenancy(e.target.value)} disabled={formLocked} />
+									<textarea value={tenantPreviousTenancy} onChange={e => setTenantPreviousTenancy(e.target.value)} />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text">5. Description of premises let to the tenant Including appurtenant land, if any</span>
-									<textarea value={propertyPremisesDescription} onChange={e => setPropertyPremisesDescription(e.target.value)} disabled={formLocked} />
+									<textarea value={propertyPremisesDescription} onChange={e => setPropertyPremisesDescription(e.target.value)} />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">6. Date from which possession is given to the tenant</span>
-									<input type="date" value={propertyPossessionDate} onChange={e => setPropertyPossessionDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required disabled={formLocked} />
+									<input type="date" value={propertyPossessionDate} onChange={e => setPropertyPossessionDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">7. Rent payable as in section 8 (Monthly Rent ₹)</span>
-									<input type="number" value={propertyRentPayable} onChange={e => setPropertyRentPayable(e.target.value)} onWheel={e => e.target.blur()} min="0" required disabled={formLocked} />
+									<input type="number" value={propertyRentPayable} onChange={e => setPropertyRentPayable(e.target.value)} onWheel={e => e.target.blur()} min="0" required />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text">8. Furniture and other equipment provided to the tenant</span>
-									<textarea value={propertyFurnitureDescription} onChange={e => setPropertyFurnitureDescription(e.target.value)} disabled={formLocked} />
+									<textarea value={propertyFurnitureDescription} onChange={e => setPropertyFurnitureDescription(e.target.value)} />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text">9. Other charges payable</span></label>
 								<div className="form-grid">
-									<label><span className="label-text">(a) Electricity</span><input type="number" value={propertyChargeElectricity} onChange={e => setPropertyChargeElectricity(e.target.value)} onWheel={e => e.target.blur()} min="0" disabled={formLocked} /></label>
-									<label><span className="label-text">(b) Water</span><input type="number" value={propertyChargeWater} onChange={e => setPropertyChargeWater(e.target.value)} onWheel={e => e.target.blur()} min="0" disabled={formLocked} /></label>
-									<label><span className="label-text">(c) Extra furnishing, fittings and fixtures</span><input type="number" value={propertyChargeFurnishing} onChange={e => setPropertyChargeFurnishing(e.target.value)} onWheel={e => e.target.blur()} min="0" disabled={formLocked} /></label>
-									<label><span className="label-text">(d) Other services</span><input type="number" value={propertyChargeOtherServices} onChange={e => setPropertyChargeOtherServices(e.target.value)} onWheel={e => e.target.blur()} min="0" disabled={formLocked} /></label>
+									<label><span className="label-text">(a) Electricity</span><input type="number" value={propertyChargeElectricity} onChange={e => setPropertyChargeElectricity(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
+									<label><span className="label-text">(b) Water</span><input type="number" value={propertyChargeWater} onChange={e => setPropertyChargeWater(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
+									<label><span className="label-text">(c) Extra furnishing, fittings and fixtures</span><input type="number" value={propertyChargeFurnishing} onChange={e => setPropertyChargeFurnishing(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
+									<label><span className="label-text">(d) Other services</span><input type="number" value={propertyChargeOtherServices} onChange={e => setPropertyChargeOtherServices(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
 								</div>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">10. Duration of tenancy (Period for which let)</span></label>
 								<div className="form-grid">
-									<label><span className="label-text">End Date</span><input type="date" value={propertyTenancyEndDate} onChange={e => setPropertyTenancyEndDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required disabled={formLocked} min={propertyPossessionDate} /></label>
+									<label><span className="label-text">End Date</span><input type="date" value={propertyTenancyEndDate} onChange={e => setPropertyTenancyEndDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required min={propertyPossessionDate} /></label>
 									<label><span className="label-text">Duration</span><input type="text" value={propertyTenancyDuration} readOnly disabled className="readonly-input" /></label>
 								</div>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">11. Permanent Account Number (PAN) of landlord:</span>
-									<input type="text" value={landlordPan} onChange={e => setLandlordPan(e.target.value.toUpperCase())} required disabled={formLocked} />
+									<input type="text" value={landlordPan} onChange={e => setLandlordPan(e.target.value.toUpperCase())} required />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">12. Mobile Number and E-mail id of landlord (if available)</span></label>
 								<div className="form-grid">
-									<input type="tel" placeholder="Mobile Number" value={landlordPhone} onChange={e => setLandlordPhone(e.target.value)} required disabled={formLocked} />
-									<input type="email" placeholder="E-mail id" value={landlordEmail} onChange={e => setLandlordEmail(e.target.value)} required={initiatorRole === 'LANDLORD'} disabled={formLocked} />
+									<input type="tel" placeholder="Mobile Number" value={landlordPhone} onChange={e => setLandlordPhone(e.target.value)} required />
+									<input type="email" placeholder="E-mail id" value={landlordEmail} onChange={e => setLandlordEmail(e.target.value)} required={initiatorRole === 'LANDLORD'} />
 								</div>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">13. Permanent Account Number (PAN) of tenant</span>
-									<input type="text" value={tenantPan} onChange={e => setTenantPan(e.target.value.toUpperCase())} required disabled={formLocked} />
+									<input type="text" value={tenantPan} onChange={e => setTenantPan(e.target.value.toUpperCase())} required />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text required">14. Mobile Number and E-mail id of tenant</span></label>
 								<div className="form-grid">
-									<input type="tel" placeholder="Mobile Number" value={tenantPhone} onChange={e => setTenantPhone(e.target.value)} required disabled={formLocked} />
-									<input type="email" placeholder="E-mail id" value={tenantEmail} onChange={e => setTenantEmail(e.target.value)} required={initiatorRole === 'TENANT'} disabled={formLocked} />
+									<input type="tel" placeholder="Mobile Number" value={tenantPhone} onChange={e => setTenantPhone(e.target.value)} required />
+									<input type="email" placeholder="E-mail id" value={tenantEmail} onChange={e => setTenantEmail(e.target.value)} required={initiatorRole === 'TENANT'} />
 								</div>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text">15. Permanent Account Number (PAN) of Property Manager (if any)</span>
-									<input type="text" value={managerPan} onChange={e => setManagerPan(e.target.value.toUpperCase())} disabled={formLocked} />
+									<input type="text" value={managerPan} onChange={e => setManagerPan(e.target.value.toUpperCase())} />
 								</label>
 							</div>
 
 							<div className="form-group-row">
 								<label><span className="label-text">16. Mobile Number and E-mail id of Property Manager (if any)</span></label>
 								<div className="form-grid">
-									<input type="tel" placeholder="Mobile Number" value={managerPhone} onChange={e => setManagerPhone(e.target.value)} disabled={formLocked} />
-									<input type="email" placeholder="E-mail id" value={managerEmail} onChange={e => setManagerEmail(e.target.value)} disabled={formLocked} />
+									<input type="tel" placeholder="Mobile Number" value={managerPhone} onChange={e => setManagerPhone(e.target.value)} />
+									<input type="email" placeholder="E-mail id" value={managerEmail} onChange={e => setManagerEmail(e.target.value)} />
 								</div>
 							</div>
 						</section>
@@ -863,7 +876,7 @@ function TenancyCertificate() {
 								<div className="upload-item-full">
 									<label>
 										<span className="label-text required">Registered Tenancy Agreement (PDF)</span>
-										<input type="file" accept=".pdf" onChange={e => setAgreementFile(e.target.files[0])} disabled={formLocked} />
+										<input type="file" accept=".pdf" onChange={e => setAgreementFile(e.target.files[0])} />
 										<p className="muted">Upload the scanned copy of the agreement.</p>
 									</label>
 								</div>
@@ -886,7 +899,6 @@ function TenancyCertificate() {
 															const f = e.target.files[0]
 															await handlePassportPhotoUpload(f, setTenantPhotoFile, setTenantPhotoPreview, 'tenant')
 														}}
-														disabled={formLocked}
 														required
 													/>
 													<p className="muted">Auto-cropped to passport ratio.</p>
@@ -896,14 +908,14 @@ function TenancyCertificate() {
 											<div className="upload-item-row">
 												<label>
 													<span className="label-text required">Tenant Signature Image</span>
-													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setTenantSignatureFile(f); if (f) setTenantSignaturePreview(URL.createObjectURL(f)) }} disabled={formLocked} required />
+													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setTenantSignatureFile(f); if (f) setTenantSignaturePreview(URL.createObjectURL(f)) }} required />
 												</label>
 												{tenantSignaturePreview && <img src={tenantSignaturePreview} alt="T Sign" className="tenancy-thumb" />}
 											</div>
 											<div className="upload-item-row">
 												<label>
 													<span className="label-text required">Tenant PAN Card Document</span>
-													<input type="file" accept=".pdf,image/*" onChange={e => { setTenantPanFile(e.target.files[0]) }} disabled={formLocked} required />
+													<input type="file" accept=".pdf,image/*" onChange={e => { setTenantPanFile(e.target.files[0]) }} required />
 												</label>
 												{tenantPanFile && <span className="muted" style={{ fontSize: '12px' }}>{tenantPanFile.name}</span>}
 											</div>
@@ -920,7 +932,6 @@ function TenancyCertificate() {
 															const f = e.target.files[0]
 															await handlePassportPhotoUpload(f, setLandlordPhotoFile, setLandlordPhotoPreview, 'landlord')
 														}}
-														disabled={formLocked}
 														required
 													/>
 													<p className="muted">Auto-cropped to passport ratio.</p>
@@ -930,14 +941,14 @@ function TenancyCertificate() {
 											<div className="upload-item-row">
 												<label>
 													<span className="label-text required">Landlord Signature Image</span>
-													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setLandlordSignatureFile(f); if (f) setLandlordSignaturePreview(URL.createObjectURL(f)) }} disabled={formLocked} required />
+													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setLandlordSignatureFile(f); if (f) setLandlordSignaturePreview(URL.createObjectURL(f)) }} required />
 												</label>
 												{landlordSignaturePreview && <img src={landlordSignaturePreview} alt="L Sign" className="tenancy-thumb" />}
 											</div>
 											<div className="upload-item-row">
 												<label>
 													<span className="label-text required">Landlord PAN Card Document</span>
-													<input type="file" accept=".pdf,image/*" onChange={e => { setLandlordPanFile(e.target.files[0]) }} disabled={formLocked} required />
+													<input type="file" accept=".pdf,image/*" onChange={e => { setLandlordPanFile(e.target.files[0]) }} required />
 												</label>
 												{landlordPanFile && <span className="muted" style={{ fontSize: '12px' }}>{landlordPanFile.name}</span>}
 											</div>
@@ -1115,91 +1126,63 @@ function TenancyCertificate() {
 							Please review all details carefully before final submission.
 						</div>
 
-						<div className="payment-section" style={{ marginTop: '30px', padding: '20px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>
-							<h3>Fee Payment</h3>
-							<p>Based on your agreement registration date, the required application fee is <strong>₹{feeAmount}</strong>.</p>
+						<div className="ws-uin-payment-section">
+							<h3 className="ws-uin-payment-title">Fee payment</h3>
+							<p className="ws-uin-payment-lead">
+								Based on your agreement registration date, the required application fee is <strong>₹{feeAmount}</strong>.
+							</p>
 							{!paymentComplete ? (
 								<button type="button" className="ws-btn ws-btn--primary" onClick={handleMockPayment} disabled={paymentSimulating || draftSaving}>
-									{paymentSimulating ? 'Processing Payment...' : `Pay ₹${feeAmount} via eGRAS`}
+									{paymentSimulating ? 'Processing payment…' : `Pay ₹${feeAmount} via eGRAS`}
 								</button>
 							) : (
-								<div className="ws-alert ws-alert--success" style={{ marginTop: '10px' }}>
-									Payment of ₹{feeAmount} completed successfully. (Mock GRN: {Math.floor(Math.random() * 1000000000)})
+								<div className="ws-alert ws-alert--success ws-uin-payment-success">
+									Payment of ₹{feeAmount} completed successfully.{paymentGrn ? ` (Mock GRN: ${paymentGrn})` : ''}
 								</div>
 							)}
 						</div>
 
-						{!tenancyReceipt && (
-							<div className="tenancy-declaration-section" style={{ marginTop: '32px', padding: '16px', background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '4px' }}>
-								<label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', margin: 0, flexDirection: 'row' }}>
-									<input
-										type="checkbox"
-										checked={declarationChecked}
-										onChange={(e) => setDeclarationChecked(e.target.checked)}
-										disabled={formLocked}
-										style={{ marginTop: '4px', width: 'auto' }}
-									/>
-									<span style={{ fontSize: '0.9rem', lineHeight: '1.5' }}>
-										I/we hereby declare that the particulars given above are true and correct to the best of my/our knowledge and belief and no material fact has been concealed.
-									</span>
-								</label>
-							</div>
-						)}
-					</div>
-				)}
-
-				{tenancyStep === 5 && tenancyReceipt && (
-					<div className="tenancy-success-card">
-						<h3>Application Submitted!</h3>
-						<p>Your Application No is: <strong>{tenancyReceipt.application_no}</strong></p>
-						<div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px' }}>
-							<button type="button" onClick={() => navigate('/dashboard/status')}>View My Applications</button>
-							<button
-								type="button"
-								className="action-icon-btn secondary"
-								title="Download Acknowledgement"
-								data-tooltip="Download Acknowledgement"
-								onClick={async () => {
-									try {
-										const response = await api.get(`/api/tenancy-applications/${tenancyReceipt.application_no}/acknowledgement?print=1`);
-										const printWindow = window.open('', '_blank');
-										printWindow.document.write(response.data);
-										printWindow.document.close();
-									} catch (err) {
-										alert('Failed to open acknowledgement');
-									}
-								}}
-							>
-								<Icon name="download" className="btn-icon-svg" />
-							</button>
+						<div className="ws-uin-declaration">
+							<label className="ws-uin-declaration-label">
+								<input
+									type="checkbox"
+									checked={declarationChecked}
+									onChange={(e) => setDeclarationChecked(e.target.checked)}
+								/>
+								<span>
+									I/we hereby declare that the particulars given above are true and correct to the best of my/our knowledge and belief and no material fact has been concealed.
+								</span>
+							</label>
 						</div>
 					</div>
 				)}
 
 				<div className="form-actions ws-uin-apply-actions">
-					{tenancyStep > 1 && !tenancyReceipt ? (
+					{tenancyStep > 1 ? (
 						<button type="button" className="ws-btn ws-btn--secondary" onClick={() => goToStep(tenancyStep - 1)}>
 							Back
 						</button>
 					) : null}
-					{tenancyStep === 1 && !tenancyReceipt ? (
+					{tenancyStep === 1 ? (
 						<button type="button" className="ws-btn ws-btn--secondary" onClick={resetTenancyForm}>
 							Start over
 						</button>
 					) : null}
-					{tenancyStep < 4 && !tenancyReceipt ? (
+					{tenancyStep < 4 ? (
 						<button type="submit" className="ws-btn ws-btn--primary" disabled={draftSaving || (tenancyStep === 1 && registrationTooOld)}>
 							{draftSaving ? 'Saving…' : 'Save & continue'}
 						</button>
 					) : null}
-					{tenancyStep === 4 && !tenancyReceipt ? (
+					{tenancyStep === 4 ? (
 						<button type="submit" className="ws-btn ws-btn--primary" disabled={tenancySubmitting || draftSaving || !declarationChecked || !paymentComplete}>
 							{tenancySubmitting ? 'Submitting…' : 'Confirm & submit'}
 						</button>
 					) : null}
 				</div>
 			</form>
-			) : null}
+					) : null}
+				</div>
+			</div>
 		</div>
 	)
 }

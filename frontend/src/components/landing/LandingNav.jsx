@@ -47,75 +47,77 @@ function LandingNav({ variant = 'overlay' }) {
 					role="toolbar"
 					aria-label="Accessibility options"
 				>
-					<div className="landing-nav-mobile-a11y-scroll">
-						<span className="landing-nav-mobile-flag" role="img" aria-label="India">
-							🇮🇳
-						</span>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<a href="#main-content" className="landing-nav-mobile-skip">
-							Skip to main content
-						</a>
-						<a
-							href="#portal-content"
-							className="landing-nav-mobile-skip landing-nav-mobile-skip--apply"
-						>
-							Skip to apply
-						</a>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Text size">
+					<div className="landing-nav-mobile-a11y-inner">
+						<div className="landing-nav-mobile-a11y-row landing-nav-mobile-a11y-row--primary">
+							<span className="landing-nav-mobile-flag" role="img" aria-label="India">
+								🇮🇳
+							</span>
+							<div className="landing-nav-mobile-skip-group">
+								<a href="#main-content" className="landing-nav-mobile-skip">
+									Skip to main content
+								</a>
+								<a
+									href="#portal-content"
+									className="landing-nav-mobile-skip landing-nav-mobile-skip--apply"
+								>
+									Skip to apply
+								</a>
+							</div>
+						</div>
+						<div className="landing-nav-mobile-a11y-row landing-nav-mobile-a11y-row--tools">
+							<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Text size">
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('increase')}
+									aria-label="Increase text size"
+								>
+									A+
+								</button>
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('reset')}
+									aria-label="Reset text size"
+								>
+									A
+								</button>
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('decrease')}
+									aria-label="Decrease text size"
+								>
+									A−
+								</button>
+							</div>
+							<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Language">
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('lang-en')}
+									aria-label="English"
+								>
+									EN
+								</button>
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('lang-as')}
+									aria-label="Assamese"
+								>
+									অসমীয়া
+								</button>
+							</div>
 							<button
 								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('increase')}
-								aria-label="Increase text size"
+								className="landing-nav-mobile-a11y-btn landing-nav-mobile-a11y-btn--solo"
+								onClick={() => emitLandingA11y('contrast')}
 							>
-								A+
-							</button>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('reset')}
-								aria-label="Reset text size"
-							>
-								A
-							</button>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('decrease')}
-								aria-label="Decrease text size"
-							>
-								A−
+								<span className="landing-nav-a11y-label landing-nav-a11y-label--long">High contrast</span>
+								<span className="landing-nav-a11y-label landing-nav-a11y-label--short">Contrast</span>
 							</button>
 						</div>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Language">
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('lang-en')}
-								aria-label="English"
-							>
-								EN
-							</button>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('lang-as')}
-								aria-label="Assamese"
-							>
-								অসমীয়া
-							</button>
-						</div>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<button
-							type="button"
-							className="landing-nav-mobile-a11y-btn landing-nav-mobile-a11y-btn--solo"
-							onClick={() => emitLandingA11y('contrast')}
-						>
-							<span className="landing-nav-a11y-label landing-nav-a11y-label--long">High contrast</span>
-							<span className="landing-nav-a11y-label landing-nav-a11y-label--short">Contrast</span>
-						</button>
 					</div>
 				</div>
 

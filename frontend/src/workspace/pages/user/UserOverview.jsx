@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
@@ -9,6 +9,7 @@ import { STATUS, STATUS_LABELS } from '../../../constants/status'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
 import { tenantServiceGroups } from '../../../data/tenantServices'
 import CitizenStatusChart from '../../components/dashboard/CitizenStatusChart'
+import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
 
 const SERVICE_TILE_ICONS = {
 	'rent-authority': 'building',
@@ -19,6 +20,8 @@ const SERVICE_TILE_ICONS = {
 function UserOverview() {
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
+	const location = useLocation()
+	const [flashMessage, setFlashMessage] = useState('')
 	const [applications, setApplications] = useState([])
 	const [totalCount, setTotalCount] = useState(0)
 	const [loading, setLoading] = useState(true)
@@ -40,6 +43,13 @@ function UserOverview() {
 	useEffect(() => {
 		loadData()
 	}, [])
+
+	useEffect(() => {
+		const message = location.state?.successMessage
+		if (!message) return
+		setFlashMessage(message)
+		navigate(location.pathname, { replace: true, state: {} })
+	}, [location.pathname, location.state, navigate])
 
 	const loadData = async () => {
 		setLoading(true)
@@ -124,6 +134,12 @@ function UserOverview() {
 
 	return (
 		<div className="ws-page ws-citizen-dashboard">
+			<SubmissionSuccessModal
+				open={Boolean(flashMessage)}
+				message={flashMessage}
+				onClose={() => setFlashMessage('')}
+			/>
+
 			{showProfilePrompt ? (
 				<div className="ws-alert ws-alert--warning" role="status">
 					<span>Complete your profile to auto-fill future applications.</span>

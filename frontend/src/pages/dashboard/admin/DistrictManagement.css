@@ -1,0 +1,120 @@
+.admin-district-toolbar__add {
+	display: flex;
+	align-items: flex-end;
+	margin-left: auto;
+	padding-bottom: 1px;
+}
+
+.admin-district-modal {
+	width: 100%;
+	max-width: 400px;
+	margin: 0;
+	padding: 1.5rem 1.75rem;
+	background: #fff;
+	border-radius: 12px;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+}
+
+.admin-district-modal h3 {
+	margin: 0 0 0.5rem;
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+}
+
+.admin-district-modal__hint {
+	margin: 0 0 1.25rem;
+	font-size: 0.875rem;
+	color: var(--ws-muted, #64748b);
+	line-height: 1.45;
+}
+
+.admin-district-modal .form-group {
+	margin-bottom: 1rem;
+}
+
+.admin-district-modal .form-group label {
+	display: block;
+	margin-bottom: 0.35rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ws-text, #334155);
+}
+
+.admin-district-modal .form-group input {
+	width: 100%;
+	padding: 9px 12px;
+	border-radius: 8px;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	font-size: 0.875rem;
+	font-family: inherit;
+	box-sizing: border-box;
+}
+
+.admin-district-modal .form-group input:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1);
+}
+
+.admin-district-modal__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+/* Table layout: S.no. | District name | Actions */
+.admin-district-panel .ws-table {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.admin-district-panel .ws-table th:first-child,
+.admin-district-panel .ws-table td:first-child {
+	width: 72px;
+	text-align: center;
+}
+
+.admin-district-panel .ws-table th:nth-child(2),
+.admin-district-panel .ws-table td:nth-child(2) {
+	width: auto;
+}
+
+.admin-district-panel .ws-status-th-actions,
+.admin-district-panel .ws-status-actions {
+	width: 120px;
+	min-width: 120px;
+	text-align: right;
+}
+
+.admin-district-panel .ws-status-actions {
+	display: table-cell !important;
+	vertical-align: middle;
+}
+
+.admin-district-panel .ws-table .th-content {
+	justify-content: flex-start;
+}
+
+.admin-district-panel .ws-table th,
+.admin-district-panel .ws-table td {
+	border-bottom: 1px solid var(--ws-border, #e2e8f0);
+}
+
+@media (max-width: 640px) {
+	.admin-district-toolbar__add {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	.admin-district-toolbar__add .ws-btn {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.admin-district-modal {
+		max-width: calc(100vw - 2rem);
+	}
+}

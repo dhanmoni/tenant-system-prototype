@@ -90,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
     Route::middleware("role:$adminRoles")->group(function () {
         Route::get('/admin/tenancy-records', [TenancyApplicationController::class, 'adminIndex']);
         Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
+        Route::put('/admin/applications/{type}/{id}', [ApplicationWorkflowController::class, 'update']);
     });
 
     // Service Application Workflow
