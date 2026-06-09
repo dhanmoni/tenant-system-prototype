@@ -19,7 +19,7 @@ class ApplicationResource extends JsonResource
             'id', 'application_no', 'user_id', 'status', 'created_at', 'updated_at', 
             'district_id', 'forwarded_at', 'forwarded_by_user_id', 'rejected_at', 
             'rejected_by_user_id', 'rejection_message', 'assigned_to_role', 
-            'approved_at', 'approved_by_user_id'
+            'approved_at', 'approved_by_user_id', 'forward_remarks'
         ];
         
         // Get all attributes of the model
@@ -38,6 +38,7 @@ class ApplicationResource extends JsonResource
             'rejected_at' => $this->rejected_at,
             'approved_at' => $this->approved_at,
             'rejection_message' => $this->rejection_message,
+            'forward_remarks' => $this->forward_remarks,
             'assigned_to_role' => $this->assigned_to_role,
             'district_id' => $this->district_id,
             'form_type' => $this->form_type ?? $this->resource->form_type, // Fallback if not set

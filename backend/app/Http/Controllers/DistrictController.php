@@ -66,9 +66,32 @@ class DistrictController extends Controller
 
     public function destroy(District $district)
     {
-        $district->delete();
+        // Deletion is disabled: deactivate the district instead to preserve history.
+        return response()->json([
+            'message' => 'Districts cannot be deleted. Please deactivate the district instead.',
+        ], 403);
+    }
 
-        return response()->json(['message' => 'District deleted']);
+    public function toggleActive(Request $request, District $district)
+    {
+        $deactivating = $district->is_active;
+
+        // A reason is required when deactivating; activation clears it.
+        if ($deactivating) {
+            $data = $request->validate([
+                'reason' => ['required', 'string', 'max:1000'],
+            ]);
+            $district->deactivation_reason = $data['reason'];
+        } else {
+            $district->deactivation_reason = null;
+        }
+
+        $district->is_active = !$deactivating;
+        $district->save();
+
+        return response()->json([
+            'district' => $district->load(['state', 'rentAuthority', 'rentCourt', 'rentTribunal', 'districtAdmin']),
+        ]);
     }
 
     public function assignAdmin(Request $request, District $district)

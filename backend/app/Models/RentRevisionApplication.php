@@ -38,6 +38,7 @@ class RentRevisionApplication extends Model
         'rejected_by_user_id',
         'rejection_message',
         'assigned_to_role',
+        'forward_remarks',
     ];
 
     public function getRouteKeyName()

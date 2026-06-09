@@ -2874,6 +2874,10 @@
 	box-shadow: var(--ws-shadow);
 }
 
+.ws-uin-apply-form--docs-step {
+	min-width: 0;
+}
+
 .ws-uin-apply-form--preview-step {
 	background: transparent;
 	border: none;
@@ -2948,6 +2952,222 @@
 	margin-top: 24px;
 	padding-top: 16px;
 	border-top: 1px solid var(--ws-border);
+}
+
+/* UIN — dedicated payment stage */
+.ws-uin-payment-step {
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.ws-uin-payment-card {
+	max-width: 560px;
+	margin: 0 auto;
+	padding: 1.75rem;
+	border: 1px solid var(--ws-border);
+	border-radius: 14px;
+	background: var(--ws-surface, #fff);
+	box-shadow: var(--ws-shadow);
+	text-align: center;
+}
+
+.ws-uin-payment-card-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--ws-text);
+}
+
+.ws-uin-payment-card-lead {
+	margin: 0 auto 1.4rem;
+	max-width: 440px;
+	font-size: 0.9rem;
+	line-height: 1.55;
+	color: var(--ws-muted);
+}
+
+.ws-uin-payment-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	margin-bottom: 1.5rem;
+	padding: 1rem 1.15rem;
+	border: 1px solid var(--ws-border);
+	border-radius: 10px;
+	background: #f8fafc;
+	text-align: left;
+}
+
+.ws-uin-payment-summary-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	font-size: 0.9rem;
+	color: var(--ws-muted);
+}
+
+.ws-uin-payment-summary-row strong {
+	color: var(--ws-text);
+}
+
+.ws-uin-payment-pay-btn {
+	min-width: 220px;
+}
+
+.ws-uin-payment-note {
+	margin: 1rem 0 0;
+	font-size: 0.8rem;
+	color: var(--ws-muted);
+}
+
+/* UIN — post-submit confirmation screen */
+.uin-confirm {
+	display: flex;
+	justify-content: center;
+	padding: 1.5rem 0 3rem;
+}
+
+.uin-confirm-card {
+	width: 100%;
+	max-width: 560px;
+	padding: 2.5rem 2rem;
+	border: 1px solid var(--ws-border);
+	border-radius: 16px;
+	background: var(--ws-surface, #fff);
+	box-shadow: var(--ws-shadow);
+	text-align: center;
+}
+
+.uin-confirm-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 64px;
+	height: 64px;
+	margin: 0 auto 1.25rem;
+	border-radius: 999px;
+	background: #dcfce7;
+	color: #15803d;
+	font-size: 2rem;
+	font-weight: 700;
+}
+
+.uin-confirm-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: var(--ws-text);
+}
+
+.uin-confirm-lead {
+	margin: 0 auto 1.75rem;
+	max-width: 420px;
+	font-size: 0.95rem;
+	line-height: 1.55;
+	color: var(--ws-muted);
+}
+
+.uin-confirm-meta {
+	margin: 0 0 1.5rem;
+	padding: 1.1rem 1.25rem;
+	border: 1px solid var(--ws-border);
+	border-radius: 12px;
+	background: #f8fafc;
+	text-align: left;
+}
+
+.uin-confirm-meta-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.35rem 0;
+}
+
+.uin-confirm-meta-row dt {
+	font-size: 0.85rem;
+	color: var(--ws-muted);
+}
+
+.uin-confirm-meta-row dd {
+	margin: 0;
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--ws-text);
+	font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+}
+
+.uin-confirm-joint-note {
+	margin: 0 0 0.75rem;
+	padding: 0.85rem 1rem;
+	border: 1px solid #fde68a;
+	border-radius: 10px;
+	background: #fffbeb;
+	font-size: 0.85rem;
+	line-height: 1.5;
+	color: #92400e;
+	text-align: left;
+}
+
+.uin-confirm-invite {
+	margin: 0 0 1.5rem;
+}
+
+.uin-confirm-invite-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: stretch;
+}
+
+.uin-confirm-invite-input {
+	flex: 1;
+	min-width: 0;
+	padding: 0.6rem 0.75rem;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	border-radius: 8px;
+	background: #f8fafc;
+	font-size: 0.85rem;
+	font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+	color: var(--ws-text);
+}
+
+.uin-confirm-invite-input:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1);
+}
+
+.uin-confirm-invite-copy {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.uin-confirm-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem;
+	justify-content: center;
+}
+
+.uin-confirm-alert {
+	margin: 1.25rem 0 0;
+	text-align: left;
+}
+
+/* Join application — preview step media */
+.join-preview-step .preview-actions-hint {
+	margin: 0 0 1.25rem;
+	font-size: 0.9rem;
+	color: var(--ws-muted);
+}
+
+.join-preview-media {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.25rem;
+	margin-top: 1rem;
 }
 
 .ws-alert {

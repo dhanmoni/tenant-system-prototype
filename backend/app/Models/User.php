@@ -46,6 +46,7 @@ class User extends Authenticatable
         'approved_at',
         'approved_by_user_id',
         'is_blocked',
+        'block_reason',
         'reports_to_user_id',
         'password',
         'email_verified_at',

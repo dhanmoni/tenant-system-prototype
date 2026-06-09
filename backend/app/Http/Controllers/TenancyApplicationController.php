@@ -228,7 +228,7 @@ class TenancyApplicationController extends Controller
         ]);
 
         $application = TenancyApplication::where('ref_code', $request->input('ref_code'))
-            ->with('office', 'villageWard')
+            ->with('office', 'villageWard', 'district')
             ->first();
 
         if (!$application) {
@@ -278,15 +278,34 @@ class TenancyApplicationController extends Controller
                 'landlord_email' => $application->landlord_email,
                 'landlord_address' => $application->landlord_address,
                 'landlord_pan' => $application->landlord_pan,
+                'landlord_aadhar' => $application->landlord_aadhar,
+                'landlord_photo_path' => $application->landlord_photo_path,
+                'landlord_signature_path' => $application->landlord_signature_path,
+                'manager_name' => $application->manager_name,
+                'manager_address' => $application->manager_address,
+                'manager_email' => $application->manager_email,
+                'manager_phone' => $application->manager_phone,
+                'manager_pan' => $application->manager_pan,
+                'manager_aadhar' => $application->manager_aadhar,
                 'tenant_name' => $application->tenant_name,
                 'tenant_phone' => $application->tenant_phone,
                 'tenant_email' => $application->tenant_email,
                 'tenant_address' => $application->tenant_address,
                 'tenant_pan' => $application->tenant_pan,
+                'tenant_aadhar' => $application->tenant_aadhar,
+                'tenant_previous_tenancy' => $application->tenant_previous_tenancy,
+                'tenant_photo_path' => $application->tenant_photo_path,
+                'tenant_signature_path' => $application->tenant_signature_path,
                 'property_premises_description' => $application->property_premises_description,
                 'property_rent_payable' => $application->property_rent_payable,
+                'property_furniture_description' => $application->property_furniture_description,
+                'property_charge_electricity' => $application->property_charge_electricity,
+                'property_charge_water' => $application->property_charge_water,
+                'property_charge_furnishing' => $application->property_charge_furnishing,
+                'property_charge_other_services' => $application->property_charge_other_services,
                 'property_tenancy_duration' => $application->property_tenancy_duration,
                 'property_possession_date' => $application->property_possession_date,
+                'district' => $application->district,
                 'apply_type' => $application->apply_type,
                 'initiator_completed' => $application->initiator_completed,
                 'second_party_completed' => $application->second_party_completed,
@@ -687,7 +706,7 @@ class TenancyApplicationController extends Controller
 
     public function applicationDetails(Request $request, TenancyApplication $tenancyApplication)
     {
-        $tenancyApplication->load('office');
+        $tenancyApplication->load(['office', 'district']);
         $html = view('tenancy.application-details', [
             'application' => $tenancyApplication,
             'print' => $request->boolean('print'),

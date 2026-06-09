@@ -82,11 +82,38 @@
 	width: auto;
 }
 
+.admin-district-panel .ws-table th:nth-child(3),
+.admin-district-panel .ws-table td:nth-child(3) {
+	width: 110px;
+}
+
 .admin-district-panel .ws-status-th-actions,
 .admin-district-panel .ws-status-actions {
-	width: 120px;
-	min-width: 120px;
+	width: 150px;
+	min-width: 150px;
 	text-align: right;
+}
+
+/* Active / inactive status badge */
+.admin-user-status {
+	display: inline-block;
+	padding: 0.2rem 0.6rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.admin-user-status--active {
+	color: #15803d;
+	background: #dcfce7;
+	border: 1px solid #bbf7d0;
+}
+
+.admin-user-status--inactive {
+	color: #b91c1c;
+	background: #fee2e2;
+	border: 1px solid #fecaca;
 }
 
 .admin-district-panel .ws-status-actions {

@@ -36,6 +36,66 @@ class ApplicationWorkflowController extends Controller
         };
     }
 
+    // Oldest first (created_at ASC), tie-broken by application_no so the order is stable
+    // and identical between the list endpoints and the sequential-processing guard.
+    protected static function compareFifo($a, $b)
+    {
+        $timeDiff = strtotime($a['created_at'] ?? 0) - strtotime($b['created_at'] ?? 0);
+        if ($timeDiff === 0) {
+            return strcmp($a['application_no'] ?? '', $b['application_no'] ?? '');
+        }
+        return $timeDiff;
+    }
+
+    // Service-form types handled by an assistant or principal of a given office.
+    protected function getQueueTypesForUser($user)
+    {
+        return match ($user->role) {
+            Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
+            Roles::RC_ASSISTANT, Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
+            Roles::RT_ASSISTANT, Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
+            default => [],
+        };
+    }
+
+    // Returns the single oldest pending application (FIFO head) for this officer's
+    // district + queue, or null when the queue is empty.
+    protected function getOldestPending($user, $status)
+    {
+        $types = $this->getQueueTypesForUser($user);
+        $districtId = $user->district_id;
+        $candidates = [];
+        foreach ($types as $type) {
+            $modelClass = $this->getModel($type);
+            if (!$modelClass) continue;
+            $app = $modelClass::where('district_id', $districtId)
+                ->where('status', $status)
+                ->orderBy('created_at', 'asc')
+                ->orderBy('application_no', 'asc')
+                ->first();
+            if ($app) {
+                $candidates[] = [
+                    'type' => $type,
+                    'id' => $app->id,
+                    'created_at' => (string) $app->created_at,
+                    'application_no' => $app->application_no,
+                ];
+            }
+        }
+        if (empty($candidates)) {
+            return null;
+        }
+        usort($candidates, [self::class, 'compareFifo']);
+        return $candidates[0];
+    }
+
+    // FIFO lock: an action is only allowed on the head of the queue.
+    protected function isQueueHead($user, $status, $type, $id)
+    {
+        $oldest = $this->getOldestPending($user, $status);
+        return $oldest && $oldest['type'] === $type && (int) $oldest['id'] === (int) $id;
+    }
+
     public function inbox(Request $request)
     {
         $user = $request->user();
@@ -88,13 +148,8 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
-        usort($allApplications, function ($a, $b) {
-            $timeDiff = strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
-            if ($timeDiff === 0) {
-                return strcmp($b['application_no'] ?? '', $a['application_no'] ?? '');
-            }
-            return $timeDiff;
-        });
+        // FIFO: oldest submitted application first, so officers clear the queue in order.
+        usort($allApplications, [self::class, 'compareFifo']);
 
         $total = count($allApplications);
         $lastPage = max(1, (int) ceil($total / $perPage));
@@ -130,6 +185,17 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Application outside district'], 403);
         }
 
+        // FIFO: assistants must clear the oldest submitted application before the next.
+        if (!$this->isQueueHead($user, Status::SUBMITTED, $type, $id)) {
+            return response()->json([
+                'message' => 'Please process the oldest pending application in the queue first.',
+            ], 409);
+        }
+
+        $data = $request->validate([
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
         $targetRole = match ($user->role) {
             Roles::RA_ASSISTANT => Roles::RENT_AUTHORITY,
             Roles::RC_ASSISTANT => Roles::RENT_COURT,
@@ -142,6 +208,7 @@ class ApplicationWorkflowController extends Controller
             'forwarded_at' => Carbon::now(),
             'forwarded_by_user_id' => $user->id,
             'assigned_to_role' => $targetRole,
+            'forward_remarks' => $data['remarks'] ?? null,
         ]);
 
         return response()->json(['message' => 'Application moved to review successfully', 'application' => $application]);
@@ -167,6 +234,18 @@ class ApplicationWorkflowController extends Controller
 
         if ($application->district_id !== $user->district_id) {
             return response()->json(['message' => 'Application outside district'], 403);
+        }
+
+        // FIFO: assistants/principals must act on the head of their queue first.
+        // Admins (who can reject anything) are not subject to the queue lock.
+        $isQueueRole = $user->isAssistant() || in_array($user->role, Roles::principals());
+        if ($isQueueRole) {
+            $pendingStatus = $user->isAssistant() ? Status::SUBMITTED : Status::IN_REVIEW;
+            if (!$this->isQueueHead($user, $pendingStatus, $type, $id)) {
+                return response()->json([
+                    'message' => 'Please process the oldest pending application in the queue first.',
+                ], 409);
+            }
         }
 
         $application->update([
@@ -196,6 +275,13 @@ class ApplicationWorkflowController extends Controller
 
         if ($application->district_id !== $user->district_id) {
             return response()->json(['message' => 'Application outside district'], 403);
+        }
+
+        // FIFO: principals must approve the oldest in-review application before the next.
+        if (!$this->isQueueHead($user, Status::IN_REVIEW, $type, $id)) {
+            return response()->json([
+                'message' => 'Please process the oldest pending application in the queue first.',
+            ], 409);
         }
 
         $application->update([
@@ -244,13 +330,8 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
-        usort($allApplications, function ($a, $b) {
-            $timeDiff = strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
-            if ($timeDiff === 0) {
-                return strcmp($b['application_no'] ?? '', $a['application_no'] ?? '');
-            }
-            return $timeDiff;
-        });
+        // FIFO: oldest application awaiting review first.
+        usort($allApplications, [self::class, 'compareFifo']);
 
         $total = count($allApplications);
         $lastPage = max(1, (int) ceil($total / $perPage));

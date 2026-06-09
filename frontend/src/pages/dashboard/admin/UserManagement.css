@@ -21,6 +21,27 @@
 	white-space: nowrap;
 }
 
+.admin-user-status {
+	display: inline-block;
+	padding: 0.2rem 0.6rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.admin-user-status--active {
+	color: #15803d;
+	background: #dcfce7;
+	border: 1px solid #bbf7d0;
+}
+
+.admin-user-status--inactive {
+	color: #b91c1c;
+	background: #fee2e2;
+	border: 1px solid #fecaca;
+}
+
 .admin-user-modal {
 	max-width: 480px;
 	width: calc(100% - 2rem);

@@ -152,9 +152,10 @@ class UserManagementController extends Controller
 
     public function destroy(User $user)
     {
-        $user->delete();
-
-        return response()->json(['message' => 'User deleted']);
+        // Deletion is disabled: deactivate (block) users instead to preserve history.
+        return response()->json([
+            'message' => 'Users cannot be deleted. Please deactivate the account instead.',
+        ], 403);
     }
 
     public function approve(Request $request, User $user)
@@ -172,9 +173,41 @@ class UserManagementController extends Controller
 
     public function toggleBlock(Request $request, User $user)
     {
-        $user->is_blocked = !$user->is_blocked;
+        $currentUser = $request->user();
+
+        // Cannot deactivate your own account.
+        if ($currentUser->id === $user->id) {
+            return response()->json(['message' => 'You cannot change your own account status'], 403);
+        }
+
+        // Only a super admin can change another super admin's status.
+        if ($user->role === Roles::SUPER_ADMIN && $currentUser->role !== Roles::SUPER_ADMIN) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // District admins and principals can only manage users within their own district.
+        if ($currentUser->role !== Roles::SUPER_ADMIN
+            && $user->district_id !== $currentUser->district_id) {
+            return response()->json(['message' => 'User is outside your district'], 403);
+        }
+
+        $deactivating = !$user->is_blocked;
+
+        // A reason is required when deactivating; activation clears it.
+        if ($deactivating) {
+            $data = $request->validate([
+                'reason' => ['required', 'string', 'max:1000'],
+            ]);
+            $user->block_reason = $data['reason'];
+        } else {
+            $user->block_reason = null;
+        }
+
+        $user->is_blocked = $deactivating;
         $user->save();
 
-        return response()->json(['user' => $user->load(['office', 'designation'])]);
+        return response()->json([
+            'user' => new UserResource($user->load(['office', 'designation', 'district'])),
+        ]);
     }
 }

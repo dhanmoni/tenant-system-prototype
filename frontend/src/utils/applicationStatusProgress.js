@@ -391,9 +391,12 @@ function buildAssistantReviewDescription(application, viewerRole, currentStatus)
 		const by = application.forwarded_by?.name
 			? ` Forwarded by ${application.forwarded_by.name}.`
 			: ''
+		const remarks = application.forward_remarks
+			? ` Remarks: ${application.forward_remarks}`
+			: ''
 		return at
-			? `Forwarded to ${target} on ${at}.${by}`
-			: `Forwarded to ${target} for final review.${by}`
+			? `Forwarded to ${target} on ${at}.${by}${remarks}`
+			: `Forwarded to ${target} for final review.${by}${remarks}`
 	}
 
 	if (target) {

@@ -12,11 +12,17 @@ class District extends Model
     protected $fillable = [
         'name',
         'code',
+        'is_active',
+        'deactivation_reason',
         'state_id',
         'assistant_director_id', // Rent Authority
         'district_head_id',      // Rent Court
         'rent_tribunal_id',
         'district_admin_id',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function assistantDirector()
