@@ -11035,6 +11035,76 @@ main.main-fluid {
 	min-width: 7rem;
 }
 
+.profile-completion-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1400;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.25rem;
+	background: rgba(15, 23, 42, 0.55);
+	backdrop-filter: blur(2px);
+}
+
+.profile-completion-modal {
+	width: min(100%, 28rem);
+	padding: 1.5rem 1.35rem 1.25rem;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+	border: 1px solid #e2e8f0;
+}
+
+.profile-completion-modal__icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 3rem;
+	height: 3rem;
+	margin: 0 auto 0.85rem;
+	border-radius: 50%;
+	background: #e3f2fd;
+	color: var(--gov-blue, #0d47a1);
+}
+
+.profile-completion-modal__icon svg {
+	width: 1.4rem;
+	height: 1.4rem;
+}
+
+.profile-completion-modal__title {
+	margin: 0 0 0.65rem;
+	font-family: var(--font-gov);
+	font-size: 1.125rem;
+	font-weight: 700;
+	text-align: center;
+	color: #1e293b;
+}
+
+.profile-completion-modal__message {
+	margin: 0 0 0.85rem;
+	font-size: 0.9375rem;
+	line-height: 1.55;
+	text-align: center;
+	color: #475569;
+}
+
+.profile-completion-modal__list {
+	margin: 0 0 1.15rem;
+	padding-left: 1.2rem;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: #334155;
+}
+
+.profile-completion-modal__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.65rem;
+}
+
 /* Service form — review before submit */
 .service-form-preview-overlay {
 	position: fixed;

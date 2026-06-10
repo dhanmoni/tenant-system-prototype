@@ -26,8 +26,6 @@ function UserOverview() {
 	const [totalCount, setTotalCount] = useState(0)
 	const [loading, setLoading] = useState(true)
 	const [loadError, setLoadError] = useState('')
-	const [showProfilePrompt, setShowProfilePrompt] = useState(false)
-
 	const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 	const photoUrl = user?.passport_photo_url
 	const photoPath = user?.passport_photo_path || user?.user_passport_photo_path
@@ -65,21 +63,6 @@ function UserOverview() {
 			setApplications([])
 			setTotalCount(0)
 			setLoadError(err?.response?.data?.message || 'Could not load your applications.')
-		}
-
-		try {
-			const profileRes = await api.get('/api/profile')
-			const profileUser = profileRes.data?.user || {}
-			const pUrl = profileUser.passport_photo_url
-			const pPath = profileUser.passport_photo_path || profileUser.user_passport_photo_path
-			const hasFullProfile =
-				!!profileUser.address &&
-				!!profileUser.pin_code &&
-				!!profileUser.pan_card &&
-				!!(pUrl || pPath)
-			setShowProfilePrompt(!hasFullProfile)
-		} catch {
-			setShowProfilePrompt(false)
 		} finally {
 			setLoading(false)
 		}
@@ -139,19 +122,6 @@ function UserOverview() {
 				message={flashMessage}
 				onClose={() => setFlashMessage('')}
 			/>
-
-			{showProfilePrompt ? (
-				<div className="ws-alert ws-alert--warning" role="status">
-					<span>Complete your profile to auto-fill future applications.</span>
-					<button
-						type="button"
-						className="ws-btn ws-btn--primary"
-						onClick={() => navigate('/dashboard/profile')}
-					>
-						Complete profile
-					</button>
-				</div>
-			) : null}
 
 			<header className="ws-citizen-welcome">
 				<div className="ws-citizen-welcome-accent" aria-hidden />

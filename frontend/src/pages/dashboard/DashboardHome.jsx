@@ -32,8 +32,6 @@ function DashboardHome() {
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
 	const [error, setError] = useState('')
-	const [showProfilePrompt, setShowProfilePrompt] = useState(false)
-
 	// Tenant specific state
 	const [tenantRecentApplications, setTenantRecentApplications] = useState([])
 	const [tenantRecentLoading, setTenantRecentLoading] = useState(false)
@@ -47,30 +45,12 @@ function DashboardHome() {
 	useEffect(() => {
 		if (user?.role === ROLES.USER) {
 			loadTenantRecentApplications()
-			checkProfileCompleteness()
 		} else if (user?.role === ROLES.SUPER_ADMIN) {
 			loadAdminDashboard()
 		} else {
 			loadStaffDashboard()
 		}
 	}, [user?.role])
-
-	const checkProfileCompleteness = async () => {
-		try {
-			const { data } = await api.get('/api/profile')
-			const profileUser = data?.user || {}
-			const photoUrl = profileUser.passport_photo_url
-			const photoPath = profileUser.passport_photo_path || profileUser.user_passport_photo_path
-			const hasFullProfile =
-				!!profileUser.address &&
-				!!profileUser.pin_code &&
-				!!profileUser.pan_card &&
-				!!(photoUrl || photoPath)
-			setShowProfilePrompt(!hasFullProfile)
-		} catch (_err) {
-			setShowProfilePrompt(false)
-		}
-	}
 
 	const loadTenantRecentApplications = async () => {
 		setTenantRecentLoading(true)
@@ -139,24 +119,6 @@ function DashboardHome() {
 
 		return (
 			<div className="dashboard-home tenant-dashboard-home">
-				{showProfilePrompt ? (
-					<div className="tenant-profile-prompt" role="status" aria-live="polite">
-						<div className="tenant-profile-prompt-text">
-							<Icon name="user" className="tenant-profile-prompt-icon" />
-							<span>
-								Complete your profile first. This helps auto-fill future applications and saves your time.
-							</span>
-						</div>
-						<button
-							type="button"
-							className="tenant-profile-prompt-btn"
-							onClick={() => navigate('/dashboard/profile')}
-						>
-							Complete profile
-						</button>
-					</div>
-				) : null}
-
 				<div className="tenant-dashboard-hero">
 					<button
 						type="button"
