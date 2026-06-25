@@ -120,6 +120,7 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
         Route::apiResource('offices', OfficeController::class);
         Route::apiResource('designations', DesignationController::class);
         Route::apiResource('roles', RoleController::class);
+        Route::post('/admin/applications/{type}/{id}/superadmin-move', [ApplicationWorkflowController::class, 'superadminMove']);
     });
 
     // Staff dashboard statistics (officials, assistants, district admin)

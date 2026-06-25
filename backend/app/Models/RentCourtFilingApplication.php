@@ -5,9 +5,12 @@ namespace App\Models;
 use App\Traits\GeneratesApplicationNo;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RentCourtFilingApplication extends Model
 {
+    use SoftDeletes;
+
     use GeneratesApplicationNo;
 
     protected $table = 'rent_court_form_5_applications';

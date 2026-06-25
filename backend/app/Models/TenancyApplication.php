@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
 
 class TenancyApplication extends Model
 {
+    use SoftDeletes;
+
 
     protected $casts = [
         'movement_history' => 'array',

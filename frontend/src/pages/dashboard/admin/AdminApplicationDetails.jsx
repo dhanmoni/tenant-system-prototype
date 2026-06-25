@@ -3,8 +3,8 @@ import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
-import { APPLICATION_LABELS } from '../../../constants/application'
-import { ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
+import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
+import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
 import { formatDate, formatDateTime } from '../../../utils/formatters'
 import './ApplicationDetails.css'
@@ -52,6 +52,47 @@ function labelize(key) {
 		.join(' ')
 }
 
+/**
+ * Returns the two valid workflow transitions for a given form type.
+ * Each application can only move between its assistant (Submitted) and principal (In Review).
+ */
+function getValidTransitions(formType) {
+	const RA_TYPES = [
+		APPLICATION_TYPES.RENT_REVISION,
+		APPLICATION_TYPES.OTHER_CHARGES_REVISION,
+		APPLICATION_TYPES.VALUER_APPOINTMENT,
+		APPLICATION_TYPES.RENT_AUTHORITY_FILING,
+	]
+	const RC_TYPES = [
+		APPLICATION_TYPES.RENT_COURT_POSSESSION,
+		APPLICATION_TYPES.RENT_COURT_FILING,
+		APPLICATION_TYPES.RENT_COURT_APPEAL,
+	]
+	const RT_TYPES = [
+		APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL,
+	]
+
+	if (RA_TYPES.includes(formType)) {
+		return [
+			{ role: ROLES.RA_ASSISTANT, status: 'SUBMITTED', label: 'RA Assistant — Submitted' },
+			{ role: ROLES.RENT_AUTHORITY, status: 'IN_REVIEW', label: 'Rent Authority — In Review' },
+		]
+	}
+	if (RC_TYPES.includes(formType)) {
+		return [
+			{ role: ROLES.RC_ASSISTANT, status: 'SUBMITTED', label: 'RC Assistant — Submitted' },
+			{ role: ROLES.RENT_COURT, status: 'IN_REVIEW', label: 'Rent Court — In Review' },
+		]
+	}
+	if (RT_TYPES.includes(formType)) {
+		return [
+			{ role: ROLES.RT_ASSISTANT, status: 'SUBMITTED', label: 'RT Assistant — Submitted' },
+			{ role: ROLES.RENT_TRIBUNAL, status: 'IN_REVIEW', label: 'Rent Tribunal — In Review' },
+		]
+	}
+	return null
+}
+
 const AdminApplicationDetails = () => {
 	const { applicationNo } = useParams()
 	const navigate = useNavigate()
@@ -60,6 +101,7 @@ const AdminApplicationDetails = () => {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 	const [actionLoading, setActionLoading] = useState(false)
+	const [superAdminControls, setSuperAdminControls] = useState({ status: '', assigned_to_role: '' })
 
 	useEffect(() => {
 		fetchDetails()
@@ -69,7 +111,24 @@ const AdminApplicationDetails = () => {
 		try {
 			setLoading(true)
 			const response = await api.get(`/api/admin/applications/${applicationNo}`)
-			setApplication(response.data.application)
+			const app = response.data.application
+			setApplication(app)
+			// Initialize superadmin controls to a valid transition for this form type
+			const transitions = getValidTransitions(app.form_type)
+			if (transitions) {
+				const currentCombo = `${app.assigned_to_role || ''}|${app.status || ''}`
+				const match = transitions.find(t => `${t.role}|${t.status}` === currentCombo)
+				const selected = match || transitions[0]
+				setSuperAdminControls({
+					status: selected.status,
+					assigned_to_role: selected.role,
+				})
+			} else {
+				setSuperAdminControls({
+					status: app.status || '',
+					assigned_to_role: app.assigned_to_role || ''
+				})
+			}
 			setError(null)
 		} catch (err) {
 			console.error('Error fetching application details:', err)
@@ -92,6 +151,25 @@ const AdminApplicationDetails = () => {
 		} catch (err) {
 			console.error(`Error during ${action}:`, err)
 			alert(`Failed to ${action} application.`)
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
+	const handleSuperAdminMove = async () => {
+		if (!window.confirm('Are you sure you want to forcefully move this application?')) return
+
+		try {
+			setActionLoading(true)
+			await api.post(
+				`/api/admin/applications/${application.form_type}/${application.id}/superadmin-move`,
+				superAdminControls
+			)
+			alert('Application moved successfully.')
+			fetchDetails()
+		} catch (err) {
+			console.error('Error during superadmin move:', err)
+			alert('Failed to move application.')
 		} finally {
 			setActionLoading(false)
 		}
@@ -284,6 +362,41 @@ const AdminApplicationDetails = () => {
 					{renderFieldGrid(detailFields)}
 				</section>
 			)}
+
+			{user?.role === 'super_admin' && application.form_type && (() => {
+				const transitions = getValidTransitions(application.form_type)
+				if (!transitions) return null
+				return (
+					<section className="admin-app-details__card admin-app-details__superadmin-card" style={{ border: '2px solid var(--clr-primary-500)', backgroundColor: 'var(--clr-primary-50)' }}>
+						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-primary-700)' }}>Superadmin Workflow Override</h3>
+						<div className="admin-app-details__grid" style={{ marginBottom: '1rem' }}>
+							<div className="admin-app-details__field">
+								<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Move To</label>
+								<select 
+									className="ws-input" 
+									value={`${superAdminControls.assigned_to_role}|${superAdminControls.status}`} 
+									onChange={(e) => {
+										const [role, status] = e.target.value.split('|')
+										setSuperAdminControls({ assigned_to_role: role, status })
+									}}
+								>
+									{transitions.map(({ role, status, label }) => (
+										<option key={`${role}|${status}`} value={`${role}|${status}`}>{label}</option>
+									))}
+								</select>
+							</div>
+						</div>
+						<button
+							type="button"
+							className="ws-btn ws-btn--primary"
+							onClick={handleSuperAdminMove}
+							disabled={actionLoading}
+						>
+							Force Move Application
+						</button>
+					</section>
+				)
+			})()}
 
 			{(ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED) ||
 			(PRINCIPAL_ROLES.includes(user?.role) && application.status === STATUS.IN_REVIEW) ? (
