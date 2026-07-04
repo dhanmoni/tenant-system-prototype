@@ -149,6 +149,8 @@ function getValidTransitions(formType) {
 		]
 	}
 	return null
+}
+
 function isFileField(key) {
 	return /path|image|pdf/i.test(key)
 }
@@ -285,6 +287,11 @@ const AdminApplicationDetails = () => {
 		} catch (err) {
 			console.error('Error during superadmin move:', err)
 			alert('Failed to move application.')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
 	const startEditing = () => {
 		setEditForm(buildEditForm(application))
 		setSaveError('')
