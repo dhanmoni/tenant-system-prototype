@@ -2,10 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { buildTenancyFormData, applyDraftToForm } from '../../utils/tenancyDraft'
-import {
-	completeServiceFormSubmit,
-	getTenancySubmitSuccessMessage,
-} from '../../utils/serviceFormSubmit'
+import { Icon } from '../../components/dashboard/Icons'
+import DocumentUploadSlot from '../../components/forms/DocumentUploadSlot'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
@@ -24,6 +22,8 @@ function TenancyCertificate() {
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
 	const [draftLoaded, setDraftLoaded] = useState(false)
 	const [conflictData, setConflictData] = useState(null)
+	const [submittedApp, setSubmittedApp] = useState(null)
+	const [linkCopied, setLinkCopied] = useState(false)
 
 	// Payment State
 	const [paymentComplete, setPaymentComplete] = useState(false)
@@ -93,6 +93,7 @@ function TenancyCertificate() {
 	const [tenantPanFile, setTenantPanFile] = useState(null)
 	const [managerPanFile, setManagerPanFile] = useState(null)
 	const [declarationChecked, setDeclarationChecked] = useState(false)
+	const [docPreview, setDocPreview] = useState(null)
 
 	const [profileType, setProfileType] = useState('')
 	const [profileName, setProfileName] = useState('')
@@ -383,6 +384,34 @@ function TenancyCertificate() {
 		}
 	}
 
+	const isPdfFile = (file) => file?.type === 'application/pdf' || /\.pdf$/i.test(file?.name || '')
+
+	const openDocPreview = (title, url, isPdf = false, revokeOnClose = false) => {
+		if (!url) return
+		setDocPreview({ title, url, isPdf, revokeOnClose })
+	}
+
+	const openFilePreview = (title, file) => {
+		if (!file) return
+		openDocPreview(title, URL.createObjectURL(file), isPdfFile(file), true)
+	}
+
+	const closeDocPreview = () => {
+		if (docPreview?.revokeOnClose && docPreview?.url) {
+			URL.revokeObjectURL(docPreview.url)
+		}
+		setDocPreview(null)
+	}
+
+	useEffect(() => {
+		if (!docPreview) return undefined
+		const onKeyDown = (event) => {
+			if (event.key === 'Escape') closeDocPreview()
+		}
+		document.addEventListener('keydown', onKeyDown)
+		return () => document.removeEventListener('keydown', onKeyDown)
+	}, [docPreview])
+
 	const getFormState = () => ({
 		tenancyRegistrationDate,
 		tenancyOfficeId,
@@ -502,10 +531,16 @@ function TenancyCertificate() {
 				data = res.data
 			}
 			setConflictData(null)
-			completeServiceFormSubmit(
-				navigate,
-				getTenancySubmitSuccessMessage(data, applyType)
-			)
+			setSubmittedApp({
+				application_no: data.application_no,
+				ref_code: data.ref_code,
+				join_link: data.join_link,
+				message: data.message,
+				apply_type: data.application?.apply_type || applyType,
+				fee_amount: feeAmount,
+				payment_grn: paymentGrn,
+			})
+			scrollFormToTop()
 		} catch (err) {
 			const data = err?.response?.data
 			if (err?.response?.status === 409 && data?.conflict) {
@@ -528,11 +563,14 @@ function TenancyCertificate() {
 		{ id: 1, label: 'Registration' },
 		{ id: 2, label: 'Tenancy details' },
 		{ id: 3, label: 'Documents' },
-		{ id: 4, label: 'Preview & submit' },
+		{ id: 4, label: 'Preview' },
+		{ id: 5, label: 'Payment' },
 	]
 
+	const TOTAL_STEPS = tenancySteps.length
+
 	const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
-	const maxReachableStep = Math.min(4, Math.max(tenancyStep, savedWizardStep + 1))
+	const maxReachableStep = Math.min(TOTAL_STEPS, Math.max(tenancyStep, savedWizardStep + 1))
 
 	const scrollFormToTop = useCallback(() => {
 		const main = document.getElementById('dashboard-primary-content')
@@ -548,7 +586,7 @@ function TenancyCertificate() {
 	}, [tenancyStep, scrollFormToTop])
 
 	const goToStep = (stepId) => {
-		if (stepId < 1 || stepId > 4) return
+		if (stepId < 1 || stepId > TOTAL_STEPS) return
 		if (stepId > maxReachableStep) return
 		setTenancyStep(stepId)
 		setError('')
@@ -571,18 +609,161 @@ function TenancyCertificate() {
 		}
 		if (tenancyStep === 4) {
 			if (!declarationChecked) {
-				setError('You must accept the declaration to submit.')
+				setError('You must accept the declaration to proceed to payment.')
 				return
 			}
+			const ok = await saveDraftStep(4)
+			if (ok) setTenancyStep(5)
+			return
+		}
+		if (tenancyStep === 5) {
 			if (!paymentComplete) {
 				setError('You must complete the fee payment before submitting.')
+				return
+			}
+			if (!declarationChecked) {
+				setError('You must accept the declaration to submit.')
 				return
 			}
 			submitTenancyApplication()
 			return
 		}
 		const ok = await saveDraftStep(tenancyStep)
-		if (ok) setTenancyStep((prev) => Math.min(4, prev + 1))
+		if (ok) setTenancyStep((prev) => Math.min(TOTAL_STEPS, prev + 1))
+	}
+
+	const openInPrintWindow = (html) => {
+		const printWindow = window.open('', '_blank')
+		if (!printWindow) return
+		printWindow.document.write(html)
+		printWindow.document.close()
+	}
+
+	const handleDownloadAcknowledgement = async () => {
+		if (!submittedApp?.application_no) return
+		try {
+			const res = await api.get(
+				`/api/tenancy-applications/${submittedApp.application_no}/acknowledgement?print=1`
+			)
+			openInPrintWindow(res.data)
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to open acknowledgement')
+		}
+	}
+
+	const handleDownloadApplication = async () => {
+		if (!submittedApp?.application_no) return
+		try {
+			const res = await api.get(
+				`/api/tenancy-applications/${submittedApp.application_no}/application-details?print=1`
+			)
+			openInPrintWindow(res.data)
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to open application')
+		}
+	}
+
+	const handleCopyJoinLink = async () => {
+		if (!submittedApp?.join_link) return
+		try {
+			await navigator.clipboard.writeText(submittedApp.join_link)
+			setLinkCopied(true)
+			setTimeout(() => setLinkCopied(false), 2000)
+		} catch {
+			setError('Could not copy the link. Please copy it manually.')
+		}
+	}
+
+	if (submittedApp) {
+		const isJoint = String(submittedApp.apply_type || '').toLowerCase() === 'joint'
+		return (
+			<div className="ws-page ws-uin-apply tenancy-certificate-page">
+				<div className="uin-confirm">
+					<div className="uin-confirm-card">
+						<div className="uin-confirm-icon" aria-hidden>✓</div>
+						<h1 className="uin-confirm-title">Application submitted successfully</h1>
+						<p className="uin-confirm-lead">
+							{submittedApp.message ||
+								'Your tenancy certificate application has been lodged.'}
+						</p>
+
+						<dl className="uin-confirm-meta">
+							<div className="uin-confirm-meta-row">
+								<dt>Application number</dt>
+								<dd>{submittedApp.application_no || '—'}</dd>
+							</div>
+							{submittedApp.ref_code ? (
+								<div className="uin-confirm-meta-row">
+									<dt>Reference code</dt>
+									<dd>{submittedApp.ref_code}</dd>
+								</div>
+							) : null}
+							<div className="uin-confirm-meta-row">
+								<dt>Fee paid</dt>
+								<dd>
+									₹{submittedApp.fee_amount}
+									{submittedApp.payment_grn ? ` · GRN ${submittedApp.payment_grn}` : ''}
+								</dd>
+							</div>
+						</dl>
+
+						{isJoint && submittedApp.join_link ? (
+							<div className="uin-confirm-invite">
+								<p className="uin-confirm-joint-note">
+									This is a joint application. It is awaiting the other party's
+									verification and payment. Share the invite link below so they can
+									complete their details.
+								</p>
+								<div className="uin-confirm-invite-row">
+									<input
+										type="text"
+										className="uin-confirm-invite-input"
+										value={submittedApp.join_link}
+										readOnly
+										onFocus={(e) => e.target.select()}
+									/>
+									<button
+										type="button"
+										className="ws-btn ws-btn--secondary uin-confirm-invite-copy"
+										onClick={handleCopyJoinLink}
+									>
+										{linkCopied ? 'Copied!' : 'Copy link'}
+									</button>
+								</div>
+							</div>
+						) : null}
+
+						<div className="uin-confirm-actions">
+							<button
+								type="button"
+								className="ws-btn ws-btn--primary"
+								onClick={handleDownloadAcknowledgement}
+							>
+								Download acknowledgement
+							</button>
+							<button
+								type="button"
+								className="ws-btn ws-btn--secondary"
+								onClick={handleDownloadApplication}
+							>
+								Download application
+							</button>
+							<button
+								type="button"
+								className="ws-btn ws-btn--outline"
+								onClick={() => navigate('/dashboard')}
+							>
+								Back to dashboard
+							</button>
+						</div>
+
+						{error ? (
+							<div className="ws-alert ws-alert--error uin-confirm-alert">{error}</div>
+						) : null}
+					</div>
+				</div>
+			</div>
+		)
 	}
 
 	return (
@@ -663,41 +844,6 @@ function TenancyCertificate() {
 			>
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
-						<div className="tenancy-criteria-box">
-							<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
-							<p className="tenancy-criteria-intro">You may apply only if the following conditions are satisfied:</p>
-							<ul className="tenancy-criteria-list">
-								<li className={applyType ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
-									<span className="tenancy-criteria-icon">{applyType ? '✓' : '○'}</span>
-									<span>Application type: {applyType || 'Waiting for date...'}</span>
-								</li>
-								<li className={tenancyOfficeId ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
-									<span className="tenancy-criteria-icon">{tenancyOfficeId ? '✓' : '○'}</span>
-									<span>Circle office must be selected.</span>
-								</li>
-							</ul>
-							{tenancyRegistrationDate ? (
-								<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
-									{eligibilityMet ? (
-										<p>
-											<strong>You are eligible</strong> to apply. Type: <strong>{applyType}</strong>
-											{applyType === 'Joint' ? ' — the other party will complete their details after you submit.' : null}
-										</p>
-									) : registrationTooOld ? (
-										<p><strong>Not eligible,</strong> as agreement date is more than 3 months old.</p>
-									) : null}
-								</div>
-							) : null}
-						</div>
-						<div className="tenancy-required-docs">
-							<h3 className="tenancy-docs-title">Required documents</h3>
-							<ul>
-								<li>Registered tenancy agreement (PDF)</li>
-								<li>Passport-size photograph</li>
-								<li>PAN Card</li>
-								<li>Signature</li>
-							</ul>
-						</div>
 						<div className="form-grid">
 							<label>
 								<span className="label-text required">Initiating as</span>
@@ -740,6 +886,33 @@ function TenancyCertificate() {
 								<span className="label-text required">Application Type</span>
 								<input type="text" value={applyType} readOnly disabled className="readonly-input" />
 							</label>
+						</div>
+
+						<div className="tenancy-criteria-box tenancy-criteria-box--after-type">
+							<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
+							<p className="tenancy-criteria-intro">You may apply only if the following conditions are satisfied:</p>
+							<ul className="tenancy-criteria-list">
+								<li className={applyType ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
+									<span className="tenancy-criteria-icon">{applyType ? '✓' : '○'}</span>
+									<span>Application type: {applyType || 'Waiting for date...'}</span>
+								</li>
+								<li className={tenancyOfficeId ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
+									<span className="tenancy-criteria-icon">{tenancyOfficeId ? '✓' : '○'}</span>
+									<span>Circle office must be selected.</span>
+								</li>
+							</ul>
+							{tenancyRegistrationDate ? (
+								<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
+									{eligibilityMet ? (
+										<p>
+											<strong>You are eligible</strong> to apply. Type: <strong>{applyType}</strong>
+											{applyType === 'Joint' ? ' — the other party will complete their details after you submit.' : null}
+										</p>
+									) : registrationTooOld ? (
+										<p><strong>Not eligible,</strong> as agreement date is more than 3 months old.</p>
+									) : null}
+								</div>
+							) : null}
 						</div>
 					</fieldset>
 				)}
@@ -868,94 +1041,172 @@ function TenancyCertificate() {
 				)}
 
 				{tenancyStep === 3 && (
-					<fieldset className="tenancy-fieldset">
+					<fieldset className="tenancy-fieldset tenancy-docs-fieldset">
+						<div className="tenancy-docs-step">
+							<header className="tenancy-docs-step__header">
+								<h2 className="tenancy-docs-step__title">Upload required documents</h2>
+								<p className="tenancy-docs-step__lead">
+									All items below are mandatory. Use the preview icon after each upload to verify the file.
+								</p>
+								<ul className="tenancy-docs-step__checklist" aria-label="Required documents">
+									<li>Registered tenancy agreement (PDF)</li>
+									<li>Passport-size photograph</li>
+									<li>PAN Card</li>
+									<li>Signature</li>
+								</ul>
+							</header>
 
-						<div className="upload-rows-container">
-							<section className="upload-row">
-								<h3>1. Tenancy Agreement</h3>
-								<div className="upload-item-full">
-									<label>
-										<span className="label-text required">Registered Tenancy Agreement (PDF)</span>
-										<input type="file" accept=".pdf" onChange={e => setAgreementFile(e.target.files[0])} />
-										<p className="muted">Upload the scanned copy of the agreement.</p>
-									</label>
-								</div>
-							</section>
+							<div className="tenancy-docs-step__cards">
+								<article className="tenancy-doc-card">
+									<div className="tenancy-doc-card__head">
+										<span className="tenancy-doc-card__num">1</span>
+										<div>
+											<h3 className="tenancy-doc-card__title">Registered tenancy agreement</h3>
+											<p className="tenancy-doc-card__meta">PDF only · scanned copy of the registered agreement</p>
+										</div>
+									</div>
+									<div className="tenancy-doc-slot tenancy-doc-slot--wide">
+										<label className="tenancy-doc-slot__label" htmlFor="uin-agreement-file">
+											<span className="label-text required">Choose file</span>
+											<input
+												id="uin-agreement-file"
+												type="file"
+												accept=".pdf"
+												onChange={e => {
+													const f = e.target.files[0]
+													setAgreementFile(f)
+													if (f) setAgreementPreviewUrl(URL.createObjectURL(f))
+													else setAgreementPreviewUrl('')
+												}}
+											/>
+										</label>
+										<div className="tenancy-doc-slot__status">
+											{agreementFile ? (
+												<div className="tenancy-doc-slot__uploaded">
+													<span className="tenancy-doc-slot__file-badge" aria-hidden>PDF</span>
+													<span className="tenancy-doc-slot__filename" title={agreementFile.name}>
+														{agreementFile.name}
+													</span>
+													<button
+														type="button"
+														className="tenancy-doc-preview-btn"
+														title="Preview agreement"
+														aria-label="Preview agreement"
+														onClick={() => openDocPreview('Registered Tenancy Agreement', agreementPreviewUrl, true)}
+													>
+														<Icon name="eye" />
+													</button>
+												</div>
+											) : (
+												<span className="tenancy-doc-slot__pending">Awaiting upload</span>
+											)}
+										</div>
+									</div>
+								</article>
 
-							<hr className="section-divider" />
-
-							<section className="upload-row">
-								<h3>2. Personal Documents</h3>
-								<div className="form-grid">
-									{initiatorRole === 'TENANT' ? (
-										<>
-											<div className="upload-item-row">
-												<label>
-													<span className="label-text required">Tenant Passport Photo</span>
-													<input
-														type="file"
-														accept="image/*"
-														onChange={async (e) => {
-															const f = e.target.files[0]
-															await handlePassportPhotoUpload(f, setTenantPhotoFile, setTenantPhotoPreview, 'tenant')
-														}}
-														required
-													/>
-													<p className="muted">Auto-cropped to passport ratio.</p>
-												</label>
-												{tenantPhotoPreview && <img src={tenantPhotoPreview} alt="T Photo" className="tenancy-thumb" />}
-											</div>
-											<div className="upload-item-row">
-												<label>
-													<span className="label-text required">Tenant Signature Image</span>
-													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setTenantSignatureFile(f); if (f) setTenantSignaturePreview(URL.createObjectURL(f)) }} required />
-												</label>
-												{tenantSignaturePreview && <img src={tenantSignaturePreview} alt="T Sign" className="tenancy-thumb" />}
-											</div>
-											<div className="upload-item-row">
-												<label>
-													<span className="label-text required">Tenant PAN Card Document</span>
-													<input type="file" accept=".pdf,image/*" onChange={e => { setTenantPanFile(e.target.files[0]) }} required />
-												</label>
-												{tenantPanFile && <span className="muted" style={{ fontSize: '12px' }}>{tenantPanFile.name}</span>}
-											</div>
-										</>
-									) : (
-										<>
-											<div className="upload-item-row">
-												<label>
-													<span className="label-text required">Landlord Passport Photo</span>
-													<input
-														type="file"
-														accept="image/*"
-														onChange={async (e) => {
-															const f = e.target.files[0]
-															await handlePassportPhotoUpload(f, setLandlordPhotoFile, setLandlordPhotoPreview, 'landlord')
-														}}
-														required
-													/>
-													<p className="muted">Auto-cropped to passport ratio.</p>
-												</label>
-												{landlordPhotoPreview && <img src={landlordPhotoPreview} alt="L Photo" className="tenancy-thumb" />}
-											</div>
-											<div className="upload-item-row">
-												<label>
-													<span className="label-text required">Landlord Signature Image</span>
-													<input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; setLandlordSignatureFile(f); if (f) setLandlordSignaturePreview(URL.createObjectURL(f)) }} required />
-												</label>
-												{landlordSignaturePreview && <img src={landlordSignaturePreview} alt="L Sign" className="tenancy-thumb" />}
-											</div>
-											<div className="upload-item-row">
-												<label>
-													<span className="label-text required">Landlord PAN Card Document</span>
-													<input type="file" accept=".pdf,image/*" onChange={e => { setLandlordPanFile(e.target.files[0]) }} required />
-												</label>
-												{landlordPanFile && <span className="muted" style={{ fontSize: '12px' }}>{landlordPanFile.name}</span>}
-											</div>
-										</>
-									)}
-								</div>
-							</section>
+								<article className="tenancy-doc-card">
+									<div className="tenancy-doc-card__head">
+										<span className="tenancy-doc-card__num">2</span>
+										<div>
+											<h3 className="tenancy-doc-card__title">Personal documents</h3>
+											<p className="tenancy-doc-card__meta">
+												{initiatorRole === 'TENANT' ? 'Tenant' : 'Landlord'} photograph, signature, and PAN card
+											</p>
+										</div>
+									</div>
+									<div className="tenancy-doc-card__grid">
+										{initiatorRole === 'TENANT' ? (
+											<>
+												<DocumentUploadSlot
+													id="uin-tenant-photo"
+													label="Passport-size photograph"
+													accept="image/*"
+													hint="Auto-cropped to passport ratio."
+													required
+													onChange={async (e) => {
+														const f = e.target.files[0]
+														await handlePassportPhotoUpload(f, setTenantPhotoFile, setTenantPhotoPreview, 'tenant')
+													}}
+													imagePreview={tenantPhotoPreview}
+													previewTitle="Passport-size photograph"
+													onPreview={openDocPreview}
+													onFilePreview={openFilePreview}
+												/>
+												<DocumentUploadSlot
+													id="uin-tenant-signature"
+													label="Signature"
+													accept="image/*"
+													required
+													onChange={e => {
+														const f = e.target.files[0]
+														setTenantSignatureFile(f)
+														if (f) setTenantSignaturePreview(URL.createObjectURL(f))
+													}}
+													imagePreview={tenantSignaturePreview}
+													previewTitle="Signature"
+													onPreview={openDocPreview}
+													onFilePreview={openFilePreview}
+												/>
+												<DocumentUploadSlot
+													id="uin-tenant-pan"
+													label="PAN card document"
+													accept=".pdf,image/*"
+													required
+													onChange={e => setTenantPanFile(e.target.files[0])}
+													file={tenantPanFile}
+													previewTitle="PAN Card"
+													onPreview={openDocPreview}
+													onFilePreview={openFilePreview}
+												/>
+											</>
+										) : (
+											<>
+												<DocumentUploadSlot
+													id="uin-landlord-photo"
+													label="Passport-size photograph"
+													accept="image/*"
+													hint="Auto-cropped to passport ratio."
+													required
+													onChange={async (e) => {
+														const f = e.target.files[0]
+														await handlePassportPhotoUpload(f, setLandlordPhotoFile, setLandlordPhotoPreview, 'landlord')
+													}}
+													imagePreview={landlordPhotoPreview}
+													previewTitle="Passport-size photograph"
+													onPreview={openDocPreview}
+													onFilePreview={openFilePreview}
+												/>
+												<DocumentUploadSlot
+													id="uin-landlord-signature"
+													label="Signature"
+													accept="image/*"
+													required
+													onChange={e => {
+														const f = e.target.files[0]
+														setLandlordSignatureFile(f)
+														if (f) setLandlordSignaturePreview(URL.createObjectURL(f))
+													}}
+													imagePreview={landlordSignaturePreview}
+													previewTitle="Signature"
+													onPreview={openDocPreview}
+													onFilePreview={openFilePreview}
+												/>
+												<DocumentUploadSlot
+													id="uin-landlord-pan"
+													label="PAN card document"
+													accept=".pdf,image/*"
+													required
+													onChange={e => setLandlordPanFile(e.target.files[0])}
+													file={landlordPanFile}
+													previewTitle="PAN Card"
+													onPreview={openDocPreview}
+													onFilePreview={openFilePreview}
+												/>
+											</>
+										)}
+									</div>
+								</article>
+							</div>
 						</div>
 					</fieldset>
 				)}
@@ -1123,23 +1374,7 @@ function TenancyCertificate() {
 							</div>
 						</div>
 						<div className="preview-actions-hint">
-							Please review all details carefully before final submission.
-						</div>
-
-						<div className="ws-uin-payment-section">
-							<h3 className="ws-uin-payment-title">Fee payment</h3>
-							<p className="ws-uin-payment-lead">
-								Based on your agreement registration date, the required application fee is <strong>₹{feeAmount}</strong>.
-							</p>
-							{!paymentComplete ? (
-								<button type="button" className="ws-btn ws-btn--primary" onClick={handleMockPayment} disabled={paymentSimulating || draftSaving}>
-									{paymentSimulating ? 'Processing payment…' : `Pay ₹${feeAmount} via eGRAS`}
-								</button>
-							) : (
-								<div className="ws-alert ws-alert--success ws-uin-payment-success">
-									Payment of ₹{feeAmount} completed successfully.{paymentGrn ? ` (Mock GRN: ${paymentGrn})` : ''}
-								</div>
-							)}
+							Please review all details carefully before continuing to payment.
 						</div>
 
 						<div className="ws-uin-declaration">
@@ -1155,6 +1390,53 @@ function TenancyCertificate() {
 							</label>
 						</div>
 					</div>
+				)}
+
+				{tenancyStep === 5 && (
+					<fieldset className="tenancy-fieldset ws-uin-payment-step">
+						<div className="ws-uin-payment-card">
+							<h2 className="ws-uin-payment-card-title">Application fee payment</h2>
+							<p className="ws-uin-payment-card-lead">
+								Complete the fee payment to submit your tenancy certificate application. Your application is only lodged after the payment is successful and the acknowledgement is generated.
+							</p>
+
+							<div className="ws-uin-payment-summary">
+								<div className="ws-uin-payment-summary-row">
+									<span>Application type</span>
+									<strong>{applyType || '—'}</strong>
+								</div>
+								<div className="ws-uin-payment-summary-row">
+									<span>Amount payable</span>
+									<strong>₹{feeAmount}</strong>
+								</div>
+								{draftApplicationNo ? (
+									<div className="ws-uin-payment-summary-row">
+										<span>Draft reference</span>
+										<strong>{draftApplicationNo}</strong>
+									</div>
+								) : null}
+							</div>
+
+							{!paymentComplete ? (
+								<button
+									type="button"
+									className="ws-btn ws-btn--primary ws-uin-payment-pay-btn"
+									onClick={handleMockPayment}
+									disabled={paymentSimulating || draftSaving}
+								>
+									{paymentSimulating ? 'Processing payment…' : `Pay ₹${feeAmount} via eGRAS`}
+								</button>
+							) : (
+								<div className="ws-alert ws-alert--success ws-uin-payment-success">
+									Payment of ₹{feeAmount} completed successfully.{paymentGrn ? ` (Mock GRN: ${paymentGrn})` : ''}
+								</div>
+							)}
+
+							<p className="ws-uin-payment-note">
+								This is a demo payment step. No real transaction is processed.
+							</p>
+						</div>
+					</fieldset>
 				)}
 
 				<div className="form-actions ws-uin-apply-actions">
@@ -1174,6 +1456,11 @@ function TenancyCertificate() {
 						</button>
 					) : null}
 					{tenancyStep === 4 ? (
+						<button type="submit" className="ws-btn ws-btn--primary" disabled={draftSaving || !declarationChecked}>
+							{draftSaving ? 'Saving…' : 'Proceed to payment'}
+						</button>
+					) : null}
+					{tenancyStep === 5 ? (
 						<button type="submit" className="ws-btn ws-btn--primary" disabled={tenancySubmitting || draftSaving || !declarationChecked || !paymentComplete}>
 							{tenancySubmitting ? 'Submitting…' : 'Confirm & submit'}
 						</button>
@@ -1183,6 +1470,32 @@ function TenancyCertificate() {
 					) : null}
 				</div>
 			</div>
+
+			{docPreview ? (
+				<div className="tenancy-doc-preview-overlay" role="presentation" onClick={closeDocPreview}>
+					<div
+						className="tenancy-doc-preview-modal"
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="tenancy-doc-preview-title"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<header className="tenancy-doc-preview-modal__header">
+							<h2 id="tenancy-doc-preview-title">{docPreview.title}</h2>
+							<button type="button" className="tenancy-doc-preview-modal__close" onClick={closeDocPreview} aria-label="Close preview">
+								×
+							</button>
+						</header>
+						<div className="tenancy-doc-preview-modal__body">
+							{docPreview.isPdf ? (
+								<iframe title={docPreview.title} src={docPreview.url} className="tenancy-doc-preview-modal__iframe" />
+							) : (
+								<img src={docPreview.url} alt={docPreview.title} className="tenancy-doc-preview-modal__image" />
+							)}
+						</div>
+					</div>
+				</div>
+			) : null}
 		</div>
 	)
 }

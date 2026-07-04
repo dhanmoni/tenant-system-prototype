@@ -63,6 +63,28 @@
 	padding-bottom: 1px;
 }
 
+/* FIFO queue notice (assistant / principal inbox) */
+.app-queue-notice {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.75rem 1rem;
+	border: 1px solid rgba(13, 71, 161, 0.18);
+	border-left: 3px solid var(--ws-accent, #0d47a1);
+	border-radius: 8px;
+	background: var(--gov-blue-light, #e3f2fd);
+	color: var(--ws-text, #0f172a);
+	font-size: 0.8125rem;
+	line-height: 1.4;
+}
+
+.app-queue-notice__icon {
+	flex: 0 0 auto;
+	width: 1rem;
+	height: 1rem;
+	color: var(--ws-accent, #0d47a1);
+}
+
 @media (max-width: 720px) {
 	.admin-app-toolbar .ws-status-section-controls {
 		flex-direction: column;

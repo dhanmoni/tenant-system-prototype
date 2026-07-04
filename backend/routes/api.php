@@ -47,8 +47,9 @@ Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplica
 Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
 
 Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles) {
-    // Joint tenancy routes
+    // Joint tenancy routes — literal paths must stay before {tenancyApplication}
     Route::get('/tenancy-applications/lookup', [TenancyApplicationController::class, 'lookupByRefCode']);
+    Route::get('/tenancy-applications/lookup-by-uin', [TenancyApplicationController::class, 'lookupByUid']);
     Route::post('/tenancy-applications/join', [TenancyApplicationController::class, 'joinApplication']);
     Route::post('/tenancy-applications/check-ref-code', [TenancyApplicationController::class, 'checkRefCode']);
     Route::get('/tenancy-applications/my', [TenancyApplicationController::class, 'myApplications']);
@@ -110,14 +111,17 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
         Route::get('/users/{user}', [UserManagementController::class, 'show']);
         Route::post('/users', [UserManagementController::class, 'store']);
         Route::put('/users/{user}', [UserManagementController::class, 'update']);
-        Route::delete('/users/{user}', [UserManagementController::class, 'destroy']);
+        // Users are deactivated (blocked), not deleted, to preserve history.
+        Route::post('/users/{user}/toggle-block', [UserManagementController::class, 'toggleBlock']);
     });
 
     // Super Admin only routes
     Route::middleware('role:super_admin')->group(function () {
         Route::get('/dashboard-stats', [DashboardController::class, 'stats']);
         Route::get('/activity-logs', [UserActivityLogController::class, 'index']);
-        Route::apiResource('districts', DistrictController::class);
+        // Districts are deactivated, not deleted, to preserve history.
+        Route::apiResource('districts', DistrictController::class)->except(['destroy']);
+        Route::post('districts/{district}/toggle-active', [DistrictController::class, 'toggleActive']);
         Route::apiResource('offices', OfficeController::class);
         Route::apiResource('designations', DesignationController::class);
         Route::apiResource('roles', RoleController::class);

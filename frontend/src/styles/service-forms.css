@@ -233,7 +233,8 @@
 	color: #64748b;
 }
 
-.service-form-page .tenancy-form {
+.service-form-page .tenancy-form,
+.service-form-panel .tenancy-form {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 0.85rem 1rem;
@@ -242,10 +243,17 @@
 .service-form-page .tenancy-form > label,
 .service-form-page .tenancy-form > .tenancy-field-full,
 .service-form-page .tenancy-form > .tenancy-uin-lookup,
+.service-form-panel .tenancy-form > label,
+.service-form-panel .tenancy-form > .tenancy-field-full,
+.service-form-panel .tenancy-form > .tenancy-uin-lookup,
 .service-form-page .tenancy-form > .tenancy-prefill-summary,
+.service-form-panel .tenancy-form > .tenancy-prefill-summary,
 .service-form-page .tenancy-form > .service-form-section,
+.service-form-panel .tenancy-form > .service-form-section,
 .service-form-page .tenancy-form > .service-form-actions,
-.service-form-page .tenancy-form > .form-actions {
+.service-form-panel .tenancy-form > .service-form-actions,
+.service-form-page .tenancy-form > .form-actions,
+.service-form-panel .tenancy-form > .form-actions {
 	grid-column: 1 / -1;
 }
 
@@ -379,9 +387,14 @@
 
 .tenancy-uin-lookup {
 	padding: 1.15rem 1.25rem;
-	border: 1px solid color-mix(in srgb, var(--landing-accent, #a85824) 22%, #e2e8f0);
+	border: 1px solid #dbeafe;
 	border-radius: 10px;
-	background: color-mix(in srgb, var(--landing-accent, #a85824) 4%, #fff);
+	background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.tenancy-uin-lookup .label-text {
+	color: #1e3a5f;
 }
 
 .tenancy-uin-lookup__row {
@@ -396,19 +409,88 @@
 	min-width: 0;
 }
 
-.tenancy-uin-lookup__row button {
+.tenancy-uin-lookup__row button,
+.tenancy-uin-lookup__btn {
 	flex: 0 0 auto;
 	white-space: nowrap;
 	min-height: 2.65rem;
-	padding: 0.6rem 1rem;
+	padding: 0.6rem 1.15rem;
 	border-radius: 8px;
+	font-size: 0.875rem;
 	font-weight: 700;
+	cursor: pointer;
+	border: 1px solid var(--gov-blue, #0d47a1);
+	background: var(--gov-blue, #0d47a1);
+	color: #fff;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+	transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tenancy-uin-lookup__row button:hover:not(:disabled),
+.tenancy-uin-lookup__btn:hover:not(:disabled) {
+	background: var(--gov-blue-dark, #0a3d8f);
+	border-color: var(--gov-blue-dark, #0a3d8f);
+	box-shadow: 0 2px 6px rgba(13, 71, 161, 0.22);
+}
+
+.tenancy-uin-lookup__row button:disabled,
+.tenancy-uin-lookup__btn:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
 }
 
 .tenancy-uin-lookup__hint {
 	margin: 0.5rem 0 0;
 	font-size: 0.8125rem;
 	color: #64748b;
+	line-height: 1.45;
+}
+
+.tenancy-uin-lookup__status {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin: 0.65rem 0 0;
+	padding: 0.55rem 0.75rem;
+	border-radius: 8px;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1.45;
+}
+
+.tenancy-uin-lookup__status-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.15rem;
+	height: 1.15rem;
+	border-radius: 50%;
+	background: #16a34a;
+	color: #fff;
+	font-size: 0.7rem;
+	font-weight: 800;
+	flex-shrink: 0;
+	margin-top: 0.05rem;
+}
+
+.tenancy-uin-lookup__status--success {
+	background: #ecfdf3;
+	border: 1px solid #86efac;
+	color: #166534;
+}
+
+.tenancy-uin-lookup__status--error {
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #b91c1c;
+}
+
+.tenancy-uin-lookup__hint--success {
+	color: #166534;
+}
+
+.tenancy-uin-lookup__hint--error {
+	color: #b91c1c;
 }
 
 .tenancy-prefill-summary {

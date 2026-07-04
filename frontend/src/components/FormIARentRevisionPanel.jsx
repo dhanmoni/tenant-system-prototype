@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { APPLICATION_TYPES } from '../constants/application'
 import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
 import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
+import { applyTenancyAutofill } from '../utils/tenancyUinAutofill'
 
-export default function FormIARentRevisionPanel({ onBack, serviceMeta }) {
+export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
@@ -149,6 +152,19 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta }) {
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
+	const handleTenancyLoaded = (tenancy) =>
+		applyTenancyAutofill(APPLICATION_TYPES.OTHER_CHARGES_REVISION, tenancy, user, {
+			setTenancyUIN,
+			setLandlordName,
+			setLandlordAddress,
+			setTenantName,
+			setTenantAddress,
+			setManagerName,
+			setManagerAddress,
+			setRentedPremisesDescription,
+			setExistingOtherChargesDetails,
+		})
+
 	return (
 		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form I-A - Revision or fixation of other charges'}</h1>
@@ -160,15 +176,11 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta }) {
 			{error ? <div className="error">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<label>
-					<span className="label-text required">Tenancy UIN</span>
-					<input
-						type="text"
-						value={tenancyUIN}
-						onChange={(e) => setTenancyUIN(e.target.value)}
-						required
-					/>
-				</label>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+				/>
 
 				<label>
 					<span className="label-text">Document No. of tenancy agreement (before Sub-Registrar, if any)</span>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
+import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { ROLES } from '../../../constants/roles'
 import './ApplicationList.css'
 import './DistrictManagement.css'
@@ -21,6 +22,9 @@ function DistrictManagement({ user }) {
 	const [search, setSearch] = useState('')
 	const [adding, setAdding] = useState(false)
 	const [showAddModal, setShowAddModal] = useState(false)
+	const [statusModal, setStatusModal] = useState(null)
+	const [statusReason, setStatusReason] = useState('')
+	const [statusLoading, setStatusLoading] = useState(false)
 
 	useEffect(() => {
 		if (user?.role !== ROLES.SUPER_ADMIN) {
@@ -102,16 +106,42 @@ function DistrictManagement({ user }) {
 		}
 	}
 
-	const handleDelete = async (district) => {
-		if (!window.confirm(`Delete district "${district.name}"? This cannot be undone.`)) return
+	const openStatusModal = (district) => {
+		setStatusReason('')
+		setStatusModal({ district, deactivating: district.is_active !== false })
+	}
+
+	const closeStatusModal = () => {
+		setStatusModal(null)
+		setStatusReason('')
+	}
+
+	const confirmToggleStatus = async () => {
+		if (!statusModal) return
+		const { district, deactivating } = statusModal
+		const reason = statusReason.trim()
+		if (deactivating && !reason) return
+		setStatusLoading(true)
 		setError('')
 		setSuccess('')
 		try {
-			await api.delete(`/api/districts/${district.id}`)
-			setSuccess(`District "${district.name}" deleted`)
+			await csrf()
+			await api.post(
+				`/api/districts/${district.id}/toggle-active`,
+				deactivating ? { reason } : {}
+			)
+			setSuccess(
+				`District "${district.name}" was ${deactivating ? 'deactivated' : 'activated'}`
+			)
+			closeStatusModal()
 			loadDistricts()
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to delete district')
+			setError(
+				err?.response?.data?.message ||
+					`Failed to ${deactivating ? 'deactivate' : 'activate'} district`
+			)
+		} finally {
+			setStatusLoading(false)
 		}
 	}
 
@@ -241,17 +271,43 @@ function DistrictManagement({ user }) {
 				columns={[
 					{ key: 'serial_no', label: 'S.no.', mono: true, width: '72px' },
 					{ key: 'name', label: 'District name' },
+					{
+						key: 'is_active',
+						label: 'Status',
+						render: (val) => {
+							const inactive = val === false
+							return (
+								<span
+									className={`admin-user-status ${
+										inactive
+											? 'admin-user-status--inactive'
+											: 'admin-user-status--active'
+									}`}
+								>
+									{inactive ? 'Inactive' : 'Active'}
+								</span>
+							)
+						},
+					},
 				]}
-				actions={(district) => (
-					<button
-						type="button"
-						className="ws-status-action-btn ws-status-action-btn--reject"
-						title={`Delete ${district.name}`}
-						onClick={() => handleDelete(district)}
-					>
-						<span>Delete</span>
-					</button>
-				)}
+				actions={(district) => {
+					const inactive = district.is_active === false
+					return (
+						<button
+							type="button"
+							className={`ws-status-action-btn ${
+								inactive
+									? 'ws-status-action-btn--join'
+									: 'ws-status-action-btn--reject'
+							}`}
+							title={`${inactive ? 'Activate' : 'Deactivate'} ${district.name}`}
+							onClick={() => openStatusModal(district)}
+						>
+							<Icon name={inactive ? 'check' : 'lock'} />
+							<span>{inactive ? 'Activate' : 'Deactivate'}</span>
+						</button>
+					)
+				}}
 				emptyMessage={
 					search ? 'No districts match your search.' : 'No districts found.'
 				}
@@ -266,6 +322,49 @@ function DistrictManagement({ user }) {
 				}
 			/>
 			</div>
+
+			<WorkflowConfirmModal
+				open={Boolean(statusModal)}
+				onClose={closeStatusModal}
+				title={statusModal?.deactivating ? 'Deactivate district' : 'Activate district'}
+				description={
+					statusModal
+						? statusModal.deactivating
+							? `Deactivating "${statusModal.district.name}" will hide it from active use. Please provide a reason.`
+							: `Reactivate "${statusModal.district.name}"?`
+						: ''
+				}
+				primaryLabel={
+					statusLoading
+						? statusModal?.deactivating
+							? 'Deactivating…'
+							: 'Activating…'
+						: statusModal?.deactivating
+							? 'Deactivate district'
+							: 'Activate district'
+				}
+				primaryVariant={statusModal?.deactivating ? 'danger' : 'primary'}
+				onPrimary={confirmToggleStatus}
+				primaryDisabled={
+					statusLoading || (statusModal?.deactivating && !statusReason.trim())
+				}
+			>
+				{statusModal?.deactivating ? (
+					<label className="workflow-confirm-field">
+						<span className="workflow-confirm-field__label">
+							Reason for deactivation (required)
+						</span>
+						<textarea
+							className="workflow-confirm-field__input"
+							value={statusReason}
+							onChange={(e) => setStatusReason(e.target.value)}
+							placeholder="Explain why this district is being deactivated…"
+							rows={4}
+							required
+						/>
+					</label>
+				) : null}
+			</WorkflowConfirmModal>
 		</>
 	)
 }

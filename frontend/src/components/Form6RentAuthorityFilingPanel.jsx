@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { APPLICATION_TYPES } from '../constants/application'
 import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
 import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
+import { applyTenancyAutofill } from '../utils/tenancyUinAutofill'
 
-export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
+export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
@@ -191,6 +194,16 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
+	const handleTenancyLoaded = (tenancy) =>
+		applyTenancyAutofill(APPLICATION_TYPES.RENT_AUTHORITY_FILING, tenancy, user, {
+			setTenancyUIN,
+			setApplicantName,
+			setApplicantResidentialAddress,
+			setOppositePartyName,
+			setOppositePartyResidentialAddress,
+			setJurisdictionOfRentAuthority,
+		})
+
 	return (
 		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form IV - Matters under Rule 11'}</h1>
@@ -202,15 +215,11 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta }) {
 			{error ? <div className="error">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<label>
-					<span className="label-text required">Tenancy UIN</span>
-					<input
-						type="text"
-						value={tenancyUIN}
-						onChange={(e) => setTenancyUIN(e.target.value)}
-						required
-					/>
-				</label>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+				/>
 
 				<fieldset className="tenancy-fieldset">
 					<legend className="tenancy-legend-italic">A. Applicant</legend>

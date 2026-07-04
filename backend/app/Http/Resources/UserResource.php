@@ -24,6 +24,9 @@ class UserResource extends JsonResource
             'office_id' => $this->office_id,
             'designation_id' => $this->designation_id,
             'reports_to_user_id' => $this->reports_to_user_id,
+            'is_blocked' => (bool) $this->is_blocked,
+            'block_reason' => $this->block_reason,
+            'approved_at' => $this->approved_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             

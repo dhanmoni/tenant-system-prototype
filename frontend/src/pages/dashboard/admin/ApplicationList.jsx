@@ -21,6 +21,7 @@ const ApplicationList = ({ user }) => {
 	const [loading, setLoading] = useState(true);
 	const [actionLoading, setActionLoading] = useState(null);
 	const [rejectionMsg, setRejectionMsg] = useState('');
+	const [forwardRemarks, setForwardRemarks] = useState('');
 	const [showRejectModal, setShowRejectModal] = useState(null);
 	const [showForwardModal, setShowForwardModal] = useState(null);
 	const [successModal, setSuccessModal] = useState(null);
@@ -36,6 +37,16 @@ const ApplicationList = ({ user }) => {
 	const [searchInput, setSearchInput] = useState('');
 
 	const showFilters = ADMIN_ROLES.includes(user?.role);
+	const isQueueRole =
+		ASSISTANT_ROLES.includes(user?.role) || PRINCIPAL_ROLES.includes(user?.role);
+
+	// FIFO: only the oldest pending item (first row on the first page) is actionable.
+	// id alone is not unique across form types, so key on form_type + id.
+	const activeAppKey =
+		isQueueRole && page === 1 && applications.length > 0
+			? `${applications[0].form_type}:${applications[0].id}`
+			: null;
+	const lockedHint = 'Complete the oldest application first to unlock this one.';
 
 	useEffect(() => {
 		if (user?.role === ROLES.SUPER_ADMIN) {
@@ -107,17 +118,19 @@ const ApplicationList = ({ user }) => {
 	const handleForward = async () => {
 		if (!showForwardModal) return;
 		const { type, id, application_no } = showForwardModal;
+		const remarks = forwardRemarks.trim();
 		setActionLoading(id);
 		try {
-			await api.post(`/api/admin/applications/${type}/${id}/forward`);
+			await api.post(`/api/admin/applications/${type}/${id}/forward`, { remarks });
 			setShowForwardModal(null);
+			setForwardRemarks('');
 			setSuccessModal({
 				title: 'Application forwarded',
 				description: `${application_no} has been sent to ${forwardOffice} for final review.`,
 			});
 			fetchApplications();
 		} catch (error) {
-			alert('Failed to forward application');
+			alert(error.response?.data?.message || 'Failed to forward application');
 		} finally {
 			setActionLoading(null);
 		}
@@ -130,7 +143,7 @@ const ApplicationList = ({ user }) => {
 			await api.post(`/api/admin/applications/${type}/${id}/approve`);
 			fetchApplications();
 		} catch (error) {
-			alert('Failed to approve application');
+			alert(error.response?.data?.message || 'Failed to approve application');
 		} finally {
 			setActionLoading(null);
 		}
@@ -151,7 +164,7 @@ const ApplicationList = ({ user }) => {
 			});
 			fetchApplications();
 		} catch (error) {
-			alert('Failed to reject application');
+			alert(error.response?.data?.message || 'Failed to reject application');
 		} finally {
 			setActionLoading(null);
 		}
@@ -249,6 +262,16 @@ const ApplicationList = ({ user }) => {
 		</div>
 	) : null;
 
+	const queueNotice = isQueueRole ? (
+		<div className="app-queue-notice">
+			<Icon name="lock" className="app-queue-notice__icon" />
+			<span>
+				Applications are handled oldest-first. Finish the top application to
+				unlock the next one in the queue.
+			</span>
+		</div>
+	) : null;
+
 	return (
 		<>
 			<DataTable
@@ -257,7 +280,7 @@ const ApplicationList = ({ user }) => {
 				loading={loading}
 				data={applications}
 				totalCount={paginationInfo?.total}
-				toolbar={filterToolbar}
+				toolbar={filterToolbar || queueNotice}
 				onRowClick={openDetails}
 				columns={[
 					{
@@ -317,71 +340,78 @@ const ApplicationList = ({ user }) => {
 						render: (val) => formatDate(val),
 					},
 				]}
-				actions={(app) => (
-					<>
-						<StatusProgressViewButton
-							application={app}
-							variant="admin"
-							viewerRole={user?.role}
-						/>
-						<button
-							type="button"
-							className="ws-status-action-btn ws-status-action-btn--view"
-							title="View details"
-							onClick={() => openDetails(app)}
-						>
-							<Icon name="eye" />
-							<span>View</span>
-						</button>
-						{ASSISTANT_ROLES.includes(user?.role) ? (
+				actions={(app) => {
+					const locked =
+						isQueueRole && `${app.form_type}:${app.id}` !== activeAppKey;
+					return (
+						<>
+							<StatusProgressViewButton
+								application={app}
+								variant="admin"
+								viewerRole={user?.role}
+							/>
 							<button
 								type="button"
-								className="ws-status-action-btn ws-status-action-btn--primary"
-								title={`Forward to ${forwardOffice}`}
-								onClick={() =>
-									setShowForwardModal({
-										type: app.form_type,
-										id: app.id,
-										application_no: app.application_no,
-									})
-								}
-								disabled={actionLoading === app.id}
+								className="ws-status-action-btn ws-status-action-btn--view"
+								title="View details"
+								onClick={() => openDetails(app)}
 							>
-								<span>{actionLoading === app.id ? '…' : 'Forward'}</span>
+								<Icon name="eye" />
+								<span>View</span>
 							</button>
-						) : null}
-						{PRINCIPAL_ROLES.includes(user?.role) ? (
-							<button
-								type="button"
-								className="ws-status-action-btn ws-status-action-btn--join"
-								title="Approve application"
-								onClick={() => handleApprove(app.form_type, app.id)}
-								disabled={actionLoading === app.id}
-							>
-								<Icon name="check" />
-								<span>{actionLoading === app.id ? '…' : 'Approve'}</span>
-							</button>
-						) : null}
-						{ASSISTANT_ROLES.includes(user?.role) ||
-						PRINCIPAL_ROLES.includes(user?.role) ? (
-							<button
-								type="button"
-								className="ws-status-action-btn ws-status-action-btn--reject"
-								title="Reject application"
-								onClick={() =>
-									setShowRejectModal({
-										type: app.form_type,
-										id: app.id,
-										application_no: app.application_no,
-									})
-								}
-								disabled={actionLoading === app.id}
-							>
-								<span>Reject</span>
-							</button>
-						) : null}
-					</>
-				)}
+							{ASSISTANT_ROLES.includes(user?.role) ? (
+								<button
+									type="button"
+									className="ws-status-action-btn ws-status-action-btn--primary"
+									title={locked ? lockedHint : `Forward to ${forwardOffice}`}
+									onClick={() => {
+										setForwardRemarks('');
+										setShowForwardModal({
+											type: app.form_type,
+											id: app.id,
+											application_no: app.application_no,
+										});
+									}}
+									disabled={locked || actionLoading === app.id}
+								>
+									{locked ? <Icon name="lock" /> : null}
+									<span>{actionLoading === app.id ? '…' : 'Forward'}</span>
+								</button>
+							) : null}
+							{PRINCIPAL_ROLES.includes(user?.role) ? (
+								<button
+									type="button"
+									className="ws-status-action-btn ws-status-action-btn--join"
+									title={locked ? lockedHint : 'Approve application'}
+									onClick={() => handleApprove(app.form_type, app.id)}
+									disabled={locked || actionLoading === app.id}
+								>
+									<Icon name={locked ? 'lock' : 'check'} />
+									<span>{actionLoading === app.id ? '…' : 'Approve'}</span>
+								</button>
+							) : null}
+							{ASSISTANT_ROLES.includes(user?.role) ||
+							PRINCIPAL_ROLES.includes(user?.role) ? (
+								<button
+									type="button"
+									className="ws-status-action-btn ws-status-action-btn--reject"
+									title={locked ? lockedHint : 'Reject application'}
+									onClick={() =>
+										setShowRejectModal({
+											type: app.form_type,
+											id: app.id,
+											application_no: app.application_no,
+										})
+									}
+									disabled={locked || actionLoading === app.id}
+								>
+									{locked ? <Icon name="lock" /> : null}
+									<span>Reject</span>
+								</button>
+							) : null}
+						</>
+					);
+				}}
 				emptyMessage="No service applications found."
 				pagination={
 					paginationInfo
@@ -396,7 +426,10 @@ const ApplicationList = ({ user }) => {
 
 			<WorkflowConfirmModal
 				open={Boolean(showForwardModal)}
-				onClose={() => setShowForwardModal(null)}
+				onClose={() => {
+					setShowForwardModal(null);
+					setForwardRemarks('');
+				}}
 				title="Forward application"
 				description={
 					showForwardModal
@@ -406,7 +439,20 @@ const ApplicationList = ({ user }) => {
 				primaryLabel={actionLoading ? 'Forwarding…' : `Forward to ${forwardOffice}`}
 				onPrimary={handleForward}
 				primaryDisabled={Boolean(actionLoading)}
-			/>
+			>
+				<label className="workflow-confirm-field">
+					<span className="workflow-confirm-field__label">
+						Remarks (optional)
+					</span>
+					<textarea
+						className="workflow-confirm-field__input"
+						value={forwardRemarks}
+						onChange={(e) => setForwardRemarks(e.target.value)}
+						placeholder={`Add a note for ${forwardOffice} (e.g. documents verified)…`}
+						rows={3}
+					/>
+				</label>
+			</WorkflowConfirmModal>
 
 			<WorkflowConfirmModal
 				open={Boolean(showRejectModal)}

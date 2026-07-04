@@ -1,10 +1,12 @@
 import './App.css'
+import './styles/service-forms.css'
 import './workspace/styles/workspace.css'
 import { useEffect, useState } from 'react'
 import bannerImage from './assets/img/banner.png'
 import welcomeImage from './assets/img/img1.png'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
+import { PROFILE_REMINDER_DISMISSED_KEY } from './utils/profileCompleteness'
 import {
 	WorkspaceLayout,
 	WorkspaceHome,
@@ -245,6 +247,7 @@ function App() {
 		} catch {
 			// Clear local session even if the request fails
 		}
+		sessionStorage.removeItem(PROFILE_REMINDER_DISMISSED_KEY)
 		setUser(null)
 		setPortalEntering(false)
 		navigate('/', { replace: true })
@@ -257,6 +260,7 @@ function App() {
 	}, [loggingOut, isLandingHome])
 
 	const handleUserLogin = (nextUser) => {
+		sessionStorage.removeItem(PROFILE_REMINDER_DISMISSED_KEY)
 		setPortalEntering(true)
 		setUser(nextUser)
 	}

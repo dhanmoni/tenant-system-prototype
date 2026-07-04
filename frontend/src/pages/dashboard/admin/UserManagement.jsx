@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
+import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
 import { getRoleLabel } from '../../../constants/roleLabels'
 import './ApplicationList.css'
@@ -26,6 +27,9 @@ function UserManagement({ user: currentUser }) {
 	const [editingUser, setEditingUser] = useState(null)
 	const [formData, setFormData] = useState({ name: '', email: '', password: '', role: '', district_id: currentUser?.district_id || '' })
 	const [showAddForm, setShowAddForm] = useState(false)
+	const [statusModal, setStatusModal] = useState(null)
+	const [statusReason, setStatusReason] = useState('')
+	const [statusLoading, setStatusLoading] = useState(false)
 	const [districts, setDistricts] = useState([])
 	const [filters, setFilters] = useState({ search: '', role: '', district_id: '' })
 	const [searchInput, setSearchInput] = useState('')
@@ -155,17 +159,47 @@ function UserManagement({ user: currentUser }) {
 		}
 	}
 
-	const handleDelete = async (targetUser) => {
-		if (!window.confirm(`Delete user "${targetUser.name}"? This cannot be undone.`)) return
+	const openStatusModal = (targetUser) => {
+		setStatusReason('')
+		setStatusModal({ user: targetUser, deactivating: !targetUser.is_blocked })
+	}
+
+	const closeStatusModal = () => {
+		setStatusModal(null)
+		setStatusReason('')
+	}
+
+	const confirmToggleStatus = async () => {
+		if (!statusModal) return
+		const { user: targetUser, deactivating } = statusModal
+		const reason = statusReason.trim()
+		if (deactivating && !reason) return
+		setStatusLoading(true)
 		setError('')
 		setSuccess('')
 		try {
-			await api.delete(`/api/users/${targetUser.id}`)
-			setSuccess(`${targetUser.name} was deleted`)
+			await api.post(
+				`/api/users/${targetUser.id}/toggle-block`,
+				deactivating ? { reason } : {}
+			)
+			setSuccess(`${targetUser.name} was ${deactivating ? 'deactivated' : 'activated'}`)
+			closeStatusModal()
 			loadUsers()
 		} catch (err) {
-			setError(err.response?.data?.message || 'Failed to delete user')
+			setError(
+				err.response?.data?.message ||
+					`Failed to ${deactivating ? 'deactivate' : 'activate'} user`
+			)
+		} finally {
+			setStatusLoading(false)
 		}
+	}
+
+	const canToggleStatus = (u) => {
+		if (u.id === currentUser.id) return false
+		if (currentUser.role === ROLES.SUPER_ADMIN) return true
+		if (u.role === ROLES.SUPER_ADMIN) return false
+		return [ROLES.DISTRICT_ADMIN, ...PRINCIPAL_ROLES].includes(currentUser.role)
 	}
 
 	const getAllowedRoles = () => {
@@ -400,6 +434,19 @@ function UserManagement({ user: currentUser }) {
 						label: 'District',
 						render: (val) => val?.name || '—',
 					},
+					{
+						key: 'is_blocked',
+						label: 'Status',
+						render: (val) => (
+							<span
+								className={`admin-user-status ${
+									val ? 'admin-user-status--inactive' : 'admin-user-status--active'
+								}`}
+							>
+								{val ? 'Inactive' : 'Active'}
+							</span>
+						),
+					},
 				]}
 				actions={(u) => {
 					const canEdit = currentUser.role === ROLES.SUPER_ADMIN || 
@@ -418,19 +465,68 @@ function UserManagement({ user: currentUser }) {
 				}}
 				emptyMessage="No users found."
 				actions={(u) =>
-					currentUser.role === ROLES.SUPER_ADMIN && u.id !== currentUser.id ? (
+					canToggleStatus(u) ? (
 						<button
 							type="button"
-							className="ws-status-action-btn ws-status-action-btn--reject"
-							title={`Delete ${u.name}`}
-							onClick={() => handleDelete(u)}
+							className={`ws-status-action-btn ${
+								u.is_blocked
+									? 'ws-status-action-btn--join'
+									: 'ws-status-action-btn--reject'
+							}`}
+							title={`${u.is_blocked ? 'Activate' : 'Deactivate'} ${u.name}`}
+							onClick={() => openStatusModal(u)}
 						>
-							<span>Delete</span>
+							<Icon name={u.is_blocked ? 'check' : 'lock'} />
+							<span>{u.is_blocked ? 'Activate' : 'Deactivate'}</span>
 						</button>
 					) : null
 				}
 				emptyMessage={mode === 'tenant' ? 'No registered users found.' : 'No staff users found.'}
 			/>
+
+			<WorkflowConfirmModal
+				open={Boolean(statusModal)}
+				onClose={closeStatusModal}
+				title={statusModal?.deactivating ? 'Deactivate user' : 'Activate user'}
+				description={
+					statusModal
+						? statusModal.deactivating
+							? `Deactivating "${statusModal.user.name}" will immediately block them from logging in. Please provide a reason.`
+							: `Reactivate "${statusModal.user.name}"? They will be able to log in again.`
+						: ''
+				}
+				primaryLabel={
+					statusLoading
+						? statusModal?.deactivating
+							? 'Deactivating…'
+							: 'Activating…'
+						: statusModal?.deactivating
+							? 'Deactivate user'
+							: 'Activate user'
+				}
+				primaryVariant={statusModal?.deactivating ? 'danger' : 'primary'}
+				onPrimary={confirmToggleStatus}
+				primaryDisabled={
+					statusLoading ||
+					(statusModal?.deactivating && !statusReason.trim())
+				}
+			>
+				{statusModal?.deactivating ? (
+					<label className="workflow-confirm-field">
+						<span className="workflow-confirm-field__label">
+							Reason for deactivation (required)
+						</span>
+						<textarea
+							className="workflow-confirm-field__input"
+							value={statusReason}
+							onChange={(e) => setStatusReason(e.target.value)}
+							placeholder="Explain why this account is being deactivated…"
+							rows={4}
+							required
+						/>
+					</label>
+				) : null}
+			</WorkflowConfirmModal>
 		</>
 	)
 }

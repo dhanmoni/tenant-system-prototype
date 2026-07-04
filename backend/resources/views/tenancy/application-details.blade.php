@@ -4,384 +4,329 @@
     <meta charset="utf-8" />
     <title>Tenancy Application - {{ $application->application_no }}</title>
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        color: #0f172a;
+        font-family: 'Times New Roman', Georgia, serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #000;
         margin: 0;
-        padding: 10px;
-        background: #eef1f6;
+        padding: 24px;
+        background: #f1f5f9;
       }
-      .sheet {
-        max-width: 760px;
+      .govt-form-document {
+        position: relative;
+        max-width: 800px;
         margin: 0 auto;
-      }
-      .card {
+        background: #fff;
         border: 1px solid #cfd6e2;
-        border-radius: 8px;
-        background: #eef1f6;
-        padding: 10px 12px;
-        margin-bottom: 10px;
+        padding: 48px 56px;
       }
-      .document-header {
+      .govt-form-header {
         text-align: center;
-        margin: 4px 0 12px;
+        margin-bottom: 30px;
       }
-      .document-header .schedule-title {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 700;
+      .schedule-title {
+        font-weight: bold;
+        font-size: 1.2rem;
         text-transform: uppercase;
       }
-      .document-header .section-reference {
-        margin: 10px 0 14px;
-        font-size: 14px;
+      .section-reference {
         font-style: italic;
+        margin-bottom: 5px;
       }
-      .document-header .form-title {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
+      .form-title {
+        font-weight: bold;
+        font-size: 1.1rem;
       }
-      .title {
-        margin: 0 0 8px;
-        font-size: 12px;
-        font-weight: 700;
+      .addressee {
+        margin-bottom: 20px;
       }
-      .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px 26px;
+      .preview-list-item {
+        display: flex;
+        margin-bottom: 15px;
       }
-      .field {
-        display: grid;
-        gap: 2px;
+      .preview-list-item .sl {
+        width: 40px;
+        flex: 0 0 40px;
       }
-      .label {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #475569;
-        font-weight: 700;
+      .preview-list-item .label {
+        flex: 1.5;
+        padding-right: 10px;
       }
-      .value {
-        font-size: 12px;
-        font-weight: 600;
-        color: #0f172a;
+      .preview-list-item .value {
+        flex: 2;
         word-break: break-word;
       }
-      a.value {
-        color: #1d4ed8;
-        text-decoration: underline;
+      .charges-value {
+        display: flex;
+        flex-direction: column;
       }
-      .uploads-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 8px;
+      .signature-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 50px;
+        margin-bottom: 30px;
       }
-      .uploads-table th,
-      .uploads-table td {
-        border: 1px solid #cfd6e2;
-        padding: 6px;
-        vertical-align: top;
-        text-align: left;
+      .signature-block {
+        text-align: center;
       }
-      .uploads-table th {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #475569;
-        font-weight: 700;
-        background: #e9edf5;
+      .signature-caption {
+        margin-bottom: 10px;
       }
-      .photo {
-        width: 64px;
-        height: 64px;
-        object-fit: cover;
-        border: 1px solid #cfd6e2;
-      }
-      .signature {
-        width: 96px;
-        height: 32px;
-        object-fit: contain;
-        border: 1px solid #cfd6e2;
+      .photo-box {
+        border: 1px solid #000;
+        width: 120px;
+        height: 140px;
+        margin: 10px auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         background: #fff;
+        font-size: 0.8rem;
+        text-align: center;
       }
-      .page-break-before {
-        page-break-before: always;
-        break-before: page;
+      .photo-box img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+      }
+      .sign-line {
+        height: 50px;
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+      }
+      .sign-line img {
+        max-height: 100%;
+        max-width: 150px;
+      }
+      .enclosed {
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+      .enclosed ol {
+        margin-left: 20px;
+        margin-top: 10px;
+      }
+      .enclosed li {
+        margin-bottom: 5px;
       }
       @media print {
         body {
           padding: 0;
+          background: #fff;
+        }
+        .govt-form-document {
+          border: none;
+          max-width: none;
         }
       }
     </style>
   </head>
   <body>
     @php
-      $landlordPhotoFile = $application->landlord_photo_path ? public_path('storage/' . $application->landlord_photo_path) : null;
-      $landlordSignatureFile = $application->landlord_signature_path ? public_path('storage/' . $application->landlord_signature_path) : null;
-      $tenantPhotoFile = $application->tenant_photo_path ? public_path('storage/' . $application->tenant_photo_path) : null;
-      $tenantSignatureFile = $application->tenant_signature_path ? public_path('storage/' . $application->tenant_signature_path) : null;
-      $agreementPdfFile = $application->agreement_pdf_path ? public_path('storage/' . $application->agreement_pdf_path) : null;
-      $agreementName = $application->agreement_pdf_path ? basename($application->agreement_pdf_path) : 'NA';
-      $agreementUrl = $application->agreement_pdf_path ? url('storage/' . $application->agreement_pdf_path) : null;
-
       $toDataUri = function ($path) {
-          if (!$path || !is_file($path) || !is_readable($path)) {
+          $full = $path ? public_path('storage/' . $path) : null;
+          if (!$full || !is_file($full) || !is_readable($full)) {
               return null;
           }
-          $mime = mime_content_type($path) ?: '';
+          $mime = mime_content_type($full) ?: '';
           $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
           if (!in_array($mime, $allowed, true)) {
               return null;
           }
-          $contents = file_get_contents($path);
+          $contents = file_get_contents($full);
           if ($contents === false) {
               return null;
           }
           return 'data:' . $mime . ';base64,' . base64_encode($contents);
       };
 
-      $landlordPhotoSrc = $toDataUri($landlordPhotoFile);
-      $landlordSignatureSrc = $toDataUri($landlordSignatureFile);
-      $tenantPhotoSrc = $toDataUri($tenantPhotoFile);
-      $tenantSignatureSrc = $toDataUri($tenantSignatureFile);
+      $landlordPhotoSrc = $toDataUri($application->landlord_photo_path);
+      $landlordSignatureSrc = $toDataUri($application->landlord_signature_path);
+      $tenantPhotoSrc = $toDataUri($application->tenant_photo_path);
+      $tenantSignatureSrc = $toDataUri($application->tenant_signature_path);
+
+      $hasManager = $application->manager_name && $application->manager_name !== 'NA';
+      $officeName = optional($application->office)->name;
+      $districtName = optional($application->district)->name;
+      $addressLine = $officeName
+          ? trim($officeName . ($districtName ? ', ' . $districtName : ''))
+          : '________________________';
     @endphp
 
-    <div class="sheet">
-      <div class="document-header">
-        <p class="schedule-title">THE FIRST SCHEDULE</p>
-        <p class="section-reference">[See section 4(1) and 7(2)]</p>
-        <p class="form-title">FORM FOR INFORMATION OF TENANCY</p>
+    <div class="govt-form-document">
+      <div class="govt-form-header">
+        <div class="schedule-title">THE FIRST SCHEDULE</div>
+        <div class="section-reference">[See section 4(1) and 7(2)]</div>
+        <div class="form-title">FORM FOR INFORMATION OF TENANCY</div>
       </div>
 
-      <div class="card">
-        <p class="title">Registration</p>
-        <div class="grid-2">
-          <div class="field">
-            <span class="label">Application No</span>
-            <span class="value">{{ $application->application_no ?? '-' }}</span>
+      <div class="addressee">
+        <div>To,</div>
+        <div>The Rent Authority</div>
+        <div>{{ $addressLine }} (Address)</div>
+      </div>
+
+      <div class="preview-list-container">
+        <div class="preview-list-item">
+          <div class="sl">1.</div>
+          <div class="label">Name and address of the landlord</div>
+          <div class="value">: {{ $application->landlord_name ? $application->landlord_name . ', ' . $application->landlord_address : '' }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">2.</div>
+          <div class="label">Name and address of the Property Manager (if any)</div>
+          <div class="value">: {{ $hasManager ? $application->manager_name . ', ' . $application->manager_address : '' }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">3.</div>
+          <div class="label">Name(s) and address of the tenant, including email and contact details,</div>
+          <div class="value">: {{ $application->tenant_name ? $application->tenant_name . ', ' . $application->tenant_address . ', Email: ' . $application->tenant_email . ', Phone: ' . $application->tenant_phone : '' }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">4.</div>
+          <div class="label">Description of previous tenancy, if any</div>
+          <div class="value">: {{ $application->tenant_previous_tenancy }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">5.</div>
+          <div class="label">Description of premises let to the tenant Including appurtenant land, if any</div>
+          <div class="value">: {{ $application->property_premises_description }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">6.</div>
+          <div class="label">Date from which possession is given to the tenant</div>
+          <div class="value">: {{ $application->property_possession_date }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">7.</div>
+          <div class="label">Rent payable as in section 8</div>
+          <div class="value">: {{ $application->property_rent_payable ? '₹' . $application->property_rent_payable : '' }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">8.</div>
+          <div class="label">Furniture and other equipment provided to the tenant</div>
+          <div class="value">: {{ $application->property_furniture_description }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">9.</div>
+          <div class="label">
+            Other charges payable<br />
+            (a) Electricity<br />
+            (b) Water<br />
+            (c) Extra furnishing, fittings and fixtures<br />
+            (d) Other services
           </div>
-          <div class="field">
-            <span class="label">&nbsp;</span>
-            <span class="value">&nbsp;</span>
+          <div class="value charges-value">
+            <div>&nbsp;</div>
+            <div>: {{ $application->property_charge_electricity }}</div>
+            <div>: {{ $application->property_charge_water }}</div>
+            <div>: {{ $application->property_charge_furnishing }}</div>
+            <div>: {{ $application->property_charge_other_services }}</div>
           </div>
-          <div class="field">
-            <span class="label">Date of Registration</span>
-            <span class="value">{{ $application->registration_date ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Applied to Office</span>
-            <span class="value">{{ optional($application->office)->name ?? 'N/A' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Apply Type</span>
-            <span class="value">{{ $application->apply_type ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Application Type</span>
-            <span class="value">{{ $application->application_type ?? 'Tenancy Certificate' }}</span>
-          </div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">10.</div>
+          <div class="label">Attach rent or lease or tenancy agreement</div>
+          <div class="value">: Attached in uploads</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">11.</div>
+          <div class="label">Duration of tenancy (Period for which let)</div>
+          <div class="value">: {{ $application->property_tenancy_duration }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">12.</div>
+          <div class="label">Permanent Account Number (PAN) of landlord:</div>
+          <div class="value">: {{ $application->landlord_pan }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">13.</div>
+          <div class="label">Aadhaar number of landlord:</div>
+          <div class="value">: {{ $application->landlord_aadhar }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">14.</div>
+          <div class="label">Mobile Number and E-mail id of landlord<br />(if available)</div>
+          <div class="value">: {{ $application->landlord_phone }}, {{ $application->landlord_email }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">15.</div>
+          <div class="label">Permanent Account Number (PAN) of tenant</div>
+          <div class="value">: {{ $application->tenant_pan }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">16.</div>
+          <div class="label">Aadhaar number of tenant</div>
+          <div class="value">: {{ $application->tenant_aadhar }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">17.</div>
+          <div class="label">Mobile Number and E-mail id of tenant</div>
+          <div class="value">: {{ $application->tenant_phone }}, {{ $application->tenant_email }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">18.</div>
+          <div class="label">Permanent Account Number (PAN) of Property Manager (if any)</div>
+          <div class="value">: {{ $hasManager && $application->manager_pan && $application->manager_pan !== 'NA' ? $application->manager_pan : '' }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">19.</div>
+          <div class="label">Aadhaar number of Property Manager<br />(if any)</div>
+          <div class="value">: {{ $hasManager ? $application->manager_aadhar : '' }}</div>
+        </div>
+        <div class="preview-list-item">
+          <div class="sl">20.</div>
+          <div class="label">Mobile Number and E-mail id of<br />Property Manager (if any)</div>
+          <div class="value">: {{ $hasManager && $application->manager_phone && $application->manager_phone !== 'NA' ? $application->manager_phone . ($application->manager_email && $application->manager_email !== 'noemail@noemail.com' ? ', ' . $application->manager_email : '') : '' }}</div>
         </div>
       </div>
 
-      <div class="card">
-        <p class="title">Landlord Details</p>
-        <div class="grid-2">
-          <div class="field">
-            <span class="label">Name</span>
-            <span class="value">{{ $application->landlord_name ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Address</span>
-            <span class="value">{{ $application->landlord_address ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Email</span>
-            <span class="value">{{ $application->landlord_email ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Phone</span>
-            <span class="value">{{ $application->landlord_phone ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">PAN No</span>
-            <span class="value">{{ $application->landlord_pan ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">&nbsp;</span>
-            <span class="value">&nbsp;</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <p class="title">Property Manager Details</p>
-        <div class="grid-2">
-          <div class="field">
-            <span class="label">Name</span>
-            <span class="value">{{ $application->manager_name ?? 'NA' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Address</span>
-            <span class="value">{{ $application->manager_address ?? 'NA' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Email</span>
-            <span class="value">{{ $application->manager_email ?? 'NA' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Phone</span>
-            <span class="value">{{ $application->manager_phone ?? 'NA' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">PAN</span>
-            <span class="value">{{ $application->manager_pan ?? 'NA' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">&nbsp;</span>
-            <span class="value">&nbsp;</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <p class="title">Tenant Details</p>
-        <div class="grid-2">
-          <div class="field">
-            <span class="label">Name</span>
-            <span class="value">{{ $application->tenant_name ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Address</span>
-            <span class="value">{{ $application->tenant_address ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Email</span>
-            <span class="value">{{ $application->tenant_email ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Phone</span>
-            <span class="value">{{ $application->tenant_phone ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">PAN</span>
-            <span class="value">{{ $application->tenant_pan ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Description of Previous Tenancy</span>
-            <span class="value">{{ $application->tenant_previous_tenancy ?? '-' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <p class="title">Property Details</p>
-        <div class="grid-2">
-          <div class="field">
-            <span class="label">Date of Possession by Tenant</span>
-            <span class="value">{{ $application->property_possession_date ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Rent Payable</span>
-            <span class="value">{{ $application->property_rent_payable ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Description of Premises Let to Tenant Including Appurtenant Land if Any</span>
-            <span class="value">{{ $application->property_premises_description ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Description of Furniture and Other Equipment Provided</span>
-            <span class="value">{{ $application->property_furniture_description ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Other Charges - Electricity</span>
-            <span class="value">{{ $application->property_charge_electricity ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Other Charges - Water</span>
-            <span class="value">{{ $application->property_charge_water ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Other Charges - Extra Furnishing, Fittings and Fixtures</span>
-            <span class="value">{{ $application->property_charge_furnishing ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Other Charges - Other Services</span>
-            <span class="value">{{ $application->property_charge_other_services ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">Duration of Tenancy</span>
-            <span class="value">{{ $application->property_tenancy_duration ?? '-' }}</span>
-          </div>
-          <div class="field">
-            <span class="label">&nbsp;</span>
-            <span class="value">&nbsp;</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card page-break-before">
-        <p class="title">Uploads</p>
-        <div class="field">
-          <span class="label">Agreement (PDF)</span>
-          @if ($agreementPdfFile && is_file($agreementPdfFile))
-            @if ($agreementUrl)
-              <a class="value" href="{{ $agreementUrl }}" target="_blank" rel="noopener noreferrer">Click here to open original agreement file</a>
+      <div class="signature-row">
+        <div class="signature-block">
+          <div class="signature-caption">Name and signature of landlord</div>
+          <div class="photo-box">
+            @if ($landlordPhotoSrc)
+              <img src="{{ $landlordPhotoSrc }}" alt="Landlord Photo" />
+            @else
+              <span>Photograph<br />of<br />Landlord</span>
             @endif
-          @else
-            <span class="value">Not uploaded</span>
-          @endif
+          </div>
+          <div class="sign-line">
+            @if ($landlordSignatureSrc)
+              <img src="{{ $landlordSignatureSrc }}" alt="Landlord Signature" />
+            @endif
+          </div>
         </div>
-        <table class="uploads-table">
-          <thead>
-            <tr>
-              <th>Photo</th>
-              <th>Signature</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <span class="label">Landlord Photo</span><br />
-                @if ($landlordPhotoSrc)
-                  <img class="photo" src="{{ $landlordPhotoSrc }}" alt="Landlord Photo" />
-                @else
-                  <span class="value">Not uploaded</span>
-                @endif
-              </td>
-              <td>
-                <span class="label">Landlord Signature</span><br />
-                @if ($landlordSignatureSrc)
-                  <img class="signature" src="{{ $landlordSignatureSrc }}" alt="Landlord Signature" />
-                @else
-                  <span class="value">Not uploaded</span>
-                @endif
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <span class="label">Tenant Photo</span><br />
-                @if ($tenantPhotoSrc)
-                  <img class="photo" src="{{ $tenantPhotoSrc }}" alt="Tenant Photo" />
-                @else
-                  <span class="value">Not uploaded</span>
-                @endif
-              </td>
-              <td>
-                <span class="label">Tenant Signature</span><br />
-                @if ($tenantSignatureSrc)
-                  <img class="signature" src="{{ $tenantSignatureSrc }}" alt="Tenant Signature" />
-                @else
-                  <span class="value">Not uploaded</span>
-                @endif
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="signature-block">
+          <div class="signature-caption">Name and signature of tenant</div>
+          <div class="photo-box">
+            @if ($tenantPhotoSrc)
+              <img src="{{ $tenantPhotoSrc }}" alt="Tenant Photo" />
+            @else
+              <span>Photograph<br />of<br />Tenant</span>
+            @endif
+          </div>
+          <div class="sign-line">
+            @if ($tenantSignatureSrc)
+              <img src="{{ $tenantSignatureSrc }}" alt="Tenant Signature" />
+            @endif
+          </div>
+        </div>
+      </div>
+
+      <div class="enclosed">
+        <strong>Enclosed:</strong>
+        <ol>
+          <li>Tenancy Agreement.</li>
+          <li>Self-attested copies of PAN and Aadhaar of landlord.</li>
+          <li>Self-attested copies of PAN and Aadhaar of tenant.</li>
+        </ol>
       </div>
     </div>
 
