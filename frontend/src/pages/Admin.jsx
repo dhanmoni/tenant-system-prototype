@@ -32,7 +32,7 @@ function Admin({ user }) {
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
-    password: '',
+    phone: '',
     role: 'ra_assistant',
     district_id: '',
     reports_to_user_id: '',
@@ -114,7 +114,7 @@ function Admin({ user }) {
       const payload = {
         name: userForm.name,
         email: userForm.email,
-        password: userForm.password,
+        phone: userForm.phone,
         role: userForm.role,
         district_id: userForm.district_id || null,
         reports_to_user_id: userForm.reports_to_user_id || null,
@@ -123,7 +123,7 @@ function Admin({ user }) {
       setUserForm({
         name: '',
         email: '',
-        password: '',
+        phone: '',
         role: ROLES.RA_ASSISTANT,
         district_id: '',
         reports_to_user_id: '',
@@ -288,14 +288,13 @@ function Admin({ user }) {
               />
             </label>
             <label>
-              Password
+              Phone
               <input
-                type="password"
-                value={userForm.password}
+                type="text"
+                value={userForm.phone}
                 onChange={(e) =>
-                  setUserForm((prev) => ({ ...prev, password: e.target.value }))
+                  setUserForm((prev) => ({ ...prev, phone: e.target.value }))
                 }
-                required
               />
             </label>
             <label>
