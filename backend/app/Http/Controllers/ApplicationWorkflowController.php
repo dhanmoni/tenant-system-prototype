@@ -548,4 +548,101 @@ class ApplicationWorkflowController extends Controller
 
         return response()->json(['application' => new ApplicationResource($application)]);
     }
+
+    public function superadminMove(Request $request, $type, $id)
+    {
+        $user = $request->user();
+        if ($user->role !== Roles::SUPER_ADMIN) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'assigned_to_role' => 'nullable|string',
+            'status' => 'required|string',
+        ]);
+
+        $modelClass = $this->getModel($type);
+        if (!$modelClass) return response()->json(['message' => 'Invalid form type'], 400);
+
+        $application = $modelClass::find($id);
+        if (!$application) return response()->json(['message' => 'Application not found'], 404);
+
+        // Determine the valid assistant/principal pair for this form type
+        $validTransitions = $this->getValidTransitions($type);
+        if (!$validTransitions) {
+            return response()->json(['message' => 'No valid workflow defined for this form type'], 400);
+        }
+
+        $targetRole = $request->assigned_to_role;
+        $targetStatus = $request->status;
+
+        // Validate the role+status combination
+        $validCombinations = [
+            ['role' => $validTransitions['assistant'], 'status' => Status::SUBMITTED],
+            ['role' => $validTransitions['principal'], 'status' => Status::IN_REVIEW],
+        ];
+
+        $isValid = false;
+        foreach ($validCombinations as $combo) {
+            if ($combo['role'] === $targetRole && $combo['status'] === $targetStatus) {
+                $isValid = true;
+                break;
+            }
+        }
+
+        if (!$isValid) {
+            return response()->json([
+                'message' => 'Invalid transition. This application can only move between '
+                    . $validTransitions['assistant'] . ' (Submitted) and '
+                    . $validTransitions['principal'] . ' (In Review).',
+            ], 422);
+        }
+
+        $application->update([
+            'assigned_to_role' => $targetRole,
+            'status' => $targetStatus,
+        ]);
+
+        return response()->json(['message' => 'Application updated successfully', 'application' => $application]);
+    }
+
+    /**
+     * Return the valid assistant/principal role pair for a given form type.
+     */
+    protected function getValidTransitions(string $type): ?array
+    {
+        // Rent Authority forms
+        $raTypes = [
+            ApplicationTypes::RENT_REVISION,
+            ApplicationTypes::OTHER_CHARGES_REVISION,
+            ApplicationTypes::VALUER_APPOINTMENT,
+            ApplicationTypes::RENT_AUTHORITY_FILING,
+        ];
+
+        // Rent Court forms
+        $rcTypes = [
+            ApplicationTypes::RENT_COURT_POSSESSION,
+            ApplicationTypes::RENT_COURT_FILING,
+            ApplicationTypes::RENT_COURT_APPEAL,
+        ];
+
+        // Rent Tribunal forms
+        $rtTypes = [
+            ApplicationTypes::RENT_TRIBUNAL_APPEAL,
+        ];
+
+        if (in_array($type, $raTypes)) {
+            return ['assistant' => Roles::RA_ASSISTANT, 'principal' => Roles::RENT_AUTHORITY];
+        }
+
+        if (in_array($type, $rcTypes)) {
+            return ['assistant' => Roles::RC_ASSISTANT, 'principal' => Roles::RENT_COURT];
+        }
+
+        if (in_array($type, $rtTypes)) {
+            return ['assistant' => Roles::RT_ASSISTANT, 'principal' => Roles::RENT_TRIBUNAL];
+        }
+
+        return null;
+    }
 }

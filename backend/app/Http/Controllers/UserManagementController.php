@@ -70,8 +70,8 @@ class UserManagementController extends Controller
         if ($user->role === Roles::SUPER_ADMIN) {
             // Super admin can create anyone
         } elseif ($user->role === Roles::DISTRICT_ADMIN) {
-            // District admin can create assistants for their district
-            if (!in_array($role, Roles::assistants())) {
+            // District admin can create principals and assistants for their district
+            if (!in_array($role, Roles::allStaff())) {
                 return response()->json(['message' => 'Unauthorized role creation'], 403);
             }
             $data['district_id'] = $user->district_id;
@@ -125,6 +125,34 @@ class UserManagementController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $currentUser = $request->user();
+        $newRole = $request->input('role') ?? $user->role;
+
+        // Permission checks
+        if ($currentUser->role === Roles::SUPER_ADMIN) {
+            // Can update anyone
+        } elseif ($currentUser->role === Roles::DISTRICT_ADMIN) {
+            // District admin can update staff in their district
+            if ($user->district_id !== $currentUser->district_id || !in_array($user->role, Roles::allStaff()) || !in_array($newRole, Roles::allStaff())) {
+                return response()->json(['message' => 'Unauthorized update'], 403);
+            }
+            $request->merge(['district_id' => $currentUser->district_id]);
+        } elseif (in_array($currentUser->role, Roles::principals())) {
+            // Principals can only update their own assistants
+            $allowedRole = match($currentUser->role) {
+                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
+                Roles::RENT_COURT => Roles::RC_ASSISTANT,
+                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
+                default => null,
+            };
+            if ($user->district_id !== $currentUser->district_id || $user->role !== $allowedRole || $newRole !== $allowedRole) {
+                return response()->json(['message' => 'Unauthorized update'], 403);
+            }
+            $request->merge(['district_id' => $currentUser->district_id]);
+        } else {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
@@ -135,6 +163,20 @@ class UserManagementController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'reports_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
+
+        // Update district principal IDs if role changed to principal
+        if (!empty($data['district_id'])) {
+            $districtUpdate = match($data['role']) {
+                Roles::DISTRICT_ADMIN => ['district_admin_id' => $user->id],
+                Roles::RENT_AUTHORITY => ['assistant_director_id' => $user->id],
+                Roles::RENT_COURT => ['district_head_id' => $user->id],
+                Roles::RENT_TRIBUNAL => ['rent_tribunal_id' => $user->id],
+                default => [],
+            };
+            if (!empty($districtUpdate)) {
+                District::where('id', $data['district_id'])->update($districtUpdate);
+            }
+        }
 
         $user->update([
             'name' => $data['name'],
@@ -150,12 +192,34 @@ class UserManagementController extends Controller
         return response()->json(['user' => $user->load(['office', 'designation'])]);
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
-        // Deletion is disabled: deactivate (block) users instead to preserve history.
-        return response()->json([
-            'message' => 'Users cannot be deleted. Please deactivate the account instead.',
-        ], 403);
+        $currentUser = $request->user();
+
+        // Permission checks
+        if ($currentUser->role === Roles::SUPER_ADMIN) {
+            // Can delete anyone
+        } elseif ($currentUser->role === Roles::DISTRICT_ADMIN) {
+            if ($user->district_id !== $currentUser->district_id || !in_array($user->role, Roles::allStaff())) {
+                return response()->json(['message' => 'Unauthorized deletion'], 403);
+            }
+        } elseif (in_array($currentUser->role, Roles::principals())) {
+            $allowedRole = match($currentUser->role) {
+                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
+                Roles::RENT_COURT => Roles::RC_ASSISTANT,
+                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
+                default => null,
+            };
+            if ($user->district_id !== $currentUser->district_id || $user->role !== $allowedRole) {
+                return response()->json(['message' => 'Unauthorized deletion'], 403);
+            }
+        } else {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted']);
     }
 
     public function approve(Request $request, User $user)
