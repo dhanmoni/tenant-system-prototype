@@ -1,6 +1,10 @@
+import dataGovLogo from '../assets/img/data.gov.in.svg'
 import digitalIndiaLogo from '../assets/img/digital-india.png'
-import emblem from '../assets/img/emblem-dark.png'
+import indiaPortalLogo from '../assets/img/india-portal.jpg'
+import mygovLogo from '../assets/img/mygov.svg'
 import nicLogo from '../assets/img/NIC.png'
+import pmIndiaLogo from '../assets/img/PMindia.png'
+import tcpAssamLogo from '../assets/img/TCP logo.png'
 
 /** Official portal links — add logo images under assets/img/gov/ when available */
 export const governmentPortalLogos = [
@@ -22,35 +26,36 @@ export const governmentPortalLogos = [
 		id: 'india-gov',
 		name: 'India.gov.in',
 		href: 'https://www.india.gov.in/',
-		logo: emblem,
+		logo: indiaPortalLogo,
 		alt: 'National Portal of India',
 	},
 	{
 		id: 'tcp-assam',
 		name: 'TCP Assam',
 		href: 'https://tcp.assam.gov.in/',
-		label: 'TCP Assam',
-		alt: 'Town and Country Planning, Assam',
+		logo: tcpAssamLogo,
+		alt: 'Directorate of Town and Country Planning, Assam',
 	},
 	{
 		id: 'mygov',
 		name: 'MyGov',
 		href: 'https://www.mygov.in/',
-		label: 'MyGov',
+		logo: mygovLogo,
 		alt: 'MyGov India',
 	},
 	{
 		id: 'pm-india',
 		name: 'PM India',
 		href: 'https://www.pmindia.gov.in/',
-		label: 'PM India',
+		logo: pmIndiaLogo,
 		alt: 'Prime Minister of India',
+		imgClass: 'gov-logos-carousel__img--pm',
 	},
 	{
 		id: 'data-gov',
 		name: 'Data.gov.in',
 		href: 'https://data.gov.in/',
-		label: 'Data.gov.in',
+		logo: dataGovLogo,
 		alt: 'Open Government Data Platform India',
 	},
 ]

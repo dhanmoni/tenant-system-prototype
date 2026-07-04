@@ -1,0 +1,46 @@
+.admin-user-toolbar .ws-status-section-controls {
+	align-items: flex-end;
+}
+
+.admin-user-toolbar__add {
+	display: flex;
+	align-items: flex-end;
+	margin-left: auto;
+	padding-bottom: 1px;
+}
+
+.admin-user-role {
+	display: inline-block;
+	padding: 0.2rem 0.55rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #334155;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.admin-user-modal {
+	max-width: 480px;
+	width: calc(100% - 2rem);
+}
+
+.admin-user-modal__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+@media (max-width: 720px) {
+	.admin-user-toolbar__add {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	.admin-user-toolbar__add .ws-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}

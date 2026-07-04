@@ -1,5 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
+import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
+import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
 
 const parseMoney = (value) => {
 	// Accept inputs like "25,000.50" and normalize to a number
@@ -10,9 +15,9 @@ const parseMoney = (value) => {
 }
 
 export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
+	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
 
 	const [tenancyUIN, setTenancyUIN] = useState('')
 	const [tenancyAgreementDocumentNo, setTenancyAgreementDocumentNo] = useState('')
@@ -36,9 +41,8 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 	const [signatureName, setSignatureName] = useState('')
 	const [signatureImage, setSignatureImage] = useState(null)
 
-	const submit = async () => {
+	const submit = useCallback(async () => {
 		setError('')
-		setSuccess('')
 		setSubmitting(true)
 		try {
 			await csrf()
@@ -67,7 +71,14 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 				headers: { 'Content-Type': 'multipart/form-data' },
 			})
 
-			setSuccess(data?.message || 'Form-I submitted successfully.')
+			completeServiceFormSubmit(
+				navigate,
+				getServiceFormSuccessMessage(
+					data,
+					'Form-I (Rent revision/fixation) submitted successfully.'
+				)
+			)
+			return true
 		} catch (err) {
 			const msg =
 				err?.response?.data?.message ||
@@ -75,13 +86,79 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 					? Object.values(err.response.data.errors).flat().join('. ')
 					: 'Failed to submit Form-I')
 			setError(msg)
+			return false
 		} finally {
 			setSubmitting(false)
 		}
-	}
+	}, [
+		landlordAddress,
+		landlordName,
+		managerAddress,
+		managerName,
+		presentMonthlyRent,
+		proposedMonthlyRent,
+		reasonForRentRevision,
+		rentedPremisesDescription,
+		signatureImage,
+		signatureName,
+		signedBy,
+		tenancyAgreementDocumentNo,
+		tenancyUIN,
+		tenantAddress,
+		tenantName,
+		navigate,
+	])
+
+	const previewData = useMemo(
+		() =>
+			previewSections(
+				previewSection('Tenancy', [
+					previewItem('Tenancy UIN', tenancyUIN),
+					previewItem('Agreement document no.', tenancyAgreementDocumentNo),
+				]),
+				previewSection('Landlord / tenant', [
+					previewItem('Landlord name', landlordName),
+					previewItem('Landlord address', landlordAddress),
+					previewItem('Tenant name', tenantName),
+					previewItem('Tenant address', tenantAddress),
+					previewItem('Property manager', managerName),
+					previewItem('Manager address', managerAddress),
+				]),
+				previewSection('Rent details', [
+					previewItem('Rented premises', rentedPremisesDescription),
+					previewItem('Present monthly rent', presentMonthlyRent),
+					previewItem('Proposed monthly rent', proposedMonthlyRent),
+					previewItem('Reason for revision', reasonForRentRevision),
+				]),
+				previewSection('Signature', [
+					previewItem('Signed by', signedBy),
+					previewItem('Signature name', signatureName),
+					previewItem('Signature image', signatureImage),
+				])
+			),
+		[
+			landlordAddress,
+			landlordName,
+			managerAddress,
+			managerName,
+			presentMonthlyRent,
+			proposedMonthlyRent,
+			reasonForRentRevision,
+			rentedPremisesDescription,
+			signatureImage,
+			signatureName,
+			signedBy,
+			tenancyAgreementDocumentNo,
+			tenancyUIN,
+			tenantAddress,
+			tenantName,
+		]
+	)
+
+	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
 	return (
-		<div className="auth-card dashboard-card">
+		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form I - Revision or fixation of rent'}</h1>
 			<p className="muted">
 				{serviceMeta
@@ -89,15 +166,8 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 					: 'Fill the application details and submit to the system.'}
 			</p>
 			{error ? <div className="error">{error}</div> : null}
-			{success ? <div className="success">{success}</div> : null}
 
-			<form
-				className="tenancy-form"
-				onSubmit={(e) => {
-					e.preventDefault()
-					submit()
-				}}
-			>
+			<form className="tenancy-form" onSubmit={requestPreview}>
 				<label>
 					<span className="label-text required">Tenancy UIN</span>
 					<input
@@ -239,10 +309,21 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta }) {
 						Back
 					</button>
 					<button type="submit" disabled={submitting}>
-						{submitting ? 'Submitting...' : 'Submit Form-I'}
+						{submitting ? 'Submitting...' : 'Review & submit'}
 					</button>
 				</div>
 			</form>
+
+			<ServiceFormPreviewModal
+				open={previewOpen}
+				title="Review Form I"
+				subtitle={serviceMeta?.label}
+				sections={previewData}
+				onClose={closePreview}
+				onConfirm={confirmSubmit}
+				confirming={submitting}
+				confirmLabel="Confirm & submit Form I"
+			/>
 		</div>
 	)
 }

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import NavDashboardMenu from './NavDashboardMenu'
-import emblem from '../../assets/img/emblem-dark.png'
+import tcpLogo from '../../assets/img/TCP logo.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
 import { emitLandingA11y } from '../../utils/landingA11y'
 
@@ -47,81 +47,83 @@ function LandingNav({ variant = 'overlay' }) {
 					role="toolbar"
 					aria-label="Accessibility options"
 				>
-					<div className="landing-nav-mobile-a11y-scroll">
-						<span className="landing-nav-mobile-flag" role="img" aria-label="India">
-							🇮🇳
-						</span>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<a href="#main-content" className="landing-nav-mobile-skip">
-							Skip to main content
-						</a>
-						<a
-							href="#portal-content"
-							className="landing-nav-mobile-skip landing-nav-mobile-skip--apply"
-						>
-							Skip to apply
-						</a>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Text size">
+					<div className="landing-nav-mobile-a11y-inner">
+						<div className="landing-nav-mobile-a11y-row landing-nav-mobile-a11y-row--primary">
+							<span className="landing-nav-mobile-flag" role="img" aria-label="India">
+								🇮🇳
+							</span>
+							<div className="landing-nav-mobile-skip-group">
+								<a href="#main-content" className="landing-nav-mobile-skip">
+									Skip to main content
+								</a>
+								<a
+									href="#portal-content"
+									className="landing-nav-mobile-skip landing-nav-mobile-skip--apply"
+								>
+									Skip to apply
+								</a>
+							</div>
+						</div>
+						<div className="landing-nav-mobile-a11y-row landing-nav-mobile-a11y-row--tools">
+							<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Text size">
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('increase')}
+									aria-label="Increase text size"
+								>
+									A+
+								</button>
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('reset')}
+									aria-label="Reset text size"
+								>
+									A
+								</button>
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('decrease')}
+									aria-label="Decrease text size"
+								>
+									A−
+								</button>
+							</div>
+							<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Language">
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('lang-en')}
+									aria-label="English"
+								>
+									EN
+								</button>
+								<button
+									type="button"
+									className="landing-nav-mobile-a11y-btn"
+									onClick={() => emitLandingA11y('lang-as')}
+									aria-label="Assamese"
+								>
+									অসমীয়া
+								</button>
+							</div>
 							<button
 								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('increase')}
-								aria-label="Increase text size"
+								className="landing-nav-mobile-a11y-btn landing-nav-mobile-a11y-btn--solo"
+								onClick={() => emitLandingA11y('contrast')}
 							>
-								A+
-							</button>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('reset')}
-								aria-label="Reset text size"
-							>
-								A
-							</button>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('decrease')}
-								aria-label="Decrease text size"
-							>
-								A−
+								<span className="landing-nav-a11y-label landing-nav-a11y-label--long">High contrast</span>
+								<span className="landing-nav-a11y-label landing-nav-a11y-label--short">Contrast</span>
 							</button>
 						</div>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<div className="landing-nav-mobile-a11y-group" role="group" aria-label="Language">
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('lang-en')}
-								aria-label="English"
-							>
-								EN
-							</button>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn"
-								onClick={() => emitLandingA11y('lang-as')}
-								aria-label="Assamese"
-							>
-								অসমীয়া
-							</button>
-						</div>
-						<span className="landing-nav-mobile-a11y-divider" aria-hidden />
-						<button
-							type="button"
-							className="landing-nav-mobile-a11y-btn landing-nav-mobile-a11y-btn--solo"
-							onClick={() => emitLandingA11y('contrast')}
-						>
-							<span className="landing-nav-a11y-label landing-nav-a11y-label--long">High contrast</span>
-							<span className="landing-nav-a11y-label landing-nav-a11y-label--short">Contrast</span>
-						</button>
 					</div>
 				</div>
 
 				<div className="landing-nav-mobile-brand">
 					<Link to="/" onClick={closeMenu} className="landing-nav-brand">
-						<img src={emblem} alt="" className="landing-nav-emblem" aria-hidden />
+						<img src={tcpLogo} alt="" className="landing-nav-emblem" aria-hidden />
 						<span className="landing-nav-brand-text">
 							<span className="landing-nav-brand-line">Government of Assam</span>
 							<span className="landing-nav-brand-line landing-nav-brand-line--strong">
@@ -179,6 +181,9 @@ function LandingNav({ variant = 'overlay' }) {
 								<Link to="/policies" onClick={closeMenu} className={drawerLinkClass('/policies')}>
 									Policies &amp; Guidelines
 								</Link>
+								<Link to="/resources" onClick={closeMenu} className={drawerLinkClass('/resources')}>
+									Resources
+								</Link>
 								<div className="landing-nav-drawer-ctas">
 									<AuthNavLink
 										mode="login"
@@ -228,6 +233,9 @@ function LandingNav({ variant = 'overlay' }) {
 							<Link to="/policies" className={shellLinkClass('/policies')}>
 								<span className="landing-nav-shell-link-long">Policies &amp; Guidelines</span>
 								<span className="landing-nav-shell-link-short">Policies</span>
+							</Link>
+							<Link to="/resources" className={shellLinkClass('/resources')}>
+								Resources
 							</Link>
 						</div>
 						<div className="landing-nav-cta-group">

@@ -1,4 +1,5 @@
 import { CheckCircle2, Phone } from 'lucide-react'
+import OtpInput from './OtpInput'
 
 function AuthAlert({ type, children }) {
 	if (!children) return null
@@ -17,9 +18,9 @@ function AuthAlert({ type, children }) {
 	)
 }
 
-function AuthField({ label, optional, children }) {
+function AuthField({ label, optional, className = '', children }) {
 	return (
-		<label className="auth-panel-field block">
+		<label className={`auth-panel-field block${className ? ` ${className}` : ''}`}>
 			<span className="auth-panel-label">
 				{label}
 				{optional ? <span className="font-normal text-slate-400"> (optional)</span> : null}
@@ -49,7 +50,7 @@ function StepPills({ steps, current }) {
 							{isDone ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : index + 1}
 						</span>
 						<span
-							className={`hidden text-xs font-semibold sm:inline ${
+							className={`inline text-[11px] font-semibold leading-none ${
 								isActive ? 'text-slate-800' : 'text-slate-500'
 							}`}
 						>
@@ -109,7 +110,7 @@ function AuthPanel({
 	return (
 		<div
 			id="auth-card-section"
-			className="auth-panel auth-panel--get-started auth-panel--modern overflow-hidden"
+			className="auth-panel auth-panel--get-started auth-panel--modern"
 		>
 			<div className="auth-panel-card-inner">
 				<div
@@ -165,15 +166,16 @@ function AuthPanel({
 						<form onSubmit={onLoginSubmit} className="auth-panel-form space-y-4">
 							{!otpSent ? (
 								<>
-									<AuthField label="Mobile number">
-										<div className="auth-panel-phone-wrap">
+									<AuthField label="Mobile number" className="auth-panel-field--phone">
+										<div className="auth-panel-phone-wrap auth-panel-phone-wrap--entry">
 											<span className="auth-panel-phone-prefix" aria-hidden>
 												+91
 											</span>
 											<input
+												id="login-phone"
 												type="tel"
 												name="phone"
-												className="auth-panel-input"
+												className="auth-panel-input auth-panel-input--phone"
 												value={loginForm.phone}
 												onChange={onLoginChange}
 												placeholder="10-digit mobile number"
@@ -197,12 +199,14 @@ function AuthPanel({
 								</>
 							) : (
 								<>
-									<div className="auth-panel-phone-display">
-										<div className="flex items-center gap-2">
-											<Phone className="h-4 w-4 text-landing" aria-hidden />
+									<div className="auth-panel-phone-display auth-panel-phone-display--compact">
+										<div className="auth-panel-phone-display__main">
+											<Phone className="auth-panel-phone-display__icon" aria-hidden />
 											<div>
-												<p className="text-xs text-slate-500">OTP sent to</p>
-												<p className="font-bold text-slate-800">+91 {loginForm.phone}</p>
+												<p className="auth-panel-phone-display__label">OTP sent to</p>
+												<p className="auth-panel-phone-display__number">
+													+91 {loginForm.phone}
+												</p>
 											</div>
 										</div>
 										<button
@@ -214,18 +218,13 @@ function AuthPanel({
 										</button>
 									</div>
 									<AuthField label="Enter 6-digit OTP">
-										<input
-											type="text"
-											name="otp"
-											className="auth-panel-input auth-panel-input-otp"
+										<OtpInput
+											id="login-otp"
 											value={loginForm.otp}
-											onChange={onLoginChange}
-											maxLength={6}
-											placeholder="······"
-											inputMode="numeric"
-											autoComplete="one-time-code"
+											onChange={(next) =>
+												onLoginChange({ target: { name: 'otp', value: next } })
+											}
 											autoFocus
-											required
 										/>
 									</AuthField>
 									<div className="text-center text-sm text-slate-600">
@@ -290,15 +289,16 @@ function AuthPanel({
 									/>
 								</AuthField>
 							</div>
-							<AuthField label="Mobile number">
-								<div className="auth-panel-phone-wrap">
+							<AuthField label="Mobile number" className="auth-panel-field--phone">
+								<div className="auth-panel-phone-wrap auth-panel-phone-wrap--entry">
 									<span className="auth-panel-phone-prefix" aria-hidden>
 										+91
 									</span>
 									<input
+										id="register-phone"
 										type="tel"
 										name="phone"
-										className="auth-panel-input"
+										className="auth-panel-input auth-panel-input--phone"
 										value={regForm.phone}
 										onChange={onRegChange}
 										placeholder="10-digit mobile number"
@@ -314,7 +314,7 @@ function AuthPanel({
 							<AuthField label="District">
 								<select
 									name="district_id"
-									className="auth-panel-input auth-panel-select"
+									className="auth-panel-select"
 									value={regForm.district_id}
 									onChange={onRegChange}
 									required
@@ -331,7 +331,7 @@ function AuthPanel({
 								<AuthField label="Gender">
 										<select
 											name="gender"
-											className="auth-panel-input auth-panel-select"
+											className="auth-panel-select"
 											value={regForm.gender}
 											onChange={onRegChange}
 											required
@@ -379,10 +379,14 @@ function AuthPanel({
 						<AuthAlert type="error">{regError}</AuthAlert>
 
 						<form onSubmit={onRegVerifyOtp} className="auth-panel-form space-y-4">
-							<div className="auth-panel-phone-display">
-								<div>
-									<p className="text-xs text-slate-500">Verifying</p>
-									<p className="font-bold text-slate-800">+91 {regPendingPhone}</p>
+							<div className="auth-panel-phone-display auth-panel-phone-display--compact">
+								<div className="auth-panel-phone-display__main">
+									<div>
+										<p className="auth-panel-phone-display__label">Verifying</p>
+										<p className="auth-panel-phone-display__number">
+											+91 {regPendingPhone}
+										</p>
+									</div>
 								</div>
 								<button
 									type="button"
@@ -393,18 +397,11 @@ function AuthPanel({
 								</button>
 							</div>
 							<AuthField label="Enter 6-digit OTP">
-								<input
-									type="text"
-									name="regOtp"
-									className="auth-panel-input auth-panel-input-otp"
+								<OtpInput
+									id="register-otp"
 									value={regOtp}
-									onChange={(e) => onSetRegOtp(e.target.value)}
-									maxLength={6}
-									placeholder="······"
-									inputMode="numeric"
-									autoComplete="one-time-code"
+									onChange={onSetRegOtp}
 									autoFocus
-									required
 								/>
 							</AuthField>
 							<div className="text-center text-sm text-slate-600">

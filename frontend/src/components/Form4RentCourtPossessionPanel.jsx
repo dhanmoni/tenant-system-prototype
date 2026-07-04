@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
+import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
+import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
 
 export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
+	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
 
 	const [beforeRentCourt, setBeforeRentCourt] = useState('')
 
@@ -35,9 +40,8 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 	const [verificationBeliefParasFrom, setVerificationBeliefParasFrom] = useState('')
 	const [verificationBeliefParasTo, setVerificationBeliefParasTo] = useState('')
 
-	const submit = async () => {
+	const submit = useCallback(async () => {
 		setError('')
-		setSuccess('')
 		setSubmitting(true)
 		try {
 			await csrf()
@@ -65,7 +69,11 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 				headers: { 'Content-Type': 'multipart/form-data' },
 			})
 
-			setSuccess(data?.message || 'Form II submitted successfully.')
+			completeServiceFormSubmit(
+				navigate,
+				getServiceFormSuccessMessage(data, 'Form II submitted successfully.')
+			)
+			return true
 		} catch (err) {
 			const msg =
 				err?.response?.data?.message ||
@@ -73,13 +81,96 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 					? Object.values(err.response.data.errors).flat().join('. ')
 					: 'Failed to submit Form II')
 			setError(msg)
+			return false
 		} finally {
 			setSubmitting(false)
 		}
-	}
+	}, [
+		applicantName,
+		applicantResidentialAddress,
+		beforeRentCourt,
+		enclosuresList,
+		factsOfCase,
+		groundsForRelief,
+		interimOrderSought,
+		jurisdictionStatement,
+		mattersNotPreviouslyFiled,
+		reliefSought,
+		signatureImage,
+		signatureName,
+		tenancyUIN,
+		tenantName,
+		navigate,
+	])
+
+	const previewData = useMemo(
+		() =>
+			previewSections(
+				previewSection('Court / tenancy', [
+					previewItem('Before the Rent Court', beforeRentCourt),
+					previewItem('Tenancy UIN', tenancyUIN),
+					previewItem('Tenant name', tenantName),
+				]),
+				previewSection('Applicant', [
+					previewItem('Applicant name', applicantName),
+					previewItem('Applicant address', applicantResidentialAddress),
+				]),
+				previewSection('Case details', [
+					previewItem('Jurisdiction statement', jurisdictionStatement),
+					previewItem('Facts of the case', factsOfCase),
+					previewItem('Grounds for relief', groundsForRelief),
+					previewItem('Matters not previously filed', mattersNotPreviouslyFiled),
+					previewItem('Relief sought', reliefSought),
+					previewItem('Interim order sought', interimOrderSought),
+					previewItem('List of enclosures', enclosuresList),
+				]),
+				previewSection('Verification / signature', [
+					previewItem('Applicant name', signatureName),
+					previewItem('Relation', verificationRelation),
+					previewItem('Relative name', verificationRelativeName),
+					previewItem('Age', verificationAge),
+					previewItem('Address for verification', verificationAddress),
+					previewItem('Paras (personal knowledge) from', verificationParasFrom),
+					previewItem('Paras (personal knowledge) to', verificationParasTo),
+					previewItem('Paras (legal advice) from', verificationBeliefParasFrom),
+					previewItem('Paras (legal advice) to', verificationBeliefParasTo),
+					previewItem('Date', verificationDate),
+					previewItem('Place', verificationPlace),
+					previewItem('Signature image', signatureImage),
+				])
+			),
+		[
+			applicantName,
+			applicantResidentialAddress,
+			beforeRentCourt,
+			enclosuresList,
+			factsOfCase,
+			groundsForRelief,
+			interimOrderSought,
+			jurisdictionStatement,
+			mattersNotPreviouslyFiled,
+			reliefSought,
+			signatureImage,
+			signatureName,
+			tenancyUIN,
+			tenantName,
+			verificationAddress,
+			verificationAge,
+			verificationBeliefParasFrom,
+			verificationBeliefParasTo,
+			verificationDate,
+			verificationParasFrom,
+			verificationParasTo,
+			verificationPlace,
+			verificationRelation,
+			verificationRelativeName,
+		]
+	)
+
+	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
 	return (
-		<div className="auth-card dashboard-card">
+		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form II - Recovery of possession'}</h1>
 			<p className="muted">
 				{serviceMeta
@@ -87,15 +178,8 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 					: 'Fill the application details and submit to the system.'}
 			</p>
 			{error ? <div className="error">{error}</div> : null}
-			{success ? <div className="success">{success}</div> : null}
 
-			<form
-				className="tenancy-form"
-				onSubmit={(e) => {
-					e.preventDefault()
-					submit()
-				}}
-			>
+			<form className="tenancy-form" onSubmit={requestPreview}>
 				<label>
 					<span className="label-text required">Before the Rent Court</span>
 					<input type="text" value={beforeRentCourt} onChange={(e) => setBeforeRentCourt(e.target.value)} required />
@@ -163,7 +247,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 				<fieldset className="tenancy-fieldset">
 					<legend className="tenancy-legend-italic">Verification / Signature</legend>
 					<label>
-						<span className="label-text required">Applicant name (for verification)</span>
+						<span className="label-text required">Applicant name</span>
 						<input
 							type="text"
 							value={signatureName}
@@ -238,19 +322,6 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 							onChange={(e) => setVerificationBeliefParasTo(e.target.value)}
 						/>
 					</label>
-					<div className="tenancy-field-full">
-						<p className="muted" style={{ marginTop: 0 }}>
-							I, {signatureName || '________________'} {verificationRelation}{' '}
-							{verificationRelativeName || '________________'}, aged{' '}
-							{verificationAge || '____'}, residing at{' '}
-							{verificationAddress || '________________________'}, do hereby verify that the
-							contents of paras {verificationParasFrom || '____'} to{' '}
-							{verificationParasTo || '____'} are true to my personal knowledge and paras{' '}
-							{verificationBeliefParasFrom || '____'} to{' '}
-							{verificationBeliefParasTo || '____'} are believed to be true on legal advice
-							received and I hereby declare that I have not suppressed any material facts.
-						</p>
-					</div>
 					<label>
 						<span className="label-text">Date</span>
 						<input
@@ -278,10 +349,21 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 						Back
 					</button>
 					<button type="submit" disabled={submitting}>
-						{submitting ? 'Submitting...' : 'Submit Form II'}
+						{submitting ? 'Submitting...' : 'Review & submit'}
 					</button>
 				</div>
 			</form>
+
+			<ServiceFormPreviewModal
+				open={previewOpen}
+				title="Review Form II"
+				subtitle={serviceMeta?.label}
+				sections={previewData}
+				onClose={closePreview}
+				onConfirm={confirmSubmit}
+				confirming={submitting}
+				confirmLabel="Confirm & submit Form II"
+			/>
 		</div>
 	)
 }

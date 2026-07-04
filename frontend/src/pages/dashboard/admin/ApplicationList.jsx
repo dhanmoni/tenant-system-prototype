@@ -4,13 +4,15 @@ import DataTable from '../../../components/dashboard/DataTable';
 import { Icon } from '../../../components/dashboard/Icons';
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton';
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal';
-import { useEffect, useState } from 'react';
-import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES } from '../../../constants/roles';
-import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application';
+import { useEffect, useState, useCallback } from 'react';
+import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES, ADMIN_ROLES } from '../../../constants/roles';
+import { APPLICATION_LABELS, APPLICATION_TYPES, SERVICE_APPLICATION_TYPES } from '../../../constants/application';
+import { STATUS_LABELS } from '../../../constants/status';
 import { formatDate } from '../../../utils/formatters';
 import { getAdminTableAccent } from '../../../utils/adminTableAccent';
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge';
 import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress';
+import './ApplicationList.css';
 
 const ApplicationList = ({ user }) => {
 	const forwardOffice = getAssistantForwardOfficeLabel(user?.role);
@@ -24,8 +26,26 @@ const ApplicationList = ({ user }) => {
 	const [successModal, setSuccessModal] = useState(null);
 	const [page, setPage] = useState(1);
 	const [paginationInfo, setPaginationInfo] = useState(null);
+	const [districts, setDistricts] = useState([]);
+	const [filters, setFilters] = useState({
+		search: '',
+		status: '',
+		form_type: '',
+		district_id: '',
+	});
+	const [searchInput, setSearchInput] = useState('');
 
-	const fetchApplications = async () => {
+	const showFilters = ADMIN_ROLES.includes(user?.role);
+
+	useEffect(() => {
+		if (user?.role === ROLES.SUPER_ADMIN) {
+			api.get('/api/districts', { params: { all: true } })
+				.then(({ data }) => setDistricts(Array.isArray(data) ? data : data.data || []))
+				.catch(() => setDistricts([]));
+		}
+	}, [user?.role]);
+
+	const fetchApplications = useCallback(async () => {
 		setLoading(true);
 		try {
 			let endpoint = '/api/admin/applications/all';
@@ -34,7 +54,16 @@ const ApplicationList = ({ user }) => {
 			} else if (PRINCIPAL_ROLES.includes(user?.role)) {
 				endpoint = '/api/admin/applications/principal-inbox';
 			}
-			const { data } = await api.get(`${endpoint}?page=${page}&per_page=15`);
+
+			const params = { page, per_page: 15 };
+			if (showFilters) {
+				if (filters.search) params.search = filters.search;
+				if (filters.status) params.status = filters.status;
+				if (filters.form_type) params.form_type = filters.form_type;
+				if (filters.district_id) params.district_id = filters.district_id;
+			}
+
+			const { data } = await api.get(endpoint, { params });
 			setApplications(data.applications || []);
 			setPaginationInfo(data.pagination || null);
 		} catch (error) {
@@ -42,11 +71,38 @@ const ApplicationList = ({ user }) => {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [user?.role, page, filters, showFilters]);
 
 	useEffect(() => {
 		fetchApplications();
-	}, [user?.role, page]);
+	}, [fetchApplications]);
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			const trimmed = searchInput.trim();
+			setFilters((prev) => {
+				if (prev.search === trimmed) return prev;
+				setPage(1);
+				return { ...prev, search: trimmed };
+			});
+		}, 350);
+		return () => clearTimeout(timer);
+	}, [searchInput]);
+
+	const handleFilterChange = (key, value) => {
+		setFilters((prev) => ({ ...prev, [key]: value }));
+		setPage(1);
+	};
+
+	const clearFilters = () => {
+		setSearchInput('');
+		setFilters({ search: '', status: '', form_type: '', district_id: '' });
+		setPage(1);
+	};
+
+	const hasActiveFilters = Boolean(
+		filters.search || filters.status || filters.form_type || filters.district_id
+	);
 
 	const handleForward = async () => {
 		if (!showForwardModal) return;
@@ -113,6 +169,86 @@ const ApplicationList = ({ user }) => {
 		return 'Applications';
 	})();
 
+	const filterToolbar = showFilters ? (
+		<div className="ws-status-section-toolbar admin-app-toolbar">
+			<div className="ws-status-section-controls">
+				<label className="ws-status-section-search admin-app-search">
+					<span className="ws-status-search-label">Application number</span>
+					<div className="admin-app-search__field">
+						<Icon name="search" className="admin-app-search__icon" />
+						<input
+							id="app-search"
+							type="search"
+							value={searchInput}
+							onChange={(e) => setSearchInput(e.target.value)}
+							placeholder="e.g. APP-TC-202603-000001"
+							autoComplete="off"
+							spellCheck={false}
+						/>
+					</div>
+				</label>
+
+				<label className="ws-status-section-sort">
+					<span className="ws-status-search-label">Status</span>
+					<select
+						id="app-status"
+						value={filters.status}
+						onChange={(e) => handleFilterChange('status', e.target.value)}
+					>
+						<option value="">All statuses</option>
+						{Object.entries(STATUS_LABELS).map(([val, label]) => (
+							<option key={val} value={val}>{label}</option>
+						))}
+					</select>
+				</label>
+
+				<label className="ws-status-section-sort">
+					<span className="ws-status-search-label">Form type</span>
+					<select
+						id="app-type"
+						value={filters.form_type}
+						onChange={(e) => handleFilterChange('form_type', e.target.value)}
+					>
+						<option value="">All types</option>
+						{SERVICE_APPLICATION_TYPES.map((type) => (
+							<option key={type} value={type}>
+								{APPLICATION_LABELS[type] || type}
+							</option>
+						))}
+					</select>
+				</label>
+
+				{user?.role === ROLES.SUPER_ADMIN ? (
+					<label className="ws-status-section-sort">
+						<span className="ws-status-search-label">District</span>
+						<select
+							id="app-district"
+							value={filters.district_id}
+							onChange={(e) => handleFilterChange('district_id', e.target.value)}
+						>
+							<option value="">All districts</option>
+							{districts.map((d) => (
+								<option key={d.id} value={d.id}>{d.name}</option>
+							))}
+						</select>
+					</label>
+				) : null}
+
+				{hasActiveFilters ? (
+					<div className="admin-app-toolbar__clear">
+						<button
+							type="button"
+							className="ws-btn ws-btn--outline ws-btn--sm"
+							onClick={clearFilters}
+						>
+							Clear filters
+						</button>
+					</div>
+				) : null}
+			</div>
+		</div>
+	) : null;
+
 	return (
 		<>
 			<DataTable
@@ -120,6 +256,8 @@ const ApplicationList = ({ user }) => {
 				accent={getAdminTableAccent(user)}
 				loading={loading}
 				data={applications}
+				totalCount={paginationInfo?.total}
+				toolbar={filterToolbar}
 				onRowClick={openDetails}
 				columns={[
 					{

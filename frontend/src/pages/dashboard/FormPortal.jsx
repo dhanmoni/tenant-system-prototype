@@ -46,11 +46,7 @@ function FormPortal() {
 		}
 	}
 
-	return (
-		<div className="auth-card dashboard-card">
-			{renderForm()}
-		</div>
-	)
+	return renderForm()
 }
 
 export default FormPortal

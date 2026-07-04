@@ -198,7 +198,12 @@ class TenancyApplicationController extends Controller
         $frontendUrl = config('app.frontend_url', $request->getSchemeAndHttpHost());
         $joinLink = $frontendUrl . '/join?ref=' . $application->ref_code;
 
+        $message = strtolower((string) ($application->apply_type ?? '')) === 'joint'
+            ? 'Application submitted. The other party must complete their details using the join link.'
+            : 'Tenancy certificate application submitted successfully.';
+
         return response()->json([
+            'message' => $message,
             'id' => $application->id,
             'application_no' => $application->application_no,
             'ref_code' => $application->ref_code,
@@ -724,6 +729,17 @@ class TenancyApplicationController extends Controller
 
         if ($user->role === Roles::DISTRICT_ADMIN) {
             $query->where('district_id', $user->district_id);
+        } elseif ($request->filled('district_id')) {
+            $query->where('district_id', (int) $request->input('district_id'));
+        }
+
+        $search = trim((string) $request->input('search', ''));
+        if ($search !== '') {
+            $query->where('application_no', 'like', '%' . $search . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
         }
 
         $perPage = (int) $request->input('per_page', 15);
@@ -982,7 +998,12 @@ class TenancyApplicationController extends Controller
         $frontendUrl = config('app.frontend_url', $request->getSchemeAndHttpHost());
         $joinLink = $frontendUrl . '/join?ref=' . $tenancyApplication->ref_code;
 
+        $message = strtolower((string) ($tenancyApplication->apply_type ?? '')) === 'joint'
+            ? 'Application submitted. The other party must complete their details using the join link.'
+            : 'Tenancy certificate application submitted successfully.';
+
         return response()->json([
+            'message' => $message,
             'id' => $tenancyApplication->id,
             'application_no' => $tenancyApplication->application_no,
             'ref_code' => $tenancyApplication->ref_code,

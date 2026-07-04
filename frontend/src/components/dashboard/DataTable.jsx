@@ -16,6 +16,8 @@ const DataTable = ({
 	emptyMessage = 'No records found.',
 	accent = 'default',
 	onRowClick,
+	toolbar,
+	totalCount,
 }) => {
 	const [activeSearch, setActiveSearch] = useState(null);
 	const [searchValues, setSearchValues] = useState({});
@@ -59,10 +61,16 @@ const DataTable = ({
 				<div className="ws-card-header ws-status-category-header">
 					<h2 className="ws-card-title">{title}</h2>
 					<span className="ws-status-category-count">
-						{loading ? '…' : `${data.length} shown`}
+						{loading
+							? '…'
+							: totalCount != null
+								? `${totalCount} total`
+								: `${data.length} shown`}
 					</span>
 				</div>
 			) : null}
+
+			{toolbar}
 
 			<div className="ws-card-body ws-status-table-wrap">
 				<table className="ws-table ws-status-table">

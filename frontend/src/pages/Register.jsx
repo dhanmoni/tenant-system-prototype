@@ -12,6 +12,8 @@ function Register({ onLogin }) {
 		password_confirmation: '',
 		phone: '',
 		district_id: '',
+		gender: '',
+		date_of_birth: '',
 	})
 	const [districts, setDistricts] = useState([])
 	const [error, setError] = useState('')
@@ -25,7 +27,12 @@ function Register({ onLogin }) {
 		const loadDistricts = async () => {
 			try {
 				const { data } = await api.get('/api/public/districts')
-				setDistricts(data.districts || [])
+				const list = Array.isArray(data.districts) ? data.districts : []
+				setDistricts(
+					[...list].sort((a, b) =>
+						(a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+					)
+				)
 			} catch (err) {
 				console.error('Failed to load districts', err)
 			}
@@ -34,21 +41,16 @@ function Register({ onLogin }) {
 		loadDistricts()
 	}, [])
 
-	const filteredDistricts = districts
-
 	const handleSubmit = async (e) => {
 		e.preventDefault()
 		setError('')
 		setLoading(true)
 		try {
 			await csrf()
-			const hasXsrf = document.cookie
-				.split('; ')
-				.some((cookie) => cookie.startsWith('XSRF-TOKEN='))
-			if (!hasXsrf) {
-				console.warn('XSRF-TOKEN cookie missing after csrf() call')
-			}
-			const { data } = await api.post('/api/register', form)
+			const { data } = await api.post('/api/register', {
+				...form,
+				district_id: Number(form.district_id),
+			})
 			onLogin(data.user)
 			navigate('/dashboard')
 		} catch (err) {
@@ -139,13 +141,33 @@ function Register({ onLogin }) {
 							onChange={handleChange}
 							required
 						>
-							<option value="">---SELECT---</option>
-							{filteredDistricts.map((district) => (
+							<option value="">Select district</option>
+							{districts.map((district) => (
 								<option key={district.id} value={district.id}>
 									{district.name}
 								</option>
 							))}
 						</select>
+					</label>
+					<label>
+						Gender
+						<select name="gender" value={form.gender} onChange={handleChange} required>
+							<option value="">Select gender</option>
+							<option value="Male">Male</option>
+							<option value="Female">Female</option>
+							<option value="Other">Other</option>
+						</select>
+					</label>
+					<label>
+						Date of birth
+						<input
+							type="date"
+							name="date_of_birth"
+							value={form.date_of_birth}
+							onChange={handleChange}
+							max={new Date().toISOString().split('T')[0]}
+							required
+						/>
 					</label>
 					<button type="submit" disabled={loading}>
 						{loading ? 'Creating...' : 'Create account'}
@@ -160,3 +182,4 @@ function Register({ onLogin }) {
 }
 
 export default Register
+

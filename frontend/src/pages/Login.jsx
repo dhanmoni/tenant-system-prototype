@@ -62,7 +62,12 @@ function Login({ onLogin }) {
 		const loadDistricts = async () => {
 			try {
 				const { data } = await api.get('/api/public/districts')
-				setDistricts(data.districts || [])
+				const list = Array.isArray(data.districts) ? data.districts : []
+				setDistricts(
+					[...list].sort((a, b) =>
+						(a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+					)
+				)
 			} catch (err) {
 				console.error('Failed to load districts', err)
 			}
@@ -116,6 +121,10 @@ function Login({ onLogin }) {
 			handleSendOtp()
 			return
 		}
+		if (!/^\d{6}$/.test(loginForm.otp || '')) {
+			setLoginError('Please enter the 6-digit OTP.')
+			return
+		}
 		setLoginLoading(true)
 		try {
 			await csrf()
@@ -163,8 +172,8 @@ function Login({ onLogin }) {
 			setRegError('Please send OTP first')
 			return
 		}
-		if (!regOtp.trim()) {
-			setRegError('Please enter OTP')
+		if (!/^\d{6}$/.test(regOtp || '')) {
+			setRegError('Please enter the 6-digit OTP.')
 			return
 		}
 
@@ -258,10 +267,28 @@ function Login({ onLogin }) {
 	}
 
 	useEffect(() => {
+		const previous = history.scrollRestoration
+		history.scrollRestoration = 'manual'
+		return () => {
+			history.scrollRestoration = previous
+		}
+	}, [])
+
+	useEffect(() => {
+		if (!modeFromHash(location.hash)) {
+			window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+		}
+	}, [location.pathname, location.hash])
+
+	useEffect(() => {
 		const targetMode = modeFromHash(location.hash)
 		if (!targetMode) return
 		switchMode(targetMode)
 		scrollToAuthPanel()
+		requestAnimationFrame(() => {
+			const focusId = targetMode === 'register' ? 'register-phone' : 'login-phone'
+			document.getElementById(focusId)?.focus({ preventScroll: true })
+		})
 	}, [location.hash])
 
 	const authNavValue = {
@@ -311,7 +338,7 @@ function Login({ onLogin }) {
 					<GetStartedSection authPanelProps={authPanelProps} />
 					<PortalServicesSection />
 					<PortalStatsBar />
-					<PortalBenefitsSection />
+					<PortalBenefitsSection className="portal-benefits--after-stats" />
 					<PortalGuideSection />
 					<PortalFaqSection />
 					<NeedSupportSection />

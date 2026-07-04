@@ -113,7 +113,7 @@ function PortalGuideSection() {
 	return (
 		<section
 			id="portal-guide"
-			className="portal-guide-section landing-wallpaper-bg landing-wallpaper-bg--white py-12 sm:py-16 lg:py-24"
+			className="portal-guide-section landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 py-12 sm:py-16 lg:py-24"
 			aria-labelledby="portal-guide-heading"
 		>
 			<div id="how-to-apply" className="scroll-mt-28" tabIndex={-1} aria-hidden />

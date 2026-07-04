@@ -1,6 +1,4 @@
-import { useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useInView, useReducedMotion } from 'framer-motion'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
 import PublicDashboardSummary from '../components/public-dashboard/PublicDashboardSummary'
 import {
@@ -15,212 +13,208 @@ import {
 
 const maxMonthly = Math.max(...monthlyApplications.map((m) => m.value))
 
-const panelMotion = {
-	hidden: { opacity: 0, y: 24 },
-	visible: (delay = 0) => ({
-		opacity: 1,
-		y: 0,
-		transition: { type: 'spring', stiffness: 320, damping: 26, delay },
-	}),
-}
-
 function PublicDashboard() {
-	const chartsRef = useRef(null)
-	const reduceMotion = useReducedMotion()
-	const chartsInView = useInView(chartsRef, { once: true, margin: '-60px' })
-	const reveal = reduceMotion || chartsInView
-
 	return (
 		<PublicPageLayout
-			eyebrow={publicDashboardMeta.eyebrow}
 			title={publicDashboardMeta.title}
 			titleId="public-dashboard-heading"
 			breadcrumbLabel="Public dashboard"
 			lead={publicDashboardMeta.lead}
 		>
-			<div className="public-dashboard-page">
+			<div className="public-dashboard-page gov-plain-page">
 				<PublicDashboardSummary />
 
-				<div ref={chartsRef} className="public-dashboard-charts">
-					<motion.article
-						className="public-dashboard-panel public-dashboard-panel--wide"
-						initial={reduceMotion ? false : panelMotion.hidden}
-						animate={reveal ? panelMotion.visible(0) : panelMotion.hidden}
-					>
-						<h2 className="public-dashboard-panel__title">Applications per month</h2>
-						<p className="public-dashboard-panel__lead">
+				<div className="public-dashboard-gov-charts">
+					<section className="public-dashboard-gov-section public-dashboard-gov-section--wide">
+						<h2>Applications per month</h2>
+						<p className="public-dashboard-gov-section__note">
 							New applications received through the portal (last six months)
 						</p>
 						<div
-							className="public-dashboard-bars"
+							className="public-dashboard-gov-bars"
 							role="img"
 							aria-label="Bar chart of monthly applications"
 						>
-							{monthlyApplications.map((item, index) => (
-								<div key={item.month} className="public-dashboard-bar-col">
-									<span className="public-dashboard-bar-value">
-										{item.value.toLocaleString('en-IN')}
-									</span>
-									<div className="public-dashboard-bar-track">
-										<motion.div
-											className="public-dashboard-bar"
-											initial={{ height: 0 }}
-											animate={
-												reveal
-													? { height: `${(item.value / maxMonthly) * 100}%` }
-													: { height: 0 }
-											}
-											transition={{ type: 'spring', stiffness: 280, damping: 24, delay: index * 0.06 }}
-										/>
+							<div className="public-dashboard-gov-bars__plot">
+								{monthlyApplications.map((item, index) => (
+									<div key={item.month} className="public-dashboard-gov-bar-col">
+										<span className="public-dashboard-gov-bar-value">
+											{item.value.toLocaleString('en-IN')}
+										</span>
+										<div className="public-dashboard-gov-bar-track">
+											<div
+												className={`public-dashboard-gov-bar public-dashboard-gov-bar--tone-${index % 6}`}
+												style={{ height: `${(item.value / maxMonthly) * 100}%` }}
+											/>
+										</div>
+										<span className="public-dashboard-gov-bar-label">{item.month}</span>
 									</div>
-									<span className="public-dashboard-bar-label">{item.month}</span>
-								</div>
-							))}
+								))}
+							</div>
 						</div>
-					</motion.article>
+					</section>
 
-					<div className="public-dashboard-charts__row">
-						<motion.article
-							className="public-dashboard-panel"
-							initial={reduceMotion ? false : panelMotion.hidden}
-							animate={reveal ? panelMotion.visible(0.08) : panelMotion.hidden}
-						>
-							<h2 className="public-dashboard-panel__title">Filings by tenancy body</h2>
-							<p className="public-dashboard-panel__lead">
+					<div className="public-dashboard-gov-charts__row">
+						<section className="public-dashboard-gov-section">
+							<h2>Filings by tenancy body</h2>
+							<p className="public-dashboard-gov-section__note">
 								Assam Tenancy Act matters filed online by receiving authority
 							</p>
-							<ul className="public-dashboard-progress-list">
-								{filingsByBody.map((row, index) => (
-									<li key={row.id}>
-										<div className="public-dashboard-progress-head">
-											<span>{row.label}</span>
-											<span>{row.value.toLocaleString('en-IN')}</span>
-										</div>
-										<div className="public-dashboard-progress-track">
-											<motion.div
-												className={`public-dashboard-progress-fill public-dashboard-progress-fill--${row.id}`}
-												initial={{ width: 0 }}
-												animate={reveal ? { width: `${row.pct}%` } : { width: 0 }}
-												transition={{
-													type: 'spring',
-													stiffness: 300,
-													damping: 28,
-													delay: 0.12 + index * 0.06,
-												}}
-											/>
-										</div>
-									</li>
-								))}
-							</ul>
-						</motion.article>
+							<div className="public-dashboard-gov-table-wrap">
+							<table className="public-dashboard-gov-data-table">
+								<thead>
+									<tr>
+										<th scope="col">Authority</th>
+										<th scope="col" className="public-dashboard-gov-data-table__num-col">Filings</th>
+										<th scope="col">Share</th>
+									</tr>
+								</thead>
+								<tbody>
+									{filingsByBody.map((row) => (
+										<tr key={row.id}>
+											<th scope="row">{row.label}</th>
+											<td className="public-dashboard-gov-data-table__num">
+												{row.value.toLocaleString('en-IN')}
+											</td>
+											<td className="public-dashboard-gov-data-table__share">
+												<div className="public-dashboard-gov-meter-cell">
+													<div className="public-dashboard-gov-meter">
+														<div
+															className={`public-dashboard-gov-meter__fill public-dashboard-gov-meter__fill--${row.id}`}
+															style={{ width: `${row.pct}%` }}
+														/>
+													</div>
+													<span className="public-dashboard-gov-meter__label">{row.pct}%</span>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+							</div>
+						</section>
 
-						<motion.article
-							className="public-dashboard-panel"
-							initial={reduceMotion ? false : panelMotion.hidden}
-							animate={reveal ? panelMotion.visible(0.12) : panelMotion.hidden}
-						>
-							<h2 className="public-dashboard-panel__title">UIN &amp; acknowledgement status</h2>
-							<p className="public-dashboard-panel__lead">
+						<section className="public-dashboard-gov-section">
+							<h2>UIN &amp; acknowledgement status</h2>
+							<p className="public-dashboard-gov-section__note">
 								Share of registration applications by processing stage
 							</p>
-							<ul className="public-dashboard-progress-list">
-								{certificateStatus.map((row, index) => (
-									<li key={row.label}>
-										<div className="public-dashboard-progress-head">
-											<span>{row.label}</span>
-											<span>
-												{row.value.toLocaleString('en-IN')}{' '}
-												<span className="public-dashboard-progress-pct">({row.pct}%)</span>
-											</span>
-										</div>
-										<div className="public-dashboard-progress-track">
-											<motion.div
-												className="public-dashboard-progress-fill public-dashboard-progress-fill--neutral"
-												initial={{ width: 0 }}
-												animate={reveal ? { width: `${row.pct}%` } : { width: 0 }}
-												transition={{
-													type: 'spring',
-													stiffness: 300,
-													damping: 28,
-													delay: 0.14 + index * 0.06,
-												}}
-											/>
-										</div>
-									</li>
-								))}
-							</ul>
-						</motion.article>
+							<div className="public-dashboard-gov-table-wrap">
+							<table className="public-dashboard-gov-data-table">
+								<thead>
+									<tr>
+										<th scope="col">Status</th>
+										<th scope="col" className="public-dashboard-gov-data-table__num-col">Count</th>
+										<th scope="col">Share</th>
+									</tr>
+								</thead>
+								<tbody>
+									{certificateStatus.map((row) => (
+										<tr key={row.label}>
+											<th scope="row">{row.label}</th>
+											<td className="public-dashboard-gov-data-table__num">
+												{row.value.toLocaleString('en-IN')}
+											</td>
+											<td className="public-dashboard-gov-data-table__share">
+												<div className="public-dashboard-gov-meter-cell">
+													<div className="public-dashboard-gov-meter">
+														<div
+															className="public-dashboard-gov-meter__fill public-dashboard-gov-meter__fill--neutral"
+															style={{ width: `${row.pct}%` }}
+														/>
+													</div>
+													<span className="public-dashboard-gov-meter__label">{row.pct}%</span>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+							</div>
+						</section>
 					</div>
 
-					<div className="public-dashboard-charts__row">
-						<motion.article
-							className="public-dashboard-panel"
-							initial={reduceMotion ? false : panelMotion.hidden}
-							animate={reveal ? panelMotion.visible(0.16) : panelMotion.hidden}
-						>
-							<h2 className="public-dashboard-panel__title">Application pipeline</h2>
-							<p className="public-dashboard-panel__lead">
-								From submission to acknowledgement (illustrative funnel)
+					<div className="public-dashboard-gov-charts__row">
+						<section className="public-dashboard-gov-section">
+							<h2>Application pipeline</h2>
+							<p className="public-dashboard-gov-section__note">
+								From submission to acknowledgement (illustrative)
 							</p>
-							<ul className="public-dashboard-progress-list">
-								{applicationPipeline.map((row, index) => (
-									<li key={row.label}>
-										<div className="public-dashboard-progress-head">
-											<span>{row.label}</span>
-											<span>{row.value.toLocaleString('en-IN')}</span>
-										</div>
-										<div className="public-dashboard-progress-track">
-											<motion.div
-												className="public-dashboard-progress-fill"
-												initial={{ width: 0 }}
-												animate={reveal ? { width: `${row.pct}%` } : { width: 0 }}
-												transition={{
-													type: 'spring',
-													stiffness: 300,
-													damping: 28,
-													delay: 0.18 + index * 0.05,
-												}}
-											/>
-										</div>
-									</li>
-								))}
-							</ul>
-						</motion.article>
+							<div className="public-dashboard-gov-table-wrap">
+							<table className="public-dashboard-gov-data-table">
+								<thead>
+									<tr>
+										<th scope="col">Stage</th>
+										<th scope="col" className="public-dashboard-gov-data-table__num-col">Count</th>
+										<th scope="col">Share</th>
+									</tr>
+								</thead>
+								<tbody>
+									{applicationPipeline.map((row) => (
+										<tr key={row.label}>
+											<th scope="row">{row.label}</th>
+											<td className="public-dashboard-gov-data-table__num">
+												{row.value.toLocaleString('en-IN')}
+											</td>
+											<td className="public-dashboard-gov-data-table__share">
+												<div className="public-dashboard-gov-meter-cell">
+													<div className="public-dashboard-gov-meter">
+														<div
+															className="public-dashboard-gov-meter__fill public-dashboard-gov-meter__fill--pipeline"
+															style={{ width: `${row.pct}%` }}
+														/>
+													</div>
+													<span className="public-dashboard-gov-meter__label">{row.pct}%</span>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+							</div>
+						</section>
 
-						<motion.article
-							className="public-dashboard-panel"
-							initial={reduceMotion ? false : panelMotion.hidden}
-							animate={reveal ? panelMotion.visible(0.2) : panelMotion.hidden}
-						>
-							<h2 className="public-dashboard-panel__title">Top districts by volume</h2>
-							<p className="public-dashboard-panel__lead">
+						<section className="public-dashboard-gov-section">
+							<h2>Top districts by volume</h2>
+							<p className="public-dashboard-gov-section__note">
 								Highest application counts among Assam districts (sample)
 							</p>
-							<ol className="public-dashboard-rank-list">
-								{topDistricts.map((district, index) => (
-									<li key={district.name} className="public-dashboard-rank-item">
-										<span className="public-dashboard-rank-num">{index + 1}</span>
-										<span className="public-dashboard-rank-name">{district.name}</span>
-										<span className="public-dashboard-rank-value">
-											{district.applications.toLocaleString('en-IN')}
-										</span>
-									</li>
-								))}
-							</ol>
-						</motion.article>
+							<div className="public-dashboard-gov-table-wrap">
+								<table className="public-dashboard-gov-table">
+									<thead>
+										<tr>
+											<th scope="col">Rank</th>
+											<th scope="col">District</th>
+											<th scope="col">Applications</th>
+										</tr>
+									</thead>
+									<tbody>
+										{topDistricts.map((district, index) => (
+											<tr key={district.name}>
+												<td className="public-dashboard-gov-table__rank">{index + 1}</td>
+												<th scope="row">{district.name}</th>
+												<td className="public-dashboard-gov-table__num">
+													{district.applications.toLocaleString('en-IN')}
+												</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+						</section>
 					</div>
 				</div>
 
-				<aside className="public-dashboard-callout" role="note">
-					<p className="public-dashboard-callout__text">{publicDashboardMeta.demoNote}</p>
-					<div className="public-dashboard-actions">
-						{publicDashboardLinks.map((link) => (
-							<Link key={link.to} to={link.to} className="public-dashboard-action-link">
-								{link.label}
-							</Link>
-						))}
-					</div>
-				</aside>
+				<p className="gov-plain-page__meta">{publicDashboardMeta.demoNote}</p>
+
+				<p className="gov-plain-page__links">
+					{publicDashboardLinks.map((link, index) => (
+						<span key={link.to}>
+							{index > 0 ? ' · ' : null}
+							<Link to={link.to}>{link.label}</Link>
+						</span>
+					))}
+				</p>
 			</div>
 		</PublicPageLayout>
 	)

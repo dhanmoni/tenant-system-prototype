@@ -1,4 +1,4 @@
-import emblem from '../assets/img/emblem-dark.png'
+import tcpLogo from '../assets/img/TCP logo.png'
 
 function PortalLoader({
 	title = 'Loading portal',
@@ -19,7 +19,11 @@ function PortalLoader({
 				<span className="portal-loader-orbit portal-loader-orbit--3" />
 				<span className="portal-loader-ring" />
 				<span className="portal-loader-core">
-					<img src={emblem} alt="" className="portal-loader-emblem" />
+					<img
+						src={tcpLogo}
+						alt="Directorate of Town and Country Planning, Assam"
+						className="portal-loader-emblem"
+					/>
 				</span>
 			</div>
 

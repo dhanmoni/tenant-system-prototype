@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
+import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
+import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
 
 export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
+	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
 
 	const [tenancyUIN, setTenancyUIN] = useState('')
 
@@ -21,9 +26,8 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 	const [signatureName, setSignatureName] = useState('')
 	const [signatureImage, setSignatureImage] = useState(null)
 
-	const submit = async () => {
+	const submit = useCallback(async () => {
 		setError('')
-		setSuccess('')
 		setSubmitting(true)
 		try {
 			await csrf()
@@ -53,7 +57,14 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 				headers: { 'Content-Type': 'multipart/form-data' },
 			})
 
-			setSuccess(data?.message || 'Form-I-B submitted successfully.')
+			completeServiceFormSubmit(
+				navigate,
+				getServiceFormSuccessMessage(
+					data,
+					'Form-I-B (Valuer appointment) submitted successfully.'
+				)
+			)
+			return true
 		} catch (err) {
 			const msg =
 				err?.response?.data?.message ||
@@ -61,13 +72,65 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 					? Object.values(err.response.data.errors).flat().join('. ')
 					: 'Failed to submit Form-I-B')
 			setError(msg)
+			return false
 		} finally {
 			setSubmitting(false)
 		}
-	}
+	}, [
+		applicantLandlordOrTenant,
+		applicantName,
+		applicantRelationTargetName,
+		applicantRelationType,
+		applicantResidentPlace,
+		district,
+		premisesSituatedAddress,
+		signatureImage,
+		signatureName,
+		signedBy,
+		tenancyUIN,
+		navigate,
+	])
+
+	const previewData = useMemo(
+		() =>
+			previewSections(
+				previewSection('Tenancy', [previewItem('Tenancy UIN', tenancyUIN)]),
+				previewSection('Applicant', [
+					previewItem('Applicant name', applicantName),
+					previewItem('Relation type', applicantRelationType),
+					previewItem('Relation target name', applicantRelationTargetName),
+					previewItem('Resident of', applicantResidentPlace),
+					previewItem('Landlord or tenant', applicantLandlordOrTenant),
+				]),
+				previewSection('Premises', [
+					previewItem('Premises situated at', premisesSituatedAddress),
+					previewItem('District', district),
+				]),
+				previewSection('Signature', [
+					previewItem('Signed by', signedBy),
+					previewItem('Signature name', signatureName),
+					previewItem('Signature image', signatureImage),
+				])
+			),
+		[
+			applicantLandlordOrTenant,
+			applicantName,
+			applicantRelationTargetName,
+			applicantRelationType,
+			applicantResidentPlace,
+			district,
+			premisesSituatedAddress,
+			signatureImage,
+			signatureName,
+			signedBy,
+			tenancyUIN,
+		]
+	)
+
+	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
 	return (
-		<div className="auth-card dashboard-card">
+		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form I-B - Appointment of valuer'}</h1>
 			<p className="muted">
 				{serviceMeta
@@ -75,15 +138,8 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 					: 'Fill the application details and submit to the system.'}
 			</p>
 			{error ? <div className="error">{error}</div> : null}
-			{success ? <div className="success">{success}</div> : null}
 
-			<form
-				className="tenancy-form"
-				onSubmit={(e) => {
-					e.preventDefault()
-					submit()
-				}}
-			>
+			<form className="tenancy-form" onSubmit={requestPreview}>
 				<label>
 					<span className="label-text required">Tenancy UIN</span>
 					<input
@@ -208,10 +264,21 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 						Back
 					</button>
 					<button type="submit" disabled={submitting}>
-						{submitting ? 'Submitting...' : 'Submit Form-I-B'}
+						{submitting ? 'Submitting...' : 'Review & submit'}
 					</button>
 				</div>
 			</form>
+
+			<ServiceFormPreviewModal
+				open={previewOpen}
+				title="Review Form I-B"
+				subtitle={serviceMeta?.label}
+				sections={previewData}
+				onClose={closePreview}
+				onConfirm={confirmSubmit}
+				confirming={submitting}
+				confirmLabel="Confirm & submit Form I-B"
+			/>
 		</div>
 	)
 }

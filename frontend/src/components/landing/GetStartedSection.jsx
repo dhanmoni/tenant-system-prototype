@@ -40,7 +40,7 @@ function GetStartedSection({ authPanelProps }) {
 	return (
 		<section
 			id="portal-content"
-			className="get-started-section get-started-section--modern"
+			className="get-started-section get-started-section--modern scroll-mt-28"
 			aria-labelledby="get-started-heading"
 		>
 			<div className="get-started-shell">
@@ -67,13 +67,13 @@ function GetStartedSection({ authPanelProps }) {
 								className="get-started-headline__primary"
 								variants={reduceMotion ? undefined : introTitleVariants}
 							>
-								The right place
+								One place to manage
 							</motion.span>
 							<motion.span
 								className="get-started-headline__accent"
 								variants={reduceMotion ? undefined : introTitleVariants}
 							>
-								for your tenancy needs.
+								all your tenancy issues.
 							</motion.span>
 						</motion.h2>
 						<motion.span
@@ -87,7 +87,7 @@ function GetStartedSection({ authPanelProps }) {
 						variants={reduceMotion ? undefined : introLeadVariants}
 					>
 						Register or sign in with your mobile number to apply for services, track
-						applications, and manage tenancy matters — all in one government portal.
+						applications, and manage tenancy matters — all in one Government portal.
 					</motion.p>
 					<ul className="get-started-promo-features">
 						{PROMO_FEATURES.map((item, index) => (

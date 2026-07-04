@@ -278,9 +278,16 @@ class ApplicationWorkflowController extends Controller
 
         $page = (int) $request->input('page', 1);
         $perPage = (int) $request->input('per_page', 15);
+        $search = trim((string) $request->input('search', ''));
+        $statusFilter = $request->input('status');
+        $formTypeFilter = $request->input('form_type');
+        $districtFilter = $request->input('district_id');
 
         $districtId = $user->district_id;
         $types = ApplicationTypes::serviceForms();
+        if ($formTypeFilter && in_array($formTypeFilter, $types, true)) {
+            $types = [$formTypeFilter];
+        }
 
         $allApplications = [];
         foreach ($types as $type) {
@@ -293,6 +300,14 @@ class ApplicationWorkflowController extends Controller
                 $query = $modelClass::with($relations);
                 if ($user->role === Roles::DISTRICT_ADMIN) {
                     $query->where('district_id', $districtId);
+                } elseif ($districtFilter) {
+                    $query->where('district_id', (int) $districtFilter);
+                }
+                if ($statusFilter) {
+                    $query->where('status', $statusFilter);
+                }
+                if ($search !== '') {
+                    $query->where('application_no', 'like', '%' . $search . '%');
                 }
                 $apps = $query->get()->map(function ($app) use ($type) {
                     $app->form_type = $type;
@@ -325,6 +340,72 @@ class ApplicationWorkflowController extends Controller
                 'per_page' => $perPage,
                 'total' => $total,
             ],
+        ]);
+    }
+
+    public function update(Request $request, $type, $id)
+    {
+        $user = $request->user();
+        if ($user->role !== Roles::SUPER_ADMIN) {
+            return response()->json(['message' => 'Only super admins can edit applications'], 403);
+        }
+
+        $modelClass = $this->getModel($type);
+        if (!$modelClass) {
+            return response()->json(['message' => 'Invalid form type'], 400);
+        }
+
+        $application = $modelClass::find($id);
+        if (!$application) {
+            return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        $protected = [
+            'id',
+            'application_no',
+            'user_id',
+            'status',
+            'district_id',
+            'forwarded_at',
+            'forwarded_by_user_id',
+            'rejected_at',
+            'rejected_by_user_id',
+            'rejection_message',
+            'approved_at',
+            'approved_by_user_id',
+            'assigned_to_role',
+            'ref_code',
+            'wizard_step',
+            'current_with',
+            'initiator_role',
+            'initiator_completed',
+            'second_party_completed',
+            'landlord_user_id',
+            'tenant_user_id',
+            'office_id',
+            'village_ward_id',
+            'application_type',
+            'movement_history',
+        ];
+
+        $editable = array_values(array_filter(
+            array_diff($application->getFillable(), $protected),
+            fn (string $key) => !preg_match('/path|image|pdf|uin|_uid$/i', $key) && $key !== 'uid'
+        ));
+
+        $data = $request->only($editable);
+        $application->update($data);
+
+        $relations = ['district'];
+        if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
+            $relations = ['user', 'forwardedBy', 'district'];
+        }
+        $application->load($relations);
+        $application->form_type = $type;
+
+        return response()->json([
+            'message' => 'Application updated successfully',
+            'application' => new ApplicationResource($application),
         ]);
     }
 

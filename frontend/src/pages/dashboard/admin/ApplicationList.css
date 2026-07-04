@@ -1,0 +1,82 @@
+/* Service applications — integrated search toolbar */
+.admin-app-toolbar .ws-status-section-search,
+.admin-app-toolbar .ws-status-section-sort {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.admin-app-toolbar input[type='search'],
+.admin-app-toolbar select {
+	width: 100%;
+	margin: 0;
+	padding: 9px 12px;
+	border-radius: 8px;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	background: #fff;
+	font-size: 0.875rem;
+	font-family: inherit;
+	box-sizing: border-box;
+	color: var(--ws-text, #0f172a);
+}
+
+.admin-app-toolbar input[type='search']:focus,
+.admin-app-toolbar select:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1);
+}
+
+.admin-app-toolbar .ws-status-section-controls {
+	align-items: flex-end;
+}
+
+.admin-app-search {
+	flex: 1.4 1 260px;
+}
+
+.admin-app-search__field {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.admin-app-search__icon {
+	position: absolute;
+	left: 0.7rem;
+	width: 1rem;
+	height: 1rem;
+	color: var(--ws-muted, #94a3b8);
+	pointer-events: none;
+}
+
+.admin-app-search__field input[type='search'] {
+	padding-left: 2.25rem !important;
+	font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+	font-size: 0.8125rem !important;
+	letter-spacing: 0.02em;
+}
+
+.admin-app-toolbar__clear {
+	display: flex;
+	align-items: flex-end;
+	padding-bottom: 1px;
+}
+
+@media (max-width: 720px) {
+	.admin-app-toolbar .ws-status-section-controls {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.admin-app-search,
+	.admin-app-toolbar .ws-status-section-sort {
+		flex-basis: auto;
+		min-width: 0;
+	}
+
+	.admin-app-toolbar__clear .ws-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}

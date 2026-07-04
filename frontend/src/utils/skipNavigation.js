@@ -2,6 +2,7 @@ const PUBLIC_MARKETING_PATHS = new Set([
 	'/about',
 	'/services',
 	'/policies',
+	'/resources',
 	'/contact',
 	'/public-dashboard',
 	'/sitemap',
