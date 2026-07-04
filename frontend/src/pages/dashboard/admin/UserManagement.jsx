@@ -22,6 +22,9 @@ function UserManagement({ user: currentUser }) {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
+	const [showUserForm, setShowUserForm] = useState(false)
+	const [editingUser, setEditingUser] = useState(null)
+	const [formData, setFormData] = useState({ name: '', email: '', password: '', role: '', district_id: currentUser?.district_id || '' })
 	const [showAddForm, setShowAddForm] = useState(false)
 	const [districts, setDistricts] = useState([])
 	const [filters, setFilters] = useState({ search: '', role: '', district_id: '' })
@@ -114,6 +117,15 @@ function UserManagement({ user: currentUser }) {
 		setError('')
 		setSuccess('')
 		try {
+			if (editingUser) {
+				await api.put(`/api/users/${editingUser.id}`, formData)
+				setSuccess('User updated successfully')
+			} else {
+				await api.post('/api/users', formData)
+				setSuccess('User created successfully')
+			}
+			setShowUserForm(false)
+			setEditingUser(null)
 			await api.post('/api/users', formData)
 			setSuccess('User created successfully')
 			setShowAddForm(false)
@@ -126,7 +138,20 @@ function UserManagement({ user: currentUser }) {
 			})
 			loadUsers()
 		} catch (err) {
-			setError(err.response?.data?.message || 'Failed to create user')
+			setError(err.response?.data?.message || `Failed to ${editingUser ? 'update' : 'create'} user`)
+		}
+	}
+
+	const handleDelete = async (u) => {
+		if (!window.confirm(`Are you sure you want to delete ${u.name}?`)) return
+		setError('')
+		setSuccess('')
+		try {
+			await api.delete(`/api/users/${u.id}`)
+			setSuccess('User deleted successfully')
+			loadUsers()
+		} catch (err) {
+			setError(err.response?.data?.message || 'Failed to delete user')
 		}
 	}
 
@@ -145,7 +170,10 @@ function UserManagement({ user: currentUser }) {
 
 	const getAllowedRoles = () => {
 		if (currentUser.role === ROLES.SUPER_ADMIN) {
-			return [ROLES.DISTRICT_ADMIN, ...PRINCIPAL_ROLES]
+			return [ROLES.DISTRICT_ADMIN, ...PRINCIPAL_ROLES, ...ASSISTANT_ROLES]
+		}
+		if (currentUser.role === ROLES.DISTRICT_ADMIN) {
+			return [...PRINCIPAL_ROLES, ...ASSISTANT_ROLES]
 		}
 		if (currentUser.role === ROLES.DISTRICT_ADMIN) return []
 		if (currentUser.role === ROLES.RENT_AUTHORITY) return [ROLES.RA_ASSISTANT]
@@ -228,7 +256,11 @@ function UserManagement({ user: currentUser }) {
 						<button
 							type="button"
 							className="ws-btn ws-btn--primary ws-btn--sm"
-							onClick={() => setShowAddForm(true)}
+							onClick={() => {
+								setEditingUser(null)
+								setFormData({ name: '', email: '', password: '', role: '', district_id: currentUser?.district_id || '' })
+								setShowUserForm(true)
+							}}
 						>
 							Add staff user
 						</button>
@@ -251,6 +283,10 @@ function UserManagement({ user: currentUser }) {
 				</div>
 			) : null}
 
+			{showUserForm && (
+				<div className="modal-overlay">
+					<div className="auth-card" style={{ maxWidth: '500px' }}>
+						<h3>{editingUser ? 'Edit Staff User' : 'Create New Staff User'}</h3>
 			{showAddForm ? (
 				<div className="modal-overlay">
 					<div className="auth-card admin-user-modal">
@@ -274,6 +310,12 @@ function UserManagement({ user: currentUser }) {
 									onChange={(e) => setFormData({ ...formData, email: e.target.value })}
 								/>
 							</div>
+							{!editingUser && (
+								<div className="form-group">
+									<label>Password</label>
+									<input type="password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+								</div>
+							)}
 							<div className="form-group">
 								<label>Password</label>
 								<input
@@ -296,6 +338,9 @@ function UserManagement({ user: currentUser }) {
 									))}
 								</select>
 							</div>
+							<div className="nav-actions">
+								<button type="submit">{editingUser ? 'Update User' : 'Create User'}</button>
+								<button type="button" className="secondary" onClick={() => { setShowUserForm(false); setEditingUser(null); }}>Cancel</button>
 							{currentUser.role === ROLES.SUPER_ADMIN ? (
 								<div className="form-group">
 									<label>District</label>
@@ -356,6 +401,22 @@ function UserManagement({ user: currentUser }) {
 						render: (val) => val?.name || '—',
 					},
 				]}
+				actions={(u) => {
+					const canEdit = currentUser.role === ROLES.SUPER_ADMIN || 
+									(currentUser.role === ROLES.DISTRICT_ADMIN && u.district_id === currentUser.district_id && u.role !== ROLES.DISTRICT_ADMIN && u.role !== ROLES.SUPER_ADMIN) || 
+									(PRINCIPAL_ROLES.includes(currentUser.role) && ASSISTANT_ROLES.includes(u.role) && u.district_id === currentUser.district_id);
+					return (
+						<>
+							{canEdit && (
+								<>
+									<button className="action-icon-btn primary" style={{ marginRight: '8px' }} onClick={() => { setEditingUser(u); setFormData({ name: u.name, email: u.email, role: u.role, district_id: u.district_id }); setShowUserForm(true); }}>Edit</button>
+									<button className="action-icon-btn secondary" style={{ color: 'red' }} onClick={() => handleDelete(u)}>Delete</button>
+								</>
+							)}
+						</>
+					)
+				}}
+				emptyMessage="No users found."
 				actions={(u) =>
 					currentUser.role === ROLES.SUPER_ADMIN && u.id !== currentUser.id ? (
 						<button
