@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { APPLICATION_TYPES } from '../constants/application'
 import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
 import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
+import { applyTenancyAutofill } from '../utils/tenancyUinAutofill'
 
-export default function Form5RentCourtFilingPanel({ onBack, serviceMeta }) {
+export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
@@ -200,6 +203,17 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta }) {
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
+	const handleTenancyLoaded = (tenancy) =>
+		applyTenancyAutofill(APPLICATION_TYPES.RENT_COURT_FILING, tenancy, user, {
+			setTenancyUIN,
+			setRentCourtAt,
+			setApplicantName,
+			setApplicantResidentialAddress,
+			setRespondentName,
+			setRespondentResidentialAddress,
+			setJurisdictionOfRentCourt,
+		})
+
 	return (
 		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form III - Eviction and recovery of possession'}</h1>
@@ -211,13 +225,16 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta }) {
 			{error ? <div className="error">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+					label="Tenancy Unique Identification Number"
+				/>
+
 				<label>
 					<span className="label-text required">Rent Court at</span>
 					<input type="text" value={rentCourtAt} onChange={(e) => setRentCourtAt(e.target.value)} required />
-				</label>
-				<label>
-					<span className="label-text required">Tenancy Unique Identification Number</span>
-					<input type="text" value={tenancyUIN} onChange={(e) => setTenancyUIN(e.target.value)} required />
 				</label>
 
 				<fieldset className="tenancy-fieldset">

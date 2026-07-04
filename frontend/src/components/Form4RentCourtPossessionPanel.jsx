@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { APPLICATION_TYPES } from '../constants/application'
 import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
 import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
+import { applyTenancyAutofill } from '../utils/tenancyUinAutofill'
 
-export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
+export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
@@ -169,6 +172,16 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
+	const handleTenancyLoaded = (tenancy) =>
+		applyTenancyAutofill(APPLICATION_TYPES.RENT_COURT_POSSESSION, tenancy, user, {
+			setTenancyUIN,
+			setApplicantName,
+			setApplicantResidentialAddress,
+			setTenantName,
+			setBeforeRentCourt,
+			setJurisdictionStatement,
+		})
+
 	return (
 		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form II - Recovery of possession'}</h1>
@@ -180,6 +193,12 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 			{error ? <div className="error">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+				/>
+
 				<label>
 					<span className="label-text required">Before the Rent Court</span>
 					<input type="text" value={beforeRentCourt} onChange={(e) => setBeforeRentCourt(e.target.value)} required />
@@ -205,10 +224,6 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta }) {
 				<fieldset className="tenancy-fieldset">
 					<legend className="tenancy-legend-italic">Tenant details</legend>
 
-					<label>
-						<span className="label-text required">Tenant Unique Identification Number</span>
-						<input type="text" value={tenancyUIN} onChange={(e) => setTenancyUIN(e.target.value)} required />
-					</label>
 					<label>
 						<span className="label-text">Tenant name (optional)</span>
 						<input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} />

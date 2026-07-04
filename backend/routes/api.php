@@ -47,8 +47,9 @@ Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplica
 Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
 
 Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles) {
-    // Joint tenancy routes
+    // Joint tenancy routes — literal paths must stay before {tenancyApplication}
     Route::get('/tenancy-applications/lookup', [TenancyApplicationController::class, 'lookupByRefCode']);
+    Route::get('/tenancy-applications/lookup-by-uin', [TenancyApplicationController::class, 'lookupByUid']);
     Route::post('/tenancy-applications/join', [TenancyApplicationController::class, 'joinApplication']);
     Route::post('/tenancy-applications/check-ref-code', [TenancyApplicationController::class, 'checkRefCode']);
     Route::get('/tenancy-applications/my', [TenancyApplicationController::class, 'myApplications']);

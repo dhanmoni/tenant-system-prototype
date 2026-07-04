@@ -214,6 +214,33 @@ class TenancyApplicationController extends Controller
     }
 
     /**
+     * Lookup a completed tenancy record by UIN for service-form auto-fill.
+     */
+    public function lookupByUid(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $request->validate([
+            'uid' => ['required', 'string', 'max:64'],
+        ]);
+
+        $application = TenancyApplication::where('uid', trim($request->input('uid')))
+            ->with('office', 'villageWard', 'district')
+            ->first();
+
+        if (!$application) {
+            return response()->json(['message' => 'No tenancy record found for this UIN.'], 404);
+        }
+
+        return response()->json([
+            'tenancy' => $this->serializeTenancyForAutofill($application),
+        ]);
+    }
+
+    /**
      * Lookup an application by reference code (for second party join flow).
      */
     public function lookupByRefCode(Request $request)
@@ -1415,6 +1442,44 @@ class TenancyApplicationController extends Controller
 
         // For tenant and property manager initiated applications, landlord confirms.
         return 'LANDLORD';
+    }
+
+    private function serializeTenancyForAutofill(TenancyApplication $application): array
+    {
+        return [
+            'uid' => $application->uid,
+            'application_no' => $application->application_no,
+            'status' => $application->status,
+            'registration_date' => $application->registration_date,
+            'office' => $application->office,
+            'village_ward' => $application->villageWard,
+            'district' => $application->district,
+            'landlord_name' => $application->landlord_name,
+            'landlord_phone' => $application->landlord_phone,
+            'landlord_email' => $application->landlord_email,
+            'landlord_address' => $application->landlord_address,
+            'landlord_pan' => $application->landlord_pan,
+            'manager_name' => $application->manager_name,
+            'manager_address' => $application->manager_address,
+            'manager_email' => $application->manager_email,
+            'manager_phone' => $application->manager_phone,
+            'tenant_name' => $application->tenant_name,
+            'tenant_phone' => $application->tenant_phone,
+            'tenant_email' => $application->tenant_email,
+            'tenant_address' => $application->tenant_address,
+            'tenant_pan' => $application->tenant_pan,
+            'tenant_previous_tenancy' => $application->tenant_previous_tenancy,
+            'property_premises_description' => $application->property_premises_description,
+            'property_rent_payable' => $application->property_rent_payable,
+            'property_furniture_description' => $application->property_furniture_description,
+            'property_charge_electricity' => $application->property_charge_electricity,
+            'property_charge_water' => $application->property_charge_water,
+            'property_charge_furnishing' => $application->property_charge_furnishing,
+            'property_charge_other_services' => $application->property_charge_other_services,
+            'property_tenancy_duration' => $application->property_tenancy_duration,
+            'property_possession_date' => $application->property_possession_date,
+            'apply_type' => $application->apply_type,
+        ];
     }
 }
 

@@ -1,4 +1,5 @@
 import './App.css'
+import './styles/service-forms.css'
 import './workspace/styles/workspace.css'
 import { useEffect, useState } from 'react'
 import bannerImage from './assets/img/banner.png'

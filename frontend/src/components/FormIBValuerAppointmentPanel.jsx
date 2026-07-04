@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
+import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { APPLICATION_TYPES } from '../constants/application'
 import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
 import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
+import { applyTenancyAutofill } from '../utils/tenancyUinAutofill'
 
-export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
+export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
@@ -129,6 +132,18 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
+	const handleTenancyLoaded = (tenancy) =>
+		applyTenancyAutofill(APPLICATION_TYPES.VALUER_APPOINTMENT, tenancy, user, {
+			setTenancyUIN,
+			setApplicantName,
+			setApplicantResidentPlace,
+			setApplicantLandlordOrTenant,
+			setPremisesSituatedAddress,
+			setDistrict,
+			setSignedBy,
+			setSignatureName,
+		})
+
 	return (
 		<div className="dashboard-card service-form-panel">
 			<h1>{serviceMeta?.label || 'Form I-B - Appointment of valuer'}</h1>
@@ -140,15 +155,11 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta }) {
 			{error ? <div className="error">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<label>
-					<span className="label-text required">Tenancy UIN</span>
-					<input
-						type="text"
-						value={tenancyUIN}
-						onChange={(e) => setTenancyUIN(e.target.value)}
-						required
-					/>
-				</label>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+				/>
 
 				<fieldset className="tenancy-fieldset">
 					<legend className="tenancy-legend-italic">Applicant details</legend>
