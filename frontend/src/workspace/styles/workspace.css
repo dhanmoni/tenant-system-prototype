@@ -451,6 +451,19 @@
 	transform: none;
 }
 
+.page.page-dashboard .ws-root button.ws-btn--secondary {
+	background: #e8f0fe;
+	color: var(--ws-accent);
+	border-color: #bfdbfe;
+}
+
+.page.page-dashboard .ws-root button.ws-btn--secondary:hover:not(:disabled) {
+	background: #dbeafe;
+	border-color: #93c5fd;
+	color: var(--ws-accent);
+	transform: none;
+}
+
 .page.page-dashboard .ws-root button.ws-btn--outline {
 	background: #fff;
 	color: var(--ws-text);
@@ -3149,6 +3162,65 @@
 	flex-wrap: wrap;
 	gap: 0.65rem;
 	justify-content: center;
+}
+
+.uin-confirm-actions button.ws-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin: 0;
+	min-height: 2.5rem;
+	padding: 0.55rem 1.1rem;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	font-family: inherit;
+	line-height: 1.25;
+	cursor: pointer;
+	border: 1px solid transparent;
+	appearance: none;
+	-webkit-appearance: none;
+	box-sizing: border-box;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.uin-confirm-actions button.ws-btn--primary {
+	background: var(--ws-accent, #0d47a1);
+	color: #fff;
+	border-color: var(--ws-accent, #0d47a1);
+}
+
+.uin-confirm-actions button.ws-btn--primary:hover:not(:disabled) {
+	background: var(--ws-accent-hover, #1565c0);
+	border-color: var(--ws-accent-hover, #1565c0);
+	color: #fff;
+	box-shadow: 0 2px 8px rgba(13, 71, 161, 0.25);
+}
+
+.uin-confirm-actions button.ws-btn--secondary {
+	background: #e8f0fe;
+	color: var(--ws-accent, #0d47a1);
+	border-color: #bfdbfe;
+}
+
+.uin-confirm-actions button.ws-btn--secondary:hover:not(:disabled) {
+	background: #dbeafe;
+	border-color: #93c5fd;
+	color: var(--ws-accent, #0d47a1);
+}
+
+.uin-confirm-actions button.ws-btn--outline {
+	background: #fff;
+	color: var(--ws-text, #0f172a);
+	border-color: var(--ws-border-strong, #cbd5e1);
+}
+
+.uin-confirm-actions button.ws-btn--outline:hover:not(:disabled) {
+	background: #f8fafc;
+	border-color: #94a3b8;
+	color: var(--ws-accent, #0d47a1);
 }
 
 .uin-confirm-alert {
