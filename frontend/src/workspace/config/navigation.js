@@ -47,7 +47,7 @@ export function getWorkspaceNavigation(user) {
 		})
 	}
 
-	if (ASSISTANT_ROLES.includes(user.role)) {
+	if ([...ASSISTANT_ROLES, ROLES.VALUER].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/inbox',
 			label: 'Application inbox',

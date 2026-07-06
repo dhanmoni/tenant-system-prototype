@@ -13,6 +13,9 @@ class Roles
     public const RENT_COURT = 'rent_court';
     public const RENT_TRIBUNAL = 'rent_tribunal';
 
+    // Other Admin Entities
+    public const VALUER = 'valuer';
+
     // Assistant Roles
     public const RA_ASSISTANT = 'ra_assistant';
     public const RC_ASSISTANT = 'rc_assistant';
@@ -47,7 +50,7 @@ class Roles
      */
     public static function allStaff(): array
     {
-        return array_merge(self::assistants(), self::principals());
+        return array_merge(self::assistants(), self::principals(), [self::VALUER]);
     }
 
     /**

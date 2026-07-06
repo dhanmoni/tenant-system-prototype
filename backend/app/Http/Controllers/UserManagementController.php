@@ -25,15 +25,15 @@ class UserManagementController extends Controller
             $query->where('district_id', $currentUser->district_id)
                   ->where('role', '!=', Roles::USER);
         } elseif (in_array($currentUser->role, Roles::principals())) {
-            // Heads see only their respective assistants in their district
-            $assistantRole = match($currentUser->role) {
-                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
-                Roles::RENT_COURT => Roles::RC_ASSISTANT,
-                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
-                default => 'none',
+            // Heads see only their respective assistants and valuers in their district
+            $assistantRoles = match($currentUser->role) {
+                Roles::RENT_AUTHORITY => [Roles::RA_ASSISTANT, Roles::VALUER],
+                Roles::RENT_COURT => [Roles::RC_ASSISTANT],
+                Roles::RENT_TRIBUNAL => [Roles::RT_ASSISTANT],
+                default => [],
             };
             $query->where('district_id', $currentUser->district_id)
-                  ->where('role', $assistantRole);
+                  ->whereIn('role', $assistantRoles);
         } else {
             // Other roles (like assistants) should not see the user list generally,
             // but if they access it, they see nothing.
@@ -76,15 +76,15 @@ class UserManagementController extends Controller
             }
             $data['district_id'] = $user->district_id;
         } elseif (in_array($user->role, Roles::principals())) {
-            // Principals can create their own assistants
-            $allowedRole = match($user->role) {
-                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
-                Roles::RENT_COURT => Roles::RC_ASSISTANT,
-                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
-                default => null,
+            // Principals can create their own assistants and valuers
+            $allowedRoles = match($user->role) {
+                Roles::RENT_AUTHORITY => [Roles::RA_ASSISTANT, Roles::VALUER],
+                Roles::RENT_COURT => [Roles::RC_ASSISTANT],
+                Roles::RENT_TRIBUNAL => [Roles::RT_ASSISTANT],
+                default => [],
             };
-            if ($role !== $allowedRole) {
-                return response()->json(['message' => 'Unauthorized assistant role'], 403);
+            if (!in_array($role, $allowedRoles)) {
+                return response()->json(['message' => 'Unauthorized assistant/valuer role'], 403);
             }
             $data['district_id'] = $user->district_id;
         } else {
@@ -138,14 +138,14 @@ class UserManagementController extends Controller
             }
             $request->merge(['district_id' => $currentUser->district_id]);
         } elseif (in_array($currentUser->role, Roles::principals())) {
-            // Principals can only update their own assistants
-            $allowedRole = match($currentUser->role) {
-                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
-                Roles::RENT_COURT => Roles::RC_ASSISTANT,
-                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
-                default => null,
+            // Principals can only update their own assistants and valuers
+            $allowedRoles = match($currentUser->role) {
+                Roles::RENT_AUTHORITY => [Roles::RA_ASSISTANT, Roles::VALUER],
+                Roles::RENT_COURT => [Roles::RC_ASSISTANT],
+                Roles::RENT_TRIBUNAL => [Roles::RT_ASSISTANT],
+                default => [],
             };
-            if ($user->district_id !== $currentUser->district_id || $user->role !== $allowedRole || $newRole !== $allowedRole) {
+            if ($user->district_id !== $currentUser->district_id || !in_array($user->role, $allowedRoles) || !in_array($newRole, $allowedRoles)) {
                 return response()->json(['message' => 'Unauthorized update'], 403);
             }
             $request->merge(['district_id' => $currentUser->district_id]);
@@ -204,13 +204,13 @@ class UserManagementController extends Controller
                 return response()->json(['message' => 'Unauthorized deletion'], 403);
             }
         } elseif (in_array($currentUser->role, Roles::principals())) {
-            $allowedRole = match($currentUser->role) {
-                Roles::RENT_AUTHORITY => Roles::RA_ASSISTANT,
-                Roles::RENT_COURT => Roles::RC_ASSISTANT,
-                Roles::RENT_TRIBUNAL => Roles::RT_ASSISTANT,
-                default => null,
+            $allowedRoles = match($currentUser->role) {
+                Roles::RENT_AUTHORITY => [Roles::RA_ASSISTANT, Roles::VALUER],
+                Roles::RENT_COURT => [Roles::RC_ASSISTANT],
+                Roles::RENT_TRIBUNAL => [Roles::RT_ASSISTANT],
+                default => [],
             };
-            if ($user->district_id !== $currentUser->district_id || $user->role !== $allowedRole) {
+            if ($user->district_id !== $currentUser->district_id || !in_array($user->role, $allowedRoles)) {
                 return response()->json(['message' => 'Unauthorized deletion'], 403);
             }
         } else {

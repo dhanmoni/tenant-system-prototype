@@ -22,6 +22,7 @@ class User extends Authenticatable
     public const ROLE_RA_ASSISTANT = Roles::RA_ASSISTANT;
     public const ROLE_RC_ASSISTANT = Roles::RC_ASSISTANT;
     public const ROLE_RT_ASSISTANT = Roles::RT_ASSISTANT;
+    public const ROLE_VALUER = Roles::VALUER;
     public const ROLE_USER = Roles::USER;
 
     /**
@@ -86,6 +87,7 @@ class User extends Authenticatable
             self::ROLE_RA_ASSISTANT,
             self::ROLE_RC_ASSISTANT,
             self::ROLE_RT_ASSISTANT,
+            self::ROLE_VALUER,
             self::ROLE_USER,
         ];
     }
@@ -103,6 +105,11 @@ class User extends Authenticatable
     public function isAssistant(): bool
     {
         return in_array($this->role, Roles::assistants());
+    }
+
+    public function isValuer(): bool
+    {
+        return $this->role === self::ROLE_VALUER;
     }
 
     public function district()

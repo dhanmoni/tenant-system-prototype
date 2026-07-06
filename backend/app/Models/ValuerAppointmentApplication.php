@@ -38,6 +38,9 @@ class ValuerAppointmentApplication extends Model
         'rejection_message',
         'assigned_to_role',
         'forward_remarks',
+        'assigned_valuer_id',
+        'valuer_assigned_at',
+        'valuer_report',
     ];
 
     public function getRouteKeyName()
@@ -63,6 +66,11 @@ class ValuerAppointmentApplication extends Model
     public function rejectedBy()
     {
         return $this->belongsTo(User::class, 'rejected_by_user_id');
+    }
+
+    public function assignedValuer()
+    {
+        return $this->belongsTo(User::class, 'assigned_valuer_id');
     }
 }
 

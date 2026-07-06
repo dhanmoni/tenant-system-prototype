@@ -6,6 +6,7 @@ import { Icon } from '../../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { STATUS_LABELS } from '../../../constants/status'
+import { ROLES } from '../../../constants/roles'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
 import { formatDate } from '../../../utils/formatters'
 import { getAdminTableAccent } from '../../../utils/adminTableAccent'
@@ -46,7 +47,10 @@ const ApplicationInbox = ({ user }) => {
 	const fetchInbox = async () => {
 		setLoading(true)
 		try {
-			const { data } = await api.get(`/api/admin/applications/inbox?page=${page}&per_page=15`)
+			const endpoint = user?.role === ROLES.VALUER 
+				? `/api/admin/applications/valuer-inbox?page=${page}&per_page=15` 
+				: `/api/admin/applications/inbox?page=${page}&per_page=15`
+			const { data } = await api.get(endpoint)
 			setApplications(data.applications || [])
 			setPaginationInfo(data.pagination || null)
 		} catch (error) {
@@ -168,36 +172,40 @@ const ApplicationInbox = ({ user }) => {
 							<Icon name="eye" />
 							<span>View</span>
 						</button>
-						<button
-							type="button"
-							className="ws-status-action-btn ws-status-action-btn--primary"
-							title={`Forward to ${forwardOffice}`}
-							onClick={() =>
-								setShowForwardModal({
-									type: app.form_type,
-									id: app.id,
-									application_no: app.application_no,
-								})
-							}
-							disabled={actionLoading === app.id}
-						>
-							<span>{actionLoading === app.id ? '…' : 'Forward'}</span>
-						</button>
-						<button
-							type="button"
-							className="ws-status-action-btn ws-status-action-btn--reject"
-							title="Reject application"
-							onClick={() =>
-								setShowRejectModal({
-									type: app.form_type,
-									id: app.id,
-									application_no: app.application_no,
-								})
-							}
-							disabled={actionLoading === app.id}
-						>
-							<span>Reject</span>
-						</button>
+						{user?.role !== ROLES.VALUER && (
+							<>
+								<button
+									type="button"
+									className="ws-status-action-btn ws-status-action-btn--primary"
+									title={`Forward to ${forwardOffice}`}
+									onClick={() =>
+										setShowForwardModal({
+											type: app.form_type,
+											id: app.id,
+											application_no: app.application_no,
+										})
+									}
+									disabled={actionLoading === app.id}
+								>
+									<span>{actionLoading === app.id ? '…' : 'Forward'}</span>
+								</button>
+								<button
+									type="button"
+									className="ws-status-action-btn ws-status-action-btn--reject"
+									title="Reject application"
+									onClick={() =>
+										setShowRejectModal({
+											type: app.form_type,
+											id: app.id,
+											application_no: app.application_no,
+										})
+									}
+									disabled={actionLoading === app.id}
+								>
+									<span>Reject</span>
+								</button>
+							</>
+						)}
 					</>
 				)}
 				emptyMessage="No pending applications found."

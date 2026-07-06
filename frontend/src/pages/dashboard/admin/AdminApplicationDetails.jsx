@@ -217,6 +217,9 @@ const AdminApplicationDetails = () => {
 	const [isEditing, setIsEditing] = useState(false)
 	const [editForm, setEditForm] = useState({})
 	const [saveError, setSaveError] = useState('')
+	const [valuers, setValuers] = useState([])
+	const [selectedValuerId, setSelectedValuerId] = useState('')
+	const [valuerReport, setValuerReport] = useState('')
 
 	const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN
 
@@ -252,6 +255,72 @@ const AdminApplicationDetails = () => {
 			setError('Failed to load application details.')
 		} finally {
 			setLoading(false)
+		}
+	}
+
+	const fetchValuers = async () => {
+		try {
+			const { data } = await api.get('/api/users?role=valuer')
+			// The backend currently might just return assistants and valuers together for RA, we can filter it locally
+			const valuerUsers = (data.users || []).filter(u => u.role === ROLES.VALUER)
+			setValuers(valuerUsers)
+		} catch (err) {
+			console.error('Error fetching valuers:', err)
+		}
+	}
+
+	useEffect(() => {
+		if (user?.role === ROLES.RENT_AUTHORITY && application?.form_type === APPLICATION_TYPES.VALUER_APPOINTMENT) {
+			fetchValuers()
+		}
+	}, [user?.role, application?.form_type])
+
+	const handleAssignValuer = async () => {
+		if (!selectedValuerId) return alert('Please select a valuer')
+		setActionLoading(true)
+		try {
+			await api.post(`/api/admin/applications/${application.id}/assign-valuer`, {
+				assigned_valuer_id: selectedValuerId
+			})
+			alert('Valuer assigned successfully')
+			fetchDetails()
+		} catch (err) {
+			console.error(err)
+			alert(err.response?.data?.message || 'Failed to assign valuer')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
+	const handleRemoveValuer = async () => {
+		if (!window.confirm('Are you sure you want to remove the assigned valuer?')) return;
+		setActionLoading(true)
+		try {
+			await api.post(`/api/admin/applications/${application.id}/remove-valuer`)
+			alert('Valuer removed successfully')
+			fetchDetails()
+		} catch (err) {
+			console.error(err)
+			alert(err.response?.data?.message || 'Failed to remove valuer')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
+	const handleSubmitValuerReport = async () => {
+		if (!valuerReport.trim()) return alert('Please enter the report')
+		setActionLoading(true)
+		try {
+			await api.post(`/api/admin/applications/${application.id}/submit-valuer-report`, {
+				valuer_report: valuerReport
+			})
+			alert('Report submitted successfully')
+			fetchDetails()
+		} catch (err) {
+			console.error(err)
+			alert(err.response?.data?.message || 'Failed to submit report')
+		} finally {
+			setActionLoading(false)
 		}
 	}
 
@@ -505,6 +574,109 @@ const AdminApplicationDetails = () => {
 		</div>
 	)
 
+	const renderValuerSections = () => {
+		if (application?.form_type !== APPLICATION_TYPES.VALUER_APPOINTMENT) return null
+
+		return (
+			<>
+				{user?.role === ROLES.RENT_AUTHORITY && (application.status === STATUS.IN_REVIEW || application.status === STATUS.VALUER_REPORT_SUBMITTED || application.status === STATUS.VALUER_ASSIGNED) && (
+					<section className="admin-app-details__card admin-app-details__valuer-card" style={{ border: '1px solid var(--clr-primary-200)', backgroundColor: 'var(--clr-primary-50)' }}>
+						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-primary-700)' }}>Valuer Assignment</h3>
+						
+						{application.assigned_valuer_id ? (
+							<div className="admin-app-details__grid" style={{ marginBottom: '1rem' }}>
+								{renderStat('Assigned Valuer', application.assigned_valuer?.name || `Valuer ID: ${application.assigned_valuer_id}`)}
+								{renderStat('Assigned Date', new Date(application.valuer_assigned_at).toLocaleString())}
+							</div>
+						) : (
+							<p style={{ marginBottom: '1rem', color: 'var(--clr-gray-600)' }}>No valuer assigned yet.</p>
+						)}
+
+						<div className="admin-app-details__grid" style={{ alignItems: 'flex-end', marginBottom: '1rem' }}>
+							<div className="admin-app-details__field">
+								<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Assign / Reassign Valuer</label>
+								<select
+									className="ws-input"
+									value={selectedValuerId}
+									onChange={(e) => setSelectedValuerId(e.target.value)}
+									disabled={actionLoading}
+								>
+									<option value="">-- Select a Valuer --</option>
+									{valuers.map(v => (
+										<option key={v.id} value={v.id}>{v.name} ({v.email})</option>
+									))}
+								</select>
+							</div>
+							<div style={{ display: 'flex', gap: '0.5rem' }}>
+								<button
+									type="button"
+									className="ws-btn ws-btn--primary"
+									onClick={handleAssignValuer}
+									disabled={actionLoading || !selectedValuerId}
+								>
+									{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
+								</button>
+								{application.assigned_valuer_id && (
+									<button
+										type="button"
+										className="ws-btn ws-btn--danger"
+										onClick={handleRemoveValuer}
+										disabled={actionLoading}
+									>
+										Remove Valuer
+									</button>
+								)}
+							</div>
+						</div>
+
+						{application.valuer_report && (
+							<div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--clr-primary-200)' }}>
+								<h4 style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--clr-primary-700)' }}>Valuer's Report</h4>
+								<div className="ws-card" style={{ backgroundColor: '#fff', padding: '1rem' }}>
+									<p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{application.valuer_report}</p>
+								</div>
+							</div>
+						)}
+					</section>
+				)}
+
+				{user?.role === ROLES.VALUER && (
+					<section className="admin-app-details__card admin-app-details__valuer-card" style={{ border: '1px solid var(--clr-info-200)', backgroundColor: 'var(--clr-info-50)' }}>
+						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-info-700)' }}>Submit Valuer Report</h3>
+						{application.status === STATUS.VALUER_REPORT_SUBMITTED ? (
+							<div className="ws-card" style={{ backgroundColor: '#fff', padding: '1rem' }}>
+								<p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Report Submitted:</p>
+								<p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{application.valuer_report}</p>
+							</div>
+						) : (
+							<>
+								<div className="admin-app-details__field" style={{ marginBottom: '1rem' }}>
+									<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Your Report</label>
+									<textarea
+										className="ws-input"
+										rows="5"
+										value={valuerReport}
+										onChange={(e) => setValuerReport(e.target.value)}
+										placeholder="Enter your detailed report here..."
+										disabled={actionLoading}
+									/>
+								</div>
+								<button
+									type="button"
+									className="ws-btn ws-btn--primary"
+									onClick={handleSubmitValuerReport}
+									disabled={actionLoading || !valuerReport.trim()}
+								>
+									Submit Report
+								</button>
+							</>
+						)}
+					</section>
+				)}
+			</>
+		)
+	}
+
 	if (loading) {
 		return <div className="ws-dashboard-loading">Loading application details…</div>
 	}
@@ -691,6 +863,8 @@ const AdminApplicationDetails = () => {
 				)
 			})}
 
+			{renderValuerSections()}
+
 			{user?.role === 'super_admin' && application.form_type && (() => {
 				const transitions = getValidTransitions(application.form_type)
 				if (!transitions) return null
@@ -727,7 +901,7 @@ const AdminApplicationDetails = () => {
 			})()}
 
 			{(ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED) ||
-			(PRINCIPAL_ROLES.includes(user?.role) && application.status === STATUS.IN_REVIEW) ? (
+			(PRINCIPAL_ROLES.includes(user?.role) && (application.status === STATUS.IN_REVIEW || (user?.role === ROLES.RENT_AUTHORITY && application.status === STATUS.VALUER_REPORT_SUBMITTED))) ? (
 				<footer className="admin-app-details__actions">
 					{ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED && (
 						<>
@@ -750,7 +924,7 @@ const AdminApplicationDetails = () => {
 						</>
 					)}
 
-					{PRINCIPAL_ROLES.includes(user?.role) && application.status === STATUS.IN_REVIEW && (
+					{(PRINCIPAL_ROLES.includes(user?.role) && (application.status === STATUS.IN_REVIEW || (user?.role === ROLES.RENT_AUTHORITY && application.status === STATUS.VALUER_REPORT_SUBMITTED))) && (
 						<>
 							<button
 								type="button"

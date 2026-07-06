@@ -14,6 +14,7 @@ const STAFF_ROLE_OPTIONS = [
 	ROLES.DISTRICT_ADMIN,
 	...PRINCIPAL_ROLES,
 	...ASSISTANT_ROLES,
+	ROLES.VALUER,
 ]
 
 function UserManagement({ user: currentUser }) {
@@ -249,9 +250,9 @@ function UserManagement({ user: currentUser }) {
 			return [ROLES.DISTRICT_ADMIN, ...PRINCIPAL_ROLES, ...ASSISTANT_ROLES]
 		}
 		if (currentUser.role === ROLES.DISTRICT_ADMIN) {
-			return [...PRINCIPAL_ROLES, ...ASSISTANT_ROLES]
+			return [...PRINCIPAL_ROLES, ...ASSISTANT_ROLES, ROLES.VALUER]
 		}
-		if (currentUser.role === ROLES.RENT_AUTHORITY) return [ROLES.RA_ASSISTANT]
+		if (currentUser.role === ROLES.RENT_AUTHORITY) return [ROLES.RA_ASSISTANT, ROLES.VALUER]
 		if (currentUser.role === ROLES.RENT_COURT) return [ROLES.RC_ASSISTANT]
 		if (currentUser.role === ROLES.RENT_TRIBUNAL) return [ROLES.RT_ASSISTANT]
 		return []
@@ -359,33 +360,63 @@ function UserManagement({ user: currentUser }) {
 				</div>
 			) : null}
 
-			{showAddForm
-				? createPortal(
-						<div
-							className="modal-overlay admin-user-modal-overlay"
-							role="presentation"
-							onClick={closeAddForm}
-						>
-							<div
-								className="admin-user-modal"
-								role="dialog"
-								aria-modal="true"
-								aria-labelledby="add-staff-user-title"
-								onClick={(e) => e.stopPropagation()}
-							>
-								<header className="admin-user-modal__header">
-									<div>
-										<h3 id="add-staff-user-title">Add staff user</h3>
-										<p className="admin-user-modal__hint">
-											Create an office account.
-										</p>
-									</div>
-									<button
-										type="button"
-										className="admin-user-modal__close"
-										onClick={closeAddForm}
-										disabled={creating}
-										aria-label="Close"
+			{showAddForm ? (
+				<div className="modal-overlay">
+					<div className="auth-card admin-user-modal">
+						<h3>Create staff user</h3>
+						{error ? (
+							<div className="ws-profile-alert ws-profile-alert--error" role="alert" style={{ marginBottom: '1rem' }}>
+								{error}
+							</div>
+						) : null}
+						<form onSubmit={handleSubmit}>
+							<div className="form-group">
+								<label>Name</label>
+								<input
+									type="text"
+									required
+									value={formData.name}
+									onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+								/>
+							</div>
+							<div className="form-group">
+								<label>Email</label>
+								<input
+									type="email"
+									required
+									value={formData.email}
+									onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+								/>
+							</div>
+							<div className="form-group">
+								<label>Phone</label>
+								<input 
+									type="text" 
+									value={formData.phone} 
+									onChange={e => setFormData({ ...formData, phone: e.target.value })} 
+								/>
+							</div>
+							<div className="form-group">
+								<label>Role</label>
+								<select
+									required
+									value={formData.role}
+									onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+								>
+									<option value="">Select role</option>
+									{getAllowedRoles().map((r) => (
+										<option key={r} value={r}>{getRoleLabel(r)}</option>
+									))}
+								</select>
+							</div>
+							{currentUser.role === ROLES.SUPER_ADMIN ? (
+								<div className="form-group">
+									<label>District</label>
+									<select
+										value={formData.district_id}
+										onChange={(e) =>
+											setFormData({ ...formData, district_id: e.target.value })
+										}
 									>
 										×
 									</button>

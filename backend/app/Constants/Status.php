@@ -13,6 +13,8 @@ class Status
     public const PARTIAL = 'PARTIAL';
     public const PENDING = 'PENDING';
     public const DRAFT = 'DRAFT';
+    public const VALUER_ASSIGNED = 'VALUER_ASSIGNED';
+    public const VALUER_REPORT_SUBMITTED = 'VALUER_REPORT_SUBMITTED';
 
     /**
      * Get all valid statuses.
@@ -29,6 +31,8 @@ class Status
             self::PARTIAL,
             self::PENDING,
             self::DRAFT,
+            self::VALUER_ASSIGNED,
+            self::VALUER_REPORT_SUBMITTED,
         ];
     }
 }

@@ -53,9 +53,10 @@ class ApplicationResource extends JsonResource
             }),
             
             'district' => $this->whenLoaded('district', function() {
+                $rel = $this->getRelation('district');
                 return [
-                    'id' => $this->district->id,
-                    'name' => $this->district->name,
+                    'id' => $rel ? $rel->id : null,
+                    'name' => $rel ? $rel->name : null,
                 ];
             }),
             
