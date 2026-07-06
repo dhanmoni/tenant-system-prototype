@@ -13,18 +13,35 @@ function DocumentUploadSlot({
 	onPreview,
 	onFilePreview,
 }) {
+	const hasFile = Boolean(imagePreview || file)
+	const fileName = file?.name || (imagePreview ? 'Image selected' : '')
+
 	return (
-		<div className="tenancy-doc-slot">
-			<label className="tenancy-doc-slot__label" htmlFor={id}>
-				<span className={`label-text${required ? ' required' : ''}`}>{label}</span>
-				<input id={id} type="file" accept={accept} onChange={onChange} required={required} />
-				{hint ? <span className="muted tenancy-doc-slot__hint">{hint}</span> : null}
-			</label>
-			<div className="tenancy-doc-slot__status">
+		<div className={`tenancy-doc-slot${hasFile ? ' is-uploaded' : ''}`}>
+			<div className="tenancy-doc-slot__head">
+				<span className={`tenancy-doc-slot__title${required ? ' is-required' : ''}`}>{label}</span>
+				{hint ? <span className="tenancy-doc-slot__hint">{hint}</span> : null}
+			</div>
+
+			<div className="tenancy-doc-slot__row">
+				<input
+					id={id}
+					className="tenancy-doc-slot__input"
+					type="file"
+					accept={accept}
+					onChange={onChange}
+					required={required && !hasFile}
+				/>
+				<label htmlFor={id} className="tenancy-doc-slot__pick-btn">
+					{hasFile ? 'Change file' : 'Choose file'}
+				</label>
+
 				{imagePreview ? (
 					<div className="tenancy-doc-slot__uploaded">
 						<img src={imagePreview} alt="" className="tenancy-thumb tenancy-thumb--slot" />
-						<span className="tenancy-doc-slot__uploaded-label">Ready to preview</span>
+						<span className="tenancy-doc-slot__filename" title={fileName}>
+							{fileName}
+						</span>
 						<button
 							type="button"
 							className="tenancy-doc-preview-btn"
@@ -54,7 +71,7 @@ function DocumentUploadSlot({
 						</button>
 					</div>
 				) : (
-					<span className="tenancy-doc-slot__pending">Awaiting upload</span>
+					<span className="tenancy-doc-slot__pending">No file chosen</span>
 				)}
 			</div>
 		</div>

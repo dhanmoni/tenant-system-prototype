@@ -42,16 +42,179 @@
 	border: 1px solid #fecaca;
 }
 
+.admin-user-modal-overlay {
+	z-index: 1400;
+}
+
 .admin-user-modal {
-	max-width: 480px;
-	width: calc(100% - 2rem);
+	width: min(480px, calc(100vw - 2rem));
+	max-height: min(90vh, 720px);
+	overflow: auto;
+	margin: 0;
+	padding: 1.35rem 1.5rem 1.4rem;
+	background: #fff;
+	border-radius: 12px;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+}
+
+.admin-user-modal__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.admin-user-modal__header h3 {
+	margin: 0 0 0.35rem;
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+}
+
+.admin-user-modal__hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-user-modal__close {
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	border: none;
+	border-radius: 8px;
+	background: #f1f5f9;
+	color: #475569;
+	font-size: 1.35rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.admin-user-modal__close:hover:not(:disabled) {
+	background: #e2e8f0;
+	color: #0f172a;
+}
+
+.admin-user-modal__close:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.admin-user-modal__error {
+	margin: 0 0 0.85rem;
+	padding: 0.65rem 0.8rem;
+	border-radius: 8px;
+	border: 1px solid #fecaca;
+	background: #fef2f2;
+	color: #b91c1c;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+}
+
+.admin-user-modal__form .form-group {
+	margin-bottom: 0.9rem;
+}
+
+.admin-user-modal__form .form-group label {
+	display: block;
+	margin-bottom: 0.35rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ws-text, #334155);
+}
+
+.admin-user-modal__form .form-group input,
+.admin-user-modal__form .form-group select {
+	width: 100%;
+	padding: 0.55rem 0.75rem;
+	border-radius: 8px;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	background: #fff;
+	font-size: 0.875rem;
+	font-family: inherit;
+	color: #0f172a;
+	box-sizing: border-box;
+}
+
+.admin-user-modal__form .form-group input:focus,
+.admin-user-modal__form .form-group select:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+}
+
+.admin-user-modal__form .form-group input:disabled,
+.admin-user-modal__form .form-group select:disabled {
+	background: #f8fafc;
+	color: #64748b;
+	cursor: not-allowed;
 }
 
 .admin-user-modal__actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
-	margin-top: 0.5rem;
+	margin-top: 1rem;
+}
+
+/* Portaled outside .ws-root — cannot rely on workspace .ws-btn selectors */
+.admin-user-modal__actions button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin: 0;
+	min-height: 2.5rem;
+	padding: 0.55rem 1.1rem;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	font-family: inherit;
+	line-height: 1.25;
+	cursor: pointer;
+	border: 1px solid transparent;
+	appearance: none;
+	-webkit-appearance: none;
+	box-sizing: border-box;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.admin-user-modal__actions button.ws-btn--primary,
+.admin-user-modal__actions button[type='submit'] {
+	background: var(--ws-accent, #0d47a1);
+	color: #fff;
+	border-color: var(--ws-accent, #0d47a1);
+}
+
+.admin-user-modal__actions button.ws-btn--primary:hover:not(:disabled),
+.admin-user-modal__actions button[type='submit']:hover:not(:disabled) {
+	background: var(--ws-accent-hover, #1565c0);
+	border-color: var(--ws-accent-hover, #1565c0);
+	color: #fff;
+	box-shadow: 0 2px 8px rgba(13, 71, 161, 0.25);
+}
+
+.admin-user-modal__actions button.ws-btn--outline,
+.admin-user-modal__actions button[type='button'] {
+	background: #fff;
+	color: var(--ws-text, #0f172a);
+	border-color: var(--ws-border-strong, #cbd5e1);
+}
+
+.admin-user-modal__actions button.ws-btn--outline:hover:not(:disabled),
+.admin-user-modal__actions button[type='button']:hover:not(:disabled) {
+	background: #f8fafc;
+	border-color: #94a3b8;
+	color: var(--ws-accent, #0d47a1);
+}
+
+.admin-user-modal__actions button:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
 }
 
 @media (max-width: 720px) {

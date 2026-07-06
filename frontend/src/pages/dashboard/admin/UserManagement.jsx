@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
@@ -23,9 +24,11 @@ function UserManagement({ user: currentUser }) {
 	const [users, setUsers] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
 	const [showAddForm, setShowAddForm] = useState(false)
+	const [formError, setFormError] = useState('')
+	const [creating, setCreating] = useState(false)
 	const [statusModal, setStatusModal] = useState(null)
+	const [successModal, setSuccessModal] = useState(null)
 	const [statusReason, setStatusReason] = useState('')
 	const [statusLoading, setStatusLoading] = useState(false)
 	const [districts, setDistricts] = useState([])
@@ -38,6 +41,33 @@ function UserManagement({ user: currentUser }) {
 		role: '',
 		district_id: currentUser?.district_id || '',
 	})
+
+	const closeAddForm = () => {
+		if (creating) return
+		setShowAddForm(false)
+		setFormError('')
+		setFormData({
+			name: '',
+			email: '',
+			phone: '',
+			role: '',
+			district_id: currentUser?.district_id || '',
+		})
+	}
+
+	useEffect(() => {
+		if (!showAddForm) return undefined
+		const onKey = (e) => {
+			if (e.key === 'Escape') closeAddForm()
+		}
+		document.addEventListener('keydown', onKey)
+		const prev = document.body.style.overflow
+		document.body.style.overflow = 'hidden'
+		return () => {
+			document.removeEventListener('keydown', onKey)
+			document.body.style.overflow = prev
+		}
+	}, [showAddForm, creating])
 
 	useEffect(() => {
 		if (ASSISTANT_ROLES.includes(currentUser.role)) {
@@ -116,12 +146,35 @@ function UserManagement({ user: currentUser }) {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault()
+		setFormError('')
 		setError('')
-		setSuccess('')
+
+		const payload = {
+			name: formData.name.trim(),
+			email: formData.email.trim(),
+			phone: formData.phone.trim(),
+			role: formData.role,
+			district_id: formData.district_id || currentUser?.district_id || null,
+		}
+
+		if (!payload.name || !payload.email || !payload.phone || !payload.role) {
+			setFormError('Name, email, phone, and role are required.')
+			return
+		}
+		if (!/^\d{10}$/.test(payload.phone)) {
+			setFormError('Phone number must be exactly 10 digits.')
+			return
+		}
+		if (currentUser.role === ROLES.SUPER_ADMIN && !payload.district_id) {
+			setFormError('Please select a district for this staff user.')
+			return
+		}
+
+		setCreating(true)
 		try {
-			await api.post('/api/users', formData)
-			setSuccess('User created successfully')
+			await api.post('/api/users', payload)
 			setShowAddForm(false)
+			setFormError('')
 			setFormData({
 				name: '',
 				email: '',
@@ -129,15 +182,19 @@ function UserManagement({ user: currentUser }) {
 				role: '',
 				district_id: currentUser?.district_id || '',
 			})
+			setSuccessModal({
+				title: 'Staff user created',
+				description: `${payload.name} was added successfully. Default password is Test@123.`,
+			})
 			loadUsers()
 		} catch (err) {
-			const data = err.response?.data
-			if (data?.errors) {
-				const firstError = Object.values(data.errors)[0][0]
-				setError(firstError)
-			} else {
-				setError(data?.message || 'Failed to create user')
-			}
+			const errors = err?.response?.data?.errors
+			const fieldMsg = errors
+				? Object.values(errors).flat().join(' ')
+				: err?.response?.data?.message
+			setFormError(fieldMsg || 'Failed to create user')
+		} finally {
+			setCreating(false)
 		}
 	}
 
@@ -158,14 +215,18 @@ function UserManagement({ user: currentUser }) {
 		if (deactivating && !reason) return
 		setStatusLoading(true)
 		setError('')
-		setSuccess('')
 		try {
 			await api.post(
 				`/api/users/${targetUser.id}/toggle-block`,
 				deactivating ? { reason } : {}
 			)
-			setSuccess(`${targetUser.name} was ${deactivating ? 'deactivated' : 'activated'}`)
 			closeStatusModal()
+			setSuccessModal({
+				title: deactivating ? 'User deactivated' : 'User activated',
+				description: deactivating
+					? `"${targetUser.name}" has been deactivated and can no longer log in.${reason ? ` Reason: ${reason}` : ''}`
+					: `"${targetUser.name}" has been activated and can log in again.`,
+			})
 			loadUsers()
 		} catch (err) {
 			setError(
@@ -272,7 +333,14 @@ function UserManagement({ user: currentUser }) {
 							type="button"
 							className="ws-btn ws-btn--primary ws-btn--sm"
 							onClick={() => {
-								setFormData({ name: '', email: '', phone: '', role: '', district_id: currentUser?.district_id || '' })
+								setFormError('')
+								setFormData({
+									name: '',
+									email: '',
+									phone: '',
+									role: '',
+									district_id: currentUser?.district_id || '',
+								})
 								setShowAddForm(true)
 							}}
 						>
@@ -289,11 +357,6 @@ function UserManagement({ user: currentUser }) {
 			{error ? (
 				<div className="ws-profile-alert ws-profile-alert--error" role="alert">
 					{error}
-				</div>
-			) : null}
-			{success ? (
-				<div className="ws-profile-alert ws-profile-alert--success" role="status">
-					{success}
 				</div>
 			) : null}
 
@@ -355,29 +418,124 @@ function UserManagement({ user: currentUser }) {
 											setFormData({ ...formData, district_id: e.target.value })
 										}
 									>
-										<option value="">Select district</option>
-										{districts.map((d) => (
-											<option key={d.id} value={d.id}>{d.name}</option>
-										))}
-									</select>
-								</div>
-							) : null}
-							<div className="nav-actions admin-user-modal__actions">
-								<button type="submit" className="ws-btn ws-btn--primary">
-									Create user
-								</button>
-								<button
-									type="button"
-									className="ws-btn ws-btn--outline"
-									onClick={() => setShowAddForm(false)}
-								>
-									Cancel
-								</button>
+										×
+									</button>
+								</header>
+
+								{formError ? (
+									<div className="admin-user-modal__error" role="alert">
+										{formError}
+									</div>
+								) : null}
+
+								<form onSubmit={handleSubmit} className="admin-user-modal__form">
+									<div className="form-group">
+										<label htmlFor="staff-name">Name</label>
+										<input
+											id="staff-name"
+											type="text"
+											required
+											autoFocus
+											value={formData.name}
+											onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+											placeholder="Full name"
+											disabled={creating}
+										/>
+									</div>
+									<div className="form-group">
+										<label htmlFor="staff-email">Email</label>
+										<input
+											id="staff-email"
+											type="email"
+											required
+											value={formData.email}
+											onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+											placeholder="name@example.com"
+											disabled={creating}
+										/>
+									</div>
+									<div className="form-group">
+										<label htmlFor="staff-phone">Phone</label>
+										<input
+											id="staff-phone"
+											type="tel"
+											required
+											inputMode="numeric"
+											pattern="[0-9]{10}"
+											minLength={10}
+											maxLength={10}
+											value={formData.phone}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													phone: e.target.value.replace(/\D/g, '').slice(0, 10),
+												})
+											}
+											placeholder="10-digit mobile number"
+											disabled={creating}
+										/>
+									</div>
+									<div className="form-group">
+										<label htmlFor="staff-role">Role</label>
+										<select
+											id="staff-role"
+											required
+											value={formData.role}
+											onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+											disabled={creating}
+										>
+											<option value="">Select role</option>
+											{getAllowedRoles().map((r) => (
+												<option key={r} value={r}>
+													{getRoleLabel(r)}
+												</option>
+											))}
+										</select>
+									</div>
+									{currentUser.role === ROLES.SUPER_ADMIN ? (
+										<div className="form-group">
+											<label htmlFor="staff-district">District</label>
+											<select
+												id="staff-district"
+												required
+												value={formData.district_id}
+												onChange={(e) =>
+													setFormData({ ...formData, district_id: e.target.value })
+												}
+												disabled={creating}
+											>
+												<option value="">Select district</option>
+												{districts.map((d) => (
+													<option key={d.id} value={d.id}>
+														{d.name}
+													</option>
+												))}
+											</select>
+										</div>
+									) : null}
+									<div className="admin-user-modal__actions">
+										<button
+											type="submit"
+											className="ws-btn ws-btn--primary"
+											disabled={creating}
+										>
+											{creating ? 'Creating…' : 'Create user'}
+										</button>
+										<button
+											type="button"
+											className="ws-btn ws-btn--outline"
+											onClick={closeAddForm}
+											disabled={creating}
+										>
+											Cancel
+										</button>
+									</div>
+								</form>
 							</div>
-						</form>
-					</div>
-				</div>
-			) : null}
+						</div>,
+						document.body
+					)
+				: null}
 
 			<DataTable
 				title={tableTitle}
@@ -483,6 +641,16 @@ function UserManagement({ user: currentUser }) {
 					</label>
 				) : null}
 			</WorkflowConfirmModal>
+
+			<WorkflowConfirmModal
+				open={Boolean(successModal)}
+				onClose={() => setSuccessModal(null)}
+				title={successModal?.title || 'Done'}
+				description={successModal?.description}
+				primaryLabel="OK"
+				secondaryLabel="Close"
+				onPrimary={() => setSuccessModal(null)}
+			/>
 		</>
 	)
 }

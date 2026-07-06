@@ -195,7 +195,7 @@ class TenancyApplicationController extends Controller
             ]));
         });
 
-        $frontendUrl = config('app.frontend_url', $request->getSchemeAndHttpHost());
+        $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5173'), '/');
         $joinLink = $frontendUrl . '/join?ref=' . $application->ref_code;
 
         $message = strtolower((string) ($application->apply_type ?? '')) === 'joint'
@@ -1041,7 +1041,7 @@ class TenancyApplicationController extends Controller
             'movement_history' => $movement,
         ]));
 
-        $frontendUrl = config('app.frontend_url', $request->getSchemeAndHttpHost());
+        $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5173'), '/');
         $joinLink = $frontendUrl . '/join?ref=' . $tenancyApplication->ref_code;
 
         $message = strtolower((string) ($tenancyApplication->apply_type ?? '')) === 'joint'

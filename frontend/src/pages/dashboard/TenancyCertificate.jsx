@@ -531,10 +531,13 @@ function TenancyCertificate() {
 				data = res.data
 			}
 			setConflictData(null)
+			const refCode = data.ref_code
 			setSubmittedApp({
 				application_no: data.application_no,
-				ref_code: data.ref_code,
-				join_link: data.join_link,
+				ref_code: refCode,
+				join_link: refCode
+					? `${window.location.origin}/join?ref=${encodeURIComponent(refCode)}`
+					: data.join_link,
 				message: data.message,
 				apply_type: data.application?.apply_type || applyType,
 				fee_amount: feeAmount,
@@ -1065,13 +1068,17 @@ function TenancyCertificate() {
 											<p className="tenancy-doc-card__meta">PDF only · scanned copy of the registered agreement</p>
 										</div>
 									</div>
-									<div className="tenancy-doc-slot tenancy-doc-slot--wide">
-										<label className="tenancy-doc-slot__label" htmlFor="uin-agreement-file">
-											<span className="label-text required">Choose file</span>
+									<div className={`tenancy-doc-slot tenancy-doc-slot--wide${agreementFile ? ' is-uploaded' : ''}`}>
+										<div className="tenancy-doc-slot__head">
+											<span className="tenancy-doc-slot__title is-required">Registered tenancy agreement (PDF)</span>
+										</div>
+										<div className="tenancy-doc-slot__row">
 											<input
 												id="uin-agreement-file"
+												className="tenancy-doc-slot__input"
 												type="file"
 												accept=".pdf"
+												required={!agreementFile}
 												onChange={e => {
 													const f = e.target.files[0]
 													setAgreementFile(f)
@@ -1079,8 +1086,9 @@ function TenancyCertificate() {
 													else setAgreementPreviewUrl('')
 												}}
 											/>
-										</label>
-										<div className="tenancy-doc-slot__status">
+											<label htmlFor="uin-agreement-file" className="tenancy-doc-slot__pick-btn">
+												{agreementFile ? 'Change file' : 'Choose file'}
+											</label>
 											{agreementFile ? (
 												<div className="tenancy-doc-slot__uploaded">
 													<span className="tenancy-doc-slot__file-badge" aria-hidden>PDF</span>
@@ -1098,7 +1106,7 @@ function TenancyCertificate() {
 													</button>
 												</div>
 											) : (
-												<span className="tenancy-doc-slot__pending">Awaiting upload</span>
+												<span className="tenancy-doc-slot__pending">No file chosen</span>
 											)}
 										</div>
 									</div>
