@@ -7,7 +7,7 @@ import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmM
 import { useEffect, useState, useCallback } from 'react';
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES, ADMIN_ROLES } from '../../../constants/roles';
 import { APPLICATION_LABELS, APPLICATION_TYPES, SERVICE_APPLICATION_TYPES } from '../../../constants/application';
-import { STATUS_LABELS } from '../../../constants/status';
+import { STATUS, STATUS_LABELS } from '../../../constants/status';
 import { formatDate } from '../../../utils/formatters';
 import { getAdminTableAccent } from '../../../utils/adminTableAccent';
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge';
@@ -38,13 +38,22 @@ const ApplicationList = ({ user }) => {
 
 	const showFilters = ADMIN_ROLES.includes(user?.role);
 	const isQueueRole =
-		ASSISTANT_ROLES.includes(user?.role) || PRINCIPAL_ROLES.includes(user?.role);
+		ASSISTANT_ROLES.includes(user?.role) || PRINCIPAL_ROLES.includes(user?.role) || user?.role === ROLES.VALUER;
 
-	// FIFO: only the oldest pending item (first row on the first page) is actionable.
-	// id alone is not unique across form types, so key on form_type + id.
-	const activeAppKey =
-		isQueueRole && page === 1 && applications.length > 0
-			? `${applications[0].form_type}:${applications[0].id}`
+	const getActionableStatus = (role) => {
+		if (ASSISTANT_ROLES.includes(role)) return [STATUS.SUBMITTED];
+		if (PRINCIPAL_ROLES.includes(role)) return [STATUS.IN_REVIEW, STATUS.VALUER_REPORT_SUBMITTED];
+		if (role === ROLES.VALUER) return [STATUS.VALUER_ASSIGNED];
+		return [];
+	};
+
+	const actionableStatuses = getActionableStatus(user?.role);
+	const firstActionableApp = isQueueRole && page === 1 
+		? applications.find(app => actionableStatuses.includes(app.status))
+		: null;
+
+	const activeAppKey = firstActionableApp
+			? `${firstActionableApp.form_type}:${firstActionableApp.id}`
 			: null;
 	const lockedHint = 'Complete the oldest application first to unlock this one.';
 
@@ -64,6 +73,8 @@ const ApplicationList = ({ user }) => {
 				endpoint = '/api/admin/applications/inbox';
 			} else if (PRINCIPAL_ROLES.includes(user?.role)) {
 				endpoint = '/api/admin/applications/principal-inbox';
+			} else if (user?.role === ROLES.VALUER) {
+				endpoint = '/api/admin/applications/valuer-inbox';
 			}
 
 			const params = { page, per_page: 15 };

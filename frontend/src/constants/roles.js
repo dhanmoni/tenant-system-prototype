@@ -7,6 +7,7 @@ export const ROLES = {
 	RA_ASSISTANT: 'ra_assistant',
 	RC_ASSISTANT: 'rc_assistant',
 	RT_ASSISTANT: 'rt_assistant',
+	VALUER: 'valuer',
 	USER: 'user'
 };
 

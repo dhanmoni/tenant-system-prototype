@@ -9,6 +9,7 @@ export const ROLE_LABELS = {
 	[ROLES.RA_ASSISTANT]: 'Rent Authority Assistant',
 	[ROLES.RC_ASSISTANT]: 'Rent Court Assistant',
 	[ROLES.RT_ASSISTANT]: 'Rent Tribunal Assistant',
+	[ROLES.VALUER]: 'Valuer',
 	[ROLES.USER]: 'Citizen',
 }
 

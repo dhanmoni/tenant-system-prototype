@@ -98,11 +98,15 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
     Route::middleware("role:$allAdminStaffRoles")->group(function () {
         Route::get('/admin/applications/inbox', [ApplicationWorkflowController::class, 'inbox']);
         Route::get('/admin/applications/principal-inbox', [ApplicationWorkflowController::class, 'principalInbox']);
+        Route::get('/admin/applications/valuer-inbox', [ApplicationWorkflowController::class, 'valuerInbox']);
         Route::get('/admin/applications/{applicationNo}', [ApplicationWorkflowController::class, 'showByApplicationNo']);
         Route::get('/admin/applications/{type}/{id}', [ApplicationWorkflowController::class, 'show']);
         Route::post('/admin/applications/{type}/{id}/forward', [ApplicationWorkflowController::class, 'forward']);
         Route::post('/admin/applications/{type}/{id}/reject', [ApplicationWorkflowController::class, 'reject']);
         Route::post('/admin/applications/{type}/{id}/approve', [ApplicationWorkflowController::class, 'approve']);
+        Route::post('/admin/applications/{id}/assign-valuer', [ApplicationWorkflowController::class, 'assignValuer']);
+        Route::post('/admin/applications/{id}/remove-valuer', [ApplicationWorkflowController::class, 'removeValuer']);
+        Route::post('/admin/applications/{id}/submit-valuer-report', [ApplicationWorkflowController::class, 'submitValuerReport']);
     });
 
     // Admin user management

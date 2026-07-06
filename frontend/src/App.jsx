@@ -250,8 +250,18 @@ function App() {
 		sessionStorage.removeItem(PROFILE_REMINDER_DISMISSED_KEY)
 		setUser(null)
 		setPortalEntering(false)
-		navigate('/', { replace: true })
+		navigate('/login', { replace: true })
 	}
+
+	useEffect(() => {
+		const handleUnauthorized = () => {
+			sessionStorage.removeItem(PROFILE_REMINDER_DISMISSED_KEY)
+			setUser(null)
+			navigate('/login', { replace: true })
+		}
+		window.addEventListener('auth:unauthorized', handleUnauthorized)
+		return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
+	}, [navigate])
 
 	useEffect(() => {
 		if (loggingOut && isLandingHome) {
@@ -506,7 +516,12 @@ function App() {
 							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleUserLogin} />
 						}
 					/>
-					<Route path="/login" element={<Login onLogin={handleUserLogin} />} />
+					<Route
+						path="/login"
+						element={
+							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleUserLogin} />
+						}
+					/>
 					<Route path="/register" element={<Navigate to="/login" replace />} />
 					<Route path="/policies" element={<Policies />} />
 					<Route path="/resources" element={<Resources />} />

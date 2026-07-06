@@ -12,6 +12,8 @@ export const STATUS = {
 	UNDER_PROCESS: 'UNDER_PROCESS', // Display state for SUBMITTED in some views
 	DRAFT: 'DRAFT',
 	PARTIAL: 'PARTIAL',
+	VALUER_ASSIGNED: 'VALUER_ASSIGNED',
+	VALUER_REPORT_SUBMITTED: 'VALUER_REPORT_SUBMITTED',
 }
 
 export const STATUS_LABELS = {
@@ -24,6 +26,8 @@ export const STATUS_LABELS = {
 	[STATUS.UNDER_PROCESS]: 'Under Process',
 	[STATUS.DRAFT]: 'Draft',
 	[STATUS.PARTIAL]: 'Awaiting second party',
+	[STATUS.VALUER_ASSIGNED]: 'Assigned to Valuer',
+	[STATUS.VALUER_REPORT_SUBMITTED]: 'Valuer Report Submitted',
 }
 
 export const STATUS_COLORS = {
@@ -34,4 +38,6 @@ export const STATUS_COLORS = {
 	[STATUS.APPROVED]: 'success',
 	[STATUS.COMPLETED]: 'success',
 	[STATUS.UNDER_PROCESS]: 'info',
+	[STATUS.VALUER_ASSIGNED]: 'info',
+	[STATUS.VALUER_REPORT_SUBMITTED]: 'warning',
 }

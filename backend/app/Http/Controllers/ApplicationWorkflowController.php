@@ -54,6 +54,7 @@ class ApplicationWorkflowController extends Controller
             Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
             Roles::RC_ASSISTANT, Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
             Roles::RT_ASSISTANT, Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
+            Roles::VALUER => [ApplicationTypes::VALUER_APPOINTMENT],
             default => [],
         };
     }
@@ -68,9 +69,13 @@ class ApplicationWorkflowController extends Controller
         foreach ($types as $type) {
             $modelClass = $this->getModel($type);
             if (!$modelClass) continue;
-            $app = $modelClass::where('district_id', $districtId)
-                ->where('status', $status)
-                ->orderBy('created_at', 'asc')
+            $query = $modelClass::where('district_id', $districtId);
+            if (is_array($status)) {
+                $query->whereIn('status', $status);
+            } else {
+                $query->where('status', $status);
+            }
+            $app = $query->orderBy('created_at', 'asc')
                 ->orderBy('application_no', 'asc')
                 ->first();
             if ($app) {
@@ -240,7 +245,7 @@ class ApplicationWorkflowController extends Controller
         // Admins (who can reject anything) are not subject to the queue lock.
         $isQueueRole = $user->isAssistant() || in_array($user->role, Roles::principals());
         if ($isQueueRole) {
-            $pendingStatus = $user->isAssistant() ? Status::SUBMITTED : Status::IN_REVIEW;
+            $pendingStatus = $user->isAssistant() ? Status::SUBMITTED : [Status::IN_REVIEW, Status::VALUER_REPORT_SUBMITTED];
             if (!$this->isQueueHead($user, $pendingStatus, $type, $id)) {
                 return response()->json([
                     'message' => 'Please process the oldest pending application in the queue first.',
@@ -277,8 +282,8 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Application outside district'], 403);
         }
 
-        // FIFO: principals must approve the oldest in-review application before the next.
-        if (!$this->isQueueHead($user, Status::IN_REVIEW, $type, $id)) {
+        // FIFO: principals must approve the oldest pending application before the next.
+        if (!$this->isQueueHead($user, [Status::IN_REVIEW, Status::VALUER_REPORT_SUBMITTED], $type, $id)) {
             return response()->json([
                 'message' => 'Please process the oldest pending application in the queue first.',
             ], 409);
@@ -318,7 +323,7 @@ class ApplicationWorkflowController extends Controller
             $modelClass = $this->getModel($type);
             if ($modelClass) {
                 $apps = $modelClass::where('district_id', $districtId)
-                    ->where('status', Status::IN_REVIEW)
+                    ->whereIn('status', [Status::IN_REVIEW, Status::VALUER_REPORT_SUBMITTED, Status::VALUER_ASSIGNED])
                     ->with(['user', 'forwardedBy', 'district'])
                     ->get()
                     ->map(function ($app) use ($type) {
@@ -496,7 +501,11 @@ class ApplicationWorkflowController extends Controller
         $modelClass = $this->getModel($type);
         if (!$modelClass) return response()->json(['message' => 'Invalid form type'], 400);
 
-        $application = $modelClass::with(['user', 'forwardedBy', 'district'])->find($id);
+        $relations = ['user', 'forwardedBy', 'district'];
+        if ($type === ApplicationTypes::VALUER_APPOINTMENT) {
+            $relations[] = 'assignedValuer';
+        }
+        $application = $modelClass::with($relations)->find($id);
         if (!$application) return response()->json(['message' => 'Application not found'], 404);
 
         // Permissions: Super Admin, District Admin (same district), or designated Head/Assistant
@@ -523,6 +532,9 @@ class ApplicationWorkflowController extends Controller
                 $relations = ['district'];
                 if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
                     $relations = ['user', 'forwardedBy', 'district'];
+                }
+                if ($type === ApplicationTypes::VALUER_APPOINTMENT) {
+                    $relations[] = 'assignedValuer';
                 }
                 $application = $modelClass::with($relations)->where('application_no', $applicationNo)->first();
                 if ($application) {
@@ -604,6 +616,166 @@ class ApplicationWorkflowController extends Controller
         ]);
 
         return response()->json(['message' => 'Application updated successfully', 'application' => $application]);
+    }
+
+    public function assignValuer(Request $request, $id)
+    {
+        $user = $request->user();
+        if ($user->role !== Roles::RENT_AUTHORITY) {
+            return response()->json(['message' => 'Only Rent Authority can assign a valuer'], 403);
+        }
+
+        $request->validate([
+            'assigned_valuer_id' => 'required|exists:users,id',
+        ]);
+
+        $modelClass = $this->getModel(ApplicationTypes::VALUER_APPOINTMENT);
+        $application = $modelClass::find($id);
+        
+        if (!$application) {
+            return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        if ($application->district_id !== $user->district_id) {
+            return response()->json(['message' => 'Application outside district'], 403);
+        }
+
+        // Must be IN_REVIEW, VALUER_ASSIGNED, or VALUER_REPORT_SUBMITTED to assign/reassign
+        if (!in_array($application->status, [Status::IN_REVIEW, Status::VALUER_ASSIGNED, Status::VALUER_REPORT_SUBMITTED])) {
+            return response()->json(['message' => 'Application must be in review to assign a valuer'], 422);
+        }
+
+        // Verify the assigned user is a valuer in the same district
+        $valuer = \App\Models\User::find($request->assigned_valuer_id);
+        if ($valuer->role !== Roles::VALUER || $valuer->district_id !== $user->district_id) {
+            return response()->json(['message' => 'Invalid valuer selected'], 422);
+        }
+
+        $application->update([
+            'status' => Status::VALUER_ASSIGNED,
+            'assigned_valuer_id' => $valuer->id,
+            'valuer_assigned_at' => Carbon::now(),
+            'assigned_to_role' => Roles::VALUER,
+        ]);
+
+        return response()->json(['message' => 'Valuer assigned successfully', 'application' => $application]);
+    }
+
+    public function removeValuer(Request $request, $id)
+    {
+        $user = $request->user();
+        if ($user->role !== Roles::RENT_AUTHORITY) {
+            return response()->json(['message' => 'Only Rent Authority can remove a valuer'], 403);
+        }
+
+        $modelClass = $this->getModel(ApplicationTypes::VALUER_APPOINTMENT);
+        $application = $modelClass::find($id);
+        
+        if (!$application) {
+            return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        if ($application->district_id !== $user->district_id) {
+            return response()->json(['message' => 'Application outside district'], 403);
+        }
+
+        // Must be VALUER_ASSIGNED to remove
+        if ($application->status !== Status::VALUER_ASSIGNED) {
+            return response()->json(['message' => 'Application must be in valuer assigned state to remove valuer'], 422);
+        }
+
+        $application->update([
+            'status' => Status::IN_REVIEW,
+            'assigned_valuer_id' => null,
+            'valuer_assigned_at' => null,
+            'assigned_to_role' => Roles::RENT_AUTHORITY,
+        ]);
+
+        return response()->json(['message' => 'Valuer removed successfully', 'application' => $application]);
+    }
+
+    public function valuerInbox(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== Roles::VALUER) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 15);
+
+        $modelClass = $this->getModel(ApplicationTypes::VALUER_APPOINTMENT);
+        $apps = $modelClass::where('assigned_valuer_id', $user->id)
+            ->where('status', Status::VALUER_ASSIGNED)
+            ->with(['user', 'district'])
+            ->get()
+            ->map(function ($app) {
+                $app->form_type = ApplicationTypes::VALUER_APPOINTMENT;
+                return $app;
+            });
+
+        $resourceArray = ApplicationResource::collection($apps)->toArray($request);
+        usort($resourceArray, [self::class, 'compareFifo']);
+
+        $total = count($resourceArray);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $lastPage));
+        $offset = ($page - 1) * $perPage;
+        $paginatedItems = array_slice($resourceArray, $offset, $perPage);
+
+        return response()->json([
+            'applications' => $paginatedItems,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => $total,
+            ],
+        ]);
+    }
+
+    public function submitValuerReport(Request $request, $id)
+    {
+        $user = $request->user();
+        if ($user->role !== Roles::VALUER) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'valuer_report' => 'required|string',
+        ]);
+
+        $modelClass = $this->getModel(ApplicationTypes::VALUER_APPOINTMENT);
+        $application = $modelClass::find($id);
+
+        if (!$application) {
+            return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        if ($application->assigned_valuer_id !== $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // FIFO: valuer must act on the oldest assigned application first
+        $oldest = $modelClass::where('assigned_valuer_id', $user->id)
+            ->where('status', Status::VALUER_ASSIGNED)
+            ->orderBy('created_at', 'asc')
+            ->orderBy('application_no', 'asc')
+            ->first();
+
+        if ($oldest && (int) $oldest->id !== (int) $id) {
+            return response()->json([
+                'message' => 'Please process the oldest pending application in your queue first.',
+            ], 409);
+        }
+
+        $application->update([
+            'status' => Status::VALUER_REPORT_SUBMITTED,
+            'valuer_report' => $request->valuer_report,
+            'assigned_to_role' => Roles::RENT_AUTHORITY,
+        ]);
+
+        return response()->json(['message' => 'Report submitted successfully', 'application' => $application]);
     }
 
     /**

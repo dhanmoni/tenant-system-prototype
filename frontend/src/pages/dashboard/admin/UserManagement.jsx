@@ -13,6 +13,7 @@ const STAFF_ROLE_OPTIONS = [
 	ROLES.DISTRICT_ADMIN,
 	...PRINCIPAL_ROLES,
 	...ASSISTANT_ROLES,
+	ROLES.VALUER,
 ]
 
 function UserManagement({ user: currentUser }) {
@@ -130,7 +131,13 @@ function UserManagement({ user: currentUser }) {
 			})
 			loadUsers()
 		} catch (err) {
-			setError(err.response?.data?.message || 'Failed to create user')
+			const data = err.response?.data
+			if (data?.errors) {
+				const firstError = Object.values(data.errors)[0][0]
+				setError(firstError)
+			} else {
+				setError(data?.message || 'Failed to create user')
+			}
 		}
 	}
 
@@ -182,9 +189,9 @@ function UserManagement({ user: currentUser }) {
 			return [ROLES.DISTRICT_ADMIN, ...PRINCIPAL_ROLES, ...ASSISTANT_ROLES]
 		}
 		if (currentUser.role === ROLES.DISTRICT_ADMIN) {
-			return [...PRINCIPAL_ROLES, ...ASSISTANT_ROLES]
+			return [...PRINCIPAL_ROLES, ...ASSISTANT_ROLES, ROLES.VALUER]
 		}
-		if (currentUser.role === ROLES.RENT_AUTHORITY) return [ROLES.RA_ASSISTANT]
+		if (currentUser.role === ROLES.RENT_AUTHORITY) return [ROLES.RA_ASSISTANT, ROLES.VALUER]
 		if (currentUser.role === ROLES.RENT_COURT) return [ROLES.RC_ASSISTANT]
 		if (currentUser.role === ROLES.RENT_TRIBUNAL) return [ROLES.RT_ASSISTANT]
 		return []
@@ -294,6 +301,11 @@ function UserManagement({ user: currentUser }) {
 				<div className="modal-overlay">
 					<div className="auth-card admin-user-modal">
 						<h3>Create staff user</h3>
+						{error ? (
+							<div className="ws-profile-alert ws-profile-alert--error" role="alert" style={{ marginBottom: '1rem' }}>
+								{error}
+							</div>
+						) : null}
 						<form onSubmit={handleSubmit}>
 							<div className="form-group">
 								<label>Name</label>

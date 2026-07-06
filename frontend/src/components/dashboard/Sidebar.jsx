@@ -302,7 +302,7 @@ function Sidebar({ user, onLogout }) {
 							</NavLink>
 						)}
 
-						{ASSISTANT_ROLES.includes(user.role) && (
+						{[...ASSISTANT_ROLES, ROLES.VALUER].includes(user.role) && (
 							<NavLink
 								to="/dashboard/admin/inbox"
 								className={linkClass}
