@@ -65,9 +65,6 @@ export function getWorkspaceNavigation(user) {
 
 	if (ADMIN_ROLES.includes(user.role)) {
 		items.push({ to: '/dashboard/admin/tenancy', label: 'Tenancy applications', icon: 'file' })
-		if (user.role !== ROLES.SUPER_ADMIN) {
-			items.push({ to: '/dashboard/status', label: 'UIN status', icon: 'status' })
-		}
 	}
 
 	if (user.role === ROLES.SUPER_ADMIN) {

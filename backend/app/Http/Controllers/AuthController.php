@@ -74,14 +74,18 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 422);
             }
 
-            // Find last active user among them
-            $lastActiveUserId = UserActivityLog::whereIn('user_id', $users->pluck('id'))
+            $activeUsers = $users->where('is_blocked', false);
+            if ($activeUsers->isEmpty()) {
+                return response()->json(['message' => 'Account is blocked'], 403);
+            }
+
+            // Find last active user among active ones
+            $lastActiveUserId = UserActivityLog::whereIn('user_id', $activeUsers->pluck('id'))
                 ->where('action', 'login')
                 ->orderByDesc('logged_at')
                 ->value('user_id');
 
-            $user = $lastActiveUserId ? $users->firstWhere('id', $lastActiveUserId) : $users->first();
-
+            $user = $lastActiveUserId ? $activeUsers->firstWhere('id', $lastActiveUserId) : $activeUsers->first();
             Auth::login($user);
         } else {
             $users = User::where('phone', $validated['phone'])->get();
@@ -89,33 +93,29 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 422);
             }
 
-            $matchedUser = null;
+            $matchedUsers = collect();
             foreach ($users as $u) {
                 if (Hash::check($validated['password'], $u->password)) {
-                    $matchedUser = $u;
-                    break;
+                    $matchedUsers->push($u);
                 }
             }
 
-            if (!$matchedUser) {
+            if ($matchedUsers->isEmpty()) {
                 return response()->json(['message' => 'Invalid credentials'], 422);
             }
 
-            $lastActiveUserId = UserActivityLog::whereIn('user_id', $users->pluck('id'))
+            $activeMatchedUsers = $matchedUsers->where('is_blocked', false);
+            if ($activeMatchedUsers->isEmpty()) {
+                return response()->json(['message' => 'Account is blocked'], 403);
+            }
+
+            $lastActiveUserId = UserActivityLog::whereIn('user_id', $activeMatchedUsers->pluck('id'))
                 ->where('action', 'login')
                 ->orderByDesc('logged_at')
                 ->value('user_id');
 
-            $user = $lastActiveUserId ? $users->firstWhere('id', $lastActiveUserId) : $users->first();
+            $user = $lastActiveUserId ? $activeMatchedUsers->firstWhere('id', $lastActiveUserId) : $activeMatchedUsers->first();
             Auth::login($user);
-        }
-
-        if ($user->is_blocked) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return response()->json(['message' => 'Account is blocked'], 403);
         }
         if (
             !$user->approved_at &&
