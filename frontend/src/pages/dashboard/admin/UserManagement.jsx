@@ -184,7 +184,7 @@ function UserManagement({ user: currentUser }) {
 			})
 			setSuccessModal({
 				title: 'Staff user created',
-				description: `${payload.name} was added successfully. Default password is Test@123.`,
+				description: `${payload.name} was added successfully.`,
 			})
 			loadUsers()
 		} catch (err) {

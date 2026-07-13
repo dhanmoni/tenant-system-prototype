@@ -59,7 +59,15 @@ class UserManagementController extends Controller
             'district_id' => ['nullable', 'integer', 'exists:districts,id'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'designation_id' => ['nullable', 'integer', 'exists:designations,id'],
-            'phone' => ['required', 'string', 'size:10', 'regex:/^[0-9]{10}$/'],
+            'phone' => [
+                'required', 
+                'string', 
+                'size:10', 
+                'regex:/^[0-9]{10}$/',
+                Rule::unique('users')->where(function ($query) use ($request) {
+                    return $query->where('role', $request->role);
+                })
+            ],
             'reports_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
@@ -160,7 +168,16 @@ class UserManagementController extends Controller
             'district_id' => ['nullable', 'integer', 'exists:districts,id'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'designation_id' => ['nullable', 'integer', 'exists:designations,id'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => [
+                'nullable', 
+                'string', 
+                'size:10', 
+                'regex:/^[0-9]{10}$/',
+                Rule::unique('users')->where(function ($query) use ($request, $user) {
+                    $role = $request->input('role') ?? $user->role;
+                    return $query->where('role', $role);
+                })->ignore($user->id)
+            ],
             'reports_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
