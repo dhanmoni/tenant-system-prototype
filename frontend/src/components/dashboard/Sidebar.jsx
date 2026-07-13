@@ -6,6 +6,7 @@ import { tenantServiceGroups } from '../../data/tenantServices'
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, ADMIN_ROLES } from '../../constants/roles'
 import { getRoleLabel } from '../../constants/roleLabels'
 import { formatDisplayEmail, formatDisplayName } from '../../utils/formatters'
+import api from '../../api'
 
 const FLYOUT_CLOSE_DELAY_MS = 220
 
@@ -106,6 +107,31 @@ function Sidebar({ user, onLogout }) {
 	const [flyoutOpen, setFlyoutOpen] = useState(false)
 	const [flyoutPosition, setFlyoutPosition] = useState(null)
 	const [activeCategoryId, setActiveCategoryId] = useState(tenantServiceGroups[0]?.id)
+	const [profiles, setProfiles] = useState([])
+	const [isSwitching, setIsSwitching] = useState(false)
+
+	useEffect(() => {
+		api.get('/api/user-profiles')
+			.then((res) => {
+				if (res.data.profiles && res.data.profiles.length > 1) {
+					setProfiles(res.data.profiles)
+				}
+			})
+			.catch((err) => console.error('Failed to fetch user profiles:', err))
+	}, [])
+
+	const handleProfileSwitch = async (e) => {
+		const targetId = e.target.value
+		if (!targetId || targetId === String(user.id)) return
+		setIsSwitching(true)
+		try {
+			await api.post('/api/switch-profile', { user_id: targetId })
+			window.location.href = '/dashboard'
+		} catch (err) {
+			console.error(err)
+			setIsSwitching(false)
+		}
+	}
 
 	const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 	const photoUrl = user?.passport_photo_url
@@ -208,6 +234,24 @@ function Sidebar({ user, onLogout }) {
 					</div>
 				</div>
 				<div className="dashboard-menu-account-actions" role="group" aria-label="Account actions">
+					{profiles.length > 1 && (
+						<div className="dashboard-menu-account-switcher" style={{ padding: '0 16px 8px' }}>
+							<label htmlFor="role-switcher" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>Switch Role</label>
+							<select
+								id="role-switcher"
+								value={user.id}
+								onChange={handleProfileSwitch}
+								disabled={isSwitching}
+								style={{ width: '100%', padding: '6px', borderRadius: '6px', fontSize: '0.85rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+							>
+								{profiles.map(p => (
+									<option key={p.id} value={p.id}>
+										{p.role === ROLES.USER ? 'Citizen' : getRoleLabel(p.role)}
+									</option>
+								))}
+							</select>
+						</div>
+					)}
 					<NavLink
 						to="/dashboard/profile"
 						className={`dashboard-menu-account-btn${isProfileRoute ? ' active' : ''}`}

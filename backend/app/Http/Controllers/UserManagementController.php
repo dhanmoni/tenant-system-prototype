@@ -54,12 +54,12 @@ class UserManagementController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'role' => ['required', 'string', 'max:255', 'exists:roles,name'],
             'district_id' => ['nullable', 'integer', 'exists:districts,id'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'designation_id' => ['nullable', 'integer', 'exists:designations,id'],
-            'phone' => ['required', 'string', 'size:10', 'regex:/^[0-9]{10}$/', 'unique:users,phone'],
+            'phone' => ['required', 'string', 'size:10', 'regex:/^[0-9]{10}$/'],
             'reports_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
@@ -155,7 +155,7 @@ class UserManagementController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'role' => ['required', 'string', 'max:255', 'exists:roles,name'],
             'district_id' => ['nullable', 'integer', 'exists:districts,id'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
