@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { buildTenancyFormData, applyDraftToForm } from '../../utils/tenancyDraft'
@@ -15,15 +15,16 @@ function TenancyCertificate() {
 
 	const [tenancyStep, setTenancyStep] = useState(1)
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
+	const [saveToast, setSaveToast] = useState('')
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
 	const [draftSaving, setDraftSaving] = useState(false)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
-	const [draftLoaded, setDraftLoaded] = useState(false)
+	const [pageReady, setPageReady] = useState(false)
 	const [conflictData, setConflictData] = useState(null)
 	const [submittedApp, setSubmittedApp] = useState(null)
 	const [linkCopied, setLinkCopied] = useState(false)
+	const saveToastTimerRef = useRef(null)
 
 	// Payment State
 	const [paymentComplete, setPaymentComplete] = useState(false)
@@ -104,11 +105,15 @@ function TenancyCertificate() {
 	const [profilePan, setProfilePan] = useState('')
 	const [profilePhotoPreview, setProfilePhotoPreview] = useState('')
 
-	useEffect(() => {
-		loadProfile()
-		loadTenancyOffices()
-		loadTenancyDistricts()
-	}, [])
+	const loadTenancyVillageWards = async (districtId) => {
+		if (!districtId) return setTenancyVillageWards([])
+		setTenancyVillageWardsLoading(true)
+		try {
+			const { data } = await api.get('/api/public/village-wards', { params: { district_id: districtId } })
+			setTenancyVillageWards(Array.isArray(data) ? data : data.data || [])
+		} catch (err) { setError('Failed to load village/wards') }
+		finally { setTenancyVillageWardsLoading(false) }
+	}
 
 	const populateFromDraft = useCallback(
 		(draft) => {
@@ -167,7 +172,6 @@ function TenancyCertificate() {
 				const app = data.application || data
 				if (app?.status === 'DRAFT') {
 					populateFromDraft(app)
-					setDraftLoaded(true)
 					return
 				}
 			}
@@ -177,16 +181,8 @@ function TenancyCertificate() {
 			}
 		} catch (err) {
 			console.error('Failed to load draft', err)
-		} finally {
-			setDraftLoaded(true)
 		}
 	}, [populateFromDraft, searchParams])
-
-	useEffect(() => {
-		if (tenancyDistricts.length > 0) {
-			loadDraft()
-		}
-	}, [tenancyDistricts.length, loadDraft])
 
 	const loadProfile = async () => {
 		try {
@@ -206,6 +202,48 @@ function TenancyCertificate() {
 			else if (photoPath) setProfilePhotoPreview(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${photoPath}`)
 		} catch (err) { console.error('Failed to load profile for prefill') }
 	}
+
+	const loadTenancyOffices = async () => {
+		setTenancyOfficesLoading(true)
+		try {
+			const { data } = await api.get('/api/public/offices')
+			const items = Array.isArray(data) ? data : (data.data || data.offices || [])
+			setTenancyOffices(items)
+		} catch (err) { setError('Failed to load offices') }
+		finally { setTenancyOfficesLoading(false) }
+	}
+
+	const loadTenancyDistricts = async () => {
+		setTenancyDistrictsLoading(true)
+		try {
+			const { data } = await api.get('/api/public/districts')
+			setTenancyDistricts(Array.isArray(data) ? data : (data.districts || data.data || []))
+		} catch (err) { setError('Failed to load districts') }
+		finally { setTenancyDistrictsLoading(false) }
+	}
+
+	useEffect(() => {
+		let active = true
+		setPageReady(false)
+
+		const boot = async () => {
+			try {
+				await Promise.all([
+					loadProfile(),
+					loadTenancyOffices(),
+					loadTenancyDistricts(),
+					loadDraft(),
+				])
+			} finally {
+				if (active) setPageReady(true)
+			}
+		}
+
+		boot()
+		return () => {
+			active = false
+		}
+	}, [loadDraft])
 
 	// Dynamic pre-fill based on initiatorRole and profile data
 	useEffect(() => {
@@ -238,35 +276,6 @@ function TenancyCertificate() {
 		} else { setPropertyTenancyDuration('') }
 	}, [propertyPossessionDate, propertyTenancyEndDate])
 
-	const loadTenancyOffices = async () => {
-		setTenancyOfficesLoading(true)
-		try {
-			const { data } = await api.get('/api/public/offices')
-			const items = Array.isArray(data) ? data : (data.data || data.offices || [])
-			setTenancyOffices(items)
-		} catch (err) { setError('Failed to load offices') }
-		finally { setTenancyOfficesLoading(false) }
-	}
-
-	const loadTenancyDistricts = async () => {
-		setTenancyDistrictsLoading(true)
-		try {
-			const { data } = await api.get('/api/public/districts')
-			setTenancyDistricts(Array.isArray(data) ? data : (data.districts || data.data || []))
-		} catch (err) { setError('Failed to load districts') }
-		finally { setTenancyDistrictsLoading(false) }
-	}
-
-	const loadTenancyVillageWards = async (districtId) => {
-		if (!districtId) return setTenancyVillageWards([])
-		setTenancyVillageWardsLoading(true)
-		try {
-			const { data } = await api.get('/api/public/village-wards', { params: { district_id: districtId } })
-			setTenancyVillageWards(Array.isArray(data) ? data : data.data || [])
-		} catch (err) { setError('Failed to load village/wards') }
-		finally { setTenancyVillageWardsLoading(false) }
-	}
-
 	const resetTenancyForm = () => {
 		setTenancyStep(1); setDraftApplicationNo(null); setSavedWizardStep(0); setTenancyRegistrationDate(''); setTenancyOfficeId('');
 		setAgreementFile(null); setAgreementPreviewUrl(''); setLandlordPhotoFile(null); setLandlordPhotoPreview(profileType === 'landlord' ? profilePhotoPreview : '');
@@ -274,7 +283,7 @@ function TenancyCertificate() {
 		setTenantSignatureFile(null); setTenantSignaturePreview(''); setManagerName(''); setManagerAddress(''); setManagerEmail(''); setManagerPhone(''); setManagerPan('');
 		setTenantPreviousTenancy(''); setPropertyPossessionDate(''); setPropertyRentPayable(''); setPropertyPremisesDescription(''); setPropertyFurnitureDescription('');
 		setPropertyChargeElectricity(''); setPropertyChargeWater(''); setPropertyChargeFurnishing(''); setPropertyChargeOtherServices(''); setPropertyTenancyDuration('');
-		setPropertyTenancyEndDate(''); setSuccess(''); setError(''); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyDistrictId('');
+		setPropertyTenancyEndDate(''); setSaveToast(''); setError(''); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyDistrictId('');
 		setPaymentComplete(false); setPaymentSimulating(false); setPaymentGrn(''); setDeclarationChecked(false);
 		setInitiatorRole(profileType === 'landlord' ? 'LANDLORD' : profileType === 'tenant' ? 'TENANT' : '')
 	}
@@ -301,6 +310,7 @@ function TenancyCertificate() {
 			setPaymentSimulating(false)
 			setPaymentComplete(true)
 			setPaymentGrn(String(Math.floor(Math.random() * 1000000000)))
+			showSaveToast('Payment completed.')
 		}, 1500)
 	}
 
@@ -456,9 +466,21 @@ function TenancyCertificate() {
 		managerPanFile,
 	})
 
+	const showSaveToast = useCallback((message = 'Progress saved.') => {
+		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+		setSaveToast(message)
+		saveToastTimerRef.current = setTimeout(() => {
+			setSaveToast('')
+			saveToastTimerRef.current = null
+		}, 2800)
+	}, [])
+
+	useEffect(() => () => {
+		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+	}, [])
+
 	const saveDraftStep = async (step) => {
 		setError('')
-		setSuccess('')
 		setDraftSaving(true)
 		try {
 			await csrf()
@@ -487,7 +509,7 @@ function TenancyCertificate() {
 				setDraftApplicationNo(draft.application_no)
 				setSavedWizardStep(Math.max(step, Number(draft.wizard_step) || step))
 			}
-			setSuccess('Progress saved.')
+			showSaveToast(step === 4 ? 'Preview completed.' : 'Progress saved.')
 			return true
 		} catch (err) {
 			const errors = err?.response?.data?.errors
@@ -506,7 +528,7 @@ function TenancyCertificate() {
 	}
 
 	const submitTenancyApplication = async (forceNew = false) => {
-		setError(''); setSuccess(''); setTenancySubmitting(true)
+		setError(''); setTenancySubmitting(true)
 		if (!forceNew) setConflictData(null)
 
 		try {
@@ -572,7 +594,6 @@ function TenancyCertificate() {
 
 	const TOTAL_STEPS = tenancySteps.length
 
-	const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
 	const maxReachableStep = Math.min(TOTAL_STEPS, Math.max(tenancyStep, savedWizardStep + 1))
 
 	const scrollFormToTop = useCallback(() => {
@@ -593,7 +614,6 @@ function TenancyCertificate() {
 		if (stepId > maxReachableStep) return
 		setTenancyStep(stepId)
 		setError('')
-		setSuccess('')
 		// Ensure village/ward list is available when returning to registration
 		if (stepId === 1 && tenancyDistrictId) {
 			loadTenancyVillageWards(tenancyDistrictId)
@@ -771,27 +791,25 @@ function TenancyCertificate() {
 
 	return (
 		<div className="ws-page ws-uin-apply tenancy-certificate-page">
+			{saveToast ? (
+				<div className="ws-uin-save-toast" role="status" aria-live="polite">
+					{saveToast}
+				</div>
+			) : null}
+			{!pageReady ? (
+				<div className="ws-uin-apply-loading" role="status" aria-live="polite">
+					Loading application…
+				</div>
+			) : (
+				<>
 			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
 				<Link to="/dashboard">Dashboard</Link>
 				<span className="ws-breadcrumb-sep">/</span>
 				<span>Apply for UIN</span>
 			</nav>
 
-			<header className="ws-uin-apply-head">
-				<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
-				<p className="ws-uin-apply-lead">
-					Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
-				</p>
-				{draftApplicationNo ? (
-					<p className="ws-uin-apply-draft-id">
-						Draft: <strong>{draftApplicationNo}</strong>
-					</p>
-				) : null}
-			</header>
-
 			<div className="ws-uin-apply-body">
-				<aside className="ws-uin-wizard-rail" aria-label="Application stages">
-					<p className="ws-uin-wizard-rail-title">Stages</p>
+				<nav className="ws-uin-wizard-progress" aria-label="Application stages">
 					<ol className="ws-uin-wizard-steps">
 						{tenancySteps.map((step, idx) => {
 							const done = tenancyStep > step.id || savedWizardStep >= step.id
@@ -819,7 +837,7 @@ function TenancyCertificate() {
 							)
 						})}
 					</ol>
-				</aside>
+				</nav>
 
 				<div className="ws-uin-apply-main">
 					{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
@@ -834,17 +852,21 @@ function TenancyCertificate() {
 						</div>
 					)}
 
-					{success ? <div className="ws-alert ws-alert--success">{success}</div> : null}
-
-					{!draftLoaded ? (
-						<div className="ws-uin-apply-loading">Loading your application…</div>
-					) : null}
-
-					{draftLoaded ? (
 			<form
 				className={`tenancy-form ws-uin-apply-form${tenancyStep === 4 ? ' ws-uin-apply-form--preview-step' : ''}`}
 				onSubmit={handleContinue}
 			>
+				<header className="ws-uin-apply-form-head">
+					<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
+					<p className="ws-uin-apply-lead">
+						Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
+					</p>
+					<p className="ws-uin-apply-type-note">
+						<strong>Joint</strong> (agreement within 3 months): both parties complete the form.
+						<strong> Individual</strong> (older than 3 months): you apply alone.
+					</p>
+				</header>
+
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
 						<div className="form-grid">
@@ -860,6 +882,7 @@ function TenancyCertificate() {
 							<label>
 								<span className="label-text required">Date of Agreement</span>
 								<input type="date" value={tenancyRegistrationDate} onChange={e => setTenancyRegistrationDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required max={new Date().toISOString().split('T')[0]} />
+								<span className="ws-uin-field-hint">Must be within the last 3 months.</span>
 							</label>
 							<label>
 								<span className="label-text required">District</span>
@@ -887,36 +910,15 @@ function TenancyCertificate() {
 
 							<label>
 								<span className="label-text required">Application Type</span>
-								<input type="text" value={applyType} readOnly disabled className="readonly-input" />
+								<input type="text" value={applyType || 'Select agreement date'} readOnly disabled className="readonly-input" />
 							</label>
 						</div>
 
-						<div className="tenancy-criteria-box tenancy-criteria-box--after-type">
-							<h2 className="tenancy-criteria-title">Eligibility criteria</h2>
-							<p className="tenancy-criteria-intro">You may apply only if the following conditions are satisfied:</p>
-							<ul className="tenancy-criteria-list">
-								<li className={applyType ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
-									<span className="tenancy-criteria-icon">{applyType ? '✓' : '○'}</span>
-									<span>Application type: {applyType || 'Waiting for date...'}</span>
-								</li>
-								<li className={tenancyOfficeId ? 'tenancy-criteria-met' : 'tenancy-criteria-pending'}>
-									<span className="tenancy-criteria-icon">{tenancyOfficeId ? '✓' : '○'}</span>
-									<span>Circle office must be selected.</span>
-								</li>
-							</ul>
-							{tenancyRegistrationDate ? (
-								<div className={`tenancy-eligibility-result ${eligibilityMet ? 'eligible' : 'not-eligible'}`}>
-									{eligibilityMet ? (
-										<p>
-											<strong>You are eligible</strong> to apply. Type: <strong>{applyType}</strong>
-											{applyType === 'Joint' ? ' — the other party will complete their details after you submit.' : null}
-										</p>
-									) : registrationTooOld ? (
-										<p><strong>Not eligible,</strong> as agreement date is more than 3 months old.</p>
-									) : null}
-								</div>
-							) : null}
-						</div>
+						{registrationTooOld ? (
+							<div className="ws-alert ws-alert--error" role="alert">
+								Not eligible — agreement date is more than 3 months old.
+							</div>
+						) : null}
 					</fieldset>
 				)}
 				{tenancyStep === 2 && (
@@ -1475,7 +1477,6 @@ function TenancyCertificate() {
 					) : null}
 				</div>
 			</form>
-					) : null}
 				</div>
 			</div>
 
@@ -1504,6 +1505,8 @@ function TenancyCertificate() {
 					</div>
 				</div>
 			) : null}
+				</>
+			)}
 		</div>
 	)
 }

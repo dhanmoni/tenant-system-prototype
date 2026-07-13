@@ -1,34 +1,38 @@
 import { Link } from 'react-router-dom'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
+import { useLanguage } from '../i18n'
 
 function Contact() {
+	const { t } = useLanguage()
+	const addressLines = t('contact.addressLines').split('\n')
+
 	return (
 		<PublicPageLayout
-			title="Contact Us"
+			title={t('contact.title')}
 			titleId="contact-heading"
-			breadcrumbLabel="Contact Us"
-			lead="Directorate of Town and Country Planning, Assam — helpdesk and office contact details. Information below is for demonstration; replace with official published contacts for production."
+			breadcrumbLabel={t('contact.title')}
+			lead={t('contact.lead')}
 		>
 			<div className="gov-plain-page">
 				<div className="gov-plain-page__columns">
 					<div className="gov-plain-page__col">
 						<section>
-							<h2>Helpdesk</h2>
+							<h2>{t('contact.helpdesk')}</h2>
 							<p>
-								<strong>Toll-free:</strong>{' '}
+								<strong>{t('contact.tollFree')}</strong>{' '}
 								<a href="tel:18000000000">1800-000-0000</a>
 							</p>
 							<p>
-								<strong>Email:</strong>{' '}
+								<strong>{t('contact.emailLabel')}</strong>{' '}
 								<a href="mailto:helpdesk.tcms@nic.in">helpdesk.tcms@nic.in</a>
 							</p>
 							<p>
-								<strong>Hours (demo):</strong> Monday–Friday, 10:00–17:00 IST
+								<strong>{t('contact.hoursLabel')}</strong> {t('contact.hoursValue')}
 							</p>
 						</section>
 
 						<section>
-							<h2>Phone</h2>
+							<h2>{t('contact.phone')}</h2>
 							<p>
 								<a href="tel:+913612234567">+91 361 223 4567</a>
 							</p>
@@ -37,18 +41,19 @@ function Contact() {
 
 					<div className="gov-plain-page__col">
 						<section>
-							<h2>Office address</h2>
+							<h2>{t('contact.officeAddress')}</h2>
 							<p>
-								Directorate of Town and Country Planning
-								<br />
-								Urban Affairs Complex, Sachivalaya Road, Dispur
-								<br />
-								Guwahati, Assam 781006
+								{addressLines.map((line, index) => (
+									<span key={line}>
+										{index > 0 ? <br /> : null}
+										{line}
+									</span>
+								))}
 							</p>
 						</section>
 
 						<section>
-							<h2>Email</h2>
+							<h2>{t('contact.email')}</h2>
 							<p>
 								<a href="mailto:support@assamtenancy.gov.in">
 									support@assamtenancy.gov.in
@@ -59,14 +64,11 @@ function Contact() {
 				</div>
 
 				<section className="gov-plain-page__map" aria-labelledby="contact-map-heading">
-					<h2 id="contact-map-heading">Office location</h2>
-					<p>
-						Directorate of Town and Country Planning, Urban Affairs Complex, Sachivalaya
-						Road, Dispur, Guwahati, Assam 781006
-					</p>
+					<h2 id="contact-map-heading">{t('contact.mapTitle')}</h2>
+					<p>{t('contact.mapAddress')}</p>
 					<div className="gov-plain-page__map-frame">
 						<iframe
-							title="Directorate of Town and Country Planning office location"
+							title={t('contact.mapIframe')}
 							className="gov-plain-page__map-embed"
 							loading="lazy"
 							referrerPolicy="no-referrer-when-downgrade"
@@ -79,23 +81,20 @@ function Contact() {
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							Open in Google Maps
+							{t('contact.openMaps')}
 						</a>
 					</p>
 				</section>
 
-				<p className="gov-plain-page__meta">
-					Map and contact details are for reference only. Verify the exact office location
-					and published helpline numbers with the department before visiting.
-				</p>
+				<p className="gov-plain-page__meta">{t('contact.meta')}</p>
 
 				<p className="gov-plain-page__links">
-					<Link to="/#login">Sign in</Link>
+					<Link to="/#login">{t('contact.signIn')}</Link>
 					{' · '}
-					<Link to="/#register">Register</Link>
+					<Link to="/#register">{t('contact.register')}</Link>
 					{' · '}
 					<a href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">
-						TCP Assam official site
+						{t('contact.tcpSite')}
 					</a>
 				</p>
 			</div>

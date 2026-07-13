@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Check } from 'lucide-react'
 import AuthPanel from './AuthPanel'
@@ -9,12 +9,7 @@ import {
 	introLineVariants,
 	introTitleVariants,
 } from '../../utils/landingMotion'
-
-const PROMO_FEATURES = [
-	'Apply for UIN and track status from your dashboard',
-	'File Rent Authority, Court, and Tribunal forms online',
-	'Secure sign-in with mobile OTP — no password to remember',
-]
+import { useLanguage } from '../../i18n'
 
 const featureVariants = {
 	hidden: { opacity: 0, x: -14, scale: 0.98 },
@@ -32,10 +27,20 @@ const featureVariants = {
 }
 
 function GetStartedSection({ authPanelProps }) {
+	const { t } = useLanguage()
 	const promoRef = useRef(null)
 	const reduceMotion = useReducedMotion()
 	const promoInView = useInView(promoRef, { once: true, margin: '-10% 0px -8% 0px' })
 	const animate = reduceMotion || promoInView
+
+	const promoFeatures = useMemo(
+		() => [
+			t('home.getStarted.feature1'),
+			t('home.getStarted.feature2'),
+			t('home.getStarted.feature3'),
+		],
+		[t],
+	)
 
 	return (
 		<section
@@ -55,7 +60,7 @@ function GetStartedSection({ authPanelProps }) {
 						className="get-started-eyebrow"
 						variants={reduceMotion ? undefined : introEyebrowVariants}
 					>
-						Assam Tenancy Portal
+						{t('home.getStarted.eyebrow')}
 					</motion.p>
 					<div className="get-started-headline-wrap">
 						<motion.h2
@@ -67,13 +72,13 @@ function GetStartedSection({ authPanelProps }) {
 								className="get-started-headline__primary"
 								variants={reduceMotion ? undefined : introTitleVariants}
 							>
-								One place to manage
+								{t('home.getStarted.headline1')}
 							</motion.span>
 							<motion.span
 								className="get-started-headline__accent"
 								variants={reduceMotion ? undefined : introTitleVariants}
 							>
-								all your tenancy issues.
+								{t('home.getStarted.headline2')}
 							</motion.span>
 						</motion.h2>
 						<motion.span
@@ -86,11 +91,10 @@ function GetStartedSection({ authPanelProps }) {
 						className="get-started-promo-lead"
 						variants={reduceMotion ? undefined : introLeadVariants}
 					>
-						Register or sign in with your mobile number to apply for services, track
-						applications, and manage tenancy matters — all in one Government portal.
+						{t('home.getStarted.lead')}
 					</motion.p>
 					<ul className="get-started-promo-features">
-						{PROMO_FEATURES.map((item, index) => (
+						{promoFeatures.map((item, index) => (
 							<motion.li
 								key={item}
 								custom={index}

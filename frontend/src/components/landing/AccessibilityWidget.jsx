@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Contrast, Link2, Minus, PersonStanding, Plus, RotateCcw, X, Type } from 'lucide-react'
+import { useLanguage } from '../../i18n'
 
 function AccessibilityWidget({
 	fontScale,
@@ -12,6 +13,7 @@ function AccessibilityWidget({
 	onToggleHighlightLinks,
 	mainContentTargetId = 'main-content',
 }) {
+	const { t } = useLanguage()
 	const [open, setOpen] = useState(false)
 	const panelId = useId()
 	const fabRef = useRef(null)
@@ -58,21 +60,21 @@ function AccessibilityWidget({
 	const options = [
 		{
 			id: 'bigger-text',
-			label: 'Bigger text',
+			label: t('a11y.biggerText'),
 			hint: 'A+',
 			icon: Plus,
 			onClick: onIncreaseFont,
 		},
 		{
 			id: 'smaller-text',
-			label: 'Smaller text',
+			label: t('a11y.smallerText'),
 			hint: 'A−',
 			icon: Minus,
 			onClick: onDecreaseFont,
 		},
 		{
 			id: 'reset-text',
-			label: 'Reset text',
+			label: t('a11y.resetTextLabel'),
 			hint: 'A',
 			icon: RotateCcw,
 			onClick: onResetFont,
@@ -80,8 +82,8 @@ function AccessibilityWidget({
 		},
 		{
 			id: 'high-contrast',
-			label: 'High contrast',
-			hint: 'On / Off',
+			label: t('a11y.highContrast'),
+			hint: t('a11y.onOff'),
 			icon: Contrast,
 			onClick: onToggleContrast,
 			active: highContrast,
@@ -90,8 +92,8 @@ function AccessibilityWidget({
 			? [
 					{
 						id: 'highlight-links',
-						label: 'Highlight links',
-						hint: 'On / Off',
+						label: t('a11y.highlightLinks'),
+						hint: t('a11y.onOff'),
 						icon: Link2,
 						onClick: onToggleHighlightLinks,
 						active: highlightLinks,
@@ -135,15 +137,15 @@ function AccessibilityWidget({
 					<div className="ux4g-a11y-panel-brand">
 						<PersonStanding className="h-5 w-5 shrink-0" aria-hidden />
 						<div>
-							<h2 id="ux4g-a11y-panel-title">Accessibility options</h2>
-							<p>Adjust display settings for easier reading</p>
+							<h2 id="ux4g-a11y-panel-title">{t('a11y.options')}</h2>
+							<p>{t('a11y.optionsHint')}</p>
 						</div>
 					</div>
 					<button
 						type="button"
 						className="ux4g-a11y-panel-close"
 						onClick={close}
-						aria-label="Close accessibility options"
+						aria-label={t('a11y.closeOptions')}
 					>
 						<X className="h-5 w-5" aria-hidden />
 					</button>
@@ -178,7 +180,7 @@ function AccessibilityWidget({
 						onClick={() => skipTo(mainContentTargetId)}
 					>
 						<Type className="h-4 w-4" aria-hidden />
-						Skip to content
+						{t('a11y.skipToContent')}
 					</button>
 				</div>
 			</div>
@@ -190,8 +192,8 @@ function AccessibilityWidget({
 				onClick={toggle}
 				aria-expanded={open}
 				aria-controls={panelId}
-				aria-label="Accessibility options"
-				title="Accessibility options"
+				aria-label={t('a11y.options')}
+				title={t('a11y.options')}
 			>
 				<PersonStanding className="h-7 w-7" strokeWidth={2.25} aria-hidden />
 			</button>

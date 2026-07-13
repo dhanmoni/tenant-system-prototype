@@ -93,7 +93,16 @@ class UserSeeder extends Seeder
                 'approved_at' => now(),
             ],
             [
-                'name' => 'user',
+                'name' => 'Valuer',
+                'email' => 'valuer@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_VALUER,
+                'district_id' => $district->id,
+                'phone' => '9333333333',
+                'approved_at' => now(),
+            ],
+            [
+                'name' => 'Demo Tenant',
                 'email' => 'tenant@nic.in',
                 'password' => 'password',
                 'role' => User::ROLE_USER,

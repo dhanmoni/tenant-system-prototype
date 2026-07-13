@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import LandingNav from './LandingNav'
 import PublicPageHero from './PublicPageHero'
 import LandingFooter from './LandingFooter'
+import { useLanguage } from '../../i18n'
 
 function PublicPageLayout({
 	eyebrow,
@@ -13,6 +14,8 @@ function PublicPageLayout({
 	showHero = false,
 	heroSlides,
 }) {
+	const { t } = useLanguage()
+
 	return (
 		<div className="page-public-site min-w-0 overflow-x-clip">
 			<header
@@ -24,9 +27,9 @@ function PublicPageLayout({
 
 			<div className="public-page landing-body landing-wallpaper-bg landing-wallpaper-bg--white min-h-[40vh]">
 				<div className="public-page__content">
-					<nav className="public-page__breadcrumb" aria-label="Breadcrumb">
+					<nav className="public-page__breadcrumb" aria-label={t('public.layout.breadcrumb')}>
 						<Link to="/" className="public-page__breadcrumb-link">
-							Home
+							{t('public.layout.home')}
 						</Link>
 						<span aria-hidden>/</span>
 						<span className="public-page__breadcrumb-current">{breadcrumbLabel}</span>

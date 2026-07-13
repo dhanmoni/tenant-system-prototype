@@ -58,11 +58,12 @@
   - **Status** – List and view status of own submissions (Tenancy Certificate + all Assam Tenancy Rules forms).
     - UI shows **separate tables per category** and uses **icon “View details”** for form submissions.
     - For Property Manager initiated tenancy applications, join flow currently awaits **Landlord** as second-party confirmation.
-4. **Official roles (RA, RC, RT, Assistants, District Admin)**
+4. **Official roles (RA, RC, RT, Assistants, Valuer, District Admin)**
   - **Dashboard** – **Statistics** (states, districts, users, applications), **charts** (overview bar chart, applications by status), and **quick actions** to open other panels. Logged-in user info + logout are shown in the **sidebar**.
   - **Inbox / Applications** – View and process applications assigned to your office / district.
     - **Assistants** (RA/RC/RT Assistant) can pre-verify and forward applications.
     - **Heads** (Rent Authority, Rent Court, Rent Tribunal) can make final decisions (Approve/Reject).
+    - **Valuer** can view assigned Form I-B applications and submit valuer reports.
   - **District Management** – List/manage districts (scoped by permissions).
   - **User Management** – View user list, open user detail to **update** or **delete** users.
 5. **System admin only (Super Admin)**
@@ -88,6 +89,7 @@
 | **ra_assistant**   | ❌                | ✅                    | ❌           | ✅ (Verify/Forward)     |
 | **rc_assistant**   | ❌                | ✅                    | ❌           | ✅ (Verify/Forward)     |
 | **rt_assistant**   | ❌                | ✅                    | ❌           | ✅ (Verify/Forward)     |
+| **valuer**         | ❌                | ✅                    | ❌           | ✅ (Valuer Inbox/Report)|
 | **rent_authority** | ❌                | ✅                    | ❌           | ✅ (Approve/Reject)     |
 | **rent_court**     | ❌                | ✅                    | ❌           | ✅ (Approve/Reject)     |
 | **rent_tribunal**  | ❌                | ✅                    | ❌           | ✅ (Approve/Reject)     |
@@ -119,6 +121,7 @@ To use the **official dashboard**, log in with:
 | **RA Assistant**      | `9111111110`      | `ra.assistant@nic.in`           | `123456` |
 | **RC Assistant**      | `9111111111`      | `rc.assistant@nic.in`           | `123456` |
 | **RT Assistant**      | `9111111112`      | `rt.assistant@nic.in`           | `123456` |
+| **Valuer**            | `9333333333`      | `valuer@nic.in`                 | `123456` |
 
 
 The official dashboard shows your **official email** and role, **stat cards and charts** (applications by status, etc.), and **Application Inbox** (Forward/Reject/Approve actions).
@@ -150,6 +153,6 @@ Seeder order includes **states → districts → village/wards → offices → d
 
 ## Technical Updates (May 2026)
 
-- **Role Migration:** Roles have been standardized to `super_admin`, `district_admin`, `rent_authority`, `rent_court`, `rent_tribunal`, `ra_assistant`, `rc_assistant`, `rt_assistant`, and `user`.
-- **Workflow Integration:** Service applications now support a workflow where Assistants can forward applications to their respective Heads, and Heads can Approve/Reject.
+- **Role Migration:** Roles have been standardized to `super_admin`, `district_admin`, `rent_authority`, `rent_court`, `rent_tribunal`, `ra_assistant`, `rc_assistant`, `rt_assistant`, `valuer`, and `user`.
+- **Workflow Integration:** Service applications now support a workflow where Assistants can forward applications to their respective Heads, and Heads can Approve/Reject. Form I-B supports Rent Authority assigning a **valuer** and the valuer submitting a report.
 - **District Scoping:** Official dashboards are now strictly scoped to the district assigned to the user. Super Admin remains global.

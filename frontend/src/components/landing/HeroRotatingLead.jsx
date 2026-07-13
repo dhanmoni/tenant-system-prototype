@@ -1,19 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { heroLeadMessages } from '../../data/heroLeadMessages'
+import { useLanguage } from '../../i18n'
 
 const TYPE_MS = 42
 const DELETE_MS = 26
 const HOLD_MS = 3200
 const ROTATE_MS = 5200
 
+const LEAD_KEYS = ['hero.lead1', 'hero.lead2', 'hero.lead3', 'hero.lead4', 'hero.lead5']
+
 function HeroRotatingLead() {
+	const { t, language } = useLanguage()
 	const reduceMotion = useReducedMotion()
 	const [messageIndex, setMessageIndex] = useState(0)
 	const [displayed, setDisplayed] = useState('')
 	const [isDeleting, setIsDeleting] = useState(false)
 
+	const heroLeadMessages = useMemo(() => LEAD_KEYS.map((key) => t(key)), [t])
+
 	const currentMessage = heroLeadMessages[messageIndex] ?? heroLeadMessages[0]
+
+	useEffect(() => {
+		setMessageIndex(0)
+		setDisplayed('')
+		setIsDeleting(false)
+	}, [language])
 
 	useEffect(() => {
 		if (reduceMotion) return undefined
@@ -38,7 +49,7 @@ function HeroRotatingLead() {
 		}
 
 		return () => window.clearTimeout(timeoutId)
-	}, [currentMessage, displayed, isDeleting, reduceMotion])
+	}, [currentMessage, displayed, isDeleting, reduceMotion, heroLeadMessages.length])
 
 	useEffect(() => {
 		if (!reduceMotion) return undefined
@@ -48,14 +59,14 @@ function HeroRotatingLead() {
 		}, ROTATE_MS)
 
 		return () => window.clearInterval(timer)
-	}, [reduceMotion])
+	}, [reduceMotion, heroLeadMessages.length])
 
 	if (reduceMotion) {
 		return (
 			<span className="landing-hero-lead__text" aria-live="polite">
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.span
-						key={messageIndex}
+						key={`${language}-${messageIndex}`}
 						className="landing-hero-lead__phrase"
 						initial={{ opacity: 0, y: 6 }}
 						animate={{ opacity: 1, y: 0 }}

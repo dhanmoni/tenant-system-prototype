@@ -1,13 +1,33 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Building2, CircleCheckBig, FileStack, IdCard } from 'lucide-react'
 import { portalPublicStats } from '../../data/portalPublicStats'
+import { useLanguage } from '../../i18n'
 
 const statIcons = {
 	fileStack: FileStack,
 	idCard: IdCard,
 	landmark: Building2,
 	circleCheck: CircleCheckBig,
+}
+
+const statCopyKeys = {
+	applications_submitted: {
+		label: 'home.stats.applications',
+		description: 'home.stats.applicationsDesc',
+	},
+	uins_issued: {
+		label: 'home.stats.uins',
+		description: 'home.stats.uinsDesc',
+	},
+	service_filings: {
+		label: 'home.stats.filings',
+		description: 'home.stats.filingsDesc',
+	},
+	disputes_resolved: {
+		label: 'home.stats.disputes',
+		description: 'home.stats.disputesDesc',
+	},
 }
 
 const itemVariants = {
@@ -81,16 +101,30 @@ function AnimatedFigure({ stat, active }) {
 }
 
 function PortalStatsBar() {
+	const { t } = useLanguage()
 	const stripRef = useRef(null)
 	const isInView = useInView(stripRef, { once: true, margin: '-12%' })
 	const reduceMotion = useReducedMotion()
+
+	const stats = useMemo(
+		() =>
+			portalPublicStats.map((stat) => {
+				const keys = statCopyKeys[stat.id]
+				return {
+					...stat,
+					label: keys ? t(keys.label) : stat.label,
+					description: keys ? t(keys.description) : stat.description,
+				}
+			}),
+		[t],
+	)
 
 	return (
 		<section
 			ref={stripRef}
 			id="portal-stats"
 			className="portal-stats-card portal-stats-card--bridge scroll-mt-28"
-			aria-label="Portal statistics"
+			aria-label={t('home.stats.aria')}
 		>
 			<div className="portal-stats-card__wrap mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<motion.div
@@ -100,7 +134,7 @@ function PortalStatsBar() {
 					viewport={{ once: true, margin: '-40px' }}
 					transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
 				>
-					{portalPublicStats.map((stat, index) => {
+					{stats.map((stat, index) => {
 						const Icon = statIcons[stat.icon] || FileStack
 						return (
 							<motion.div

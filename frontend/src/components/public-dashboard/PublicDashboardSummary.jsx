@@ -1,31 +1,57 @@
-import { publicDashboardKpis, publicDashboardMeta } from '../../data/publicDashboardData'
+import { useMemo } from 'react'
+import { publicDashboardKpis } from '../../data/publicDashboardData'
+import { useLanguage } from '../../i18n'
+
+const kpiKeys = {
+	applications_submitted: { label: 'pd.kpi.applications', hint: 'pd.kpi.applicationsHint' },
+	uins_issued: { label: 'pd.kpi.uins', hint: 'pd.kpi.uinsHint' },
+	service_filings: { label: 'pd.kpi.filings', hint: 'pd.kpi.filingsHint' },
+	disputes_resolved: { label: 'pd.kpi.matters', hint: 'pd.kpi.mattersHint' },
+}
 
 function PublicDashboardSummary() {
+	const { t } = useLanguage()
+
+	const kpis = useMemo(
+		() =>
+			publicDashboardKpis.map((kpi) => {
+				const keys = kpiKeys[kpi.id]
+				return {
+					...kpi,
+					label: keys ? t(keys.label) : kpi.label,
+					hint: keys ? t(keys.hint) : kpi.hint,
+				}
+			}),
+		[t],
+	)
+
 	return (
 		<section className="public-dashboard-gov-kpis" aria-labelledby="public-dashboard-kpis-heading">
 			<div className="public-dashboard-gov-kpis__head">
 				<h2 id="public-dashboard-kpis-heading" className="public-dashboard-gov-kpis__title">
-					Key indicators
+					{t('pd.kpis.title')}
 				</h2>
 				<p className="public-dashboard-gov-kpis__meta">
-					Sample data · Last updated {publicDashboardMeta.lastUpdated}
+					{t('pd.kpis.meta', { date: t('pd.lastUpdated') })}
 				</p>
 			</div>
 
 			<div className="public-dashboard-gov-table-wrap">
 				<table className="public-dashboard-gov-table">
 					<caption className="public-dashboard-gov-table__caption">
-						Portal activity summary for citizens and researchers
+						{t('pd.kpis.caption')}
 					</caption>
 					<thead>
 						<tr>
-							<th scope="col">Indicator</th>
-							<th scope="col" className="public-dashboard-gov-data-table__num-col">Count</th>
-							<th scope="col">Remarks</th>
+							<th scope="col">{t('pd.kpis.indicator')}</th>
+							<th scope="col" className="public-dashboard-gov-data-table__num-col">
+								{t('pd.kpis.count')}
+							</th>
+							<th scope="col">{t('pd.kpis.remarks')}</th>
 						</tr>
 					</thead>
 					<tbody>
-						{publicDashboardKpis.map((kpi) => (
+						{kpis.map((kpi) => (
 							<tr key={kpi.id}>
 								<th scope="row">{kpi.label}</th>
 								<td className="public-dashboard-gov-table__num public-dashboard-gov-data-table__num">

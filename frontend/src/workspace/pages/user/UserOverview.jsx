@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
-import { formatDate, formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
+import { formatDate } from '../../../utils/formatters'
 import { parseTenantFormsResponse } from '../../../utils/tenantFormsApi'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
@@ -26,17 +26,6 @@ function UserOverview() {
 	const [totalCount, setTotalCount] = useState(0)
 	const [loading, setLoading] = useState(true)
 	const [loadError, setLoadError] = useState('')
-	const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-	const photoUrl = user?.passport_photo_url
-	const photoPath = user?.passport_photo_path || user?.user_passport_photo_path
-	const avatarUrl = photoUrl
-		? photoUrl
-		: photoPath
-			? `${apiBaseUrl}/storage/${photoPath}`
-			: null
-
-	const displayName = formatDisplayName(user?.name)
-	const displayEmail = formatDisplayEmail(user?.email)
 
 	useEffect(() => {
 		loadData()
@@ -126,36 +115,20 @@ function UserOverview() {
 			<header className="ws-citizen-welcome">
 				<div className="ws-citizen-welcome-accent" aria-hidden />
 				<div className="ws-citizen-welcome-inner">
-					<div className="ws-citizen-welcome-profile">
-					{avatarUrl ? (
-						<img src={avatarUrl} alt="" className="ws-citizen-welcome-avatar" />
-					) : (
-						<span className="ws-citizen-welcome-avatar-fallback" aria-hidden>
-							<Icon name="user" />
-						</span>
-					)}
-					<div className="ws-citizen-welcome-copy">
-						<h1 className="ws-citizen-welcome-title">Welcome, {displayName}</h1>
-						<p className="ws-citizen-welcome-email">{displayEmail}</p>
-						{user?.district?.name ? (
-							<p className="ws-citizen-welcome-meta">{user.district.name} district</p>
-						) : null}
+					<div className="ws-citizen-welcome-stats" aria-label="Application summary">
+						<div className="ws-citizen-stat-card">
+							<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.total}</span>
+							<span className="ws-citizen-stat-card-label">Total applications</span>
+						</div>
+						<div className="ws-citizen-stat-card ws-citizen-stat-card--progress">
+							<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.inReview}</span>
+							<span className="ws-citizen-stat-card-label">In progress</span>
+						</div>
+						<div className="ws-citizen-stat-card ws-citizen-stat-card--done">
+							<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.completed}</span>
+							<span className="ws-citizen-stat-card-label">Completed</span>
+						</div>
 					</div>
-				</div>
-				<div className="ws-citizen-welcome-stats" aria-label="Application summary">
-					<div className="ws-citizen-stat-card">
-						<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.total}</span>
-						<span className="ws-citizen-stat-card-label">Total applications</span>
-					</div>
-					<div className="ws-citizen-stat-card ws-citizen-stat-card--progress">
-						<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.inReview}</span>
-						<span className="ws-citizen-stat-card-label">In progress</span>
-					</div>
-					<div className="ws-citizen-stat-card ws-citizen-stat-card--done">
-						<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.completed}</span>
-						<span className="ws-citizen-stat-card-label">Completed</span>
-					</div>
-				</div>
 				</div>
 			</header>
 

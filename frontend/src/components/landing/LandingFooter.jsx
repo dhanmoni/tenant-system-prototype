@@ -3,38 +3,7 @@ import { ExternalLink, Globe, Link2, Mail, Share2 } from 'lucide-react'
 import nicLogo from '../../assets/img/NIC.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
 import { siteLastUpdated } from '../../data/siteMeta'
-
-const portalLinks = [
-	{ label: 'Home', to: '/' },
-	{ label: 'Services', to: '/services' },
-	{ label: 'How it works', to: '/#portal-guide', hash: true },
-	{ label: 'Login', to: '/#login', hash: true },
-	{ label: 'New registration', to: '/#register', hash: true },
-]
-
-const resourceLinks = [
-	{ label: 'About us', to: '/about' },
-	{ label: 'Public dashboard', to: '/public-dashboard' },
-	{ label: 'Services', to: '/services' },
-	{ label: 'Policies & guidelines', to: '/policies' },
-	{ label: 'Resources', to: '/resources' },
-	{ label: 'Contact us', to: '/contact' },
-	{ label: 'Sitemap', to: '/sitemap' },
-]
-
-const externalLinks = [
-	{ label: 'TCP Assam', href: 'https://tcp.assam.gov.in/' },
-	{ label: 'India.gov.in', href: 'https://www.india.gov.in/' },
-	{ label: 'Digital India', href: 'https://www.digitalindia.gov.in/' },
-]
-
-const socialLinks = [
-	{ label: 'LinkedIn', href: 'https://www.linkedin.com/', icon: Link2 },
-	{ label: 'Facebook', href: 'https://www.facebook.com/', icon: Share2 },
-	{ label: 'YouTube', href: 'https://www.youtube.com/', icon: Globe },
-	{ label: 'Contact', href: '/contact', icon: Mail },
-	{ label: 'TCP Assam', href: 'https://tcp.assam.gov.in/', icon: ExternalLink },
-]
+import { useLanguage } from '../../i18n'
 
 const footerLinkClass =
 	'landing-footer-link text-sm text-white/80 no-underline transition hover:text-white hover:underline'
@@ -70,6 +39,40 @@ function FooterColumn({ title, children }) {
 }
 
 function LandingFooter() {
+	const { t } = useLanguage()
+
+	const portalLinks = [
+		{ label: t('nav.home'), to: '/' },
+		{ label: t('nav.services'), to: '/services' },
+		{ label: t('footer.howItWorks'), to: '/#portal-guide', hash: true },
+		{ label: t('nav.login'), to: '/#login', hash: true },
+		{ label: t('footer.newRegistration'), to: '/#register', hash: true },
+	]
+
+	const resourceLinks = [
+		{ label: t('nav.about'), to: '/about' },
+		{ label: t('nav.publicDashboard'), to: '/public-dashboard' },
+		{ label: t('nav.services'), to: '/services' },
+		{ label: t('footer.policiesGuidelines'), to: '/policies' },
+		{ label: t('nav.resources'), to: '/resources' },
+		{ label: t('nav.contactUs'), to: '/contact' },
+		{ label: t('footer.sitemap'), to: '/sitemap' },
+	]
+
+	const externalLinks = [
+		{ label: 'TCP Assam', href: 'https://tcp.assam.gov.in/' },
+		{ label: 'India.gov.in', href: 'https://www.india.gov.in/' },
+		{ label: 'Digital India', href: 'https://www.digitalindia.gov.in/' },
+	]
+
+	const socialLinks = [
+		{ label: 'LinkedIn', href: 'https://www.linkedin.com/', icon: Link2 },
+		{ label: 'Facebook', href: 'https://www.facebook.com/', icon: Share2 },
+		{ label: 'YouTube', href: 'https://www.youtube.com/', icon: Globe },
+		{ label: t('nav.contact'), href: '/contact', icon: Mail },
+		{ label: 'TCP Assam', href: 'https://tcp.assam.gov.in/', icon: ExternalLink },
+	]
+
 	return (
 		<footer className="landing-footer bg-[#111111] text-white" role="contentinfo">
 			<div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
@@ -77,10 +80,10 @@ function LandingFooter() {
 					<div className="lg:col-span-4">
 						<p className="text-2xl font-bold tracking-tight text-landing">ATRP</p>
 						<p className="mt-1 text-sm font-semibold text-white/90">
-							Assam Tenancy Registration Portal
+							{t('gov.portalFull')}
 						</p>
 						<p className="mt-2 max-w-xs text-sm leading-relaxed text-white/60">
-							One digital platform for tenancy registration and services in Assam.
+							{t('footer.tagline')}
 						</p>
 						<div className="mt-5 flex flex-wrap gap-2">
 							{socialLinks.map(({ label, href, icon: Icon }) => (
@@ -96,14 +99,14 @@ function LandingFooter() {
 								</a>
 							))}
 						</div>
-						<p className="mt-5 text-xs text-white/45">Last updated: 20 Mar 2026</p>
-						<p className="text-xs text-white/45">Visitors (demo): 4,32,102</p>
+						<p className="mt-5 text-xs text-white/45">{t('footer.lastUpdated', { date: '20 Mar 2026' })}</p>
+						<p className="text-xs text-white/45">{t('footer.visitors')}</p>
 					</div>
 
 					<div className="lg:col-span-2">
-						<FooterColumn title="Portal">
+						<FooterColumn title={t('footer.portal')}>
 							{portalLinks.map((item) => (
-								<li key={item.label}>
+								<li key={`${item.to}-${item.label}`}>
 									<FooterLink item={item} />
 								</li>
 							))}
@@ -111,9 +114,9 @@ function LandingFooter() {
 					</div>
 
 					<div className="lg:col-span-3">
-						<FooterColumn title="Resources">
+						<FooterColumn title={t('footer.resources')}>
 							{resourceLinks.map((item) => (
-								<li key={item.label}>
+								<li key={`${item.to}-${item.label}`}>
 									<FooterLink item={item} />
 								</li>
 							))}
@@ -121,7 +124,7 @@ function LandingFooter() {
 					</div>
 
 					<div className="lg:col-span-3">
-						<FooterColumn title="External">
+						<FooterColumn title={t('footer.external')}>
 							{externalLinks.map((item) => (
 								<li key={item.label}>
 									<a
@@ -139,17 +142,17 @@ function LandingFooter() {
 
 						<div className="mt-8 border-t border-white/10 pt-6">
 							<p className="text-xs leading-relaxed text-white/50">
-								Directorate of Town and Country Planning
+								{t('footer.deptLine1')}
 								<br />
-								Department of Housing and Urban Affairs
+								{t('footer.deptLine2')}
 								<br />
-								Government of Assam
+								{t('footer.deptLine3')}
 							</p>
 							<div className="mt-4 flex flex-wrap items-center gap-4">
 								<img className="h-8 w-auto brightness-0 invert opacity-90" src={nicLogo} alt="NIC" />
 								<img className="h-8 w-auto" src={digitalIndiaLogo} alt="Digital India" />
 							</div>
-							<p className="mt-2 text-[10px] uppercase tracking-wide text-white/40">Powered by</p>
+							<p className="mt-2 text-[10px] uppercase tracking-wide text-white/40">{t('footer.poweredBy')}</p>
 						</div>
 					</div>
 				</div>
@@ -157,19 +160,16 @@ function LandingFooter() {
 
 			<div className="border-t border-white/10">
 				<div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-					<p>
-						© 2026 Assam Tenancy Registration Portal. Content owned by Directorate of Town and
-						Country Planning, Assam.
-					</p>
+					<p>{t('footer.copyright')}</p>
 					<p className="mt-2 font-medium text-white/60">
-						Last updated: <time dateTime="2026-05-16">{siteLastUpdated}</time>
+						{t('footer.lastUpdatedLabel')} <time dateTime="2026-05-16">{siteLastUpdated}</time>
 					</p>
 					<div className="flex flex-wrap gap-4">
 						<Link to="/policies" className="landing-footer-link text-white/50 no-underline hover:text-white">
-							Terms &amp; policies
+							{t('footer.terms')}
 						</Link>
 						<Link to="/policies" className="landing-footer-link text-white/50 no-underline hover:text-white">
-							Privacy
+							{t('footer.privacy')}
 						</Link>
 						<a
 							href="https://www.india.gov.in/"
@@ -177,7 +177,7 @@ function LandingFooter() {
 							rel="noopener noreferrer"
 							className="landing-footer-link text-white/50 no-underline hover:text-white"
 						>
-							Website policies
+							{t('footer.websitePolicies')}
 						</a>
 					</div>
 				</div>
