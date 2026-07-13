@@ -85,6 +85,8 @@ Route::middleware('auth:sanctum')->group(function () use ($allStaffRoles, $admin
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/user-profiles', [AuthController::class, 'userProfiles']);
+    Route::post('/switch-profile', [AuthController::class, 'switchProfile']);
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 

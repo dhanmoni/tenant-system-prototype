@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Validation\Rule;
+
 use App\Models\District;
 use App\Models\UserActivityLog;
 use App\Models\User;
@@ -18,9 +20,15 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:Male,Female,Other'],
             'date_of_birth' => ['required', 'date', 'after:1900-01-01', 'before_or_equal:today'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'email' => [
+                'required', 'string', 'email', 'max:255',
+                Rule::unique('users')->where(fn ($query) => $query->where('role', 'user'))
+            ],
             'password' => ['nullable', 'string', 'min:8'],
-            'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/', 'unique:users,phone'],
+            'phone' => [
+                'required', 'string', 'regex:/^[0-9]{10}$/',
+                Rule::unique('users')->where(fn ($query) => $query->where('role', 'user'))
+            ],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
         ]);
 
@@ -61,23 +69,45 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid OTP'], 422);
             }
 
-            $user = User::where('phone', $validated['phone'])->first();
-            if (!$user) {
+            $users = User::where('phone', $validated['phone'])->get();
+            if ($users->isEmpty()) {
                 return response()->json(['message' => 'Invalid credentials'], 422);
             }
+
+            // Find last active user among them
+            $lastActiveUserId = UserActivityLog::whereIn('user_id', $users->pluck('id'))
+                ->where('action', 'login')
+                ->orderByDesc('logged_at')
+                ->value('user_id');
+
+            $user = $lastActiveUserId ? $users->firstWhere('id', $lastActiveUserId) : $users->first();
 
             Auth::login($user);
         } else {
-            $credentials = [
-                'phone' => $validated['phone'],
-                'password' => $validated['password'],
-            ];
-
-            if (!Auth::attempt($credentials)) {
+            $users = User::where('phone', $validated['phone'])->get();
+            if ($users->isEmpty()) {
                 return response()->json(['message' => 'Invalid credentials'], 422);
             }
 
-            $user = $request->user();
+            $matchedUser = null;
+            foreach ($users as $u) {
+                if (Hash::check($validated['password'], $u->password)) {
+                    $matchedUser = $u;
+                    break;
+                }
+            }
+
+            if (!$matchedUser) {
+                return response()->json(['message' => 'Invalid credentials'], 422);
+            }
+
+            $lastActiveUserId = UserActivityLog::whereIn('user_id', $users->pluck('id'))
+                ->where('action', 'login')
+                ->orderByDesc('logged_at')
+                ->value('user_id');
+
+            $user = $lastActiveUserId ? $users->firstWhere('id', $lastActiveUserId) : $users->first();
+            Auth::login($user);
         }
 
         if ($user->is_blocked) {
@@ -141,6 +171,53 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         return response()->json(['user' => $request->user()]);
+    }
+
+    public function userProfiles(Request $request)
+    {
+        $user = $request->user();
+        $profiles = User::where('phone', $user->phone)
+            ->where('is_blocked', false)
+            ->get();
+
+        return response()->json(['profiles' => $profiles]);
+    }
+
+    public function switchProfile(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer']
+        ]);
+
+        $currentUser = $request->user();
+        $targetUser = User::where('id', $validated['user_id'])
+            ->where('phone', $currentUser->phone)
+            ->first();
+
+        if (!$targetUser) {
+            return response()->json(['message' => 'Profile not found or unauthorized.'], 403);
+        }
+
+        if ($targetUser->is_blocked) {
+            return response()->json(['message' => 'Target account is blocked.'], 403);
+        }
+
+        // Switch the authenticated user without invalidating the entire session
+        // which would cause concurrent frontend requests to fail with 401.
+        Auth::guard('web')->login($targetUser);
+
+        UserActivityLog::create([
+            'user_id' => $targetUser->id,
+            'session_id' => $request->session()->getId(),
+            'action' => 'login', // Log as login to update last active
+            'ip_address' => $request->ip(),
+            'ip_location' => null,
+            'user_agent' => substr((string) $request->userAgent(), 0, 500),
+            'meta' => null,
+            'logged_at' => now(),
+        ]);
+
+        return response()->json(['user' => $targetUser, 'message' => 'Profile switched successfully.']);
     }
 }
 
