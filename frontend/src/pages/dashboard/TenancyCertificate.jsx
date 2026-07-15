@@ -110,15 +110,7 @@ function TenancyCertificate() {
 	const [profileDistrictId, setProfileDistrictId] = useState('')
 	const [profileOfficeId, setProfileOfficeId] = useState('')
 
-	const loadTenancyVillageWards = async (districtId) => {
-		if (!districtId) return setTenancyVillageWards([])
-		setTenancyVillageWardsLoading(true)
-		try {
-			const { data } = await api.get('/api/public/village-wards', { params: { district_id: districtId } })
-			setTenancyVillageWards(Array.isArray(data) ? data : data.data || [])
-		} catch (err) { setError('Failed to load village/wards') }
-		finally { setTenancyVillageWardsLoading(false) }
-	}
+
 
 	const populateFromDraft = useCallback(
 		(draft) => {
@@ -1701,6 +1693,7 @@ function TenancyCertificate() {
 					) : null}
 				</div>
 			</form>
+					) : null}
 				</div>
 			</div>
 
