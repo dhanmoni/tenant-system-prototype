@@ -1,23 +1,6 @@
+import { useMemo } from 'react'
 import { useReducedMotion } from 'framer-motion'
-
-const updates = [
-	// {
-	// 	id: 'docs',
-	// 	text: 'Keep pan card, rent agreement, passport size photograph and signature ready before you apply.',
-	// },
-	{
-		id: 'uin-joint',
-		text: 'UIN apply: agreements within 2 months of registration are Joint — both parties must apply.',
-	},
-	{
-		id: 'uin-individual',
-		text: 'UIN apply: agreements older than 2 months (up to 3 months) may be submitted as Individual application.',
-	},
-	// {
-	// 	id: 'track',
-	// 	text: 'Track your application status anytime after signing in to your account.',
-	// },
-]
+import { useLanguage } from '../../i18n'
 
 function NoticeItem({ text }) {
 	return (
@@ -31,17 +14,26 @@ function NoticeItem({ text }) {
 }
 
 function DailyUpdateTicker() {
+	const { t } = useLanguage()
 	const reduceMotion = useReducedMotion()
+
+	const updates = useMemo(
+		() => [
+			{ id: 'uin-joint', text: t('home.notice.uinJoint') },
+			{ id: 'uin-individual', text: t('home.notice.uinIndividual') },
+		],
+		[t],
+	)
 	const marqueeItems = [...updates, ...updates]
 
 	return (
 		<section
 			className="daily-update-ticker"
-			aria-label="Notices"
+			aria-label={t('home.notices')}
 			aria-live={reduceMotion ? 'polite' : 'off'}
 		>
 			<div className="daily-update-ticker-inner">
-				<div className="daily-update-ticker-badge">Notices</div>
+				<div className="daily-update-ticker-badge">{t('home.notices')}</div>
 
 				<div className="daily-update-ticker-viewport">
 					{reduceMotion ? (

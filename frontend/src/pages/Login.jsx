@@ -17,10 +17,12 @@ import NeedSupportSection from '../components/landing/NeedSupportSection'
 import GovernmentLogosCarousel from '../components/landing/GovernmentLogosCarousel'
 import LandingFooter from '../components/landing/LandingFooter'
 import LandingFab from '../components/landing/LandingFab'
+import { useLanguage } from '../i18n'
 
 function Login({ onLogin }) {
 	const navigate = useNavigate()
 	const location = useLocation()
+	const { t } = useLanguage()
 
 	const [mode, setMode] = useState('login')
 	const [loginForm, setLoginForm] = useState({ phone: '', otp: '' })
@@ -98,13 +100,13 @@ function Login({ onLogin }) {
 		setLoginError('')
 		setOtpMessage('')
 		if (!/^\d{10}$/.test(loginForm.phone)) {
-			setLoginError('Please enter a valid 10-digit mobile number')
+			setLoginError(t('auth.invalidPhone'))
 			return
 		}
 		setLoginForm((prev) => ({ ...prev, otp: '' }))
 		setOtpSent(true)
 		setResendTimer(60)
-		setOtpMessage('OTP sent successfully.')
+		setOtpMessage(t('auth.otpSent'))
 	}
 
 	const handleEditPhone = () => {
@@ -122,7 +124,7 @@ function Login({ onLogin }) {
 			return
 		}
 		if (!/^\d{6}$/.test(loginForm.otp || '')) {
-			setLoginError('Please enter the 6-digit OTP.')
+			setLoginError(t('auth.enterOtpError'))
 			return
 		}
 		setLoginLoading(true)
@@ -138,7 +140,7 @@ function Login({ onLogin }) {
 					: '/dashboard'
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
-			setLoginError(formatApiErrors(err, 'Login failed'))
+			setLoginError(formatApiErrors(err, t('auth.loginFailed')))
 		} finally {
 			setLoginLoading(false)
 		}
@@ -154,13 +156,13 @@ function Login({ onLogin }) {
 		setRegError('')
 		setRegOtpMessage('')
 		if (!regPendingPhone?.trim()) {
-			setRegError('Phone number is missing')
+			setRegError(t('auth.phoneMissing'))
 			return
 		}
 		setRegOtpSent(true)
 		setRegOtp('')
 		setResendTimer(60)
-		setRegOtpMessage('OTP sent successfully.')
+		setRegOtpMessage(t('auth.otpSent'))
 	}
 
 	const handleRegVerifyOtp = async (e) => {
@@ -169,11 +171,11 @@ function Login({ onLogin }) {
 		setRegOtpMessage('')
 
 		if (!regOtpSent) {
-			setRegError('Please send OTP first')
+			setRegError(t('auth.sendOtpFirst'))
 			return
 		}
 		if (!/^\d{6}$/.test(regOtp || '')) {
-			setRegError('Please enter the 6-digit OTP.')
+			setRegError(t('auth.enterOtpError'))
 			return
 		}
 
@@ -190,21 +192,21 @@ function Login({ onLogin }) {
 					: '/dashboard'
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
-			setRegError(err?.response?.data?.message || 'OTP verification failed')
+			setRegError(err?.response?.data?.message || t('auth.otpVerifyFailed'))
 		} finally {
 			setRegLoading(false)
 		}
 	}
 
 	const validateRegForm = () => {
-		if (!regForm.name?.trim()) return 'Please enter your full name.'
-		if (!regForm.email?.trim()) return 'Please enter your email address.'
+		if (!regForm.name?.trim()) return t('auth.enterFullName')
+		if (!regForm.email?.trim()) return t('auth.enterEmail')
 		if (!/^\d{10}$/.test(regForm.phone || '')) {
-			return 'Please enter a valid 10-digit mobile number.'
+			return t('auth.invalidPhone')
 		}
-		if (!regForm.district_id) return 'Please select your district.'
-		if (!regForm.gender) return 'Please select your gender.'
-		if (!regForm.date_of_birth) return 'Please enter your date of birth.'
+		if (!regForm.district_id) return t('auth.selectDistrictError')
+		if (!regForm.gender) return t('auth.selectGenderError')
+		if (!regForm.date_of_birth) return t('auth.enterDob')
 		return null
 	}
 
@@ -234,9 +236,9 @@ function Login({ onLogin }) {
 			setRegOtpSent(true)
 			setResendTimer(60)
 			setRegOtp('')
-			setRegOtpMessage('Account created! OTP sent successfully.')
+			setRegOtpMessage(t('auth.accountCreatedOtp'))
 		} catch (err) {
-			setRegError(formatApiErrors(err, 'Registration failed. Please check your details.'))
+			setRegError(formatApiErrors(err, t('auth.registrationFailed')))
 		} finally {
 			setRegLoading(false)
 		}

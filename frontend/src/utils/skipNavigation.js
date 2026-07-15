@@ -14,9 +14,11 @@ export function isPublicMarketingPath(pathname = '') {
 
 /** Resolve main-content skip target for current route. */
 export function getMainContentTargetId(pathname = '') {
-	return String(pathname || '').startsWith('/dashboard')
-		? 'dashboard-primary-content'
-		: 'main-content'
+	const path = String(pathname || '')
+	if (path.startsWith('/dashboard')) return 'dashboard-primary-content'
+	// Home landing: skip into Apply / Sign in (get started) section
+	if (path === '/' || path === '') return 'portal-content'
+	return 'main-content'
 }
 
 /** Resolve primary navigation skip target for current route. */

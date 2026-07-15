@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
@@ -16,37 +16,42 @@ import heroPortalSlide from '../../assets/img/img10.png'
 import heroTenancyHandover from '../../assets/img/img8.png'
 import heroFamilyHome from '../../assets/img/img5.png'
 import HeroRotatingLead from './HeroRotatingLead'
-
-const heroSlides = [
-	{
-		src: heroCommunityHomes,
-		alt: 'Residential neighbourhood in Assam with traditional and modern homes and families on a community green',
-		objectPosition: 'center 42%',
-	},
-	{
-		src: heroTenancyHandover,
-		alt: 'Tenancy registration completed with key handover and signed documents in a new home',
-		objectPosition: 'center 42%',
-	},
-	{
-		src: heroPortalSlide,
-		alt: 'Citizens using the Assam tenancy registration portal',
-		objectPosition: 'center 40%',
-	},
-	{
-		src: heroFamilyHome,
-		alt: 'Family moving into their newly registered home in Assam',
-		objectPosition: 'center 38%',
-	},
-]
+import { useLanguage } from '../../i18n'
 
 const SLIDE_INTERVAL_MS = 6000
 
 function LandingHero({ navSlot }) {
+	const { t } = useLanguage()
 	const [activeIndex, setActiveIndex] = useState(0)
 	const [slideDirection, setSlideDirection] = useState(1)
 	const [isPaused, setIsPaused] = useState(false)
 	const reduceMotion = useReducedMotion()
+
+	const heroSlides = useMemo(
+		() => [
+			{
+				src: heroCommunityHomes,
+				alt: t('hero.slide1Alt'),
+				objectPosition: 'center 42%',
+			},
+			{
+				src: heroTenancyHandover,
+				alt: t('hero.slide2Alt'),
+				objectPosition: 'center 42%',
+			},
+			{
+				src: heroPortalSlide,
+				alt: t('hero.slide3Alt'),
+				objectPosition: 'center 40%',
+			},
+			{
+				src: heroFamilyHome,
+				alt: t('hero.slide4Alt'),
+				objectPosition: 'center 38%',
+			},
+		],
+		[t],
+	)
 
 	const goToSlideIndex = (index, direction) => {
 		const nextIndex =
@@ -63,7 +68,7 @@ function LandingHero({ navSlot }) {
 			setActiveIndex((prev) => (prev + 1) % heroSlides.length)
 		}, SLIDE_INTERVAL_MS)
 		return () => clearInterval(timer)
-	}, [reduceMotion, isPaused])
+	}, [reduceMotion, isPaused, heroSlides.length])
 
 	const scrollToHowToApply = (e) => {
 		e.preventDefault()
@@ -95,7 +100,7 @@ function LandingHero({ navSlot }) {
 		<section
 			id="landing-hero"
 			className="landing-hero relative isolate overflow-hidden"
-			aria-label="Portal introduction"
+			aria-label={t('hero.aria')}
 		>
 			{navSlot}
 			<div className="landing-hero-media">
@@ -124,48 +129,48 @@ function LandingHero({ navSlot }) {
 						initial={reduceMotion ? false : 'hidden'}
 						animate={reduceMotion ? undefined : 'visible'}
 					>
-							<div className="landing-hero-copy__text">
-								<motion.h1
-									id="hero-heading"
-									className="landing-hero-title"
-									variants={reduceMotion ? undefined : heroTitleVariants}
-								>
-									Assam Tenancy Registration and Management System
-									<motion.span
-										className="landing-hero-title__accent"
-										variants={reduceMotion ? undefined : heroAccentLineVariants}
-										aria-hidden
-									/>
-								</motion.h1>
-								<motion.p
-									className="landing-hero-lead landing-hero-lead--rotating"
-									variants={reduceMotion ? undefined : heroLeadVariants}
-								>
-									<HeroRotatingLead />
-								</motion.p>
-							</div>
-							<motion.div
-								className="landing-hero-actions"
-								variants={reduceMotion ? undefined : heroActionsContainerVariants}
+						<div className="landing-hero-copy__text">
+							<motion.h1
+								id="hero-heading"
+								className="landing-hero-title"
+								variants={reduceMotion ? undefined : heroTitleVariants}
 							>
-								<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
-									<AuthNavLink
-										mode="login"
-										className="landing-hero-cta landing-hero-cta--primary"
-									>
-										Apply Now
-									</AuthNavLink>
-								</motion.div>
-								<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
-									<a
-										href="#portal-guide"
-										onClick={scrollToHowToApply}
-										className="landing-hero-cta landing-hero-cta--ghost"
-									>
-										How to apply
-									</a>
-								</motion.div>
+								{t('gov.portalSystem')}
+								<motion.span
+									className="landing-hero-title__accent"
+									variants={reduceMotion ? undefined : heroAccentLineVariants}
+									aria-hidden
+								/>
+							</motion.h1>
+							<motion.p
+								className="landing-hero-lead landing-hero-lead--rotating"
+								variants={reduceMotion ? undefined : heroLeadVariants}
+							>
+								<HeroRotatingLead />
+							</motion.p>
+						</div>
+						<motion.div
+							className="landing-hero-actions"
+							variants={reduceMotion ? undefined : heroActionsContainerVariants}
+						>
+							<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
+								<AuthNavLink
+									mode="login"
+									className="landing-hero-cta landing-hero-cta--primary"
+								>
+									{t('hero.applyNow')}
+								</AuthNavLink>
 							</motion.div>
+							<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
+								<a
+									href="#portal-guide"
+									onClick={scrollToHowToApply}
+									className="landing-hero-cta landing-hero-cta--ghost"
+								>
+									{t('hero.howToApply')}
+								</a>
+							</motion.div>
+						</motion.div>
 					</motion.div>
 				</div>
 
@@ -175,7 +180,9 @@ function LandingHero({ navSlot }) {
 							type="button"
 							className="landing-hero-carousel-arrow landing-hero-carousel-arrow--prev"
 							onClick={goToPreviousSlide}
-							aria-label={`Previous slide: ${heroSlides[(activeIndex - 1 + heroSlides.length) % heroSlides.length].alt}`}
+							aria-label={t('hero.prevSlide', {
+								alt: heroSlides[(activeIndex - 1 + heroSlides.length) % heroSlides.length].alt,
+							})}
 						>
 							<ChevronLeft className="landing-hero-carousel-arrow-icon" aria-hidden />
 						</button>
@@ -183,7 +190,9 @@ function LandingHero({ navSlot }) {
 							type="button"
 							className="landing-hero-carousel-arrow landing-hero-carousel-arrow--next"
 							onClick={goToNextSlide}
-							aria-label={`Next slide: ${heroSlides[(activeIndex + 1) % heroSlides.length].alt}`}
+							aria-label={t('hero.nextSlide', {
+								alt: heroSlides[(activeIndex + 1) % heroSlides.length].alt,
+							})}
 						>
 							<ChevronRight className="landing-hero-carousel-arrow-icon" aria-hidden />
 						</button>
@@ -193,8 +202,8 @@ function LandingHero({ navSlot }) {
 								className="landing-hero-carousel-pause"
 								onClick={() => setIsPaused((p) => !p)}
 								aria-pressed={isPaused}
-								aria-label={isPaused ? 'Play hero slideshow' : 'Pause hero slideshow'}
-								title={isPaused ? 'Play slideshow' : 'Pause slideshow'}
+								aria-label={isPaused ? t('hero.play') : t('hero.pause')}
+								title={isPaused ? t('hero.playTitle') : t('hero.pauseTitle')}
 							>
 								{isPaused ? (
 									<Play className="h-4 w-4" aria-hidden />
@@ -202,14 +211,14 @@ function LandingHero({ navSlot }) {
 									<Pause className="h-4 w-4" aria-hidden />
 								)}
 							</button>
-							<div className="flex gap-2" role="tablist" aria-label="Hero background slides">
+							<div className="flex gap-2" role="tablist" aria-label={t('hero.slides')}>
 								{heroSlides.map((slide, index) => (
 									<button
 										key={slide.src}
 										type="button"
 										role="tab"
 										aria-selected={index === activeIndex}
-										aria-label={`Show slide ${index + 1}: ${slide.alt}`}
+										aria-label={t('hero.showSlide', { n: index + 1, alt: slide.alt })}
 										className={`landing-hero-carousel-dot ${index === activeIndex ? 'is-active' : ''}`}
 										onClick={() => goToSlide(index)}
 									/>

@@ -7,7 +7,14 @@ import { ROLES } from '../../constants/roles'
 import api from '../../api'
 import { getWorkspaceNavigation } from '../config/navigation'
 
-function WorkspaceSidebar({ user, onLogout }) {
+function WorkspaceSidebar({
+	user,
+	onLogout,
+	open = false,
+	onClose,
+	collapsed = false,
+	onToggleCollapse,
+}) {
 	const navGroups = getWorkspaceNavigation(user)
 	const [profiles, setProfiles] = useState([])
 	const [isSwitching, setIsSwitching] = useState(false)
@@ -45,16 +52,42 @@ function WorkspaceSidebar({ user, onLogout }) {
 
 	const linkClass = ({ isActive }) => `ws-nav-link${isActive ? ' active' : ''}`
 
+	const handleNavClick = () => {
+		onClose?.()
+	}
+
 	return (
-		<aside className="ws-sidebar" aria-label="Workspace navigation">
+		<aside
+			className={`ws-sidebar${open ? ' is-open' : ''}${collapsed ? ' is-collapsed' : ''}`}
+			aria-label="Workspace navigation"
+		>
 			<div className="ws-sidebar-brand">
-				<div className="ws-sidebar-logo" aria-hidden>
-					ATS
-				</div>
-				<div>
+				<div className="ws-sidebar-brand-text">
 					<div className="ws-sidebar-title">Tenancy Portal</div>
 					<div className="ws-sidebar-subtitle">Govt. of Assam</div>
 				</div>
+				{onToggleCollapse ? (
+					<button
+						type="button"
+						className="ws-sidebar-collapse-btn"
+						aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+						aria-expanded={!collapsed}
+						title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+						onClick={onToggleCollapse}
+					>
+						<Icon name={collapsed ? 'panelOpen' : 'panelClose'} className="ws-sidebar-collapse-icon" />
+					</button>
+				) : null}
+				{onClose ? (
+					<button
+						type="button"
+						className="ws-sidebar-close"
+						aria-label="Close navigation menu"
+						onClick={onClose}
+					>
+						×
+					</button>
+				) : null}
 			</div>
 
 			<nav id="workspace-primary-nav" className="ws-sidebar-nav" aria-label="Primary">
@@ -69,9 +102,11 @@ function WorkspaceSidebar({ user, onLogout }) {
 								to={item.to}
 								end={item.end}
 								className={linkClass}
+								title={collapsed ? item.label : undefined}
+								onClick={handleNavClick}
 							>
 								<Icon name={item.icon} className="ws-nav-link-icon" />
-								{item.label}
+								<span className="ws-nav-link-label">{item.label}</span>
 							</NavLink>
 						))}
 					</div>
@@ -79,7 +114,7 @@ function WorkspaceSidebar({ user, onLogout }) {
 			</nav>
 
 			<div className="ws-sidebar-footer">
-				<div className="ws-sidebar-user">
+				<div className="ws-sidebar-user" title={collapsed ? formatDisplayName(user?.name) : undefined}>
 					{avatarUrl ? (
 						<img src={avatarUrl} alt="" className="ws-sidebar-user-photo" />
 					) : (
@@ -87,7 +122,7 @@ function WorkspaceSidebar({ user, onLogout }) {
 							<Icon name="user" />
 						</span>
 					)}
-					<div>
+					<div className="ws-sidebar-user-copy">
 						<div className="ws-sidebar-user-name">{formatDisplayName(user?.name)}</div>
 						<div className="ws-sidebar-user-email">
 							{formatDisplayEmail(user?.email)}
@@ -95,14 +130,16 @@ function WorkspaceSidebar({ user, onLogout }) {
 					</div>
 				</div>
 				{profiles.length > 1 && (
-					<div className="ws-sidebar-profile-switcher" style={{ padding: '0 16px 12px' }}>
-						<label htmlFor="ws-role-switcher" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '4px' }}>Switch Role</label>
+					<div className="ws-sidebar-profile-switcher">
+						<label htmlFor="ws-role-switcher" className="ws-sidebar-profile-label">
+							Switch Role
+						</label>
 						<select
 							id="ws-role-switcher"
 							value={user.id}
 							onChange={handleProfileSwitch}
 							disabled={isSwitching}
-							style={{ width: '100%', padding: '6px', borderRadius: '4px', fontSize: '0.85rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+							title={collapsed ? 'Switch role' : undefined}
 						>
 							{profiles.map(p => (
 								<option key={p.id} value={p.id}>
@@ -112,8 +149,14 @@ function WorkspaceSidebar({ user, onLogout }) {
 						</select>
 					</div>
 				)}
-				<button type="button" className="ws-sidebar-logout" onClick={onLogout}>
-					Sign out
+				<button
+					type="button"
+					className="ws-sidebar-logout"
+					onClick={onLogout}
+					title={collapsed ? 'Sign out' : undefined}
+				>
+					<Icon name="logout" className="ws-sidebar-logout-icon" />
+					<span className="ws-sidebar-logout-label">Sign out</span>
 				</button>
 			</div>
 		</aside>

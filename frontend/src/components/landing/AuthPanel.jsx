@@ -1,5 +1,6 @@
 import { CheckCircle2, Phone } from 'lucide-react'
 import OtpInput from './OtpInput'
+import { useLanguage } from '../../i18n'
 
 function AuthAlert({ type, children }) {
 	if (!children) return null
@@ -18,21 +19,21 @@ function AuthAlert({ type, children }) {
 	)
 }
 
-function AuthField({ label, optional, className = '', children }) {
+function AuthField({ label, optional, optionalLabel, className = '', children }) {
 	return (
 		<label className={`auth-panel-field block${className ? ` ${className}` : ''}`}>
 			<span className="auth-panel-label">
 				{label}
-				{optional ? <span className="font-normal text-slate-400"> (optional)</span> : null}
+				{optional ? <span className="font-normal text-slate-400"> {optionalLabel}</span> : null}
 			</span>
 			{children}
 		</label>
 	)
 }
 
-function StepPills({ steps, current }) {
+function StepPills({ steps, current, progressLabel }) {
 	return (
-		<ol className="mb-6 flex items-center gap-2" aria-label="Progress">
+		<ol className="mb-6 flex items-center gap-2" aria-label={progressLabel}>
 			{steps.map((step, index) => {
 				const isActive = index === current
 				const isDone = index < current
@@ -94,6 +95,7 @@ function AuthPanel({
 	onSetRegStep,
 	onSetRegOtp,
 }) {
+	const { t } = useLanguage()
 	const loginStep = otpSent ? 1 : 0
 	const regStepIndex = regStep === 'otp' ? 1 : 0
 
@@ -116,7 +118,7 @@ function AuthPanel({
 				<div
 					className="auth-panel-tabs flex"
 					role="tablist"
-					aria-label="Sign in or register"
+					aria-label={t('auth.tabs')}
 				>
 					<button
 						type="button"
@@ -127,7 +129,7 @@ function AuthPanel({
 						}`}
 						onClick={switchToLogin}
 					>
-						Log in
+						{t('auth.logIn')}
 					</button>
 					<button
 						type="button"
@@ -138,26 +140,25 @@ function AuthPanel({
 						}`}
 						onClick={switchToRegister}
 					>
-						Register
+						{t('auth.register')}
 					</button>
 				</div>
 
 				{mode === 'login' ? (
 					<div className="auth-panel-body">
 						<StepPills
+							progressLabel={t('auth.progress')}
 							steps={[
-								{ id: 'phone', label: 'Phone' },
-								{ id: 'otp', label: 'Verify OTP' },
+								{ id: 'phone', label: t('auth.stepPhone') },
+								{ id: 'otp', label: t('auth.stepOtp') },
 							]}
 							current={loginStep}
 						/>
 						<h2 className="auth-panel-title">
-							{otpSent ? 'Verify OTP' : 'Welcome back'}
+							{otpSent ? t('auth.verifyOtp') : t('auth.welcomeBack')}
 						</h2>
 						<p className="auth-panel-lead">
-							{otpSent
-								? 'Enter the code sent to your mobile number.'
-								: 'Sign in with your registered mobile number.'}
+							{otpSent ? t('auth.otpLead') : t('auth.loginLead')}
 						</p>
 
 						<AuthAlert type="success">{otpMessage}</AuthAlert>
@@ -166,7 +167,7 @@ function AuthPanel({
 						<form onSubmit={onLoginSubmit} className="auth-panel-form space-y-4">
 							{!otpSent ? (
 								<>
-									<AuthField label="Mobile number" className="auth-panel-field--phone">
+									<AuthField label={t('auth.mobileNumber')} className="auth-panel-field--phone">
 										<div className="auth-panel-phone-wrap auth-panel-phone-wrap--entry">
 											<span className="auth-panel-phone-prefix" aria-hidden>
 												+91
@@ -178,12 +179,12 @@ function AuthPanel({
 												className="auth-panel-input auth-panel-input--phone"
 												value={loginForm.phone}
 												onChange={onLoginChange}
-												placeholder="10-digit mobile number"
+												placeholder={t('auth.mobilePlaceholder')}
 												autoComplete="tel"
 												inputMode="numeric"
 												pattern="[0-9]{10}"
 												maxLength={10}
-												title="Enter a 10-digit mobile number"
+												title={t('auth.mobileTitle')}
 												required
 											/>
 										</div>
@@ -194,7 +195,7 @@ function AuthPanel({
 										onClick={onSendOtp}
 										disabled={loginLoading}
 									>
-										{loginLoading ? 'Please wait…' : 'Send OTP'}
+										{loginLoading ? t('auth.pleaseWait') : t('auth.sendOtp')}
 									</button>
 								</>
 							) : (
@@ -203,7 +204,7 @@ function AuthPanel({
 										<div className="auth-panel-phone-display__main">
 											<Phone className="auth-panel-phone-display__icon" aria-hidden />
 											<div>
-												<p className="auth-panel-phone-display__label">OTP sent to</p>
+												<p className="auth-panel-phone-display__label">{t('auth.otpSentTo')}</p>
 												<p className="auth-panel-phone-display__number">
 													+91 {loginForm.phone}
 												</p>
@@ -214,10 +215,10 @@ function AuthPanel({
 											className="auth-panel-link"
 											onClick={onEditPhone}
 										>
-											Change
+											{t('auth.change')}
 										</button>
 									</div>
-									<AuthField label="Enter 6-digit OTP">
+									<AuthField label={t('auth.enterOtp')}>
 										<OtpInput
 											id="login-otp"
 											value={loginForm.otp}
@@ -229,10 +230,10 @@ function AuthPanel({
 									</AuthField>
 									<div className="text-center text-sm text-slate-600">
 										{resendTimer > 0 ? (
-											<span>Resend OTP in {resendTimer}s</span>
+											<span>{t('auth.resendIn', { seconds: resendTimer })}</span>
 										) : (
 											<button type="button" className="auth-panel-link" onClick={onSendOtp}>
-												Resend OTP
+												{t('auth.resendOtp')}
 											</button>
 										)}
 									</div>
@@ -241,7 +242,7 @@ function AuthPanel({
 										className="auth-panel-btn-primary auth-panel-btn-primary--cta w-full"
 										disabled={loginLoading}
 									>
-										{loginLoading ? 'Signing in…' : 'Log in'}
+										{loginLoading ? t('auth.signingIn') : t('auth.logIn')}
 									</button>
 								</>
 							)}
@@ -250,46 +251,45 @@ function AuthPanel({
 				) : regStep === 'details' ? (
 					<div className="auth-panel-body">
 						<StepPills
+							progressLabel={t('auth.progress')}
 							steps={[
-								{ id: 'details', label: 'Your details' },
-								{ id: 'otp', label: 'Verify OTP' },
+								{ id: 'details', label: t('auth.stepDetails') },
+								{ id: 'otp', label: t('auth.stepOtp') },
 							]}
 							current={regStepIndex}
 						/>
-						<h2 className="auth-panel-title">Create account</h2>
-						<p className="auth-panel-lead">
-							Fill in your details — we will send an OTP to verify your mobile.
-						</p>
+						<h2 className="auth-panel-title">{t('auth.createAccount')}</h2>
+						<p className="auth-panel-lead">{t('auth.registerLead')}</p>
 
 						<AuthAlert type="error">{regError}</AuthAlert>
 
 						<form onSubmit={onRegSubmit} className="auth-panel-form space-y-4">
 							<div className="auth-panel-field-row">
-								<AuthField label="Full name">
+								<AuthField label={t('auth.fullName')}>
 									<input
 										type="text"
 										name="name"
 										className="auth-panel-input"
 										value={regForm.name}
 										onChange={onRegChange}
-										placeholder="Full name"
+										placeholder={t('auth.fullName')}
 										required
 									/>
 								</AuthField>
-								<AuthField label="Email">
+								<AuthField label={t('auth.email')}>
 									<input
 										type="email"
 										name="email"
 										className="auth-panel-input"
 										value={regForm.email}
 										onChange={onRegChange}
-										placeholder="Email address"
+										placeholder={t('auth.emailPlaceholder')}
 										autoComplete="email"
 										required
 									/>
 								</AuthField>
 							</div>
-							<AuthField label="Mobile number" className="auth-panel-field--phone">
+							<AuthField label={t('auth.mobileNumber')} className="auth-panel-field--phone">
 								<div className="auth-panel-phone-wrap auth-panel-phone-wrap--entry">
 									<span className="auth-panel-phone-prefix" aria-hidden>
 										+91
@@ -301,17 +301,17 @@ function AuthPanel({
 										className="auth-panel-input auth-panel-input--phone"
 										value={regForm.phone}
 										onChange={onRegChange}
-										placeholder="10-digit mobile number"
+										placeholder={t('auth.mobilePlaceholder')}
 										autoComplete="tel"
 										inputMode="numeric"
 										pattern="[0-9]{10}"
 										maxLength={10}
-										title="Enter a 10-digit mobile number"
+										title={t('auth.mobileTitle')}
 										required
 									/>
 								</div>
 							</AuthField>
-							<AuthField label="District">
+							<AuthField label={t('auth.district')}>
 								<select
 									name="district_id"
 									className="auth-panel-select"
@@ -319,7 +319,7 @@ function AuthPanel({
 									onChange={onRegChange}
 									required
 								>
-									<option value="">Select district</option>
+									<option value="">{t('auth.selectDistrict')}</option>
 									{filteredDistricts.map((d) => (
 										<option key={d.id} value={d.id}>
 											{d.name}
@@ -328,7 +328,7 @@ function AuthPanel({
 								</select>
 							</AuthField>
 							<div className="auth-panel-field-row">
-								<AuthField label="Gender">
+								<AuthField label={t('auth.gender')}>
 										<select
 											name="gender"
 											className="auth-panel-select"
@@ -336,13 +336,13 @@ function AuthPanel({
 											onChange={onRegChange}
 											required
 										>
-											<option value="">Select gender</option>
-											<option value="Male">Male</option>
-											<option value="Female">Female</option>
-											<option value="Other">Other</option>
+											<option value="">{t('auth.selectGender')}</option>
+											<option value="Male">{t('auth.male')}</option>
+											<option value="Female">{t('auth.female')}</option>
+											<option value="Other">{t('auth.other')}</option>
 										</select>
 									</AuthField>
-								<AuthField label="Date of birth">
+								<AuthField label={t('auth.dob')}>
 									<input
 										type="date"
 										name="date_of_birth"
@@ -359,21 +359,22 @@ function AuthPanel({
 								className="auth-panel-btn-primary auth-panel-btn-primary--cta w-full"
 								disabled={regLoading}
 							>
-								{regLoading ? 'Processing…' : 'Create account'}
+								{regLoading ? t('auth.processing') : t('auth.createAccount')}
 							</button>
 						</form>
 					</div>
 				) : (
 					<div className="auth-panel-body">
 						<StepPills
+							progressLabel={t('auth.progress')}
 							steps={[
-								{ id: 'details', label: 'Your details' },
-								{ id: 'otp', label: 'Verify OTP' },
+								{ id: 'details', label: t('auth.stepDetails') },
+								{ id: 'otp', label: t('auth.stepOtp') },
 							]}
 							current={1}
 						/>
-						<h2 className="auth-panel-title">Verify your mobile</h2>
-						<p className="auth-panel-lead">Enter the OTP sent to +91 {regPendingPhone}.</p>
+						<h2 className="auth-panel-title">{t('auth.verifyMobile')}</h2>
+						<p className="auth-panel-lead">{t('auth.verifyLead', { phone: regPendingPhone })}</p>
 
 						<AuthAlert type="success">{regOtpMessage}</AuthAlert>
 						<AuthAlert type="error">{regError}</AuthAlert>
@@ -382,7 +383,7 @@ function AuthPanel({
 							<div className="auth-panel-phone-display auth-panel-phone-display--compact">
 								<div className="auth-panel-phone-display__main">
 									<div>
-										<p className="auth-panel-phone-display__label">Verifying</p>
+										<p className="auth-panel-phone-display__label">{t('auth.verifying')}</p>
 										<p className="auth-panel-phone-display__number">
 											+91 {regPendingPhone}
 										</p>
@@ -393,10 +394,10 @@ function AuthPanel({
 									className="auth-panel-link"
 									onClick={() => onSetRegStep('details')}
 								>
-									Change
+									{t('auth.change')}
 								</button>
 							</div>
-							<AuthField label="Enter 6-digit OTP">
+							<AuthField label={t('auth.enterOtp')}>
 								<OtpInput
 									id="register-otp"
 									value={regOtp}
@@ -406,10 +407,10 @@ function AuthPanel({
 							</AuthField>
 							<div className="text-center text-sm text-slate-600">
 								{resendTimer > 0 ? (
-									<span>Resend OTP in {resendTimer}s</span>
+									<span>{t('auth.resendIn', { seconds: resendTimer })}</span>
 								) : (
 									<button type="button" className="auth-panel-link" onClick={onRegSendOtp}>
-										Resend OTP
+										{t('auth.resendOtp')}
 									</button>
 								)}
 							</div>
@@ -418,15 +419,13 @@ function AuthPanel({
 								className="auth-panel-btn-primary auth-panel-btn-primary--cta w-full"
 								disabled={regLoading}
 							>
-								{regLoading ? 'Verifying…' : 'Verify & log in'}
+								{regLoading ? t('auth.verifyingEllipsis') : t('auth.verifyAndLogin')}
 							</button>
 						</form>
 					</div>
 				)}
 
-				<p className="auth-panel-footnote">
-					For your security, a one-time password is sent via SMS to your registered mobile number.
-				</p>
+				<p className="auth-panel-footnote">{t('auth.footnote')}</p>
 			</div>
 		</div>
 	)

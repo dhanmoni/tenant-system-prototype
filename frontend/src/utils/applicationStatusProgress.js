@@ -261,9 +261,12 @@ function buildOfficeReviewDescription(application, currentStatus) {
 	const at = formatTimestamp(application.forwarded_at)
 
 	if ([STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)) {
-		return application.approved_by?.name
+		const by = application.approved_by?.name
 			? `Approved by ${application.approved_by.name} (${office}).`
 			: `Final decision recorded by ${office}.`
+		return application.approval_message
+			? `${by} Message: ${application.approval_message}`
+			: by
 	}
 
 	if (currentStatus === STATUS.IN_REVIEW) {
@@ -352,7 +355,9 @@ function buildServiceFormSteps(application, currentStatus) {
 	steps.push({
 		id: 'completed',
 		title: 'Completed',
-		description: 'Application processed successfully.',
+		description: application.approval_message
+			? `Approved. Message: ${application.approval_message}`
+			: 'Application processed successfully.',
 		timestamp: formatTimestamp(application.approved_at),
 		state: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus) ? 'completed' : 'pending',
 		badge: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus) ? 'completed' : 'pending',

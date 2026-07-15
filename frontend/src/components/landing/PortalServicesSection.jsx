@@ -1,8 +1,8 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ArrowRight, Building2, FileCheck, Gavel, Landmark } from 'lucide-react'
-import { portalServiceHighlights, portalServicesIntro } from '../../data/portalServices'
+import { portalServiceHighlights } from '../../data/portalServices'
 import {
 	showcaseCardFromLeftVariants,
 	showcaseCardFromRightVariants,
@@ -11,6 +11,7 @@ import {
 	showcaseGridVariants,
 } from '../../utils/landingMotion'
 import LandingSectionIntro from './LandingSectionIntro'
+import { useLanguage } from '../../i18n'
 
 const MotionLink = motion.create(Link)
 
@@ -25,15 +26,58 @@ const highlightIcons = {
 	'rent-tribunal': Landmark,
 }
 
+const highlightCopyKeys = {
+	uin: {
+		title: 'home.services.uin.title',
+		short: 'home.services.uin.short',
+		tagline: 'home.services.uin.tagline',
+		desc: 'home.services.uin.desc',
+	},
+	'rent-authority': {
+		title: 'home.services.rentAuthority.title',
+		short: 'home.services.rentAuthority.short',
+		tagline: 'home.services.rentAuthority.tagline',
+		desc: 'home.services.rentAuthority.desc',
+	},
+	'rent-court': {
+		title: 'home.services.rentCourt.title',
+		short: 'home.services.rentCourt.short',
+		tagline: 'home.services.rentCourt.tagline',
+		desc: 'home.services.rentCourt.desc',
+	},
+	'rent-tribunal': {
+		title: 'home.services.rentTribunal.title',
+		short: 'home.services.rentTribunal.short',
+		tagline: 'home.services.rentTribunal.tagline',
+		desc: 'home.services.rentTribunal.desc',
+	},
+}
+
 function PortalServicesSection() {
+	const { t } = useLanguage()
 	const visualRef = useRef(null)
 	const reduceMotion = useReducedMotion()
 	const cardsInView = useInView(visualRef, { once: true, margin: '-14% 0px -10% 0px' })
 	const reveal = reduceMotion || cardsInView
 
-	const uinHighlight = portalServiceHighlights.find((item) => item.id === 'uin')
-	const authorityHighlights = portalServiceHighlights.filter((item) => item.id !== 'uin')
-	// Left column top → bottom: highest authority, then first level; right: second level, then UIN.
+	const localizedHighlights = useMemo(
+		() =>
+			portalServiceHighlights.map((item) => {
+				const keys = highlightCopyKeys[item.id]
+				if (!keys) return item
+				return {
+					...item,
+					title: t(keys.title),
+					shortLabel: t(keys.short),
+					tagline: t(keys.tagline),
+					description: t(keys.desc),
+				}
+			}),
+		[t],
+	)
+
+	const uinHighlight = localizedHighlights.find((item) => item.id === 'uin')
+	const authorityHighlights = localizedHighlights.filter((item) => item.id !== 'uin')
 	const columns = [
 		[authorityHighlights[0], authorityHighlights[2]].filter(Boolean),
 		[authorityHighlights[1], uinHighlight].filter(Boolean),
@@ -170,9 +214,8 @@ function PortalServicesSection() {
 					<div className="portal-services-showcase__copy portal-services-showcase__copy--promo">
 						<LandingSectionIntro
 							className="portal-services-showcase__promo-intro"
-							eyebrow={portalServicesIntro.eyebrow}
-							title={portalServicesIntro.title}
-							lead={portalServicesIntro.lead}
+							title={t('home.services.title')}
+							lead={t('home.services.lead')}
 							titleId="services-heading"
 						/>
 						<motion.div
@@ -199,7 +242,7 @@ function PortalServicesSection() {
 											}
 								}
 							>
-								Explore all services
+								{t('home.services.explore')}
 								<motion.span
 									className="portal-services-showcase__cta-icon"
 									aria-hidden

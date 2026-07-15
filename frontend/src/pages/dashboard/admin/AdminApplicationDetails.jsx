@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
+import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
 import { formatDate, formatDateTime } from '../../../utils/formatters'
+import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress'
 import './ApplicationDetails.css'
 
 const EXCLUDED_FIELDS = new Set([
@@ -43,6 +45,8 @@ const WORKFLOW_FIELDS = new Set([
 	'rejected_at',
 	'approved_at',
 	'rejection_message',
+	'approval_message',
+	'forward_remarks',
 ])
 
 const SUMMARY_FIELDS = ['district', 'form_type', 'status']
@@ -65,6 +69,8 @@ const NON_EDITABLE_KEYS = new Set([
 	'rejected_at',
 	'approved_at',
 	'rejection_message',
+	'approval_message',
+	'forward_remarks',
 	'ref_code',
 	'wizard_step',
 	'current_with',
@@ -220,6 +226,11 @@ const AdminApplicationDetails = () => {
 	const [valuers, setValuers] = useState([])
 	const [selectedValuerId, setSelectedValuerId] = useState('')
 	const [valuerReport, setValuerReport] = useState('')
+	const [workflowModal, setWorkflowModal] = useState(null)
+	const [workflowMessage, setWorkflowMessage] = useState('')
+	const [successModal, setSuccessModal] = useState(null)
+
+	const forwardOffice = getAssistantForwardOfficeLabel(user?.role)
 
 	const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN
 
@@ -227,9 +238,9 @@ const AdminApplicationDetails = () => {
 		fetchDetails()
 	}, [applicationNo])
 
-	const fetchDetails = async () => {
+	const fetchDetails = async ({ silent = false } = {}) => {
 		try {
-			setLoading(true)
+			if (!silent) setLoading(true)
 			const response = await api.get(`/api/admin/applications/${applicationNo}`)
 			const app = response.data.application
 			setApplication(app)
@@ -254,7 +265,7 @@ const AdminApplicationDetails = () => {
 			console.error('Error fetching application details:', err)
 			setError('Failed to load application details.')
 		} finally {
-			setLoading(false)
+			if (!silent) setLoading(false)
 		}
 	}
 
@@ -324,19 +335,53 @@ const AdminApplicationDetails = () => {
 		}
 	}
 
-	const handleAction = async (action) => {
-		if (!window.confirm(`Are you sure you want to ${action} this application?`)) return
+	const openWorkflowModal = (action) => {
+		setWorkflowMessage('')
+		setWorkflowModal(action)
+	}
+
+	const closeWorkflowModal = () => {
+		if (actionLoading) return
+		setWorkflowModal(null)
+		setWorkflowMessage('')
+	}
+
+	const handleWorkflowConfirm = async () => {
+		if (!application || !workflowModal) return
+
+		const trimmed = workflowMessage.trim()
+		const needsMessage = workflowModal === 'approve' || workflowModal === 'reject'
+		if (needsMessage && !trimmed) return
+
+		const payload =
+			workflowModal === 'forward'
+				? { remarks: trimmed || undefined }
+				: { message: trimmed }
 
 		try {
 			setActionLoading(true)
 			await api.post(
-				`/api/admin/applications/${application.form_type}/${application.id}/${action}`
+				`/api/admin/applications/${application.form_type}/${application.id}/${workflowModal}`,
+				payload
 			)
-			alert(`Application ${action}ed successfully.`)
-			fetchDetails()
+			const labels = {
+				forward: 'moved to review',
+				approve: 'approved',
+				reject: 'rejected',
+			}
+			setWorkflowModal(null)
+			setWorkflowMessage('')
+			setSuccessModal({
+				title: `Application ${labels[workflowModal] || 'updated'}`,
+				description:
+					needsMessage
+						? `${application.application_no} was ${labels[workflowModal]}. Message recorded: "${trimmed}"`
+						: `${application.application_no} was ${labels[workflowModal]}${trimmed ? `. Remarks: "${trimmed}"` : ''}.`,
+			})
+			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(`Error during ${action}:`, err)
-			alert(`Failed to ${action} application.`)
+			console.error(`Error during ${workflowModal}:`, err)
+			alert(err.response?.data?.message || `Failed to ${workflowModal} application.`)
 		} finally {
 			setActionLoading(false)
 		}
@@ -908,7 +953,7 @@ const AdminApplicationDetails = () => {
 							<button
 								type="button"
 								className="ws-btn ws-btn--primary"
-								onClick={() => handleAction('forward')}
+								onClick={() => openWorkflowModal('forward')}
 								disabled={actionLoading}
 							>
 								Move to review
@@ -916,7 +961,7 @@ const AdminApplicationDetails = () => {
 							<button
 								type="button"
 								className="ws-btn ws-btn--danger"
-								onClick={() => handleAction('reject')}
+								onClick={() => openWorkflowModal('reject')}
 								disabled={actionLoading}
 							>
 								Reject
@@ -929,7 +974,7 @@ const AdminApplicationDetails = () => {
 							<button
 								type="button"
 								className="ws-btn ws-btn--primary"
-								onClick={() => handleAction('approve')}
+								onClick={() => openWorkflowModal('approve')}
 								disabled={actionLoading}
 							>
 								Approve
@@ -937,7 +982,7 @@ const AdminApplicationDetails = () => {
 							<button
 								type="button"
 								className="ws-btn ws-btn--danger"
-								onClick={() => handleAction('reject')}
+								onClick={() => openWorkflowModal('reject')}
 								disabled={actionLoading}
 							>
 								Reject
@@ -946,6 +991,82 @@ const AdminApplicationDetails = () => {
 					)}
 				</footer>
 			) : null}
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'forward'}
+				onClose={closeWorkflowModal}
+				title="Move to review"
+				description={`Send ${application.application_no} to ${forwardOffice} for final review?`}
+				primaryLabel={actionLoading ? 'Forwarding…' : `Forward to ${forwardOffice}`}
+				onPrimary={handleWorkflowConfirm}
+				primaryDisabled={Boolean(actionLoading)}
+			>
+				<label className="workflow-confirm-field">
+					<span className="workflow-confirm-field__label">Remarks (optional)</span>
+					<textarea
+						className="workflow-confirm-field__input"
+						value={workflowMessage}
+						onChange={(e) => setWorkflowMessage(e.target.value)}
+						placeholder={`Add a note for ${forwardOffice} (e.g. documents verified)…`}
+						rows={3}
+					/>
+				</label>
+			</WorkflowConfirmModal>
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'approve'}
+				onClose={closeWorkflowModal}
+				title="Approve application"
+				description={`Provide an approval message for ${application.application_no}. This will be shown in the progress timeline.`}
+				primaryLabel={actionLoading ? 'Approving…' : 'Confirm approval'}
+				onPrimary={handleWorkflowConfirm}
+				primaryDisabled={Boolean(actionLoading) || !workflowMessage.trim()}
+			>
+				<label className="workflow-confirm-field">
+					<span className="workflow-confirm-field__label">Approval message (required)</span>
+					<textarea
+						className="workflow-confirm-field__input"
+						value={workflowMessage}
+						onChange={(e) => setWorkflowMessage(e.target.value)}
+						placeholder="Enter the approval message / remarks…"
+						rows={4}
+						required
+					/>
+				</label>
+			</WorkflowConfirmModal>
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'reject'}
+				onClose={closeWorkflowModal}
+				title="Reject application"
+				description={`Provide a reason for rejecting ${application.application_no}. This will be shown to the applicant and in the progress timeline.`}
+				primaryLabel={actionLoading ? 'Rejecting…' : 'Confirm rejection'}
+				primaryVariant="danger"
+				onPrimary={handleWorkflowConfirm}
+				primaryDisabled={Boolean(actionLoading) || !workflowMessage.trim()}
+			>
+				<label className="workflow-confirm-field">
+					<span className="workflow-confirm-field__label">Rejection reason (required)</span>
+					<textarea
+						className="workflow-confirm-field__input"
+						value={workflowMessage}
+						onChange={(e) => setWorkflowMessage(e.target.value)}
+						placeholder="Explain why this application is rejected…"
+						rows={4}
+						required
+					/>
+				</label>
+			</WorkflowConfirmModal>
+
+			<WorkflowConfirmModal
+				open={Boolean(successModal)}
+				onClose={() => setSuccessModal(null)}
+				title={successModal?.title || 'Done'}
+				description={successModal?.description}
+				primaryLabel="OK"
+				secondaryLabel="Close"
+				onPrimary={() => setSuccessModal(null)}
+			/>
 		</div>
 	)
 }

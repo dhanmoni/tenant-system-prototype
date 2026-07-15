@@ -272,6 +272,10 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Only principal officers can approve applications'], 403);
         }
 
+        $data = $request->validate([
+            'message' => 'required|string|max:1000',
+        ]);
+
         $modelClass = $this->getModel($type);
         if (!$modelClass) return response()->json(['message' => 'Invalid form type'], 400);
 
@@ -293,6 +297,7 @@ class ApplicationWorkflowController extends Controller
             'status' => Status::COMPLETED,
             'approved_at' => Carbon::now(),
             'approved_by_user_id' => $user->id,
+            'approval_message' => $data['message'],
             'assigned_to_role' => null,
         ]);
 
@@ -459,6 +464,8 @@ class ApplicationWorkflowController extends Controller
             'rejection_message',
             'approved_at',
             'approved_by_user_id',
+            'approval_message',
+            'forward_remarks',
             'assigned_to_role',
             'ref_code',
             'wizard_step',

@@ -502,13 +502,63 @@
 	font-size: 0.8125rem;
 }
 
-@media (max-width: 640px) {
-	.service-form-page .tenancy-form,
-	.service-form-page .tenancy-fieldset {
-		grid-template-columns: 1fr;
+@media (max-width: 1279px) {
+	.service-form-page {
+		max-width: none;
+		padding-inline: 0;
+	}
+
+	.service-form-title {
+		font-size: 1.2rem;
 	}
 
 	.service-form-header {
 		flex-direction: column;
+		gap: 0.85rem;
+		margin-bottom: 1rem;
+		padding-bottom: 1rem;
+	}
+
+	.service-form-page .tenancy-form,
+	.service-form-panel .tenancy-form,
+	.service-form-page .tenancy-fieldset {
+		grid-template-columns: 1fr;
+	}
+
+	.service-form-panel {
+		padding: 1rem 0.9rem 1.15rem;
+		border-radius: 10px;
+	}
+
+	.dashboard-card.service-form-panel {
+		padding: 1rem 0.9rem 1.15rem;
+	}
+
+	.service-form-section {
+		padding: 0.85rem 0.75rem;
+	}
+
+	.service-form-actions,
+	.service-form-page .form-actions {
+		flex-direction: column-reverse;
+		align-items: stretch;
+		gap: 0.65rem;
+	}
+
+	.service-form-actions button,
+	.service-form-page .form-actions button {
+		width: 100%;
+		min-width: 0;
+		justify-content: center;
+	}
+}
+
+@media (max-width: 639px) {
+	.service-form-breadcrumb {
+		font-size: 0.75rem;
+	}
+
+	.service-form-title {
+		font-size: 1.1rem;
 	}
 }

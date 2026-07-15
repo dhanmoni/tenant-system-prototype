@@ -57,6 +57,34 @@ function ServiceFormRow({ form, groupId }) {
 	)
 }
 
+function ServiceFormCard({ form, groupId }) {
+	const navigate = useNavigate()
+	const location = useLocation()
+	const isActive = location.pathname === form.to
+
+	return (
+		<button
+			type="button"
+			className={`ws-services-card${isActive ? ' is-active' : ''}`}
+			aria-current={isActive ? 'page' : undefined}
+			onClick={() => navigate(form.to)}
+		>
+			<div className="ws-services-card__top">
+				<span className={`ws-services-form-badge ws-services-form-badge--${groupId}`}>
+					{form.formName}
+				</span>
+				<span className="ws-services-rule-tag">{form.rule}</span>
+			</div>
+			<span className="ws-services-card__title">{form.label}</span>
+			<span className="ws-services-card__matter">{form.matter}</span>
+			<span className="ws-services-card__cta">
+				{getFormApplyLabel(form)}
+				<Icon name="chevron" />
+			</span>
+		</button>
+	)
+}
+
 function WorkspaceServices() {
 	const { user } = useOutletContext()
 	const [searchParams] = useSearchParams()
@@ -193,6 +221,16 @@ function WorkspaceServices() {
 									))}
 								</tbody>
 							</table>
+						</div>
+
+						<div className="ws-services-card-list" aria-label={`${group.title} forms`}>
+							{group.forms.map((form) => (
+								<ServiceFormCard
+									key={`card-${form.to}`}
+									form={form}
+									groupId={group.id}
+								/>
+							))}
 						</div>
 					</section>
 				))}
