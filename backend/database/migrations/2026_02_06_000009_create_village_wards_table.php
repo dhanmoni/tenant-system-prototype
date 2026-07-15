@@ -11,8 +11,11 @@ return new class extends Migration
         Schema::create('village_wards', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('type', 16)->default('village'); // village, ward, town
+            $table->string('type', 32); // 'village' or 'ward'
             $table->foreignId('district_id')->constrained('districts')->cascadeOnDelete();
+            $table->json('villages')->nullable();
+            $table->string('area_type')->nullable();
+            $table->string('local_body')->nullable();
             $table->timestamps();
 
             $table->unique(['name', 'district_id']);

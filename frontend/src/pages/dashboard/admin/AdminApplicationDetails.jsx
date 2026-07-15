@@ -37,6 +37,9 @@ const EXCLUDED_FIELDS = new Set([
 	'tenant_user_id',
 	'office_id',
 	'village_ward_id',
+	'village_name',
+	'area_type',
+	'local_body',
 	'application_type',
 ])
 
@@ -81,6 +84,9 @@ const NON_EDITABLE_KEYS = new Set([
 	'tenant_user_id',
 	'office_id',
 	'village_ward_id',
+	'village_name',
+	'area_type',
+	'local_body',
 	'application_type',
 ])
 
@@ -823,6 +829,14 @@ const AdminApplicationDetails = () => {
 						) : null}
 						{application.district?.name ? (
 							<span className="admin-app-details__chip">{application.district.name}</span>
+						) : null}
+						{application.area_type ? (<span className="admin-app-details__chip">{application.area_type}</span>) : null}
+						{application.local_body ? (<span className="admin-app-details__chip">{application.local_body}</span>) : null}
+						{application.village_ward?.name ? (
+							<span className="admin-app-details__chip">{application.village_ward.name}</span>
+						) : null}
+						{application.village_name ? (
+							<span className="admin-app-details__chip">{application.village_name}</span>
 						) : null}
 						<span className="admin-app-details__chip">
 							Submitted {formatDate(application.created_at)}

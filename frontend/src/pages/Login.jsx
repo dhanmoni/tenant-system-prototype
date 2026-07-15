@@ -132,12 +132,18 @@ function Login({ onLogin }) {
 			await csrf()
 			const { data } = await api.post('/api/login', loginForm)
 			onLogin(data.user)
-			const fromPath = location.state?.from?.pathname || '/dashboard'
-			const fromSearch = location.state?.from?.search || ''
-			const finalTarget =
-				fromPath.includes('/join') || fromPath.includes('/dashboard/join')
-					? fromPath + fromSearch
-					: '/dashboard'
+			const fromPath = location.state?.from?.pathname || ''
+			const fromSearch = location.state?.from?.search || location.search
+			const pendingRef = localStorage.getItem('pendingJoinRef')
+
+			let finalTarget = '/dashboard'
+			if (fromPath.includes('/join') || fromPath.includes('/dashboard/join')) {
+				finalTarget = fromPath + fromSearch
+			} else if (location.search.includes('ref=')) {
+				finalTarget = `/dashboard/join${location.search}`
+			} else if (pendingRef) {
+				finalTarget = `/dashboard/join${pendingRef}`
+			}
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
 			setLoginError(formatApiErrors(err, t('auth.loginFailed')))
@@ -184,12 +190,18 @@ function Login({ onLogin }) {
 			await csrf()
 			const { data } = await api.post('/api/login', { phone: regPendingPhone, otp: regOtp })
 			onLogin(data.user)
-			const fromPath = location.state?.from?.pathname || '/dashboard'
-			const fromSearch = location.state?.from?.search || ''
-			const finalTarget =
-				fromPath.includes('/join') || fromPath.includes('/dashboard/join')
-					? fromPath + fromSearch
-					: '/dashboard'
+			const fromPath = location.state?.from?.pathname || ''
+			const fromSearch = location.state?.from?.search || location.search
+			const pendingRef = localStorage.getItem('pendingJoinRef')
+
+			let finalTarget = '/dashboard'
+			if (fromPath.includes('/join') || fromPath.includes('/dashboard/join')) {
+				finalTarget = fromPath + fromSearch
+			} else if (location.search.includes('ref=')) {
+				finalTarget = `/dashboard/join${location.search}`
+			} else if (pendingRef) {
+				finalTarget = `/dashboard/join${pendingRef}`
+			}
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
 			setRegError(err?.response?.data?.message || t('auth.otpVerifyFailed'))
@@ -262,9 +274,10 @@ function Login({ onLogin }) {
 	const openAuthPanel = (targetMode) => {
 		switchMode(targetMode)
 		const hash = authHashForMode(targetMode)
-		if (location.pathname !== '/' || location.hash !== hash) {
-			navigate({ pathname: '/', hash })
-		}
+		navigate(
+			{ pathname: location.pathname, search: location.search, hash },
+			{ state: location.state, replace: true }
+		)
 		scrollToAuthPanel()
 	}
 

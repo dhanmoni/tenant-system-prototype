@@ -8,8 +8,13 @@ class VillageWard extends Model
 {
     protected $fillable = [
         'name',
-        'type',
+        'type', 'area_type', 'local_body',
         'district_id',
+        'villages',
+    ];
+
+    protected $casts = [
+        'villages' => 'array',
     ];
 
     public function district()

@@ -15,6 +15,7 @@ export function buildTenancyFormData(
 		tenancyRegistrationDate,
 		tenancyOfficeId,
 		tenancyVillageWardId,
+		tenancyAreaType, tenancyLocalBody, tenancyVillageName,
 		initiatorRole,
 		applyType,
 		landlordName,
@@ -71,6 +72,7 @@ export function buildTenancyFormData(
 		formData.append('registration_date', tenancyRegistrationDate || '')
 		formData.append('office_id', tenancyOfficeId || '')
 		formData.append('village_ward_id', tenancyVillageWardId || '')
+		formData.append('village_name', tenancyVillageName || '')
 		formData.append('apply_type', applyType || 'Individual')
 	}
 
@@ -131,6 +133,7 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 		setTenancyOfficeId,
 		setTenancyDistrictId,
 		setTenancyVillageWardId,
+		setTenancyAreaType, setTenancyLocalBody, setTenancyVillageName,
 		setLandlordName,
 		setLandlordAddress,
 		setLandlordEmail,
@@ -181,6 +184,9 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 			setTenancyDistrictId(String(districtId))
 			loadVillageWards?.(String(districtId))
 		}
+	}
+	if (draft.village_name) {
+		setTenancyVillageName?.(draft.village_name)
 	}
 
 	setLandlordName(draft.landlord_name || '')

@@ -48,7 +48,10 @@ class TenancyApplicationController extends Controller
         $data = $request->validate([
             'registration_date' => ['required', 'date', 'before_or_equal:today'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
-            'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
+            'village_ward_id' => ['nullable', 'integer', 'exists:village_wards,id'],
+            'village_name' => ['nullable', 'string'],
+            'area_type' => ['nullable', 'string', 'in:Urban,Rural'],
+            'local_body' => ['nullable', 'string'],
             'apply_type' => ['required', 'string', 'max:32'],
             'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT,PROPERTY_MANAGER'],
             'landlord_name' => ['required', 'string', 'max:255'],
@@ -113,6 +116,7 @@ class TenancyApplicationController extends Controller
             $data['tenant_phone'],
             $data['registration_date'],
             $data['village_ward_id'],
+            $data['village_name'] ?? null,
             $salt
         );
 
@@ -491,14 +495,18 @@ class TenancyApplicationController extends Controller
             'landlord_phone' => ['required', 'string', 'max:30'],
             'tenant_phone' => ['required', 'string', 'max:30'],
             'registration_date' => ['required', 'date'],
-            'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
+            'village_ward_id' => ['nullable', 'integer', 'exists:village_wards,id'],
+            'village_name' => ['nullable', 'string'],
+            'area_type' => ['nullable', 'string', 'in:Urban,Rural'],
+            'local_body' => ['nullable', 'string'],
         ]);
 
         $refCode = TenancyApplication::generateRefCode(
             $request->input('landlord_phone'),
             $request->input('tenant_phone'),
             $request->input('registration_date'),
-            $request->input('village_ward_id')
+            $request->input('village_ward_id'),
+            $request->input('village_name')
         );
 
         $existing = TenancyApplication::where('ref_code', $refCode)->first();
@@ -545,6 +553,9 @@ class TenancyApplicationController extends Controller
             'registration_date' => ['required', 'date', 'before_or_equal:today'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
             'village_ward_id' => ['nullable', 'integer', 'exists:village_wards,id'],
+            'village_name' => ['nullable', 'string'],
+            'area_type' => ['nullable', 'string', 'in:Urban,Rural'],
+            'local_body' => ['nullable', 'string'],
             'apply_type' => ['required', 'string', 'max:32'],
             'landlord_name' => ['required', 'string', 'max:255'],
             'landlord_address' => ['required', 'string'],
@@ -939,7 +950,10 @@ class TenancyApplicationController extends Controller
         $data = $request->validate([
             'registration_date' => ['required', 'date', 'before_or_equal:today'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
-            'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
+            'village_ward_id' => ['nullable', 'integer', 'exists:village_wards,id'],
+            'village_name' => ['nullable', 'string'],
+            'area_type' => ['nullable', 'string', 'in:Urban,Rural'],
+            'local_body' => ['nullable', 'string'],
             'apply_type' => ['required', 'string', 'max:32'],
             'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT,PROPERTY_MANAGER'],
             'landlord_name' => ['required', 'string', 'max:255'],
@@ -991,6 +1005,7 @@ class TenancyApplicationController extends Controller
             $data['tenant_phone'],
             $data['registration_date'],
             $data['village_ward_id'],
+            $data['village_name'] ?? null,
             $salt
         );
 
@@ -1074,7 +1089,10 @@ class TenancyApplicationController extends Controller
                 'initiator_role' => ['required', 'string', 'in:LANDLORD,TENANT'],
                 'registration_date' => ['required', 'date', 'before_or_equal:today'],
                 'office_id' => ['required', 'integer', 'exists:offices,id'],
-                'village_ward_id' => ['required', 'integer', 'exists:village_wards,id'],
+                'village_ward_id' => ['nullable', 'integer', 'exists:village_wards,id'],
+            'village_name' => ['nullable', 'string'],
+            'area_type' => ['nullable', 'string', 'in:Urban,Rural'],
+            'local_body' => ['nullable', 'string'],
                 'apply_type' => ['required', 'string', 'max:32'],
             ]);
         }
@@ -1143,6 +1161,7 @@ class TenancyApplicationController extends Controller
             'registration_date',
             'office_id',
             'village_ward_id',
+            'village_name',
             'apply_type',
         ];
 
@@ -1293,6 +1312,7 @@ class TenancyApplicationController extends Controller
             'registration_date' => $application->registration_date,
             'office_id' => $application->office_id,
             'village_ward_id' => $application->village_ward_id,
+            'village_name' => $application->village_name,
             'apply_type' => $application->apply_type,
             'landlord_name' => $application->landlord_name,
             'landlord_address' => $application->landlord_address,

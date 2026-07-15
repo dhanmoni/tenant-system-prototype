@@ -318,7 +318,6 @@ function WorkspaceProfile() {
 					<section className="ws-card ws-profile-card">
 						<div className="ws-card-header">
 							<h2 className="ws-card-title">Account details</h2>
-							<p className="ws-profile-card-note">Managed by your registration</p>
 						</div>
 						<div className="ws-card-body ws-profile-card-body ws-profile-fields">
 							<label className="ws-profile-field">

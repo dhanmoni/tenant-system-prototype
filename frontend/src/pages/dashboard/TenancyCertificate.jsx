@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { buildTenancyFormData, applyDraftToForm } from '../../utils/tenancyDraft'
@@ -39,7 +39,10 @@ function TenancyCertificate() {
 	const [tenancyDistrictId, setTenancyDistrictId] = useState('')
 	const [tenancyDistricts, setTenancyDistricts] = useState([])
 	const [tenancyDistrictsLoading, setTenancyDistrictsLoading] = useState(false)
+	const [tenancyAreaType, setTenancyAreaType] = useState('')
+	const [tenancyLocalBody, setTenancyLocalBody] = useState('')
 	const [tenancyVillageWardId, setTenancyVillageWardId] = useState('')
+	const [tenancyVillageName, setTenancyVillageName] = useState('')
 	const [tenancyVillageWards, setTenancyVillageWards] = useState([])
 	const [tenancyVillageWardsLoading, setTenancyVillageWardsLoading] = useState(false)
 	const [initiatorRole, setInitiatorRole] = useState('')
@@ -104,6 +107,8 @@ function TenancyCertificate() {
 	const [profilePin, setProfilePin] = useState('')
 	const [profilePan, setProfilePan] = useState('')
 	const [profilePhotoPreview, setProfilePhotoPreview] = useState('')
+	const [profileDistrictId, setProfileDistrictId] = useState('')
+	const [profileOfficeId, setProfileOfficeId] = useState('')
 
 	const loadTenancyVillageWards = async (districtId) => {
 		if (!districtId) return setTenancyVillageWards([])
@@ -124,8 +129,11 @@ function TenancyCertificate() {
 				setInitiatorRole,
 				setTenancyRegistrationDate,
 				setTenancyOfficeId,
+				setTenancyAreaType,
+				setTenancyLocalBody,
 				setTenancyDistrictId,
 				setTenancyVillageWardId,
+				setTenancyVillageName,
 				setLandlordName,
 				setLandlordAddress,
 				setLandlordEmail,
@@ -163,6 +171,45 @@ function TenancyCertificate() {
 		},
 		[]
 	)
+	
+	const availableLocalBodies = useMemo(() => {
+		if (!tenancyAreaType || !tenancyVillageWards.length) return [];
+		const bodies = new Set();
+		tenancyVillageWards.forEach(vw => {
+			if (vw.area_type === tenancyAreaType && vw.local_body) {
+				bodies.add(vw.local_body);
+			}
+		});
+		return Array.from(bodies);
+	}, [tenancyAreaType, tenancyVillageWards]);
+
+	const availableWards = useMemo(() => {
+		if (!tenancyAreaType || !tenancyLocalBody || !tenancyVillageWards.length) return [];
+		return tenancyVillageWards.filter(vw => vw.area_type === tenancyAreaType && vw.local_body === tenancyLocalBody);
+	}, [tenancyAreaType, tenancyLocalBody, tenancyVillageWards]);
+
+	const availableVillages = useMemo(() => {
+		if (!tenancyVillageWardId || !availableWards.length) return [];
+		const ward = availableWards.find(w => w.id == tenancyVillageWardId);
+		return ward && ward.villages ? ward.villages : [];
+	}, [tenancyVillageWardId, availableWards]);
+
+	const availableOffices = useMemo(() => {
+		if (!tenancyDistrictId) return tenancyOffices;
+		return tenancyOffices.filter(o => o.district_id == tenancyDistrictId);
+	}, [tenancyOffices, tenancyDistrictId]);
+
+	// Auto-select circle office if there's only one for the selected district
+	useEffect(() => {
+		if (tenancyDistrictId && availableOffices.length === 1) {
+			if (tenancyOfficeId !== String(availableOffices[0].id)) {
+				setTenancyOfficeId(String(availableOffices[0].id));
+			}
+		}
+	}, [tenancyDistrictId, availableOffices, tenancyOfficeId]);
+
+
+
 
 	const loadDraft = useCallback(async () => {
 		try {
@@ -195,6 +242,8 @@ function TenancyCertificate() {
 			setProfileAddress(p.address || '')
 			setProfilePin(p.pin_code || '')
 			setProfilePan(p.pan_card || '')
+			setProfileDistrictId(p.district_id || '')
+			setProfileOfficeId(p.office_id || '')
 
 			const photoUrl = p.passport_photo_url
 			const photoPath = p.passport_photo_path || p.user_passport_photo_path
@@ -203,47 +252,19 @@ function TenancyCertificate() {
 		} catch (err) { console.error('Failed to load profile for prefill') }
 	}
 
-	const loadTenancyOffices = async () => {
-		setTenancyOfficesLoading(true)
-		try {
-			const { data } = await api.get('/api/public/offices')
-			const items = Array.isArray(data) ? data : (data.data || data.offices || [])
-			setTenancyOffices(items)
-		} catch (err) { setError('Failed to load offices') }
-		finally { setTenancyOfficesLoading(false) }
-	}
-
-	const loadTenancyDistricts = async () => {
-		setTenancyDistrictsLoading(true)
-		try {
-			const { data } = await api.get('/api/public/districts')
-			setTenancyDistricts(Array.isArray(data) ? data : (data.districts || data.data || []))
-		} catch (err) { setError('Failed to load districts') }
-		finally { setTenancyDistrictsLoading(false) }
-	}
-
+	
+	// Auto-fill district and office from profile once draft is loaded (if they are still empty)
 	useEffect(() => {
-		let active = true
-		setPageReady(false)
-
-		const boot = async () => {
-			try {
-				await Promise.all([
-					loadProfile(),
-					loadTenancyOffices(),
-					loadTenancyDistricts(),
-					loadDraft(),
-				])
-			} finally {
-				if (active) setPageReady(true)
+		if (draftLoaded) {
+			if (!tenancyDistrictId && profileDistrictId) {
+				setTenancyDistrictId(String(profileDistrictId));
+				loadTenancyVillageWards(String(profileDistrictId));
+			}
+			if (!tenancyOfficeId && profileOfficeId) {
+				setTenancyOfficeId(String(profileOfficeId));
 			}
 		}
-
-		boot()
-		return () => {
-			active = false
-		}
-	}, [loadDraft])
+	}, [draftLoaded, profileDistrictId, profileOfficeId]); // Intentionally omitting tenancyDistrictId/tenancyOfficeId so it doesn't re-fill if user clears them
 
 	// Dynamic pre-fill based on initiatorRole and profile data
 	useEffect(() => {
@@ -276,6 +297,35 @@ function TenancyCertificate() {
 		} else { setPropertyTenancyDuration('') }
 	}, [propertyPossessionDate, propertyTenancyEndDate])
 
+	const loadTenancyOffices = async () => {
+		setTenancyOfficesLoading(true)
+		try {
+			const { data } = await api.get('/api/public/offices')
+			const items = Array.isArray(data) ? data : (data.data || data.offices || [])
+			setTenancyOffices(items)
+		} catch (err) { setError('Failed to load offices') }
+		finally { setTenancyOfficesLoading(false) }
+	}
+
+	const loadTenancyDistricts = async () => {
+		setTenancyDistrictsLoading(true)
+		try {
+			const { data } = await api.get('/api/public/districts')
+			setTenancyDistricts(Array.isArray(data) ? data : (data.districts || data.data || []))
+		} catch (err) { setError('Failed to load districts') }
+		finally { setTenancyDistrictsLoading(false) }
+	}
+
+	const loadTenancyVillageWards = async (districtId) => {
+		if (!districtId) return setTenancyVillageWards([])
+		setTenancyVillageWardsLoading(true)
+		try {
+			const { data } = await api.get('/api/public/village-wards', { params: { district_id: districtId, t: new Date().getTime() } })
+			setTenancyVillageWards(Array.isArray(data) ? data : data.data || [])
+		} catch (err) { setError('Failed to load village/wards') }
+		finally { setTenancyVillageWardsLoading(false) }
+	}
+
 	const resetTenancyForm = () => {
 		setTenancyStep(1); setDraftApplicationNo(null); setSavedWizardStep(0); setTenancyRegistrationDate(''); setTenancyOfficeId('');
 		setAgreementFile(null); setAgreementPreviewUrl(''); setLandlordPhotoFile(null); setLandlordPhotoPreview(profileType === 'landlord' ? profilePhotoPreview : '');
@@ -283,7 +333,7 @@ function TenancyCertificate() {
 		setTenantSignatureFile(null); setTenantSignaturePreview(''); setManagerName(''); setManagerAddress(''); setManagerEmail(''); setManagerPhone(''); setManagerPan('');
 		setTenantPreviousTenancy(''); setPropertyPossessionDate(''); setPropertyRentPayable(''); setPropertyPremisesDescription(''); setPropertyFurnitureDescription('');
 		setPropertyChargeElectricity(''); setPropertyChargeWater(''); setPropertyChargeFurnishing(''); setPropertyChargeOtherServices(''); setPropertyTenancyDuration('');
-		setPropertyTenancyEndDate(''); setSaveToast(''); setError(''); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyDistrictId('');
+		setPropertyTenancyEndDate(''); setSuccess(''); setError(''); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyVillageName(''); setTenancyDistrictId(''); setTenancyAreaType(''); setTenancyLocalBody('');
 		setPaymentComplete(false); setPaymentSimulating(false); setPaymentGrn(''); setDeclarationChecked(false);
 		setInitiatorRole(profileType === 'landlord' ? 'LANDLORD' : profileType === 'tenant' ? 'TENANT' : '')
 	}
@@ -426,6 +476,7 @@ function TenancyCertificate() {
 		tenancyRegistrationDate,
 		tenancyOfficeId,
 		tenancyVillageWardId,
+						tenancyVillageName,
 		initiatorRole,
 		applyType,
 		landlordName,
@@ -509,7 +560,9 @@ function TenancyCertificate() {
 				setDraftApplicationNo(draft.application_no)
 				setSavedWizardStep(Math.max(step, Number(draft.wizard_step) || step))
 			}
-			showSaveToast(step === 4 ? 'Preview completed.' : 'Progress saved.')
+			setSuccess('Progress saved.')
+			if (window.toastTimer) clearTimeout(window.toastTimer)
+			window.toastTimer = setTimeout(() => setSuccess(''), 3500)
 			return true
 		} catch (err) {
 			const errors = err?.response?.data?.errors
@@ -585,11 +638,11 @@ function TenancyCertificate() {
 	}
 
 	const tenancySteps = [
-		{ id: 1, label: 'Registration' },
-		{ id: 2, label: 'Tenancy details' },
-		{ id: 3, label: 'Documents' },
+		{ id: 1, label: 'Registration & Office' },
+		{ id: 2, label: 'Tenancy Details' },
+		{ id: 3, label: 'Uploads' },
 		{ id: 4, label: 'Preview' },
-		{ id: 5, label: 'Payment' },
+		{ id: 5, label: 'Submit' },
 	]
 
 	const TOTAL_STEPS = tenancySteps.length
@@ -699,6 +752,24 @@ function TenancyCertificate() {
 
 	if (submittedApp) {
 		const isJoint = String(submittedApp.apply_type || '').toLowerCase() === 'joint'
+
+		let pendingPartyRole = 'the other party'
+		let pendingPartyName = ''
+		let pendingPartyPhone = ''
+
+		if (initiatorRole === 'LANDLORD') {
+			pendingPartyRole = 'Tenant'
+			pendingPartyName = tenantName
+			pendingPartyPhone = tenantPhone
+		} else if (initiatorRole === 'TENANT') {
+			pendingPartyRole = 'Landlord'
+			pendingPartyName = landlordName
+			pendingPartyPhone = landlordPhone
+		}
+
+		const pendingPartyText = pendingPartyName 
+			? `${pendingPartyRole} (${pendingPartyName}${pendingPartyPhone ? ` - ${pendingPartyPhone}` : ''})` 
+			: pendingPartyRole;
 		return (
 			<div className="ws-page ws-uin-apply tenancy-certificate-page">
 				<div className="uin-confirm">
@@ -706,8 +777,9 @@ function TenancyCertificate() {
 						<div className="uin-confirm-icon" aria-hidden>✓</div>
 						<h1 className="uin-confirm-title">Application submitted successfully</h1>
 						<p className="uin-confirm-lead">
-							{submittedApp.message ||
-								'Your tenancy certificate application has been lodged.'}
+							{isJoint
+								? `Application submitted. ${pendingPartyText} must complete their details using the join link.`
+								: (submittedApp.message || 'Your tenancy certificate application has been lodged.')}
 						</p>
 
 						<dl className="uin-confirm-meta">
@@ -733,7 +805,7 @@ function TenancyCertificate() {
 						{isJoint && submittedApp.join_link ? (
 							<div className="uin-confirm-invite">
 								<p className="uin-confirm-joint-note">
-									This is a joint application. It is awaiting the other party's
+									This is a joint application. It is awaiting {pendingPartyText}'s
 									verification and payment. Share the invite link below so they can
 									complete their details.
 								</p>
@@ -808,39 +880,61 @@ function TenancyCertificate() {
 				<span>Apply for UIN</span>
 			</nav>
 
-			<div className="ws-uin-apply-body">
-				<nav className="ws-uin-wizard-progress" aria-label="Application stages">
-					<ol className="ws-uin-wizard-steps">
-						{tenancySteps.map((step, idx) => {
-							const done = tenancyStep > step.id || savedWizardStep >= step.id
-							const active = tenancyStep === step.id
-							const reachable = step.id <= maxReachableStep
-							return (
-								<li
-									key={step.id}
-									className={`ws-uin-wizard-step${active ? ' is-active' : ''}${done ? ' is-done' : ''}${!reachable ? ' is-locked' : ''}`}
-								>
-									<button
-										type="button"
-										className="ws-uin-wizard-step-btn"
-										disabled={!reachable}
-										aria-current={active ? 'step' : undefined}
-										onClick={() => goToStep(step.id)}
-									>
-										<span className="ws-uin-wizard-step-num">{done && !active ? '✓' : step.id}</span>
-										<span className="ws-uin-wizard-step-label">{step.label}</span>
-									</button>
-									{idx < tenancySteps.length - 1 ? (
-										<span className="ws-uin-wizard-step-line" aria-hidden />
-									) : null}
-								</li>
-							)
-						})}
-					</ol>
-				</nav>
+			<header className="ws-uin-apply-head">
+				<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
+				<p className="ws-uin-apply-lead">
+					Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
+				</p>
+				{draftApplicationNo ? (
+					<p className="ws-uin-apply-draft-id">
+						Draft: <strong>{draftApplicationNo}</strong>
+					</p>
+				) : null}
+			</header>
 
+			<div className="horizontal-stepper-container" style={{ margin: '10px 0 40px 0', position: 'relative', maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto' }}>
+				{/* Background line */}
+				<div className="stepper-line-bg" style={{ position: 'absolute', top: '24px', left: '10%', right: '10%', height: '3px', background: '#e0e0e0', zIndex: 0 }} />
+				
+				<ol className="horizontal-stepper-steps" style={{ display: 'flex', justifyContent: 'space-between', listStyle: 'none', padding: 0, margin: 0, position: 'relative', zIndex: 1 }}>
+					{tenancySteps.map((step, idx) => {
+						const done = tenancyStep > step.id || savedWizardStep >= step.id
+						const active = tenancyStep === step.id
+						const reachable = step.id <= maxReachableStep
+						
+						return (
+							<li key={step.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: reachable ? 'pointer' : 'default' }} onClick={() => { if (reachable) goToStep(step.id) }}>
+								<div className="stepper-circle" style={{
+									width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+									background: active ? '#003399' : '#f4f5f7',
+									color: active ? '#fff' : '#111',
+									border: active ? 'none' : '1px solid #dcdfe6',
+									fontWeight: active ? 'bold' : 'normal',
+									fontSize: '16px',
+									marginBottom: '12px',
+									boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+									transition: 'all 0.2s ease',
+								}}>
+									{done && !active ? '✓' : step.id}
+								</div>
+								<span className="stepper-label" style={{
+									fontSize: '14px',
+									color: active ? '#111' : '#666',
+									fontWeight: active ? '700' : '500',
+									textAlign: 'center',
+									whiteSpace: 'nowrap'
+								}}>
+									{step.label}
+								</span>
+							</li>
+						)
+					})}
+				</ol>
+			</div>
+
+			<div className="ws-uin-apply-body-full">
 				<div className="ws-uin-apply-main">
-					{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
+					{error ? <div className="ws-alert ws-alert--error" style={{ borderRadius: '8px' }}>{error}</div> : null}
 
 					{conflictData && (
 						<div className="conflict-notice-box">
@@ -852,6 +946,33 @@ function TenancyCertificate() {
 						</div>
 					)}
 
+					{success ? (
+						<div style={{
+							position: 'fixed',
+							top: '30px',
+							right: '30px',
+							background: '#1f2937',
+							color: '#ffffff',
+							padding: '12px 24px',
+							borderRadius: '8px',
+							boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+							zIndex: 9999,
+							display: 'flex',
+							alignItems: 'center',
+							gap: '12px',
+							fontSize: '15px',
+							fontWeight: '500'
+						}}>
+							<span style={{ background: '#10b981', color: '#fff', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>✓</span>
+							{success}
+						</div>
+					) : null}
+
+					{!draftLoaded ? (
+						<div className="ws-uin-apply-loading">Loading your application…</div>
+					) : null}
+
+					{draftLoaded ? (
 			<form
 				className={`tenancy-form ws-uin-apply-form${tenancyStep === 4 ? ' ws-uin-apply-form--preview-step' : ''}`}
 				onSubmit={handleContinue}
@@ -869,6 +990,50 @@ function TenancyCertificate() {
 
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
+						<div className="compact-eligibility-box" style={{ 
+							marginBottom: '25px', 
+							padding: '12px 16px', 
+							background: '#f8f9fa', 
+							border: '1px solid #e2e8f0', 
+							borderRadius: '8px',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							flexWrap: 'wrap',
+							gap: '10px'
+						}}>
+							<div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+								<span style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>Eligibility:</span>
+								<div style={{ display: 'flex', gap: '15px', fontSize: '13px' }}>
+									<span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: applyType ? '#059669' : '#64748b' }}>
+										{applyType ? '✓' : '○'} {applyType ? `Type: ${applyType}` : 'Waiting for date'}
+									</span>
+								</div>
+							</div>
+							
+							{tenancyRegistrationDate && (
+								<div style={{ 
+									padding: '6px 12px', 
+									borderRadius: '6px', 
+									fontSize: '13px', 
+									fontWeight: '600',
+									background: eligibilityMet ? '#dcfce7' : '#fee2e2',
+									color: eligibilityMet ? '#166534' : '#991b1b',
+									display: 'flex',
+									alignItems: 'center',
+									gap: '6px'
+								}}>
+									{eligibilityMet ? (
+										<span>
+											✓ Eligible to apply 
+										</span>
+									) : registrationTooOld ? (
+										<span>✕ Not eligible (Agreement > 3 months old)</span>
+									) : null}
+								</div>
+							)}
+						</div>
+
 						<div className="form-grid">
 							<label>
 								<span className="label-text required">Initiating as</span>
@@ -886,25 +1051,57 @@ function TenancyCertificate() {
 							</label>
 							<label>
 								<span className="label-text required">District</span>
-								<select value={tenancyDistrictId} onChange={e => { setTenancyDistrictId(e.target.value); setTenancyVillageWardId(''); setTenancyVillageWards([]); loadTenancyVillageWards(e.target.value); }} required>
+								<select value={tenancyDistrictId} onChange={e => { setTenancyDistrictId(e.target.value); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyVillageName(''); loadTenancyVillageWards(e.target.value); }} required>
 									<option value="">Select District</option>
 									{tenancyDistricts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
 								</select>
 							</label>
 
+							<div className="radio-group-container">
+								<span className="label-text required">Area Type</span>
+								<div className="radio-group" style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+									<label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+										<input type="radio" name="areaType" value="Urban" checked={tenancyAreaType === 'Urban'} onChange={e => { setTenancyAreaType(e.target.value); setTenancyLocalBody(''); setTenancyVillageWardId(''); setTenancyVillageName(''); }} required disabled={!tenancyDistrictId} />
+										Urban
+									</label>
+									<label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+										<input type="radio" name="areaType" value="Rural" checked={tenancyAreaType === 'Rural'} onChange={e => { setTenancyAreaType(e.target.value); setTenancyLocalBody(''); setTenancyVillageWardId(''); setTenancyVillageName(''); }} required disabled={!tenancyDistrictId} />
+										Rural
+									</label>
+								</div>
+							</div>
+
 							<label>
-								<span className="label-text required">Village / Ward</span>
-								<select value={tenancyVillageWardId} onChange={e => setTenancyVillageWardId(e.target.value)} required disabled={!tenancyDistrictId}>
-									<option value="">Select Village/Ward</option>
-									{tenancyVillageWards.map(vw => <option key={vw.id} value={vw.id}>{vw.name}</option>)}
+								<span className="label-text required">{tenancyAreaType === 'Urban' ? 'Town/Municipal Area' : tenancyAreaType === 'Rural' ? 'Gram Panchayat' : 'Local Body'}</span>
+								<select value={tenancyLocalBody} onChange={e => { setTenancyLocalBody(e.target.value); setTenancyVillageWardId(''); setTenancyVillageName(''); }} required disabled={!tenancyAreaType}>
+									<option value="">Select {tenancyAreaType === 'Urban' ? 'Town' : tenancyAreaType === 'Rural' ? 'Gram Panchayat' : 'Local Body'}</option>
+									{availableLocalBodies.map(b => <option key={b} value={b}>{b}</option>)}
 								</select>
 							</label>
+
+							<label>
+								<span className="label-text required">Ward</span>
+								<select value={tenancyVillageWardId} onChange={e => { setTenancyVillageWardId(e.target.value); setTenancyVillageName(''); }} required disabled={!tenancyLocalBody}>
+									<option value="">Select Ward</option>
+									{availableWards.map(vw => <option key={vw.id} value={vw.id}>{vw.name}</option>)}
+								</select>
+							</label>
+
+							{tenancyAreaType === 'Rural' && (
+								<label>
+									<span className="label-text required">Village</span>
+									<select value={tenancyVillageName} onChange={e => setTenancyVillageName(e.target.value)} required disabled={!tenancyVillageWardId}>
+										<option value="">Select Village</option>
+										{availableVillages.map(v => <option key={v} value={v}>{v}</option>)}
+									</select>
+								</label>
+							)}
 
 							<label>
 								<span className="label-text required">Circle Office:</span>
 								<select value={tenancyOfficeId} onChange={e => setTenancyOfficeId(e.target.value)} required>
 									<option value="">Select Office</option>
-									{tenancyOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+									{availableOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
 								</select>
 							</label>
 
@@ -913,12 +1110,6 @@ function TenancyCertificate() {
 								<input type="text" value={applyType || 'Select agreement date'} readOnly disabled className="readonly-input" />
 							</label>
 						</div>
-
-						{registrationTooOld ? (
-							<div className="ws-alert ws-alert--error" role="alert">
-								Not eligible — agreement date is more than 3 months old.
-							</div>
-						) : null}
 					</fieldset>
 				)}
 				{tenancyStep === 2 && (
@@ -1403,28 +1594,49 @@ function TenancyCertificate() {
 				)}
 
 				{tenancyStep === 5 && (
-					<fieldset className="tenancy-fieldset ws-uin-payment-step">
-						<div className="ws-uin-payment-card">
-							<h2 className="ws-uin-payment-card-title">Application fee payment</h2>
-							<p className="ws-uin-payment-card-lead">
-								Complete the fee payment to submit your tenancy certificate application. Your application is only lodged after the payment is successful and the acknowledgement is generated.
+					<fieldset className="tenancy-fieldset ws-uin-payment-step" style={{ border: 'none', padding: 0, display: 'block' }}>
+						<div className="ws-uin-payment-card" style={{
+							textAlign: 'center',
+							padding: '20px 25px',
+							background: '#ffffff',
+							borderRadius: '12px',
+							boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
+							border: '1px solid #e2e8f0',
+							maxWidth: '450px',
+							margin: '0 auto'
+						}}>
+							<div style={{
+								width: '40px', height: '40px', borderRadius: '50%', background: '#f0fdf4', color: '#16a34a',
+								display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', margin: '0 auto 10px'
+							}}>
+								₹
+							</div>
+							<h2 className="ws-uin-payment-card-title" style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px' }}>Application fee payment</h2>
+							<p className="ws-uin-payment-card-lead" style={{ color: '#64748b', fontSize: '13px', lineHeight: '1.4', margin: '0 0 15px' }}>
+								Please process your application fee to finalize the submission. Your application will be officially lodged once the transaction is verified.
 							</p>
 
-							<div className="ws-uin-payment-summary">
-								<div className="ws-uin-payment-summary-row">
-									<span>Application type</span>
-									<strong>{applyType || '—'}</strong>
-								</div>
-								<div className="ws-uin-payment-summary-row">
-									<span>Amount payable</span>
-									<strong>₹{feeAmount}</strong>
+							<div className="ws-uin-payment-summary" style={{
+								background: '#f8fafc',
+								borderRadius: '8px',
+								padding: '12px 16px',
+								marginBottom: '20px',
+								textAlign: 'left'
+							}}>
+								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+									<span style={{ color: '#64748b' }}>Application type</span>
+									<strong style={{ color: '#0f172a' }}>{applyType || '—'}</strong>
 								</div>
 								{draftApplicationNo ? (
-									<div className="ws-uin-payment-summary-row">
-										<span>Draft reference</span>
-										<strong>{draftApplicationNo}</strong>
+									<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+										<span style={{ color: '#64748b' }}>Draft reference</span>
+										<strong style={{ color: '#0f172a' }}>{draftApplicationNo}</strong>
 									</div>
 								) : null}
+								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', marginTop: '8px' }}>
+									<span style={{ color: '#0f172a', fontWeight: '600' }}>Amount payable</span>
+									<strong style={{ color: '#2563eb', fontSize: '16px' }}>₹{feeAmount}</strong>
+								</div>
 							</div>
 
 							{!paymentComplete ? (
@@ -1433,17 +1645,29 @@ function TenancyCertificate() {
 									className="ws-btn ws-btn--primary ws-uin-payment-pay-btn"
 									onClick={handleMockPayment}
 									disabled={paymentSimulating || draftSaving}
+									style={{
+										width: '100%',
+										padding: '10px',
+										fontSize: '14px',
+										fontWeight: '600',
+										borderRadius: '8px',
+										background: '#2563eb',
+										boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'
+									}}
 								>
-									{paymentSimulating ? 'Processing payment…' : `Pay ₹${feeAmount} via eGRAS`}
+									{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount} via eGRAS`}
 								</button>
 							) : (
-								<div className="ws-alert ws-alert--success ws-uin-payment-success">
-									Payment of ₹{feeAmount} completed successfully.{paymentGrn ? ` (Mock GRN: ${paymentGrn})` : ''}
+								<div className="ws-alert ws-alert--success ws-uin-payment-success" style={{
+									background: '#ecfdf5', color: '#065f46', border: '1px solid #10b981', borderRadius: '8px', padding: '10px', fontWeight: '500', fontSize: '13px'
+								}}>
+									<span style={{ display: 'block', fontSize: '14px', marginBottom: '3px' }}>✓ Payment Successful</span>
+									₹{feeAmount} paid.{paymentGrn ? ` GRN: ${paymentGrn}` : ''}
 								</div>
 							)}
 
-							<p className="ws-uin-payment-note">
-								This is a demo payment step. No real transaction is processed.
+							<p className="ws-uin-payment-note" style={{ color: '#94a3b8', fontSize: '11px', margin: '15px 0 0' }}>
+								Secure demo step. No real transaction.
 							</p>
 						</div>
 					</fieldset>
