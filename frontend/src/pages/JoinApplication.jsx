@@ -421,40 +421,47 @@ function JoinApplication() {
 				</p>
 			</header>
 
-			<div className="ws-uin-apply-body">
-				<aside className="ws-uin-wizard-rail" aria-label="Registration stages">
-					<p className="ws-uin-wizard-rail-title">Stages</p>
-					<ol className="ws-uin-wizard-steps">
-						{JOIN_STEPS.map((step, idx) => {
-							const done = joinStep > step.id || maxReachedStep > step.id
-							const active = joinStep === step.id
-							const reachable = step.id <= maxReachableStep
-							return (
-								<li
-									key={step.id}
-									className={`ws-uin-wizard-step${active ? ' is-active' : ''}${done ? ' is-done' : ''}${!reachable ? ' is-locked' : ''}`}
-								>
-									<button
-										type="button"
-										className="ws-uin-wizard-step-btn"
-										disabled={!reachable}
-										aria-current={active ? 'step' : undefined}
-										onClick={() => goToStep(step.id)}
-									>
-										<span className="ws-uin-wizard-step-num">
-											{done && !active ? '✓' : step.id}
-										</span>
-										<span className="ws-uin-wizard-step-label">{step.label}</span>
-									</button>
-									{idx < JOIN_STEPS.length - 1 ? (
-										<span className="ws-uin-wizard-step-line" aria-hidden />
-									) : null}
-								</li>
-							)
-						})}
-					</ol>
-				</aside>
+			<div className="horizontal-stepper-container" style={{ margin: '10px 0 40px 0', position: 'relative', maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto' }}>
+				{/* Background line */}
+				<div className="stepper-line-bg" style={{ position: 'absolute', top: '24px', left: '10%', right: '10%', height: '3px', background: '#e0e0e0', zIndex: 0 }} />
+				
+				<ol className="horizontal-stepper-steps" style={{ display: 'flex', justifyContent: 'space-between', listStyle: 'none', padding: 0, margin: 0, position: 'relative', zIndex: 1 }}>
+					{JOIN_STEPS.map((step, idx) => {
+						const done = joinStep > step.id || maxReachedStep >= step.id
+						const active = joinStep === step.id
+						const reachable = step.id <= maxReachableStep
+						
+						return (
+							<li key={step.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: reachable ? 'pointer' : 'default' }} onClick={() => { if (reachable) goToStep(step.id) }}>
+								<div className="stepper-circle" style={{
+									width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+									background: active ? '#003399' : '#f4f5f7',
+									color: active ? '#fff' : '#111',
+									border: active ? 'none' : '1px solid #dcdfe6',
+									fontWeight: active ? 'bold' : 'normal',
+									fontSize: '16px',
+									marginBottom: '12px',
+									boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+									transition: 'all 0.2s ease',
+								}}>
+									{done && !active ? '✓' : step.id}
+								</div>
+								<span className="stepper-label" style={{
+									fontSize: '14px',
+									color: active ? '#111' : '#666',
+									fontWeight: active ? '700' : '500',
+									textAlign: 'center',
+									whiteSpace: 'nowrap'
+								}}>
+									{step.label}
+								</span>
+							</li>
+						)
+					})}
+				</ol>
+			</div>
 
+			<div className="ws-uin-apply-body-full">
 				<div className="ws-uin-apply-main">
 					{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
 
@@ -492,7 +499,13 @@ function JoinApplication() {
 										</div>
 										<div>
 											<span className="label-text">Village / Ward</span>
-											<span>{application.village_ward?.name || '—'}</span>
+											<span>
+												{application.area_type ? application.area_type + ', ' : ''}
+												{application.local_body ? application.local_body + ', ' : ''}
+												{application.village_ward?.name || ''} 
+												{application.village_name ? (application.village_ward?.name ? ', ' : '') + application.village_name : ''}
+												{!application.village_ward && !application.village_name && '—'}
+											</span>
 										</div>
 									</div>
 								</div>
@@ -1181,52 +1194,81 @@ function JoinApplication() {
 
 						{/* Step 5: Payment */}
 						{joinStep === 5 && (
-							<fieldset className="tenancy-fieldset ws-uin-payment-step">
-								<div className="ws-uin-payment-card">
-									<h2 className="ws-uin-payment-card-title">Application fee payment</h2>
-									<p className="ws-uin-payment-card-lead">
-										Complete the fee payment to submit your part of this tenancy
-										application. Your details are only lodged after payment is successful.
-									</p>
+							<fieldset className="tenancy-fieldset ws-uin-payment-step" style={{ border: 'none', padding: 0, display: 'block' }}>
+						<div className="ws-uin-payment-card" style={{
+							textAlign: 'center',
+							padding: '20px 25px',
+							background: '#ffffff',
+							borderRadius: '12px',
+							boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
+							border: '1px solid #e2e8f0',
+							maxWidth: '450px',
+							margin: '0 auto'
+						}}>
+							<div style={{
+								width: '40px', height: '40px', borderRadius: '50%', background: '#f0fdf4', color: '#16a34a',
+								display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', margin: '0 auto 10px'
+							}}>
+								₹
+							</div>
+							<h2 className="ws-uin-payment-card-title" style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px' }}>Application fee payment</h2>
+							<p className="ws-uin-payment-card-lead" style={{ color: '#64748b', fontSize: '13px', lineHeight: '1.4', margin: '0 0 15px' }}>
+								Please process your application fee to finalize the submission. Your application will be officially lodged once the transaction is verified.
+							</p>
 
-									<div className="ws-uin-payment-summary">
-										<div className="ws-uin-payment-summary-row">
-											<span>Application no.</span>
-											<strong>{application.application_no}</strong>
-										</div>
-										<div className="ws-uin-payment-summary-row">
-											<span>Your role</span>
-											<strong>{roleLabel}</strong>
-										</div>
-										<div className="ws-uin-payment-summary-row">
-											<span>Amount payable</span>
-											<strong>₹{feeAmount}</strong>
-										</div>
-									</div>
-
-									{!paymentComplete ? (
-										<button
-											type="button"
-											className="ws-btn ws-btn--primary ws-uin-payment-pay-btn"
-											onClick={handleMockPayment}
-											disabled={paymentSimulating || submitting}
-										>
-											{paymentSimulating
-												? 'Processing payment…'
-												: `Pay ₹${feeAmount} via eGRAS`}
-										</button>
-									) : (
-										<div className="ws-alert ws-alert--success ws-uin-payment-success">
-											Payment of ₹{feeAmount} completed successfully.
-											{paymentGrn ? ` (Mock GRN: ${paymentGrn})` : ''}
-										</div>
-									)}
-
-									<p className="ws-uin-payment-note">
-										This is a demo payment step. No real transaction is processed.
-									</p>
+							<div className="ws-uin-payment-summary" style={{
+								background: '#f8fafc',
+								borderRadius: '8px',
+								padding: '12px 16px',
+								marginBottom: '20px',
+								textAlign: 'left'
+							}}>
+								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+									<span style={{ color: '#64748b' }}>Application no.</span>
+									<strong style={{ color: '#0f172a' }}>{application.application_no}</strong>
 								</div>
-							</fieldset>
+								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+									<span style={{ color: '#64748b' }}>Your role</span>
+									<strong style={{ color: '#0f172a' }}>{roleLabel}</strong>
+								</div>
+								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', marginTop: '8px' }}>
+									<span style={{ color: '#0f172a', fontWeight: '600' }}>Amount payable</span>
+									<strong style={{ color: '#2563eb', fontSize: '16px' }}>₹{feeAmount}</strong>
+								</div>
+							</div>
+
+							{!paymentComplete ? (
+								<button
+									type="button"
+									className="ws-btn ws-btn--primary ws-uin-payment-pay-btn"
+									onClick={handleMockPayment}
+									disabled={paymentSimulating || submitting}
+									style={{
+										width: '100%',
+										padding: '10px',
+										fontSize: '14px',
+										fontWeight: '600',
+										borderRadius: '8px',
+										background: '#2563eb',
+										boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'
+									}}
+								>
+									{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount} via eGRAS`}
+								</button>
+							) : (
+								<div className="ws-alert ws-alert--success ws-uin-payment-success" style={{
+									background: '#ecfdf5', color: '#065f46', border: '1px solid #10b981', borderRadius: '8px', padding: '10px', fontWeight: '500', fontSize: '13px'
+								}}>
+									<span style={{ display: 'block', fontSize: '14px', marginBottom: '3px' }}>✓ Payment Successful</span>
+									₹{feeAmount} paid.{paymentGrn ? ` GRN: ${paymentGrn}` : ''}
+								</div>
+							)}
+
+							<p className="ws-uin-payment-note" style={{ color: '#94a3b8', fontSize: '11px', margin: '15px 0 0' }}>
+								Secure demo step. No real transaction.
+							</p>
+						</div>
+					</fieldset>
 						)}
 
 						<div className="form-actions ws-uin-apply-actions">

@@ -135,6 +135,30 @@ function App() {
 	}, [slides.length])
 
 	const location = useLocation()
+	const fromPath = location.state?.from?.pathname || ''
+	const fromSearch = location.state?.from?.search || location.search
+	let finalTarget = '/dashboard'
+
+	// Bulletproof persistent redirect
+	if (location.search.includes('ref=')) {
+		localStorage.setItem('pendingJoinRef', location.search)
+	}
+
+	const pendingRef = localStorage.getItem('pendingJoinRef')
+
+	if (fromPath.includes('/join') || fromPath.includes('/dashboard/join')) {
+		finalTarget = fromPath + fromSearch
+	} else if (location.search.includes('ref=')) {
+		finalTarget = `/dashboard/join${location.search}`
+	} else if (pendingRef) {
+		finalTarget = `/dashboard/join${pendingRef}`
+	}
+
+	// We only clear pendingRef when they actually land on the dashboard route
+	if (user && location.pathname.startsWith('/dashboard/join')) {
+		localStorage.removeItem('pendingJoinRef')
+	}
+
 	const isDashboardRoute = location.pathname.startsWith('/dashboard')
 	const isJoinEntry = location.pathname === '/join'
 	const isLandingHome =
@@ -513,13 +537,13 @@ function App() {
 					<Route
 						path="/"
 						element={
-							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleUserLogin} />
+							user ? <Navigate to={finalTarget} replace /> : <Login onLogin={handleUserLogin} />
 						}
 					/>
 					<Route
 						path="/login"
 						element={
-							user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleUserLogin} />
+							user ? <Navigate to={finalTarget} replace /> : <Login onLogin={handleUserLogin} />
 						}
 					/>
 					<Route path="/register" element={<Navigate to="/login" replace />} />
@@ -613,11 +637,7 @@ function App() {
 						/>
 						<Route
 							path="join"
-							element={
-								<WorkspaceLegacyFrame title="Join application" subtitle="Second party registration">
-									<JoinApplication user={user} />
-								</WorkspaceLegacyFrame>
-							}
+							element={<JoinApplication user={user} />}
 						/>
 					</Route>
 					<Route path="/join" element={<JoinEntryRedirect user={user} />} />

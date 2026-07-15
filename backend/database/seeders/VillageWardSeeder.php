@@ -11,59 +11,115 @@ class VillageWardSeeder extends Seeder
 {
     public function run()
     {
+        $jsonPath = database_path('seeders/data/villages.json');
+        if (!file_exists($jsonPath)) {
+            $this->command->warn('villages.json not found. Run migrations to populate data or ensure the file exists.');
+            return;
+        }
+
         Schema::disableForeignKeyConstraints();
         VillageWard::truncate();
         Schema::enableForeignKeyConstraints();
 
-        $districts = District::all();
-
-        // Pre-defined village/ward names per district (cycled through)
-        $villageNames = [
-            ['Beltola', 'ward'],
-            ['Chandmari', 'ward'],
-            ['Jalukbari', 'ward'],
-            ['Panbazar', 'ward'],
-            ['Uzanbazar', 'ward'],
+        $jsonData = json_decode(file_get_contents($jsonPath), true);
+        
+        $districtMapping = [
+            'Kamrup' => 'Kamrup Rural',
+            'Nalbari' => 'Nalbari',
+            'Barpeta' => 'Barpeta',
+            'Mangaldai' => 'Darrang',
+            'Dhubri' => 'Dhubri',
+            'Goalpara' => 'Goalpara',
+            'Bongaigaon' => 'Bongaigaon',
+            'Morigaon' => 'Morigaon',
+            'Nagaon MB' => 'Nagaon',
+            'Hojai' => 'Hojai',
+            'Tezpur' => 'Sonitpur',
+            'Biswanath' => 'Biswanath',
+            'Golaghat' => 'Golaghat',
+            'Jorhat' => 'Jorhat',
+            'Sivsagar' => 'Sivasagar',
+            'charaideo' => 'Charaideo',
+            'North Lakhimpur' => 'Lakhimpur',
+            'Dibrugarh' => 'Dibrugarh',
+            'Tinsukia' => 'Tinsukia',
+            'Cachar' => 'Cachar',
+            'Hailakandi' => 'Hailakandi',
+            'Karimganj' => 'Karimganj',
+            'Dhemaji' => 'Dhemaji',
+            'Udalguri' => 'Udalguri',
+            'Kokrajhar' => 'Kokrajhar',
+            'Karbi-Anglong' => 'Karbi Anglong',
+            'West karbi-Anglong' => 'West Karbi Anglong'
         ];
 
-        $townNames = [
-            ['Guwahati Town', 'town'],
-            ['Nagaon Town', 'town'],
-            ['Silchar Town', 'town'],
-            ['Dibrugarh Town', 'town'],
-        ];
+        $seededDistrictIds = [];
 
-        $ruralNames = [
-            ['Patacharkuchi', 'village'],
-            ['Hajo', 'village'],
-            ['Rangia', 'village'],
-            ['Sualkuchi', 'village'],
-            ['Baihata Chariali', 'village'],
-        ];
-
-        foreach ($districts as $index => $district) {
-            // Add 2 wards, 1 town, 2 villages per district (rotated from the lists)
-            $wards = array_slice($villageNames, $index % count($villageNames), 2);
-            if (count($wards) < 2) {
-                $wards = array_merge($wards, array_slice($villageNames, 0, 2 - count($wards)));
-            }
-
-            $town = $townNames[$index % count($townNames)];
+        foreach ($jsonData as $districtData) {
+            $excelDistrictName = $districtData['district_name'];
+            $dbDistrictName = $districtMapping[$excelDistrictName] ?? $excelDistrictName;
             
-            $villages = array_slice($ruralNames, $index % count($ruralNames), 2);
-            if (count($villages) < 2) {
-                $villages = array_merge($villages, array_slice($ruralNames, 0, 2 - count($villages)));
+            $district = District::where('name', 'LIKE', '%' . $dbDistrictName . '%')->first();
+            
+            if ($district) {
+                $seededDistrictIds[] = $district->id;
+                $insertData = [];
+                foreach ($districtData['entries'] as $entry) {
+                    $insertData[] = [
+                        'area_type' => $entry['area_type'] ?? null,
+                        'local_body' => $entry['local_body'] ?? null,
+                        'name' => $entry['name'],
+                        'type' => $entry['type'],
+                        'district_id' => $district->id,
+                        'villages' => json_encode($entry['villages'] ?? []),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+                
+                foreach (array_chunk($insertData, 500) as $chunk) {
+                    VillageWard::insertOrIgnore($chunk);
+                }
             }
+        }
 
-            $entries = array_merge($wards, [$town], $villages);
-
-            foreach ($entries as [$name, $type]) {
-                // Make name unique per district by appending district name for non-unique entries
-                $uniqueName = $name;
-                VillageWard::firstOrCreate(
-                    ['name' => $uniqueName, 'district_id' => $district->id],
-                    ['type' => $type]
-                );
+        // Add fallback data for any district that was missed
+        $allDistricts = District::all();
+        foreach ($allDistricts as $dist) {
+            if (!in_array($dist->id, $seededDistrictIds)) {
+                $fallbackData = [
+                    [
+                        'area_type' => 'Urban',
+                        'local_body' => $dist->name,
+                        'name' => 'Ward 1',
+                        'type' => 'ward',
+                        'district_id' => $dist->id,
+                        'villages' => json_encode([]),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ],
+                    [
+                        'area_type' => 'Urban',
+                        'local_body' => $dist->name,
+                        'name' => 'Ward 2',
+                        'type' => 'ward',
+                        'district_id' => $dist->id,
+                        'villages' => json_encode([]),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ],
+                    [
+                        'area_type' => 'Rural',
+                        'local_body' => $dist->name . ' G.P.',
+                        'name' => 'Ward 1 (Demo)',
+                        'type' => 'ward',
+                        'district_id' => $dist->id,
+                        'villages' => json_encode(['Test Village 1', 'Test Village 2']),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]
+                ];
+                VillageWard::insertOrIgnore($fallbackData);
             }
         }
     }

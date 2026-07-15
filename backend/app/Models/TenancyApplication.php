@@ -35,6 +35,7 @@ class TenancyApplication extends Model
         'registration_date',
         'office_id',
         'village_ward_id',
+        'village_name', 'area_type', 'local_body',
         'apply_type',
         'status',
         'wizard_step',
