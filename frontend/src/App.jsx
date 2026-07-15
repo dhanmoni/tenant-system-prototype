@@ -66,11 +66,13 @@ import {
 	handleSkipLinkClick,
 	isPublicMarketingPath,
 } from './utils/skipNavigation'
+import { useLanguage } from './i18n'
 import tcpLogo from './assets/img/TCP logo.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
 
 function App() {
+	const { language, setLanguage, t } = useLanguage()
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [portalEntering, setPortalEntering] = useState(false)
@@ -79,30 +81,25 @@ function App() {
 	const [fontScale, setFontScale] = useState('normal')
 	const [highContrast, setHighContrast] = useState(false)
 	const [highlightLinks, setHighlightLinks] = useState(false)
-	const [language, setLanguage] = useState('en')
 	const slides = [
 		{
-			title: 'Housing & tenancy in one place',
-			subtitle:
-				'Register tenancies, manage landlord–tenant records, and access department services with a modern, citizen-friendly portal.',
+			titleKey: 'carousel.slide1Title',
+			subtitleKey: 'carousel.slide1Subtitle',
 			image: bannerImage,
 		},
 		{
-			title: 'Digital Tenancy Registration',
-			subtitle:
-				'Apply for tenancy certificates online, track your application status in real-time, and download digitally signed documents — all from one portal.',
+			titleKey: 'carousel.slide2Title',
+			subtitleKey: 'carousel.slide2Subtitle',
 			image: welcomeImage,
 		},
 		{
-			title: 'Property & tenancy records',
-			subtitle:
-				'Register properties, manage landlord–tenant records, and stay aligned with housing department guidelines — in one place.',
+			titleKey: 'carousel.slide3Title',
+			subtitleKey: 'carousel.slide3Subtitle',
 			image: '/TCP-Images/TCP-Office2.jpg',
 		},
 		{
-			title: 'Transparent, accessible services',
-			subtitle:
-				'Citizen-centric workflows, status tracking, and digital records built for tenants, owners, and public authorities.',
+			titleKey: 'carousel.slide4Title',
+			subtitleKey: 'carousel.slide4Subtitle',
 			image: '/TCP-Images/TCP-Office3.jpg',
 		},
 	]
@@ -262,7 +259,7 @@ function App() {
 		}
 		window.addEventListener(LANDING_A11Y_EVENT, onLandingA11y)
 		return () => window.removeEventListener(LANDING_A11Y_EVENT, onLandingA11y)
-	}, [])
+	}, [setLanguage])
 
 	const handleLogout = async () => {
 		setLoggingOut(true)
@@ -310,17 +307,17 @@ function App() {
 			<PortalLoadingScreen
 				title={
 					loggingOut
-						? 'Signing out'
+						? t('loading.signingOut')
 						: portalEntering
-							? 'Opening your dashboard'
-							: 'Loading portal'
+							? t('loading.openingDashboard')
+							: t('loading.loadingPortal')
 				}
 				subtitle={
 					loggingOut
-						? 'Please wait while we return you to the home page.'
+						? t('loading.signingOutSub')
 						: portalEntering
-							? 'Please wait while we load your workspace.'
-							: 'Please wait while we check your session.'
+							? t('loading.openingSub')
+							: t('loading.sessionSub')
 				}
 			/>
 		)
@@ -335,7 +332,7 @@ function App() {
 				href={`#${mainContentTargetId}`}
 				onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
 			>
-				Skip to content
+				{t('a11y.skipToContent')}
 			</a>
 			{/* Accessibility Bar — hidden on landing home mobile (see LandingNav utility bar) */}
 			<div
@@ -347,32 +344,32 @@ function App() {
 						<img className="accessibility-emblem" src={tcpLogo} alt="" aria-hidden />
 						<div className="accessibility-gov-text">
 							<p className="accessibility-gov-line">
-								<span>Government Of Assam</span>
+								<span>{t('gov.assam')}</span>
 							</p>
 							<p className="accessibility-ministry">
-								Housing &amp; Urban Affairs
+								{t('gov.housing')}
 							</p>
 							<p className="accessibility-directorate">
-								Directorate of Town and Country Planning
+								{t('gov.directorate')}
 							</p>
 						</div>
 					</div>
-					<div className="accessibility-toolbar" role="toolbar" aria-label="Accessibility options">
+					<div className="accessibility-toolbar" role="toolbar" aria-label={t('a11y.options')}>
 						<a
 							className="accessibility-toolbar-link"
 							href={`#${mainContentTargetId}`}
 							onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
 						>
-							Skip to content
+							{t('a11y.skipToContent')}
 						</a>
 						<span className="accessibility-toolbar-divider" aria-hidden />
-						<div className="accessibility-font-tools" role="group" aria-label="Font size">
+						<div className="accessibility-font-tools" role="group" aria-label={t('a11y.fontSize')}>
 							<button
 								type="button"
 								className="accessibility-toolbar-btn"
 								onClick={increaseFontScale}
-								title="Increase text size"
-								aria-label="Increase text size"
+								title={t('a11y.increaseText')}
+								aria-label={t('a11y.increaseText')}
 							>
 								A+
 							</button>
@@ -380,8 +377,8 @@ function App() {
 								type="button"
 								className={`accessibility-toolbar-btn${fontScale === 'normal' ? ' is-active' : ''}`}
 								onClick={() => setFontScale('normal')}
-								title="Reset text size"
-								aria-label="Reset text size"
+								title={t('a11y.resetText')}
+								aria-label={t('a11y.resetText')}
 							>
 								A
 							</button>
@@ -389,8 +386,8 @@ function App() {
 								type="button"
 								className="accessibility-toolbar-btn"
 								onClick={decreaseFontScale}
-								title="Decrease text size"
-								aria-label="Decrease text size"
+								title={t('a11y.decreaseText')}
+								aria-label={t('a11y.decreaseText')}
 							>
 								A-
 							</button>
@@ -399,25 +396,25 @@ function App() {
 						<div
 							className="accessibility-lang-tools"
 							role="group"
-							aria-label="Language — English active; Assamese coming soon"
+							aria-label={t('a11y.language')}
 						>
 							<button
 								type="button"
 								className={`accessibility-toolbar-btn${language === 'en' ? ' is-active' : ''}`}
 								onClick={() => setLanguage('en')}
 								aria-pressed={language === 'en'}
-								aria-label="English"
-								title="English"
+								aria-label={t('a11y.english')}
+								title={t('a11y.english')}
 							>
 								EN
 							</button>
 							<button
 								type="button"
-								className="accessibility-toolbar-btn accessibility-toolbar-btn--soon"
-								disabled
-								aria-disabled="true"
-								aria-label="Assamese — coming soon"
-								title="Assamese translation coming soon (GIGW bilingual requirement)"
+								className={`accessibility-toolbar-btn${language === 'as' ? ' is-active' : ''}`}
+								onClick={() => setLanguage('as')}
+								aria-pressed={language === 'as'}
+								aria-label={t('a11y.assamese')}
+								title={t('a11y.assamese')}
 							>
 								অসমীয়া
 							</button>
@@ -427,10 +424,12 @@ function App() {
 							type="button"
 							className={`accessibility-toolbar-btn accessibility-toolbar-btn--text${highContrast ? ' is-active' : ''}`}
 							onClick={() => setHighContrast((prev) => !prev)}
-							title="Toggle high contrast"
+							title={t('a11y.toggleContrast')}
 							aria-pressed={highContrast}
+							aria-label={t('a11y.toggleContrast')}
 						>
-							High contrast
+							<span className="accessibility-label-long">{t('a11y.highContrast')}</span>
+							<span className="accessibility-label-short">{t('a11y.contrast')}</span>
 						</button>
 					</div>
 				</div>
@@ -440,13 +439,13 @@ function App() {
 			{showLegacyPublicChrome ? (
 				<header className="topbar">
 					<div className="brand">
-						<img className="emblem" src={tcpLogo} alt="Directorate of Town and Country Planning, Assam" />
+						<img className="emblem" src={tcpLogo} alt={t('gov.directorate')} />
 						<div className="brand-text">
 							<span className="brand-title">
-								DIRECTORATE OF TOWN AND COUNTRY PLANNING
+								{t('gov.directorateShort')}
 							</span>
 							<span className="brand-subtitle">
-								Department of Housing And Urban Affairs
+								{t('gov.department')}
 							</span>
 						</div>
 					</div>
@@ -468,22 +467,22 @@ function App() {
 						<nav id="public-primary-nav" className={user ? 'nav-auth' : undefined}>
 							{!user ? (
 								<>
-									<Link to="/">Home</Link>
-									<Link to="/about">About us</Link>
-									<Link to="/public-dashboard">Public dashboard</Link>
-									<Link to="/#login">Login</Link>
-									<Link to="/#register">Registration</Link>
+									<Link to="/">{t('nav.home')}</Link>
+									<Link to="/about">{t('nav.about')}</Link>
+									<Link to="/public-dashboard">{t('nav.publicDashboard')}</Link>
+									<Link to="/#login">{t('nav.login')}</Link>
+									<Link to="/#register">{t('nav.registration')}</Link>
 									<div className="contact-link-with-logo">
-										<Link to="/contact">Contact Us</Link>
+										<Link to="/contact">{t('nav.contactUs')}</Link>
 										<img className="contact-link-logo" src={nicLogo} alt="NIC" />
 									</div>
 								</>
 							) : (
 								<>
-									<span className="topbar-welcome">Welcome {user.name}</span>
+									<span className="topbar-welcome">{t('nav.welcome', { name: user.name })}</span>
 									<div className="nav-actions">
 										<button className="nav-link" type="button" onClick={handleLogout}>
-											Logout
+											{t('nav.logout')}
 										</button>
 									</div>
 								</>
@@ -494,11 +493,11 @@ function App() {
 			)}
 
 			{showLegacyPublicChrome ? (
-				<section className="carousel carousel--rent-banner" aria-label="Tenant and owner highlights">
+				<section className="carousel carousel--rent-banner" aria-label={t('carousel.aria')}>
 					<div className="carousel-banner">
 						{slides.map((slide, index) => (
 							<div
-								key={slide.title}
+								key={slide.titleKey}
 								className={`carousel-banner-slide ${index === slideIndex ? 'is-active' : ''}`}
 								aria-hidden={index !== slideIndex}
 							>
@@ -509,9 +508,9 @@ function App() {
 								<div className="carousel-banner-scrim" />
 								<div className="carousel-banner-inner">
 									<div className="carousel-banner-copy">
-										<p className="carousel-eyebrow">Highlights</p>
-										<h2>{slide.title}</h2>
-										<p className="carousel-subtitle">{slide.subtitle}</p>
+										<p className="carousel-eyebrow">{t('carousel.highlights')}</p>
+										<h2>{t(slide.titleKey)}</h2>
+										<p className="carousel-subtitle">{t(slide.subtitleKey)}</p>
 										<div className="carousel-nav-row">
 											<div className="carousel-dots" role="tablist">
 												{slides.map((_, dotIndex) => (
@@ -520,7 +519,7 @@ function App() {
 														type="button"
 														className={`carousel-dot ${dotIndex === slideIndex ? 'active' : ''}`}
 														onClick={() => setSlideIndex(dotIndex)}
-														aria-label={`Go to slide ${dotIndex + 1}`}
+														aria-label={t('carousel.goToSlide', { n: dotIndex + 1 })}
 													/>
 												))}
 											</div>

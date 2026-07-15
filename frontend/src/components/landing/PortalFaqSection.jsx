@@ -1,8 +1,8 @@
-import { useId, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import { landingFaqItems } from '../../data/landingFaq'
 import LandingSectionIntro from './LandingSectionIntro'
+import { useLanguage } from '../../i18n'
 
 function FaqItem({ item, isOpen, onToggle }) {
 	const baseId = useId()
@@ -23,6 +23,8 @@ function FaqItem({ item, isOpen, onToggle }) {
 					<span className="landing-faq__question">{item.question}</span>
 					<ChevronDown
 						className={`landing-faq__chevron shrink-0${isOpen ? ' is-open' : ''}`}
+						size={20}
+						strokeWidth={2.25}
 						aria-hidden
 					/>
 				</button>
@@ -43,7 +45,34 @@ function FaqItem({ item, isOpen, onToggle }) {
 }
 
 function PortalFaqSection() {
+	const { t } = useLanguage()
 	const [openFaqId, setOpenFaqId] = useState(null)
+
+	const faqItems = useMemo(
+		() => [
+			{
+				id: 'what-is-uin',
+				question: t('home.faq.uin.q'),
+				answer: t('home.faq.uin.a'),
+			},
+			{
+				id: 'documents-required',
+				question: t('home.faq.docs.q'),
+				answer: t('home.faq.docs.a'),
+			},
+			{
+				id: 'individual-joint',
+				question: t('home.faq.joint.q'),
+				answer: t('home.faq.joint.a'),
+			},
+			{
+				id: 'track-status',
+				question: t('home.faq.track.q'),
+				answer: t('home.faq.track.a'),
+			},
+		],
+		[t],
+	)
 
 	const toggleFaq = (id) => {
 		setOpenFaqId((prev) => (prev === id ? null : id))
@@ -52,20 +81,20 @@ function PortalFaqSection() {
 	return (
 		<section
 			id="portal-faq"
-			className="landing-faq-section landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 py-10 sm:py-12 lg:py-14"
+			className="landing-faq-section landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 py-12 sm:py-14 lg:py-16"
 			aria-labelledby="portal-faq-heading"
 		>
-			<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+			<div className="landing-faq-section__shell mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
 				<LandingSectionIntro
+					className="landing-faq-section__intro"
 					align="center"
-					// eyebrow="Help centre"
-					title="Frequently asked questions"
-					lead="Quick answers about UIN applications, required documents, and tracking your status."
+					title={t('home.faq.title')}
+					lead={t('home.faq.lead')}
 					titleId="portal-faq-heading"
 				/>
 
-				<div className="landing-faq__list mt-8 sm:mt-10">
-					{landingFaqItems.map((item, index) => (
+				<div className="landing-faq__list mt-9 sm:mt-10">
+					{faqItems.map((item, index) => (
 						<motion.div
 							key={item.id}
 							custom={index}

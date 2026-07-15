@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams, useNavigate, useOutletContext } from 'react-router-dom'
 import api, { csrf } from '../api'
 import DocumentUploadSlot from '../components/forms/DocumentUploadSlot'
@@ -18,11 +18,13 @@ function JoinApplication() {
 	const refCode = searchParams.get('ref') || ''
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
+	const [saveToast, setSaveToast] = useState('')
 	const [application, setApplication] = useState(null)
 	const [submitting, setSubmitting] = useState(false)
 	const [joinResult, setJoinResult] = useState(null)
 	const [joinStep, setJoinStep] = useState(1)
 	const [maxReachedStep, setMaxReachedStep] = useState(1)
+	const saveToastTimerRef = useRef(null)
 
 	// Second party form fields
 	const [name, setName] = useState('')
@@ -48,6 +50,19 @@ function JoinApplication() {
 	const TOTAL_STEPS = JOIN_STEPS.length
 	const maxReachableStep = Math.max(joinStep, maxReachedStep)
 
+	const showSaveToast = useCallback((message = 'Progress saved.') => {
+		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+		setSaveToast(message)
+		saveToastTimerRef.current = setTimeout(() => {
+			setSaveToast('')
+			saveToastTimerRef.current = null
+		}, 2800)
+	}, [])
+
+	useEffect(() => () => {
+		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+	}, [])
+
 	const feeAmount = (() => {
 		if (!application?.apply_type) return 0
 		const type = application.apply_type.toLowerCase()
@@ -60,6 +75,7 @@ function JoinApplication() {
 			setPaymentSimulating(false)
 			setPaymentComplete(true)
 			setPaymentGrn(String(Math.floor(Math.random() * 1000000000)))
+			showSaveToast('Payment completed.')
 		}, 1500)
 	}
 
@@ -213,18 +229,21 @@ function JoinApplication() {
 		if (joinStep === 1) {
 			setJoinStep(2)
 			setMaxReachedStep((prev) => Math.max(prev, 2))
+			showSaveToast('Review completed.')
 			return
 		}
 		if (joinStep === 2) {
 			if (!validateDetailsStep()) return
 			setJoinStep(3)
 			setMaxReachedStep((prev) => Math.max(prev, 3))
+			showSaveToast('Progress saved.')
 			return
 		}
 		if (joinStep === 3) {
 			if (!validateDocumentsStep()) return
 			setJoinStep(4)
 			setMaxReachedStep((prev) => Math.max(prev, 4))
+			showSaveToast('Progress saved.')
 			return
 		}
 		if (joinStep === 4) {
@@ -234,6 +253,7 @@ function JoinApplication() {
 			}
 			setJoinStep(5)
 			setMaxReachedStep((prev) => Math.max(prev, 5))
+			showSaveToast('Preview completed.')
 			return
 		}
 		if (joinStep === 5) {
@@ -413,6 +433,11 @@ function JoinApplication() {
 
 	return (
 		<div className="ws-page ws-uin-apply tenancy-certificate-page">
+			{saveToast ? (
+				<div className="ws-uin-save-toast" role="status" aria-live="polite">
+					{saveToast}
+				</div>
+			) : null}
 			<header className="ws-uin-apply-head">
 				<h1 className="ws-uin-apply-title">Join Tenancy Application</h1>
 				<p className="ws-uin-apply-lead">

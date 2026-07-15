@@ -1,8 +1,8 @@
 /** Title-case person name for display; handles generic demo placeholders. */
 export const formatDisplayName = (name) => {
-	if (!name || !String(name).trim()) return 'Portal user'
+	if (!name || !String(name).trim()) return 'Citizen'
 	const trimmed = String(name).trim()
-	if (trimmed.toLowerCase() === 'user') return 'Citizen account'
+	if (trimmed.toLowerCase() === 'user') return 'Citizen'
 	return trimmed
 		.split(/\s+/)
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())

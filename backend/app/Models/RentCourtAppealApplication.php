@@ -48,6 +48,9 @@ class RentCourtAppealApplication extends Model
         'rejection_message',
         'assigned_to_role',
         'forward_remarks',
+        'approved_at',
+        'approved_by_user_id',
+        'approval_message',
     ];
 
     public function getRouteKeyName()

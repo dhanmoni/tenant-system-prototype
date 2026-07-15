@@ -15,15 +15,16 @@ function TenancyCertificate() {
 
 	const [tenancyStep, setTenancyStep] = useState(1)
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
+	const [saveToast, setSaveToast] = useState('')
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
 	const [draftSaving, setDraftSaving] = useState(false)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
-	const [draftLoaded, setDraftLoaded] = useState(false)
+	const [pageReady, setPageReady] = useState(false)
 	const [conflictData, setConflictData] = useState(null)
 	const [submittedApp, setSubmittedApp] = useState(null)
 	const [linkCopied, setLinkCopied] = useState(false)
+	const saveToastTimerRef = useRef(null)
 
 	// Payment State
 	const [paymentComplete, setPaymentComplete] = useState(false)
@@ -109,11 +110,15 @@ function TenancyCertificate() {
 	const [profileDistrictId, setProfileDistrictId] = useState('')
 	const [profileOfficeId, setProfileOfficeId] = useState('')
 
-	useEffect(() => {
-		loadProfile()
-		loadTenancyOffices()
-		loadTenancyDistricts()
-	}, [])
+	const loadTenancyVillageWards = async (districtId) => {
+		if (!districtId) return setTenancyVillageWards([])
+		setTenancyVillageWardsLoading(true)
+		try {
+			const { data } = await api.get('/api/public/village-wards', { params: { district_id: districtId } })
+			setTenancyVillageWards(Array.isArray(data) ? data : data.data || [])
+		} catch (err) { setError('Failed to load village/wards') }
+		finally { setTenancyVillageWardsLoading(false) }
+	}
 
 	const populateFromDraft = useCallback(
 		(draft) => {
@@ -214,7 +219,6 @@ function TenancyCertificate() {
 				const app = data.application || data
 				if (app?.status === 'DRAFT') {
 					populateFromDraft(app)
-					setDraftLoaded(true)
 					return
 				}
 			}
@@ -224,16 +228,8 @@ function TenancyCertificate() {
 			}
 		} catch (err) {
 			console.error('Failed to load draft', err)
-		} finally {
-			setDraftLoaded(true)
 		}
 	}, [populateFromDraft, searchParams])
-
-	useEffect(() => {
-		if (tenancyDistricts.length > 0) {
-			loadDraft()
-		}
-	}, [tenancyDistricts.length, loadDraft])
 
 	const loadProfile = async () => {
 		try {
@@ -364,6 +360,7 @@ function TenancyCertificate() {
 			setPaymentSimulating(false)
 			setPaymentComplete(true)
 			setPaymentGrn(String(Math.floor(Math.random() * 1000000000)))
+			showSaveToast('Payment completed.')
 		}, 1500)
 	}
 
@@ -520,9 +517,21 @@ function TenancyCertificate() {
 		managerPanFile,
 	})
 
+	const showSaveToast = useCallback((message = 'Progress saved.') => {
+		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+		setSaveToast(message)
+		saveToastTimerRef.current = setTimeout(() => {
+			setSaveToast('')
+			saveToastTimerRef.current = null
+		}, 2800)
+	}, [])
+
+	useEffect(() => () => {
+		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+	}, [])
+
 	const saveDraftStep = async (step) => {
 		setError('')
-		setSuccess('')
 		setDraftSaving(true)
 		try {
 			await csrf()
@@ -572,7 +581,7 @@ function TenancyCertificate() {
 	}
 
 	const submitTenancyApplication = async (forceNew = false) => {
-		setError(''); setSuccess(''); setTenancySubmitting(true)
+		setError(''); setTenancySubmitting(true)
 		if (!forceNew) setConflictData(null)
 
 		try {
@@ -638,7 +647,6 @@ function TenancyCertificate() {
 
 	const TOTAL_STEPS = tenancySteps.length
 
-	const eligibilityMet = !registrationTooOld && !!tenancyRegistrationDate && !!tenancyOfficeId
 	const maxReachableStep = Math.min(TOTAL_STEPS, Math.max(tenancyStep, savedWizardStep + 1))
 
 	const scrollFormToTop = useCallback(() => {
@@ -659,7 +667,6 @@ function TenancyCertificate() {
 		if (stepId > maxReachableStep) return
 		setTenancyStep(stepId)
 		setError('')
-		setSuccess('')
 		// Ensure village/ward list is available when returning to registration
 		if (stepId === 1 && tenancyDistrictId) {
 			loadTenancyVillageWards(tenancyDistrictId)
@@ -856,6 +863,17 @@ function TenancyCertificate() {
 
 	return (
 		<div className="ws-page ws-uin-apply tenancy-certificate-page">
+			{saveToast ? (
+				<div className="ws-uin-save-toast" role="status" aria-live="polite">
+					{saveToast}
+				</div>
+			) : null}
+			{!pageReady ? (
+				<div className="ws-uin-apply-loading" role="status" aria-live="polite">
+					Loading application…
+				</div>
+			) : (
+				<>
 			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
 				<Link to="/dashboard">Dashboard</Link>
 				<span className="ws-breadcrumb-sep">/</span>
@@ -959,6 +977,17 @@ function TenancyCertificate() {
 				className={`tenancy-form ws-uin-apply-form${tenancyStep === 4 ? ' ws-uin-apply-form--preview-step' : ''}`}
 				onSubmit={handleContinue}
 			>
+				<header className="ws-uin-apply-form-head">
+					<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
+					<p className="ws-uin-apply-lead">
+						Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
+					</p>
+					<p className="ws-uin-apply-type-note">
+						<strong>Joint</strong> (agreement within 3 months): both parties complete the form.
+						<strong> Individual</strong> (older than 3 months): you apply alone.
+					</p>
+				</header>
+
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
 						<div className="compact-eligibility-box" style={{ 
@@ -1018,6 +1047,7 @@ function TenancyCertificate() {
 							<label>
 								<span className="label-text required">Date of Agreement</span>
 								<input type="date" value={tenancyRegistrationDate} onChange={e => setTenancyRegistrationDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required max={new Date().toISOString().split('T')[0]} />
+								<span className="ws-uin-field-hint">Must be within the last 3 months.</span>
 							</label>
 							<label>
 								<span className="label-text required">District</span>
@@ -1077,7 +1107,7 @@ function TenancyCertificate() {
 
 							<label>
 								<span className="label-text required">Application Type</span>
-								<input type="text" value={applyType} readOnly disabled className="readonly-input" />
+								<input type="text" value={applyType || 'Select agreement date'} readOnly disabled className="readonly-input" />
 							</label>
 						</div>
 					</fieldset>
@@ -1671,7 +1701,6 @@ function TenancyCertificate() {
 					) : null}
 				</div>
 			</form>
-					) : null}
 				</div>
 			</div>
 
@@ -1700,6 +1729,8 @@ function TenancyCertificate() {
 					</div>
 				</div>
 			) : null}
+				</>
+			)}
 		</div>
 	)
 }

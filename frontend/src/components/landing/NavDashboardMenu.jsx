@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, LayoutDashboard } from 'lucide-react'
+import { useLanguage } from '../../i18n'
 
 function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 	const [open, setOpen] = useState(false)
 	const rootRef = useRef(null)
 	const location = useLocation()
+	const { t } = useLanguage()
 
 	useEffect(() => {
 		setOpen(false)
@@ -36,15 +38,15 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 	const items = [
 		{
 			to: '/public-dashboard',
-			label: 'Public dashboard',
-			desc: 'Illustrative portal statistics & trends',
+			label: t('nav.publicDashboard'),
+			desc: t('nav.dashboardDesc'),
 		},
 	]
 
 	if (variant === 'drawer') {
 		return (
 			<div className="landing-nav-drawer-dropdown">
-				<p className="landing-nav-drawer-dropdown-label">Dashboard</p>
+				<p className="landing-nav-drawer-dropdown-label">{t('nav.dashboard')}</p>
 				{items.map((item) => (
 					<Link
 						key={item.to}
@@ -72,7 +74,7 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 				aria-haspopup="true"
 				onClick={() => setOpen((v) => !v)}
 			>
-				Dashboard
+				{t('nav.dashboard')}
 				<ChevronDown
 					className={`landing-nav-dropdown-chevron${open ? ' is-open' : ''}`}
 					aria-hidden

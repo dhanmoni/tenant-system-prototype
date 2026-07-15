@@ -1,15 +1,16 @@
 import { useReducedMotion } from 'framer-motion'
 import { ExternalLink } from 'lucide-react'
 import { governmentPortalLogos } from '../../data/governmentPortalLogos'
+import { useLanguage } from '../../i18n'
 
-function LogoCard({ portal }) {
+function LogoCard({ portal, opensNewLabel }) {
 	return (
 		<a
 			href={portal.href}
 			target="_blank"
 			rel="noopener noreferrer"
 			className="gov-logos-carousel__card"
-			title={`${portal.name} (opens in new tab)`}
+			title={opensNewLabel}
 		>
 			{portal.logo ? (
 				<img
@@ -27,21 +28,23 @@ function LogoCard({ portal }) {
 }
 
 function GovernmentLogosCarousel() {
+	const { t } = useLanguage()
 	const reduceMotion = useReducedMotion()
 	const items = [...governmentPortalLogos, ...governmentPortalLogos]
 
 	return (
-		<section className="gov-logos-carousel" aria-label="Related government websites">
+		<section className="gov-logos-carousel" aria-label={t('home.logos.aria')}>
 			<div className="gov-logos-carousel__inner">
-				<p className="gov-logos-carousel__sr-only">
-					Links to related Government of India and Government of Assam portals
-				</p>
+				<p className="gov-logos-carousel__sr-only">{t('home.logos.srOnly')}</p>
 
 				{reduceMotion ? (
 					<ul className="gov-logos-carousel__static">
 						{governmentPortalLogos.map((portal) => (
 							<li key={portal.id}>
-								<LogoCard portal={portal} />
+								<LogoCard
+									portal={portal}
+									opensNewLabel={t('home.logos.opensNew', { name: portal.name })}
+								/>
 							</li>
 						))}
 					</ul>
@@ -49,7 +52,11 @@ function GovernmentLogosCarousel() {
 					<div className="gov-logos-carousel__viewport">
 						<div className="gov-logos-carousel__marquee">
 							{items.map((portal, index) => (
-								<LogoCard key={`${portal.id}-${index}`} portal={portal} />
+								<LogoCard
+									key={`${portal.id}-${index}`}
+									portal={portal}
+									opensNewLabel={t('home.logos.opensNew', { name: portal.name })}
+								/>
 							))}
 						</div>
 					</div>

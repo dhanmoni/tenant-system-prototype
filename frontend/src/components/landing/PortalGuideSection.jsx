@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import LandingSectionIntro from './LandingSectionIntro'
@@ -11,59 +12,7 @@ import {
 	UserPlus,
 } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
-
-const steps = [
-	{
-		num: '1',
-		title: 'Create your account',
-		text: 'Register with your name, mobile number, and district. Verify with OTP.',
-	},
-	{
-		num: '2',
-		title: 'Log in and apply for UIN',
-		text: 'Sign in, complete your application, and upload the required documents.',
-	},
-	{
-		num: '3',
-		title: 'Follow your application',
-		text: 'Check status on your dashboard.',
-	},
-]
-
-const highlights = [
-	'Register and verify with mobile OTP',
-	'Apply for UIN and file tenancy services',
-	'Track applications and status updates',
-]
-
-const services = [
-	{
-		title: 'New registration',
-		description: 'Create your citizen account in a few minutes.',
-		authMode: 'register',
-		icon: UserPlus,
-	},
-	{
-		title: 'Login',
-		description: 'Open your dashboard and existing applications.',
-		authMode: 'login',
-		icon: LogIn,
-	},
-	{
-		title: 'Apply for UIN',
-		description: 'Submit an application and upload documents after sign-in.',
-		authMode: 'login',
-		icon: FileText,
-		badge: 'Most used',
-		featured: true,
-	},
-	{
-		title: 'Contact & help',
-		description: 'Helpdesk support, FAQs, and official enquiries.',
-		to: '/contact',
-		icon: Mail,
-	},
-]
+import { useLanguage } from '../../i18n'
 
 function GuideServiceAction({ service, index }) {
 	const Icon = service.icon
@@ -110,6 +59,70 @@ function GuideServiceAction({ service, index }) {
 }
 
 function PortalGuideSection() {
+	const { t } = useLanguage()
+
+	const steps = useMemo(
+		() => [
+			{
+				num: '1',
+				title: t('home.guide.step1.title'),
+				text: t('home.guide.step1.text'),
+			},
+			{
+				num: '2',
+				title: t('home.guide.step2.title'),
+				text: t('home.guide.step2.text'),
+			},
+			{
+				num: '3',
+				title: t('home.guide.step3.title'),
+				text: t('home.guide.step3.text'),
+			},
+		],
+		[t],
+	)
+
+	const highlights = useMemo(
+		() => [
+			t('home.guide.highlight1'),
+			t('home.guide.highlight2'),
+			t('home.guide.highlight3'),
+		],
+		[t],
+	)
+
+	const services = useMemo(
+		() => [
+			{
+				title: t('home.guide.svc.register.title'),
+				description: t('home.guide.svc.register.desc'),
+				authMode: 'register',
+				icon: UserPlus,
+			},
+			{
+				title: t('home.guide.svc.login.title'),
+				description: t('home.guide.svc.login.desc'),
+				authMode: 'login',
+				icon: LogIn,
+			},
+			{
+				title: t('home.guide.svc.uin.title'),
+				description: t('home.guide.svc.uin.desc'),
+				authMode: 'login',
+				icon: FileText,
+				badge: t('home.guide.svc.uin.badge'),
+				featured: true,
+			},
+			{
+				title: t('home.guide.svc.contact.title'),
+				description: t('home.guide.svc.contact.desc'),
+				to: '/contact',
+				icon: Mail,
+			},
+		],
+		[t],
+	)
+
 	return (
 		<section
 			id="portal-guide"
@@ -122,9 +135,8 @@ function PortalGuideSection() {
 				<LandingSectionIntro
 					className="mx-auto max-w-2xl"
 					align="center"
-					// eyebrow="Getting started"
-					title="How it works"
-					lead="Register, apply for UIN, track your application, and use tenancy services online."
+					title={t('home.guide.title')}
+					lead={t('home.guide.lead')}
 					titleId="portal-guide-heading"
 				/>
 
@@ -162,15 +174,15 @@ function PortalGuideSection() {
 						viewport={{ once: true }}
 						transition={{ duration: 0.45 }}
 						className="portal-guide-access-aside"
-						aria-label="Portal overview"
+						aria-label={t('home.guide.overview')}
 					>
 						<div className="portal-guide-access-aside__header">
 							<ShieldCheck className="h-5 w-5 shrink-0" aria-hidden strokeWidth={2.25} />
-							<p>Quick access</p>
+							<p>{t('home.guide.quickAccess')}</p>
 						</div>
 						<div className="portal-guide-access-aside__body">
 							<h3 className="portal-guide-access-aside__title">
-								Everything in one place
+								{t('home.guide.asideTitle')}
 							</h3>
 							<ul className="portal-guide-access-aside__list">
 								{highlights.map((item) => (
@@ -179,17 +191,17 @@ function PortalGuideSection() {
 							</ul>
 							<p className="portal-guide-access-aside__hours">
 								<Clock className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
-								<span>Online services available 24×7</span>
+								<span>{t('home.guide.hours')}</span>
 							</p>
 							<div className="portal-guide-access-aside__actions">
 								<AuthNavLink
 									mode="register"
 									className="portal-guide-access-aside__btn-primary"
 								>
-									Create account
+									{t('home.guide.createAccount')}
 								</AuthNavLink>
 								<a href="#services" className="portal-guide-access-aside__btn-secondary">
-									View services
+									{t('home.guide.viewServices')}
 								</a>
 							</div>
 						</div>
@@ -203,8 +215,8 @@ function PortalGuideSection() {
 						className="portal-guide-access-panel"
 					>
 						<div className="portal-guide-access-panel__header">
-							<p className="portal-guide-access-panel__label">Choose a service</p>
-							<p className="portal-guide-access-panel__hint">Tap an option to continue</p>
+							<p className="portal-guide-access-panel__label">{t('home.guide.chooseService')}</p>
+							<p className="portal-guide-access-panel__hint">{t('home.guide.tapHint')}</p>
 						</div>
 						<ul className="portal-guide-access-panel__list">
 							{services.map((service, index) => (
