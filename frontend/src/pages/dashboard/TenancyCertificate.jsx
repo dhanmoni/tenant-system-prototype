@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { buildTenancyFormData, applyDraftToForm } from '../../utils/tenancyDraft'
@@ -15,12 +15,14 @@ function TenancyCertificate() {
 
 	const [tenancyStep, setTenancyStep] = useState(1)
 	const [error, setError] = useState('')
+	const [success, setSuccess] = useState('')
 	const [saveToast, setSaveToast] = useState('')
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
 	const [draftSaving, setDraftSaving] = useState(false)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
 	const [pageReady, setPageReady] = useState(false)
+	const [draftLoaded, setDraftLoaded] = useState(false)
 	const [conflictData, setConflictData] = useState(null)
 	const [submittedApp, setSubmittedApp] = useState(null)
 	const [linkCopied, setLinkCopied] = useState(false)
@@ -220,6 +222,8 @@ function TenancyCertificate() {
 			}
 		} catch (err) {
 			console.error('Failed to load draft', err)
+		} finally {
+			setDraftLoaded(true)
 		}
 	}, [populateFromDraft, searchParams])
 
@@ -318,6 +322,20 @@ function TenancyCertificate() {
 		finally { setTenancyVillageWardsLoading(false) }
 	}
 
+	useEffect(() => {
+		const init = async () => {
+			await Promise.all([
+				loadProfile(),
+				loadTenancyDistricts(),
+				loadTenancyOffices(),
+				loadDraft(),
+			])
+			setPageReady(true)
+		}
+		init()
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
+
 	const resetTenancyForm = () => {
 		setTenancyStep(1); setDraftApplicationNo(null); setSavedWizardStep(0); setTenancyRegistrationDate(''); setTenancyOfficeId('');
 		setAgreementFile(null); setAgreementPreviewUrl(''); setLandlordPhotoFile(null); setLandlordPhotoPreview(profileType === 'landlord' ? profilePhotoPreview : '');
@@ -364,6 +382,8 @@ function TenancyCertificate() {
 		const monthsDiff = (now.getFullYear() - regDate.getFullYear()) * 12 + (now.getMonth() - regDate.getMonth())
 		return monthsDiff > 3
 	})()
+
+	const eligibilityMet = tenancyRegistrationDate && !registrationTooOld
 
 	const fileToDataUrl = (file) => new Promise((resolve, reject) => {
 		const reader = new FileReader()
