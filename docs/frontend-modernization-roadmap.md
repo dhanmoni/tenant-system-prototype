@@ -10,6 +10,8 @@
 
 - [backend-architecture.md](./backend-architecture.md) — API, roles, workflows
 - [super-admin-reference.md](./super-admin-reference.md) — super admin powers and product gaps
+- [legacy-code-map.md](./legacy-code-map.md) — where legacy lives, how it’s used, how it breaks workspace
+- [accessibility-ux4g-plan.md](./accessibility-ux4g-plan.md) — fix a11y system-wide with official UX4G widget (GIGW)
 - [Demo_NIC_Credentials.md](../Demo_NIC_Credentials.md) — demo logins (some screens described there are not routed)
 
 ---

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import { Icon } from '../../components/dashboard/Icons'
-import { getAllServiceForms, getFormApplyLabel, tenantServiceGroups } from '../../data/tenantServices'
+import { getAllServiceForms, tenantServiceGroups } from '../../data/tenantServices'
 import { ROLES } from '../../constants/roles'
 
 const GROUP_ACCENTS = {
@@ -37,11 +37,11 @@ function ServiceFormRow({ form, groupId }) {
 				</span>
 			</td>
 			<td className="ws-services-cell-desc">
-				<span className="ws-services-cell-title" title={form.label}>
-					{form.label}
-				</span>
-				<span className="ws-services-cell-matter" title={form.matter}>
+				<span className="ws-services-cell-title" title={form.matter}>
 					{form.matter}
+				</span>
+				<span className="ws-services-cell-meta" title={form.label}>
+					{form.label}
 				</span>
 			</td>
 			<td className="ws-services-cell-rule">
@@ -49,7 +49,7 @@ function ServiceFormRow({ form, groupId }) {
 			</td>
 			<td className="ws-services-cell-action">
 				<span className="ws-services-row-cta">
-					<span className="ws-services-row-cta-label">{getFormApplyLabel(form)}</span>
+					<span className="ws-services-row-cta-label">Apply</span>
 					<Icon name="chevron" />
 				</span>
 			</td>
@@ -65,7 +65,7 @@ function ServiceFormCard({ form, groupId }) {
 	return (
 		<button
 			type="button"
-			className={`ws-services-card${isActive ? ' is-active' : ''}`}
+			className={`ws-services-card ws-services-card--${groupId}${isActive ? ' is-active' : ''}`}
 			aria-current={isActive ? 'page' : undefined}
 			onClick={() => navigate(form.to)}
 		>
@@ -75,10 +75,14 @@ function ServiceFormCard({ form, groupId }) {
 				</span>
 				<span className="ws-services-rule-tag">{form.rule}</span>
 			</div>
-			<span className="ws-services-card__title">{form.label}</span>
-			<span className="ws-services-card__matter">{form.matter}</span>
+			<span className="ws-services-card__title">{form.matter}</span>
+			{form.label ? (
+				<span className="ws-services-card__meta" title={form.label}>
+					{form.label}
+				</span>
+			) : null}
 			<span className="ws-services-card__cta">
-				{getFormApplyLabel(form)}
+				Apply
 				<Icon name="chevron" />
 			</span>
 		</button>
@@ -87,15 +91,31 @@ function ServiceFormCard({ form, groupId }) {
 
 function WorkspaceServices() {
 	const { user } = useOutletContext()
-	const [searchParams] = useSearchParams()
-	const [activeGroup, setActiveGroup] = useState('all')
+	const [searchParams, setSearchParams] = useSearchParams()
+	const authorityParam = searchParams.get('authority')
+	const [activeGroup, setActiveGroup] = useState(() => {
+		if (authorityParam && tenantServiceGroups.some((g) => g.id === authorityParam)) {
+			return authorityParam
+		}
+		return 'all'
+	})
 
 	useEffect(() => {
-		const authority = searchParams.get('authority')
-		if (authority && tenantServiceGroups.some((g) => g.id === authority)) {
-			setActiveGroup(authority)
+		if (authorityParam && tenantServiceGroups.some((g) => g.id === authorityParam)) {
+			setActiveGroup(authorityParam)
+		} else if (!authorityParam) {
+			setActiveGroup('all')
 		}
-	}, [searchParams])
+	}, [authorityParam])
+
+	const selectGroup = (groupId) => {
+		setActiveGroup(groupId)
+		if (groupId === 'all') {
+			setSearchParams({}, { replace: true })
+		} else {
+			setSearchParams({ authority: groupId }, { replace: true })
+		}
+	}
 
 	if (user?.role !== ROLES.USER) {
 		return <Navigate to="/dashboard" replace />
@@ -120,7 +140,7 @@ function WorkspaceServices() {
 				<div className="ws-services-head-text">
 					<h1 className="ws-services-title">Services under the Assam Tenancy Act 2021</h1>
 					<p className="ws-services-lead">
-						Browse forms by competent authority. Select a row to open the application.
+						Browse forms by competent authority and open an application.
 					</p>
 				</div>
 				<dl className="ws-services-stats" aria-label="Service summary">
@@ -145,7 +165,7 @@ function WorkspaceServices() {
 					role="tab"
 					className={`ws-services-filter${activeGroup === 'all' ? ' is-active' : ''}`}
 					aria-selected={activeGroup === 'all'}
-					onClick={() => setActiveGroup('all')}
+					onClick={() => selectGroup('all')}
 				>
 					All
 				</button>
@@ -158,7 +178,7 @@ function WorkspaceServices() {
 							activeGroup === group.id ? ' is-active' : ''
 						}`}
 						aria-selected={activeGroup === group.id}
-						onClick={() => setActiveGroup(group.id)}
+						onClick={() => selectGroup(group.id)}
 					>
 						{GROUP_ACCENTS[group.id]?.short || group.title}
 					</button>
@@ -183,6 +203,9 @@ function WorkspaceServices() {
 								>
 									{group.title}
 								</h2>
+								{group.description ? (
+									<p className="ws-services-catalog-desc">{group.description}</p>
+								) : null}
 							</div>
 							<span className="ws-services-catalog-count">
 								{group.forms.length} form{group.forms.length === 1 ? '' : 's'}

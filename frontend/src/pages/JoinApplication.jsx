@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams, useNavigate, useOutletContext } from 'react-router-dom'
 import api, { csrf } from '../api'
 import DocumentUploadSlot from '../components/forms/DocumentUploadSlot'
+import { cleanOptionalValue } from '../utils/tenancyDraft'
+import { formatDate } from '../utils/formatters'
 
 const JOIN_STEPS = [
 	{ id: 1, label: 'Review application' },
@@ -68,6 +70,61 @@ function JoinApplication() {
 		const type = application.apply_type.toLowerCase()
 		return type === 'joint' ? 50 : type === 'individual' ? 75 : 0
 	})()
+
+	const MOBILE_RE = /^\d{10}$/
+	const PAN_RE = /^[A-Z]{5}\d{4}[A-Z]$/
+	const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+
+	const fieldErrors = useMemo(() => {
+		const errors = {}
+		if (phone && !MOBILE_RE.test(String(phone).replace(/\D/g, ''))) {
+			errors.phone = 'Must be exactly 10 digits'
+		}
+		if (email && !EMAIL_RE.test(email.trim())) {
+			errors.email = 'Enter a valid email address'
+		}
+		if (pan && !PAN_RE.test(pan.trim().toUpperCase())) {
+			errors.pan = 'Enter a valid PAN (e.g. ABCDE1234F)'
+		}
+		if (aadhar && aadhar.length > 0 && aadhar.length !== 12) {
+			errors.aadhar = 'Aadhaar must be 12 digits'
+		}
+
+		if (application) {
+			const otherPhone = cleanOptionalValue(
+				application.second_party_role === 'LANDLORD'
+					? application.tenant_phone
+					: application.landlord_phone
+			)
+			const otherPan = cleanOptionalValue(
+				application.second_party_role === 'LANDLORD'
+					? application.tenant_pan
+					: application.landlord_pan
+			)
+			const otherEmail = cleanOptionalValue(
+				application.second_party_role === 'LANDLORD'
+					? application.tenant_email
+					: application.landlord_email
+			)
+			const myPhone = String(phone || '').replace(/\D/g, '')
+			const theirPhone = String(otherPhone || '').replace(/\D/g, '')
+			if (myPhone && theirPhone && myPhone === theirPhone) {
+				errors.phone = 'Cannot match the other party’s mobile'
+			}
+			if (pan && otherPan && pan.trim().toUpperCase() === otherPan.toUpperCase()) {
+				errors.pan = 'Cannot match the other party’s PAN'
+			}
+			if (email && otherEmail && email.trim().toLowerCase() === otherEmail.toLowerCase()) {
+				errors.email = 'Cannot match the other party’s email'
+			}
+		}
+
+		return errors
+	}, [phone, email, pan, aadhar, application])
+
+	const hasDetailsFieldErrors = Boolean(
+		fieldErrors.phone || fieldErrors.email || fieldErrors.pan || fieldErrors.aadhar
+	)
 
 	const handleMockPayment = () => {
 		setPaymentSimulating(true)
@@ -160,6 +217,10 @@ function JoinApplication() {
 	const validateDetailsStep = () => {
 		if (!name.trim() || !address.trim() || !email.trim() || !phone.trim() || !pan.trim()) {
 			setError('Please fill in all required fields before continuing.')
+			return false
+		}
+		if (hasDetailsFieldErrors) {
+			setError('')
 			return false
 		}
 		return true
@@ -426,7 +487,11 @@ function JoinApplication() {
 		? storageUrl(application.tenant_signature_path)
 		: signaturePreview
 
-	const hasManager = application.manager_name && application.manager_name !== 'NA'
+	const hasManager = Boolean(cleanOptionalValue(application.manager_name))
+	const managerPan = cleanOptionalValue(application.manager_pan)
+	const managerAadhar = cleanOptionalValue(application.manager_aadhar)
+	const managerPhone = cleanOptionalValue(application.manager_phone)
+	const managerEmail = cleanOptionalValue(application.manager_email)
 	const officeAddress = application.office?.name
 		? `${application.office.name}${application.district?.name ? `, ${application.district.name}` : ''}`
 		: '________________________'
@@ -446,45 +511,32 @@ function JoinApplication() {
 				</p>
 			</header>
 
-			<div className="horizontal-stepper-container" style={{ margin: '10px 0 40px 0', position: 'relative', maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto' }}>
-				{/* Background line */}
-				<div className="stepper-line-bg" style={{ position: 'absolute', top: '24px', left: '10%', right: '10%', height: '3px', background: '#e0e0e0', zIndex: 0 }} />
-				
-				<ol className="horizontal-stepper-steps" style={{ display: 'flex', justifyContent: 'space-between', listStyle: 'none', padding: 0, margin: 0, position: 'relative', zIndex: 1 }}>
-					{JOIN_STEPS.map((step, idx) => {
+			<nav className="ws-uin-h-stepper" aria-label="Join application stages">
+				<div className="ws-uin-h-stepper__track" aria-hidden />
+				<ol className="ws-uin-h-stepper__list">
+					{JOIN_STEPS.map((step) => {
 						const done = joinStep > step.id || maxReachedStep >= step.id
 						const active = joinStep === step.id
 						const reachable = step.id <= maxReachableStep
-						
 						return (
-							<li key={step.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: reachable ? 'pointer' : 'default' }} onClick={() => { if (reachable) goToStep(step.id) }}>
-								<div className="stepper-circle" style={{
-									width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-									background: active ? '#003399' : '#f4f5f7',
-									color: active ? '#fff' : '#111',
-									border: active ? 'none' : '1px solid #dcdfe6',
-									fontWeight: active ? 'bold' : 'normal',
-									fontSize: '16px',
-									marginBottom: '12px',
-									boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-									transition: 'all 0.2s ease',
-								}}>
-									{done && !active ? '✓' : step.id}
-								</div>
-								<span className="stepper-label" style={{
-									fontSize: '14px',
-									color: active ? '#111' : '#666',
-									fontWeight: active ? '700' : '500',
-									textAlign: 'center',
-									whiteSpace: 'nowrap'
-								}}>
-									{step.label}
-								</span>
+							<li key={step.id}>
+								<button
+									type="button"
+									className={`ws-uin-h-stepper__item${active ? ' is-active' : ''}${done && !active ? ' is-done' : ''}`}
+									disabled={!reachable}
+									aria-current={active ? 'step' : undefined}
+									onClick={() => {
+										if (reachable) goToStep(step.id)
+									}}
+								>
+									<span className="ws-uin-h-stepper__num">{done && !active ? '✓' : step.id}</span>
+									<span className="ws-uin-h-stepper__label">{step.label}</span>
+								</button>
 							</li>
 						)
 					})}
 				</ol>
-			</div>
+			</nav>
 
 			<div className="ws-uin-apply-body-full">
 				<div className="ws-uin-apply-main">
@@ -512,7 +564,7 @@ function JoinApplication() {
 										</div>
 										<div>
 											<span className="label-text">Registration date</span>
-											<span>{application.registration_date}</span>
+											<span>{formatDate(application.registration_date)}</span>
 										</div>
 										<div>
 											<span className="label-text">Apply type</span>
@@ -581,12 +633,27 @@ function JoinApplication() {
 										</div>
 										<div>
 											<span className="label-text">Duration</span>
-											<span>{application.property_tenancy_duration}</span>
+											<span>
+												{application.property_tenancy_duration || '—'}
+												{application.property_tenancy_end_date
+													? ` (Till ${formatDate(application.property_tenancy_end_date)})`
+													: ''}
+											</span>
 										</div>
 										<div>
 											<span className="label-text">Possession date</span>
-											<span>{application.property_possession_date}</span>
+											<span>
+												{application.property_possession_date
+													? formatDate(application.property_possession_date)
+													: '—'}
+											</span>
 										</div>
+										{application.property_tenancy_end_date ? (
+											<div>
+												<span className="label-text">End date</span>
+												<span>{formatDate(application.property_tenancy_end_date)}</span>
+											</div>
+										) : null}
 									</div>
 								</div>
 							</div>
@@ -594,74 +661,114 @@ function JoinApplication() {
 
 						{/* Step 2: Your details */}
 						{joinStep === 2 && (
-							<fieldset className="tenancy-fieldset">
-								<legend className="tenancy-legend-italic">
-									{roleLabel} information
-								</legend>
-								<label className="tenancy-field-full">
-									<span className="label-text required">Full name</span>
-									<input
-										type="text"
-										value={name}
-										onChange={(e) => setName(e.target.value)}
-										required
-									/>
-								</label>
-								<label className="tenancy-field-full">
-									<span className="label-text required">Address</span>
-									<textarea
-										value={address}
-										onChange={(e) => setAddress(e.target.value)}
-										required
-									/>
-								</label>
-								<label>
-									<span className="label-text required">Email</span>
-									<input
-										type="email"
-										value={email}
-										onChange={(e) => setEmail(e.target.value)}
-										required
-									/>
-								</label>
-								<label>
-									<span className="label-text required">Phone</span>
-									<input
-										type="tel"
-										value={phone}
-										readOnly
-										className="readonly-input"
-										title="Phone number cannot be changed"
-									/>
-								</label>
-								<label>
-									<span className="label-text required">PAN no.</span>
-									<input
-										type="text"
-										value={pan}
-										onChange={(e) => setPan(e.target.value.toUpperCase())}
-										required
-									/>
-								</label>
-								<label>
-									<span className="label-text">Aadhaar no. (optional)</span>
-									<input
-										type="text"
-										value={aadhar}
-										onChange={(e) => setAadhar(e.target.value.replace(/\D/g, ''))}
-										maxLength={12}
-									/>
-								</label>
-								{!isLandlord ? (
-									<label className="tenancy-field-full">
-										Description of previous tenancy
-										<textarea
-											value={previousTenancy}
-											onChange={(e) => setPreviousTenancy(e.target.value)}
-										/>
-									</label>
-								) : null}
-							</fieldset>
+							<div className="parties-container">
+								<section className="tenancy-section">
+									<div className="section-header">
+										<h2>Your details</h2>
+									</div>
+									<div className="ws-uin-party-block">
+										<header className="ws-uin-party-block__head">
+											<span className="ws-uin-party-block__num">1</span>
+											<div>
+												<h3 className="ws-uin-party-block__title">{roleLabel} details</h3>
+												<p className="ws-uin-party-block__lead">
+													Confirm or update your details for this joint application.
+												</p>
+											</div>
+										</header>
+										<div className="ws-uin-party-fields">
+											<label>
+												<span className="label-text required">Full name</span>
+												<input
+													type="text"
+													value={name}
+													onChange={(e) => setName(e.target.value)}
+													required
+												/>
+											</label>
+											<label>
+												<span className="label-text required">PAN no.</span>
+												<input
+													type="text"
+													value={pan}
+													onChange={(e) => {
+														const next = e.target.value.toUpperCase()
+														if (/^[A-Z0-9]*$/.test(next)) setPan(next.slice(0, 10))
+													}}
+													maxLength={10}
+													required
+													aria-invalid={Boolean(fieldErrors.pan)}
+												/>
+												{fieldErrors.pan ? (
+													<span className="ws-uin-field-error">{fieldErrors.pan}</span>
+												) : null}
+											</label>
+											<label>
+												<span className="label-text required">Phone</span>
+												<input
+													type="tel"
+													value={phone}
+													readOnly
+													className="readonly-input"
+													title="Phone number cannot be changed"
+													aria-invalid={Boolean(fieldErrors.phone)}
+												/>
+												{fieldErrors.phone ? (
+													<span className="ws-uin-field-error">{fieldErrors.phone}</span>
+												) : null}
+											</label>
+											<label>
+												<span className="label-text required">Email</span>
+												<input
+													type="email"
+													value={email}
+													onChange={(e) => setEmail(e.target.value)}
+													required
+													aria-invalid={Boolean(fieldErrors.email)}
+												/>
+												{fieldErrors.email ? (
+													<span className="ws-uin-field-error">{fieldErrors.email}</span>
+												) : null}
+											</label>
+											<label>
+												<span className="label-text">Aadhaar no. (optional)</span>
+												<input
+													type="text"
+													inputMode="numeric"
+													value={aadhar}
+													onChange={(e) =>
+														setAadhar(e.target.value.replace(/\D/g, '').slice(0, 12))
+													}
+													maxLength={12}
+													aria-invalid={Boolean(fieldErrors.aadhar)}
+												/>
+												{fieldErrors.aadhar ? (
+													<span className="ws-uin-field-error">{fieldErrors.aadhar}</span>
+												) : null}
+											</label>
+											<label className="ws-uin-party-fields__full">
+												<span className="label-text required">Address</span>
+												<textarea
+													value={address}
+													onChange={(e) => setAddress(e.target.value)}
+													required
+													rows={3}
+												/>
+											</label>
+											{!isLandlord ? (
+												<label className="ws-uin-party-fields__full">
+													<span className="label-text">Description of previous tenancy</span>
+													<textarea
+														value={previousTenancy}
+														onChange={(e) => setPreviousTenancy(e.target.value)}
+														rows={3}
+													/>
+												</label>
+											) : null}
+										</div>
+									</div>
+								</section>
+							</div>
 						)}
 
 						{/* Step 3: Documents */}
@@ -688,7 +795,7 @@ function JoinApplication() {
 												<p className="tenancy-doc-card__meta">Photograph, signature, and PAN card for the joining party</p>
 											</div>
 										</div>
-										<div className="tenancy-doc-card__grid tenancy-doc-card__grid--stack">
+										<div className="tenancy-doc-card__grid">
 											<DocumentUploadSlot
 												id="join-photo"
 												label="Passport-size photograph"
@@ -810,7 +917,7 @@ function JoinApplication() {
 											<div style={{ flex: '2' }}>
 												:{' '}
 												{hasManager
-													? `${application.manager_name}, ${application.manager_address}`
+													? `${application.manager_name}${cleanOptionalValue(application.manager_address) ? `, ${application.manager_address}` : ''}`
 													: ''}
 											</div>
 										</div>
@@ -862,7 +969,7 @@ function JoinApplication() {
 												Date from which possession is given to the tenant
 											</div>
 											<div style={{ flex: '2' }}>
-												: {application.property_possession_date}
+												: {formatDate(application.property_possession_date)}
 											</div>
 										</div>
 										<div
@@ -939,7 +1046,10 @@ function JoinApplication() {
 												Duration of tenancy (Period for which let)
 											</div>
 											<div style={{ flex: '2' }}>
-												: {application.property_tenancy_duration}
+												: {application.property_tenancy_duration || '—'}
+												{application.property_tenancy_end_date
+													? ` (Till ${formatDate(application.property_tenancy_end_date)})`
+													: ''}
 											</div>
 										</div>
 										<div
@@ -1013,12 +1123,7 @@ function JoinApplication() {
 												Permanent Account Number (PAN) of Property Manager (if any)
 											</div>
 											<div style={{ flex: '2' }}>
-												:{' '}
-												{hasManager &&
-												application.manager_pan &&
-												application.manager_pan !== 'NA'
-													? application.manager_pan
-													: ''}
+												: {hasManager && managerPan ? managerPan : ''}
 											</div>
 										</div>
 										<div
@@ -1032,7 +1137,7 @@ function JoinApplication() {
 												(if any)
 											</div>
 											<div style={{ flex: '2' }}>
-												: {hasManager ? application.manager_aadhar : ''}
+												: {hasManager && managerAadhar ? managerAadhar : ''}
 											</div>
 										</div>
 										<div
@@ -1047,10 +1152,8 @@ function JoinApplication() {
 											</div>
 											<div style={{ flex: '2' }}>
 												:{' '}
-												{hasManager &&
-												application.manager_phone &&
-												application.manager_phone !== 'NA'
-													? `${application.manager_phone}${application.manager_email && application.manager_email !== 'noemail@noemail.com' ? `, ${application.manager_email}` : ''}`
+												{hasManager && (managerPhone || managerEmail)
+													? [managerPhone, managerEmail].filter(Boolean).join(', ')
 													: ''}
 											</div>
 										</div>
@@ -1219,81 +1322,137 @@ function JoinApplication() {
 
 						{/* Step 5: Payment */}
 						{joinStep === 5 && (
-							<fieldset className="tenancy-fieldset ws-uin-payment-step" style={{ border: 'none', padding: 0, display: 'block' }}>
-						<div className="ws-uin-payment-card" style={{
-							textAlign: 'center',
-							padding: '20px 25px',
-							background: '#ffffff',
-							borderRadius: '12px',
-							boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
-							border: '1px solid #e2e8f0',
-							maxWidth: '450px',
-							margin: '0 auto'
-						}}>
-							<div style={{
-								width: '40px', height: '40px', borderRadius: '50%', background: '#f0fdf4', color: '#16a34a',
-								display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', margin: '0 auto 10px'
-							}}>
-								₹
-							</div>
-							<h2 className="ws-uin-payment-card-title" style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px' }}>Application fee payment</h2>
-							<p className="ws-uin-payment-card-lead" style={{ color: '#64748b', fontSize: '13px', lineHeight: '1.4', margin: '0 0 15px' }}>
-								Please process your application fee to finalize the submission. Your application will be officially lodged once the transaction is verified.
-							</p>
+							<fieldset className="tenancy-fieldset ws-uin-payment-step">
+								<div className={`ws-uin-pay${paymentComplete ? ' is-paid' : ''}`}>
+									<section className="ws-uin-pay-bill">
+										<h2 className="ws-uin-pay-title">Bill summary</h2>
+										<div className="ws-uin-pay-bill-rows">
+											<div className="ws-uin-pay-row">
+												<span>Service</span>
+												<strong>Tenancy Certificate (UIN)</strong>
+											</div>
+											<div className="ws-uin-pay-row">
+												<span>Application type</span>
+												<strong>{application.apply_type || '—'}</strong>
+											</div>
+											<div className="ws-uin-pay-row">
+												<span>Application no.</span>
+												<strong>{application.application_no || '—'}</strong>
+											</div>
+											<div className="ws-uin-pay-row">
+												<span>Your role</span>
+												<strong>{roleLabel}</strong>
+											</div>
+											<div className="ws-uin-pay-row">
+												<span>Fee</span>
+												<strong>₹{feeAmount}</strong>
+											</div>
+											<div className="ws-uin-pay-row ws-uin-pay-row--total">
+												<span>Total payable</span>
+												<strong>₹{feeAmount}</strong>
+											</div>
+										</div>
+										{paymentComplete ? (
+											<div className="ws-uin-pay-paid" role="status">
+												<strong>Payment successful</strong>
+												<span>
+													₹{feeAmount} paid
+													{paymentGrn ? ` · GRN ${paymentGrn}` : ''}
+												</span>
+											</div>
+										) : (
+											<p className="ws-uin-pay-hint">Complete payment on the right to continue.</p>
+										)}
+									</section>
 
-							<div className="ws-uin-payment-summary" style={{
-								background: '#f8fafc',
-								borderRadius: '8px',
-								padding: '12px 16px',
-								marginBottom: '20px',
-								textAlign: 'left'
-							}}>
-								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-									<span style={{ color: '#64748b' }}>Application no.</span>
-									<strong style={{ color: '#0f172a' }}>{application.application_no}</strong>
-								</div>
-								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-									<span style={{ color: '#64748b' }}>Your role</span>
-									<strong style={{ color: '#0f172a' }}>{roleLabel}</strong>
-								</div>
-								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', marginTop: '8px' }}>
-									<span style={{ color: '#0f172a', fontWeight: '600' }}>Amount payable</span>
-									<strong style={{ color: '#2563eb', fontSize: '16px' }}>₹{feeAmount}</strong>
-								</div>
-							</div>
+									<section className="ws-uin-pay-method">
+										<h2 className="ws-uin-pay-title">Pay now</h2>
+										{!paymentComplete ? (
+											<>
+												<div className="ws-uin-pay-qr-wrap">
+													<div className="ws-uin-pay-qr" aria-hidden>
+														<svg viewBox="0 0 120 120" width="132" height="132" role="img">
+															<title>Demo QR code</title>
+															<rect width="120" height="120" fill="#fff" />
+															<rect x="8" y="8" width="28" height="28" fill="#0f172a" />
+															<rect x="14" y="14" width="16" height="16" fill="#fff" />
+															<rect x="18" y="18" width="8" height="8" fill="#0f172a" />
+															<rect x="84" y="8" width="28" height="28" fill="#0f172a" />
+															<rect x="90" y="14" width="16" height="16" fill="#fff" />
+															<rect x="94" y="18" width="8" height="8" fill="#0f172a" />
+															<rect x="8" y="84" width="28" height="28" fill="#0f172a" />
+															<rect x="14" y="90" width="16" height="16" fill="#fff" />
+															<rect x="18" y="94" width="8" height="8" fill="#0f172a" />
+															<rect x="44" y="12" width="8" height="8" fill="#0f172a" />
+															<rect x="56" y="12" width="8" height="8" fill="#0f172a" />
+															<rect x="68" y="20" width="8" height="8" fill="#0f172a" />
+															<rect x="44" y="32" width="8" height="8" fill="#0f172a" />
+															<rect x="60" y="32" width="8" height="8" fill="#0f172a" />
+															<rect x="44" y="48" width="8" height="8" fill="#0f172a" />
+															<rect x="56" y="48" width="8" height="8" fill="#0f172a" />
+															<rect x="68" y="48" width="8" height="8" fill="#0f172a" />
+															<rect x="80" y="48" width="8" height="8" fill="#0f172a" />
+															<rect x="92" y="48" width="8" height="8" fill="#0f172a" />
+															<rect x="104" y="48" width="8" height="8" fill="#0f172a" />
+															<rect x="44" y="60" width="8" height="8" fill="#0f172a" />
+															<rect x="68" y="60" width="8" height="8" fill="#0f172a" />
+															<rect x="92" y="60" width="8" height="8" fill="#0f172a" />
+															<rect x="44" y="72" width="8" height="8" fill="#0f172a" />
+															<rect x="56" y="72" width="8" height="8" fill="#0f172a" />
+															<rect x="80" y="72" width="8" height="8" fill="#0f172a" />
+															<rect x="104" y="72" width="8" height="8" fill="#0f172a" />
+															<rect x="56" y="84" width="8" height="8" fill="#0f172a" />
+															<rect x="68" y="84" width="8" height="8" fill="#0f172a" />
+															<rect x="92" y="84" width="8" height="8" fill="#0f172a" />
+															<rect x="56" y="96" width="8" height="8" fill="#0f172a" />
+															<rect x="80" y="96" width="8" height="8" fill="#0f172a" />
+															<rect x="104" y="96" width="8" height="8" fill="#0f172a" />
+															<rect x="68" y="108" width="8" height="8" fill="#0f172a" />
+															<rect x="92" y="108" width="8" height="8" fill="#0f172a" />
+														</svg>
+													</div>
+													<p className="ws-uin-pay-qr-caption">Scan UPI QR to pay ₹{feeAmount}</p>
+												</div>
 
-							{!paymentComplete ? (
-								<button
-									type="button"
-									className="ws-btn ws-btn--primary ws-uin-payment-pay-btn"
-									onClick={handleMockPayment}
-									disabled={paymentSimulating || submitting}
-									style={{
-										width: '100%',
-										padding: '10px',
-										fontSize: '14px',
-										fontWeight: '600',
-										borderRadius: '8px',
-										background: '#2563eb',
-										boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'
-									}}
-								>
-									{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount} via eGRAS`}
-								</button>
-							) : (
-								<div className="ws-alert ws-alert--success ws-uin-payment-success" style={{
-									background: '#ecfdf5', color: '#065f46', border: '1px solid #10b981', borderRadius: '8px', padding: '10px', fontWeight: '500', fontSize: '13px'
-								}}>
-									<span style={{ display: 'block', fontSize: '14px', marginBottom: '3px' }}>✓ Payment Successful</span>
-									₹{feeAmount} paid.{paymentGrn ? ` GRN: ${paymentGrn}` : ''}
-								</div>
-							)}
+												<div className="ws-uin-pay-or">or</div>
 
-							<p className="ws-uin-payment-note" style={{ color: '#94a3b8', fontSize: '11px', margin: '15px 0 0' }}>
-								Secure demo step. No real transaction.
-							</p>
-						</div>
-					</fieldset>
+												<div className="ws-uin-pay-bank">
+													<div className="ws-uin-pay-bank-row">
+														<span>Account name</span>
+														<strong>Govt. of Assam — eGRAS</strong>
+													</div>
+													<div className="ws-uin-pay-bank-row">
+														<span>Account no.</span>
+														<strong>5010023487612</strong>
+													</div>
+													<div className="ws-uin-pay-bank-row">
+														<span>IFSC</span>
+														<strong>SBIN0001234</strong>
+													</div>
+													<div className="ws-uin-pay-bank-row">
+														<span>UPI ID</span>
+														<strong>uinfee@assam</strong>
+													</div>
+												</div>
+
+												<button
+													type="button"
+													className="ws-btn ws-btn--primary ws-uin-pay-btn"
+													onClick={handleMockPayment}
+													disabled={paymentSimulating || submitting}
+												>
+													{paymentSimulating ? 'Confirming…' : `I have paid ₹${feeAmount}`}
+												</button>
+												<p className="ws-uin-pay-note">Demo only — no real bank transfer.</p>
+											</>
+										) : (
+											<div className="ws-uin-pay-done">
+												<p>Payment confirmed. You can submit the application.</p>
+											</div>
+										)}
+									</section>
+								</div>
+							</fieldset>
 						)}
 
 						<div className="form-actions ws-uin-apply-actions">
@@ -1315,7 +1474,11 @@ function JoinApplication() {
 								</button>
 							)}
 							{joinStep < 4 ? (
-								<button type="submit" className="ws-btn ws-btn--primary">
+								<button
+									type="submit"
+									className="ws-btn ws-btn--primary"
+									disabled={joinStep === 2 && hasDetailsFieldErrors}
+								>
 									Continue
 								</button>
 							) : null}

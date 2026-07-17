@@ -178,6 +178,9 @@ class AuthController extends Controller
         $user = $request->user();
         $profiles = User::where('phone', $user->phone)
             ->where('is_blocked', false)
+            ->with('district:id,name')
+            ->orderByRaw("CASE WHEN role = 'user' THEN 0 ELSE 1 END")
+            ->orderBy('id')
             ->get();
 
         return response()->json(['profiles' => $profiles]);

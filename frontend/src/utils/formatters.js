@@ -17,7 +17,14 @@ export const formatDisplayEmail = (email) => {
 
 export const formatDate = (value) => {
 	if (!value) return '-'
-	const parsed = new Date(value)
+	const raw = String(value).trim()
+	// Date-only values (YYYY-MM-DD) — avoid UTC timezone day-shift
+	const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+	if (dateOnly) {
+		const [, year, month, day] = dateOnly
+		return `${day}/${month}/${year}`
+	}
+	const parsed = new Date(raw)
 	if (Number.isNaN(parsed.getTime())) return '-'
 	const day = String(parsed.getDate()).padStart(2, '0')
 	const month = String(parsed.getMonth() + 1).padStart(2, '0')

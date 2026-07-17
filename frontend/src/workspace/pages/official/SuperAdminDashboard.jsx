@@ -28,42 +28,51 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 			{
 				title: 'Geography',
 				stats: [
-					{ label: 'States / UTs', value: s.states_count, hint: 'Registered' },
-					{ label: 'Districts', value: s.districts_count, hint: 'Across Assam' },
-					{ label: 'Offices', value: s.offices_count, hint: 'Circle offices' },
+					{ label: 'States / UTs', value: s.states_count, hint: 'Registered', icon: 'map' },
+					{ label: 'Districts', value: s.districts_count, hint: 'Across Assam', icon: 'building' },
+					{ label: 'Offices', value: s.offices_count, hint: 'Circle offices', icon: 'building' },
 				],
 			},
 			{
 				title: 'Organization',
 				stats: [
-					{ label: 'Roles', value: s.roles_count, hint: 'System roles' },
-					{ label: 'Designations', value: s.designations_count, hint: 'Staff titles' },
+					{ label: 'Roles', value: s.roles_count, hint: 'System roles', icon: 'lock' },
+					{
+						label: 'Designations',
+						value: s.designations_count,
+						hint: 'Staff titles',
+						icon: 'user',
+					},
 				],
 			},
 			{
 				title: 'Accounts & applications',
 				stats: [
-					{ label: 'Users', value: s.users_count, hint: 'All portal accounts' },
+					{ label: 'Users', value: s.users_count, hint: 'All portal accounts', icon: 'users' },
 					{
 						label: 'UIN applications',
 						value: s.tenancy_applications,
 						hint: 'Tenancy records',
+						icon: 'documentPlus',
 					},
 					{
 						label: 'Form applications',
 						value: s.service_applications,
 						hint: 'Assam Tenancy Act',
+						icon: 'file',
 					},
 					{
 						label: 'Pending review',
 						value: s.pending_review,
 						hint: 'Awaiting verification',
+						icon: 'clock',
 						highlight: (s.pending_review ?? 0) > 0,
 					},
 					{
 						label: 'In review',
 						value: s.in_review,
 						hint: 'With principals',
+						icon: 'timeline',
 						highlight: (s.in_review ?? 0) > 0,
 					},
 				],
@@ -127,6 +136,7 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 				<div className="ws-dashboard-loading">Loading dashboard…</div>
 			) : (
 				<>
+					{/* 1. KPIs */}
 					<DashboardSection
 						title="At a glance"
 						description="High-level signals derived from live portal data."
@@ -135,17 +145,7 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 						<InsightHighlights stats={stats} />
 					</DashboardSection>
 
-					<DashboardSection
-						title="Platform configuration"
-						description="Master data and account counts for the statewide deployment."
-					>
-						<div className="ws-sa-stat-groups">
-							{statGroups.map((group) => (
-								<StatGroup key={group.title} title={group.title} stats={group.stats} />
-							))}
-						</div>
-					</DashboardSection>
-
+					{/* 2. Actions */}
 					<DashboardSection
 						title="Management shortcuts"
 						description="Jump to common super administrator tasks."
@@ -153,6 +153,7 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 						<SuperAdminQuickActions stats={stats} />
 					</DashboardSection>
 
+					{/* 3. Pipeline + charts */}
 					<DashboardSection
 						title="Application pipeline"
 						description="Statewide status distribution for Assam Tenancy Act form submissions."
@@ -187,6 +188,55 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 						</section>
 					</div>
 
+					{/* 4. Ops */}
+					<div className="ws-dashboard-split ws-sa-split ws-sa-split--ops">
+						<DashboardSection
+							title="Recent applications"
+							description="Latest UIN and form submissions across the state."
+							action={
+								<button
+									type="button"
+									className="ws-btn ws-btn--sm ws-btn--outline"
+									onClick={() => navigate('/dashboard/admin/applications')}
+								>
+									View all
+								</button>
+							}
+							className="ws-sa-split-section"
+						>
+							<section className="ws-card">
+								<div className="ws-card-body ws-card-body--pad ws-card-body--table">
+									<RecentApplicationsTable applications={s.recent_applications} />
+								</div>
+							</section>
+						</DashboardSection>
+
+						<DashboardSection
+							title="Recent activity"
+							description="Audit trail of sign-ins and administrative actions."
+							className="ws-sa-split-section"
+						>
+							<section className="ws-card">
+								<div className="ws-card-body ws-card-body--pad">
+									<ActivityFeed />
+								</div>
+							</section>
+						</DashboardSection>
+					</div>
+
+					{/* 5. Platform config */}
+					<DashboardSection
+						title="Platform configuration"
+						description="Master data and account counts for the statewide deployment."
+					>
+						<div className="ws-sa-stat-groups">
+							{statGroups.map((group) => (
+								<StatGroup key={group.title} title={group.title} stats={group.stats} />
+							))}
+						</div>
+					</DashboardSection>
+
+					{/* 6. Reference geography */}
 					{showDistrictMap ? (
 						<DashboardSection
 							title="District coverage"
@@ -229,41 +279,6 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 								</section>
 							</DashboardSection>
 						) : null}
-					</div>
-
-					<div className="ws-dashboard-split ws-sa-split ws-sa-split--ops">
-						<DashboardSection
-							title="Recent applications"
-							description="Latest UIN and form submissions across the state."
-							action={
-								<button
-									type="button"
-									className="ws-btn ws-btn--sm ws-btn--outline"
-									onClick={() => navigate('/dashboard/admin/applications')}
-								>
-									View all
-								</button>
-							}
-							className="ws-sa-split-section"
-						>
-							<section className="ws-card">
-								<div className="ws-card-body ws-card-body--pad ws-card-body--table">
-									<RecentApplicationsTable applications={s.recent_applications} />
-								</div>
-							</section>
-						</DashboardSection>
-
-						<DashboardSection
-							title="Recent activity"
-							description="Audit trail of sign-ins and administrative actions."
-							className="ws-sa-split-section"
-						>
-							<section className="ws-card">
-								<div className="ws-card-body ws-card-body--pad">
-									<ActivityFeed />
-								</div>
-							</section>
-						</DashboardSection>
 					</div>
 				</>
 			)}

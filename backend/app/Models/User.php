@@ -76,6 +76,19 @@ class User extends Authenticatable
         'is_blocked' => 'boolean',
     ];
 
+    protected $appends = [
+        'passport_photo_url',
+    ];
+
+    public function getPassportPhotoUrlAttribute(): ?string
+    {
+        if (empty($this->passport_photo_path)) {
+            return null;
+        }
+
+        return url('storage/' . $this->passport_photo_path);
+    }
+
     public static function roles(): array
     {
         return [

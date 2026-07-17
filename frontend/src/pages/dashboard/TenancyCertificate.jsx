@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
-import { buildTenancyFormData, applyDraftToForm } from '../../utils/tenancyDraft'
+import { buildTenancyFormData, applyDraftToForm, cleanOptionalValue } from '../../utils/tenancyDraft'
+import { formatDate } from '../../utils/formatters'
 import { Icon } from '../../components/dashboard/Icons'
 import DocumentUploadSlot from '../../components/forms/DocumentUploadSlot'
 
@@ -64,6 +65,7 @@ function TenancyCertificate() {
 	const [managerPhone, setManagerPhone] = useState('')
 	const [managerPan, setManagerPan] = useState('')
 	const [managerAadhar, setManagerAadhar] = useState('')
+	const [managerMode, setManagerMode] = useState('enter') // 'same' | 'enter'
 
 	const [tenantName, setTenantName] = useState('')
 	const [tenantAddress, setTenantAddress] = useState('')
@@ -148,6 +150,7 @@ function TenancyCertificate() {
 				setTenantAadhar,
 				setTenantPreviousTenancy,
 				setPropertyPossessionDate,
+				setPropertyTenancyEndDate,
 				setPropertyRentPayable,
 				setPropertyPremisesDescription,
 				setPropertyFurnitureDescription,
@@ -183,10 +186,21 @@ function TenancyCertificate() {
 	}, [tenancyAreaType, tenancyLocalBody, tenancyVillageWards]);
 
 	const availableVillages = useMemo(() => {
-		if (!tenancyVillageWardId || !availableWards.length) return [];
-		const ward = availableWards.find(w => w.id == tenancyVillageWardId);
-		return ward && ward.villages ? ward.villages : [];
-	}, [tenancyVillageWardId, availableWards]);
+		if (!availableWards.length) return []
+		// Rural: no ward step — flatten villages under the selected Gram Panchayat
+		if (tenancyAreaType === 'Rural') {
+			const names = new Set()
+			availableWards.forEach((vw) => {
+				;(vw.villages || []).forEach((v) => {
+					if (v) names.add(String(v))
+				})
+			})
+			return Array.from(names).sort((a, b) => a.localeCompare(b))
+		}
+		if (!tenancyVillageWardId) return []
+		const ward = availableWards.find((w) => w.id == tenancyVillageWardId)
+		return ward && ward.villages ? ward.villages : []
+	}, [tenancyAreaType, tenancyVillageWardId, availableWards])
 
 	const availableOffices = useMemo(() => {
 		if (!tenancyDistrictId) return tenancyOffices;
@@ -262,20 +276,84 @@ function TenancyCertificate() {
 		}
 	}, [draftLoaded, profileDistrictId, profileOfficeId]); // Intentionally omitting tenancyDistrictId/tenancyOfficeId so it doesn't re-fill if user clears them
 
-	// Dynamic pre-fill based on initiatorRole and profile data
+	const profileAddressLine = [profileAddress, profilePin].filter(Boolean).join(', ')
+
+	const fillProfileIntoRole = useCallback((role) => {
+		if (!role || !profileName) return
+
+		if (role === 'LANDLORD') {
+			setLandlordName(profileName)
+			setLandlordAddress(profileAddressLine || profileAddress)
+			setLandlordEmail(profileEmail)
+			setLandlordPhone(profilePhone)
+			setLandlordPan(profilePan)
+			if (profilePhotoPreview) setLandlordPhotoPreview(profilePhotoPreview)
+		} else if (role === 'TENANT') {
+			setTenantName(profileName)
+			setTenantAddress(profileAddressLine || profileAddress)
+			setTenantEmail(profileEmail)
+			setTenantPhone(profilePhone)
+			setTenantPan(profilePan)
+			if (profilePhotoPreview) setTenantPhotoPreview(profilePhotoPreview)
+		}
+	}, [profileName, profileAddress, profileAddressLine, profileEmail, profilePhone, profilePan, profilePhotoPreview])
+
+	const clearPartyIfMatchesProfile = useCallback((role) => {
+		if (!profileName) return
+		const addr = profileAddressLine || profileAddress
+
+		if (role === 'LANDLORD') {
+			setLandlordName((v) => (v === profileName ? '' : v))
+			setLandlordAddress((v) => (v === addr || v === profileAddress ? '' : v))
+			setLandlordEmail((v) => (v === profileEmail ? '' : v))
+			setLandlordPhone((v) => (v === profilePhone ? '' : v))
+			setLandlordPan((v) => (v === profilePan ? '' : v))
+			setLandlordPhotoPreview((v) => (v === profilePhotoPreview ? '' : v))
+		} else if (role === 'TENANT') {
+			setTenantName((v) => (v === profileName ? '' : v))
+			setTenantAddress((v) => (v === addr || v === profileAddress ? '' : v))
+			setTenantEmail((v) => (v === profileEmail ? '' : v))
+			setTenantPhone((v) => (v === profilePhone ? '' : v))
+			setTenantPan((v) => (v === profilePan ? '' : v))
+			setTenantPhotoPreview((v) => (v === profilePhotoPreview ? '' : v))
+		}
+	}, [profileName, profileAddress, profileAddressLine, profileEmail, profilePhone, profilePan, profilePhotoPreview])
+
+	const handleInitiatorRoleChange = (role) => {
+		if (role === initiatorRole) return
+		const previous = initiatorRole
+		setInitiatorRole(role)
+		fillProfileIntoRole(role)
+		if (previous) clearPartyIfMatchesProfile(previous)
+	}
+
+	// Default role from profile type (new applications only)
 	useEffect(() => {
-		if (!initiatorRole || !profileName) return;
+		if (!draftLoaded || initiatorRole || !profileType) return
+		if (profileType === 'landlord') setInitiatorRole('LANDLORD')
+		else if (profileType === 'tenant') setInitiatorRole('TENANT')
+	}, [draftLoaded, initiatorRole, profileType])
+
+	// Fill initiator section once profile is ready (and fields are still empty)
+	useEffect(() => {
+		if (!draftLoaded || !initiatorRole || !profileName) return
 
 		if (initiatorRole === 'LANDLORD') {
-			setLandlordName(profileName); setLandlordAddress(profileAddress); setLandlordEmail(profileEmail); setLandlordPhone(profilePhone); setLandlordPan(profilePan);
-			if (profilePhotoPreview) setLandlordPhotoPreview(profilePhotoPreview);
+			setLandlordName((v) => v || profileName)
+			setLandlordAddress((v) => v || profileAddressLine || profileAddress)
+			setLandlordEmail((v) => v || profileEmail)
+			setLandlordPhone((v) => v || profilePhone)
+			setLandlordPan((v) => v || profilePan)
+			if (profilePhotoPreview) setLandlordPhotoPreview((v) => v || profilePhotoPreview)
 		} else if (initiatorRole === 'TENANT') {
-			setTenantName(profileName); setTenantAddress(profileAddress); setTenantEmail(profileEmail); setTenantPhone(profilePhone); setTenantPan(profilePan);
-			if (profilePhotoPreview) setTenantPhotoPreview(profilePhotoPreview);
-		} else if (initiatorRole === 'PROPERTY_MANAGER') {
-			setManagerName(profileName); setManagerAddress(profileAddress); setManagerEmail(profileEmail); setManagerPhone(profilePhone); setManagerPan(profilePan);
+			setTenantName((v) => v || profileName)
+			setTenantAddress((v) => v || profileAddressLine || profileAddress)
+			setTenantEmail((v) => v || profileEmail)
+			setTenantPhone((v) => v || profilePhone)
+			setTenantPan((v) => v || profilePan)
+			if (profilePhotoPreview) setTenantPhotoPreview((v) => v || profilePhotoPreview)
 		}
-	}, [initiatorRole, profileName, profileAddress, profileEmail, profilePhone, profilePan, profilePhotoPreview])
+	}, [draftLoaded, initiatorRole, profileName, profileAddress, profileAddressLine, profileEmail, profilePhone, profilePan, profilePhotoPreview])
 
 	useEffect(() => {
 		if (propertyPossessionDate && propertyTenancyEndDate) {
@@ -356,6 +434,114 @@ function TenancyCertificate() {
 		const monthsDiff = (now.getFullYear() - regDate.getFullYear()) * 12 + (now.getMonth() - regDate.getMonth())
 		return monthsDiff > 2 ? 'Individual' : 'Joint'
 	})()
+
+	const MOBILE_RE = /^\d{10}$/
+	const PAN_RE = /^[A-Z]{5}\d{4}[A-Z]$/
+	const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+
+	const fieldErrors = useMemo(() => {
+		const errors = {}
+		const phoneMsg = (v) => {
+			if (!v) return ''
+			return MOBILE_RE.test(v.replace(/\D/g, '')) ? '' : 'Must be exactly 10 digits'
+		}
+		const panMsg = (v) => {
+			if (!v) return ''
+			return PAN_RE.test(v.trim().toUpperCase()) ? '' : 'Enter a valid PAN (e.g. ABCDE1234F)'
+		}
+		const emailMsg = (v) => {
+			if (!v) return ''
+			return EMAIL_RE.test(v.trim()) ? '' : 'Enter a valid email address'
+		}
+
+		errors.landlordPhone = phoneMsg(landlordPhone)
+		errors.tenantPhone = phoneMsg(tenantPhone)
+		errors.managerPhone = phoneMsg(managerPhone)
+		errors.landlordPan = panMsg(landlordPan)
+		errors.tenantPan = panMsg(tenantPan)
+		errors.managerPan = panMsg(managerPan)
+		errors.landlordEmail = emailMsg(landlordEmail)
+		errors.tenantEmail = emailMsg(tenantEmail)
+		errors.managerEmail = emailMsg(managerEmail)
+
+		const lPhone = (landlordPhone || '').replace(/\D/g, '')
+		const tPhone = (tenantPhone || '').replace(/\D/g, '')
+		const lPan = (landlordPan || '').trim().toUpperCase()
+		const tPan = (tenantPan || '').trim().toUpperCase()
+		const lEmail = (landlordEmail || '').trim().toLowerCase()
+		const tEmail = (tenantEmail || '').trim().toLowerCase()
+
+		if (lPhone && tPhone && lPhone === tPhone) {
+			errors.landlordPhone = 'Cannot be the same as tenant mobile'
+			errors.tenantPhone = 'Cannot be the same as landlord mobile'
+		}
+		if (lPan && tPan && lPan === tPan) {
+			errors.landlordPan = 'Cannot be the same as tenant PAN'
+			errors.tenantPan = 'Cannot be the same as landlord PAN'
+		}
+		if (lEmail && tEmail && lEmail === tEmail) {
+			errors.landlordEmail = 'Cannot be the same as tenant email'
+			errors.tenantEmail = 'Cannot be the same as landlord email'
+		}
+
+		return errors
+	}, [
+		landlordPhone, tenantPhone, managerPhone,
+		landlordPan, tenantPan, managerPan,
+		landlordEmail, tenantEmail, managerEmail,
+	])
+
+	const hasStep2FieldErrors = Boolean(
+		fieldErrors.landlordPhone || fieldErrors.tenantPhone ||
+		fieldErrors.landlordPan || fieldErrors.tenantPan ||
+		fieldErrors.landlordEmail || fieldErrors.tenantEmail ||
+		(managerMode === 'enter' && (
+			fieldErrors.managerPhone || fieldErrors.managerPan || fieldErrors.managerEmail
+		))
+	)
+
+	const parseCharge = (value) => {
+		if (value === '' || value == null) return 0
+		const n = Number(value)
+		return Number.isFinite(n) && n > 0 ? n : 0
+	}
+
+	const totalMonthlyRent = useMemo(() => {
+		const rent = parseCharge(propertyRentPayable)
+		return (
+			rent +
+			parseCharge(propertyChargeElectricity) +
+			parseCharge(propertyChargeWater) +
+			parseCharge(propertyChargeFurnishing) +
+			parseCharge(propertyChargeOtherServices)
+		)
+	}, [
+		propertyRentPayable,
+		propertyChargeElectricity,
+		propertyChargeWater,
+		propertyChargeFurnishing,
+		propertyChargeOtherServices,
+	])
+
+	useEffect(() => {
+		if (managerMode !== 'same') return
+		setManagerName(landlordName)
+		setManagerAddress(landlordAddress)
+		setManagerEmail(landlordEmail)
+		setManagerPhone(landlordPhone)
+		setManagerPan(landlordPan)
+	}, [managerMode, landlordName, landlordAddress, landlordEmail, landlordPhone, landlordPan])
+
+	const handleManagerModeChange = (mode) => {
+		setManagerMode(mode)
+		if (mode === 'enter') {
+			setManagerName('')
+			setManagerAddress('')
+			setManagerEmail('')
+			setManagerPhone('')
+			setManagerPan('')
+		}
+	}
 
 	const feeAmount = (() => {
 		if (!applyType) return 0
@@ -487,8 +673,10 @@ function TenancyCertificate() {
 	const getFormState = () => ({
 		tenancyRegistrationDate,
 		tenancyOfficeId,
-		tenancyVillageWardId,
-						tenancyVillageName,
+		tenancyVillageWardId: tenancyAreaType === 'Rural' ? '' : tenancyVillageWardId,
+		tenancyAreaType,
+		tenancyLocalBody,
+		tenancyVillageName,
 		initiatorRole,
 		applyType,
 		landlordName,
@@ -511,6 +699,7 @@ function TenancyCertificate() {
 		tenantAadhar,
 		tenantPreviousTenancy,
 		propertyPossessionDate,
+		propertyTenancyEndDate,
 		propertyRentPayable,
 		propertyPremisesDescription,
 		propertyFurnitureDescription,
@@ -689,11 +878,10 @@ function TenancyCertificate() {
 		e.preventDefault()
 		if (tenancyStep === 1 && registrationTooOld) return
 		if (tenancyStep === 2) {
-			if (!managerName.trim()) setManagerName('NA')
-			if (!managerAddress.trim()) setManagerAddress('NA')
-			if (!managerEmail.trim()) setManagerEmail('noemail@noemail.com')
-			if (!managerPhone.trim()) setManagerPhone('NA')
-			if (!managerPan.trim()) setManagerPan('NA')
+			if (hasStep2FieldErrors) return
+			if (initiatorRole === 'LANDLORD' && !landlordEmail.trim()) return
+			if (initiatorRole === 'TENANT' && !tenantEmail.trim()) return
+			if (!landlordPhone || !tenantPhone || !landlordPan || !tenantPan) return
 		}
 		if (tenancyStep === 4) {
 			if (!declarationChecked) {
@@ -904,45 +1092,32 @@ function TenancyCertificate() {
 				) : null}
 			</header>
 
-			<div className="horizontal-stepper-container" style={{ margin: '10px 0 40px 0', position: 'relative', maxWidth: '1000px', marginLeft: 'auto', marginRight: 'auto' }}>
-				{/* Background line */}
-				<div className="stepper-line-bg" style={{ position: 'absolute', top: '24px', left: '10%', right: '10%', height: '3px', background: '#e0e0e0', zIndex: 0 }} />
-				
-				<ol className="horizontal-stepper-steps" style={{ display: 'flex', justifyContent: 'space-between', listStyle: 'none', padding: 0, margin: 0, position: 'relative', zIndex: 1 }}>
-					{tenancySteps.map((step, idx) => {
+			<nav className="ws-uin-h-stepper" aria-label="Application stages">
+				<div className="ws-uin-h-stepper__track" aria-hidden />
+				<ol className="ws-uin-h-stepper__list">
+					{tenancySteps.map((step) => {
 						const done = tenancyStep > step.id || savedWizardStep >= step.id
 						const active = tenancyStep === step.id
 						const reachable = step.id <= maxReachableStep
-						
 						return (
-							<li key={step.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, cursor: reachable ? 'pointer' : 'default' }} onClick={() => { if (reachable) goToStep(step.id) }}>
-								<div className="stepper-circle" style={{
-									width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-									background: active ? '#003399' : '#f4f5f7',
-									color: active ? '#fff' : '#111',
-									border: active ? 'none' : '1px solid #dcdfe6',
-									fontWeight: active ? 'bold' : 'normal',
-									fontSize: '16px',
-									marginBottom: '12px',
-									boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-									transition: 'all 0.2s ease',
-								}}>
-									{done && !active ? '✓' : step.id}
-								</div>
-								<span className="stepper-label" style={{
-									fontSize: '14px',
-									color: active ? '#111' : '#666',
-									fontWeight: active ? '700' : '500',
-									textAlign: 'center',
-									whiteSpace: 'nowrap'
-								}}>
-									{step.label}
-								</span>
+							<li key={step.id}>
+								<button
+									type="button"
+									className={`ws-uin-h-stepper__item${active ? ' is-active' : ''}${done && !active ? ' is-done' : ''}`}
+									disabled={!reachable}
+									aria-current={active ? 'step' : undefined}
+									onClick={() => {
+										if (reachable) goToStep(step.id)
+									}}
+								>
+									<span className="ws-uin-h-stepper__num">{done && !active ? '✓' : step.id}</span>
+									<span className="ws-uin-h-stepper__label">{step.label}</span>
+								</button>
 							</li>
 						)
 					})}
 				</ol>
-			</div>
+			</nav>
 
 			<div className="ws-uin-apply-body-full">
 				<div className="ws-uin-apply-main">
@@ -995,72 +1170,78 @@ function TenancyCertificate() {
 						Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
 					</p>
 					<p className="ws-uin-apply-type-note">
-						<strong>Joint</strong> (agreement within 3 months): both parties complete the form.
-						<strong> Individual</strong> (older than 3 months): you apply alone.
+						<strong>Joint</strong> (agreement within 2 months): both parties complete the form.
+						<strong> Individual</strong> (2–3 months): you apply alone.
+						Agreements older than 3 months are not eligible.
 					</p>
 				</header>
 
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
-						<div className="compact-eligibility-box" style={{ 
-							marginBottom: '25px', 
-							padding: '12px 16px', 
-							background: '#f8f9fa', 
-							border: '1px solid #e2e8f0', 
-							borderRadius: '8px',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'space-between',
-							flexWrap: 'wrap',
-							gap: '10px'
-						}}>
-							<div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-								<span style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>Eligibility:</span>
-								<div style={{ display: 'flex', gap: '15px', fontSize: '13px' }}>
-									<span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: applyType ? '#059669' : '#64748b' }}>
-										{applyType ? '✓' : '○'} {applyType ? `Type: ${applyType}` : 'Waiting for date'}
-									</span>
-								</div>
-							</div>
-							
-							{tenancyRegistrationDate && (
-								<div style={{ 
-									padding: '6px 12px', 
-									borderRadius: '6px', 
-									fontSize: '13px', 
-									fontWeight: '600',
-									background: eligibilityMet ? '#dcfce7' : '#fee2e2',
-									color: eligibilityMet ? '#166534' : '#991b1b',
-									display: 'flex',
-									alignItems: 'center',
-									gap: '6px'
-								}}>
-									{eligibilityMet ? (
-										<span>
-											✓ Eligible to apply 
-										</span>
-									) : registrationTooOld ? (
-										<span>✕ Not eligible (Agreement > 3 months old)</span>
-									) : null}
-								</div>
-							)}
-						</div>
-
 						<div className="form-grid">
-							<label>
+							<div className="ws-uin-role-toggle-field">
 								<span className="label-text required">Initiating as</span>
-								<select value={initiatorRole} onChange={e => setInitiatorRole(e.target.value)} required>
-									<option value="">Select Role</option>
-									<option value="LANDLORD">Landlord</option>
-									<option value="TENANT">Tenant</option>
-								</select>
-							</label>
+								<div className="ws-uin-role-toggle" role="radiogroup" aria-label="Initiating as">
+									<label className={`ws-uin-role-toggle__btn${initiatorRole === 'LANDLORD' ? ' is-active' : ''}`}>
+										<input
+											type="radio"
+											name="initiatorRole"
+											value="LANDLORD"
+											checked={initiatorRole === 'LANDLORD'}
+											onChange={() => handleInitiatorRoleChange('LANDLORD')}
+											required
+										/>
+										Landlord
+									</label>
+									<label className={`ws-uin-role-toggle__btn${initiatorRole === 'TENANT' ? ' is-active' : ''}`}>
+										<input
+											type="radio"
+											name="initiatorRole"
+											value="TENANT"
+											checked={initiatorRole === 'TENANT'}
+											onChange={() => handleInitiatorRoleChange('TENANT')}
+											required
+										/>
+										Tenant
+									</label>
+								</div>
+								<span className="ws-uin-field-hint">Your profile details will auto-fill the matching section in Tenancy Details.</span>
+							</div>
 
-							<label>
-								<span className="label-text required">Date of Agreement</span>
-								<input type="date" value={tenancyRegistrationDate} onChange={e => setTenancyRegistrationDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required max={new Date().toISOString().split('T')[0]} />
-								<span className="ws-uin-field-hint">Must be within the last 3 months.</span>
-							</label>
+							<div className="ws-uin-date-eligibility">
+								<label>
+									<span className="label-text required">Date of Agreement</span>
+									<input type="date" value={tenancyRegistrationDate} onChange={e => setTenancyRegistrationDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required max={new Date().toISOString().split('T')[0]} />
+									<span className="ws-uin-field-hint">Must be within the last 3 months.</span>
+								</label>
+
+								<label>
+									<span className="label-text">Eligibility</span>
+									<input
+										type="text"
+										className={`ws-uin-eligibility-field${tenancyRegistrationDate ? (eligibilityMet ? ' is-eligible' : ' is-ineligible') : ''}`}
+										value={
+											!tenancyRegistrationDate
+												? ''
+												: eligibilityMet
+													? `${applyType || '—'} — Eligible to apply`
+													: registrationTooOld
+														? 'Not eligible (Agreement > 3 months old)'
+														: '—'
+										}
+										placeholder="Select agreement date"
+										readOnly
+										aria-live="polite"
+									/>
+									<span className="ws-uin-field-hint">
+										{!tenancyRegistrationDate
+											? 'Shown after you choose the agreement date.'
+											: eligibilityMet
+												? 'Joint ≤ 2 months · Individual 2–3 months.'
+												: 'Agreements older than 3 months cannot be registered.'}
+									</span>
+								</label>
+							</div>
 							<label>
 								<span className="label-text required">District</span>
 								<select value={tenancyDistrictId} onChange={e => { setTenancyDistrictId(e.target.value); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyVillageName(''); loadTenancyVillageWards(e.target.value); }} required>
@@ -1091,18 +1272,20 @@ function TenancyCertificate() {
 								</select>
 							</label>
 
-							<label>
-								<span className="label-text required">Ward</span>
-								<select value={tenancyVillageWardId} onChange={e => { setTenancyVillageWardId(e.target.value); setTenancyVillageName(''); }} required disabled={!tenancyLocalBody}>
-									<option value="">Select Ward</option>
-									{availableWards.map(vw => <option key={vw.id} value={vw.id}>{vw.name}</option>)}
-								</select>
-							</label>
+							{tenancyAreaType === 'Urban' && (
+								<label>
+									<span className="label-text required">Ward</span>
+									<select value={tenancyVillageWardId} onChange={e => { setTenancyVillageWardId(e.target.value); setTenancyVillageName(''); }} required disabled={!tenancyLocalBody}>
+										<option value="">Select Ward</option>
+										{availableWards.map(vw => <option key={vw.id} value={vw.id}>{vw.name}</option>)}
+									</select>
+								</label>
+							)}
 
 							{tenancyAreaType === 'Rural' && (
 								<label>
 									<span className="label-text required">Village</span>
-									<select value={tenancyVillageName} onChange={e => setTenancyVillageName(e.target.value)} required disabled={!tenancyVillageWardId}>
+									<select value={tenancyVillageName} onChange={e => setTenancyVillageName(e.target.value)} required disabled={!tenancyLocalBody}>
 										<option value="">Select Village</option>
 										{availableVillages.map(v => <option key={v} value={v}>{v}</option>)}
 									</select>
@@ -1116,11 +1299,6 @@ function TenancyCertificate() {
 									{availableOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
 								</select>
 							</label>
-
-							<label>
-								<span className="label-text required">Application Type</span>
-								<input type="text" value={applyType || 'Select agreement date'} readOnly disabled className="readonly-input" />
-							</label>
 						</div>
 					</fieldset>
 				)}
@@ -1131,117 +1309,288 @@ function TenancyCertificate() {
 								<h2>Information of Tenancy</h2>
 							</div>
 
-							<div className="form-group-row" style={{ marginTop: '20px' }}>
-								<label><span className="label-text required">1. Name and address of the landlord</span></label>
-								<div className="form-grid">
-									<input type="text" placeholder="Landlord Name" value={landlordName} onChange={e => setLandlordName(e.target.value)} required />
-									<textarea placeholder="Address" value={landlordAddress} onChange={e => setLandlordAddress(e.target.value)} required />
+							<div className={`ws-uin-party-block${initiatorRole === 'LANDLORD' ? ' is-autofilled' : ''}`}>
+								<header className="ws-uin-party-block__head">
+									<span className="ws-uin-party-block__num">1</span>
+									<div>
+										<h3 className="ws-uin-party-block__title">
+											Landlord details
+											{initiatorRole === 'LANDLORD' && <span className="ws-uin-party-block__badge">From your profile</span>}
+										</h3>
+										<p className="ws-uin-party-block__lead">Enter the landlord’s name, address, PAN and contact information.</p>
+									</div>
+								</header>
+								<div className="ws-uin-party-fields">
+									<label>
+										<span className="label-text required">Name of the landlord</span>
+										<input type="text" placeholder="Landlord Name" value={landlordName} onChange={e => setLandlordName(e.target.value)} required />
+									</label>
+									<label>
+										<span className="label-text required">PAN of landlord</span>
+										<input
+											type="text"
+											value={landlordPan}
+											onChange={e => {
+												const next = e.target.value.toUpperCase()
+												if (/^[A-Z0-9]*$/.test(next)) setLandlordPan(next.slice(0, 10))
+											}}
+											maxLength={10}
+											required
+											aria-invalid={Boolean(fieldErrors.landlordPan)}
+										/>
+										{fieldErrors.landlordPan ? <span className="ws-uin-field-error">{fieldErrors.landlordPan}</span> : null}
+									</label>
+									<label>
+										<span className="label-text required">Mobile Number</span>
+										<input
+											type="tel"
+											inputMode="numeric"
+											placeholder="10-digit mobile"
+											value={landlordPhone}
+											onChange={e => {
+												const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+												setLandlordPhone(digits)
+											}}
+											maxLength={10}
+											required
+											aria-invalid={Boolean(fieldErrors.landlordPhone)}
+										/>
+										{fieldErrors.landlordPhone ? <span className="ws-uin-field-error">{fieldErrors.landlordPhone}</span> : null}
+									</label>
+									<label>
+										<span className="label-text required">E-mail id</span>
+										<input
+											type="email"
+											placeholder="name@example.com"
+											value={landlordEmail}
+											onChange={e => setLandlordEmail(e.target.value)}
+											required={initiatorRole === 'LANDLORD'}
+											aria-invalid={Boolean(fieldErrors.landlordEmail)}
+										/>
+										{fieldErrors.landlordEmail ? <span className="ws-uin-field-error">{fieldErrors.landlordEmail}</span> : null}
+									</label>
+									<label className="ws-uin-party-fields__full">
+										<span className="label-text required">Address of the landlord</span>
+										<textarea placeholder="Address" value={landlordAddress} onChange={e => setLandlordAddress(e.target.value)} required rows={3} />
+									</label>
 								</div>
 							</div>
 
-							<div className="form-group-row">
-								<label><span className="label-text">2. Name and address of the Property Manager (if any)</span></label>
-								<div className="form-grid">
-									<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} />
-									<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} />
+							<div className={`ws-uin-party-block${initiatorRole === 'TENANT' ? ' is-autofilled' : ''}`}>
+								<header className="ws-uin-party-block__head">
+									<span className="ws-uin-party-block__num">2</span>
+									<div>
+										<h3 className="ws-uin-party-block__title">
+											Tenant details
+											{initiatorRole === 'TENANT' && <span className="ws-uin-party-block__badge">From your profile</span>}
+										</h3>
+										<p className="ws-uin-party-block__lead">Enter the tenant’s name, address, PAN, contact details and previous tenancy if any.</p>
+									</div>
+								</header>
+								<div className="ws-uin-party-fields">
+									<label>
+										<span className="label-text required">Name of the tenant</span>
+										<input type="text" placeholder="Tenant Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required />
+									</label>
+									<label>
+										<span className="label-text required">PAN of tenant</span>
+										<input
+											type="text"
+											value={tenantPan}
+											onChange={e => {
+												const next = e.target.value.toUpperCase()
+												if (/^[A-Z0-9]*$/.test(next)) setTenantPan(next.slice(0, 10))
+											}}
+											maxLength={10}
+											required
+											aria-invalid={Boolean(fieldErrors.tenantPan)}
+										/>
+										{fieldErrors.tenantPan ? <span className="ws-uin-field-error">{fieldErrors.tenantPan}</span> : null}
+									</label>
+									<label>
+										<span className="label-text required">Mobile Number</span>
+										<input
+											type="tel"
+											inputMode="numeric"
+											placeholder="10-digit mobile"
+											value={tenantPhone}
+											onChange={e => {
+												const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+												setTenantPhone(digits)
+											}}
+											maxLength={10}
+											required
+											aria-invalid={Boolean(fieldErrors.tenantPhone)}
+										/>
+										{fieldErrors.tenantPhone ? <span className="ws-uin-field-error">{fieldErrors.tenantPhone}</span> : null}
+									</label>
+									<label>
+										<span className="label-text required">E-mail id</span>
+										<input
+											type="email"
+											placeholder="name@example.com"
+											value={tenantEmail}
+											onChange={e => setTenantEmail(e.target.value)}
+											required={initiatorRole === 'TENANT'}
+											aria-invalid={Boolean(fieldErrors.tenantEmail)}
+										/>
+										{fieldErrors.tenantEmail ? <span className="ws-uin-field-error">{fieldErrors.tenantEmail}</span> : null}
+									</label>
+									<label className="ws-uin-party-fields__full">
+										<span className="label-text required">Address of the tenant</span>
+										<textarea placeholder="Address" value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required rows={3} />
+									</label>
+									<label className="ws-uin-party-fields__full">
+										<span className="label-text">Description of previous tenancy, if any</span>
+										<textarea value={tenantPreviousTenancy} onChange={e => setTenantPreviousTenancy(e.target.value)} rows={3} />
+									</label>
 								</div>
 							</div>
 
-							<div className="form-group-row">
-								<label><span className="label-text required">3. Name and address of the tenant, including email and contact details</span></label>
-								<div className="form-grid">
-									<input type="text" placeholder="Tenant Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required />
-									<textarea placeholder="Address" value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required />
+							<div className="ws-uin-party-block">
+								<header className="ws-uin-party-block__head">
+									<span className="ws-uin-party-block__num">3</span>
+									<div>
+										<h3 className="ws-uin-party-block__title">Property manager details</h3>
+										<p className="ws-uin-party-block__lead">Optional — tick if the landlord is also the property manager, otherwise enter details below.</p>
+									</div>
+								</header>
+								<label className="ws-uin-manager-check">
+									<input
+										type="checkbox"
+										checked={managerMode === 'same'}
+										onChange={(e) => handleManagerModeChange(e.target.checked ? 'same' : 'enter')}
+									/>
+									<span>Same as landlord</span>
+								</label>
+								{managerMode === 'enter' ? (
+									<div className="ws-uin-party-fields">
+										<label>
+											<span className="label-text">Name of the Property Manager</span>
+											<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} />
+										</label>
+										<label>
+											<span className="label-text">PAN of Property Manager</span>
+											<input
+												type="text"
+												value={managerPan}
+												onChange={e => {
+													const next = e.target.value.toUpperCase()
+													if (/^[A-Z0-9]*$/.test(next)) setManagerPan(next.slice(0, 10))
+												}}
+												maxLength={10}
+												aria-invalid={Boolean(fieldErrors.managerPan)}
+											/>
+											{fieldErrors.managerPan ? <span className="ws-uin-field-error">{fieldErrors.managerPan}</span> : null}
+										</label>
+										<label>
+											<span className="label-text">Mobile Number</span>
+											<input
+												type="tel"
+												inputMode="numeric"
+												placeholder="10-digit mobile"
+												value={managerPhone}
+												onChange={e => {
+													const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+													setManagerPhone(digits)
+												}}
+												maxLength={10}
+												aria-invalid={Boolean(fieldErrors.managerPhone)}
+											/>
+											{fieldErrors.managerPhone ? <span className="ws-uin-field-error">{fieldErrors.managerPhone}</span> : null}
+										</label>
+										<label>
+											<span className="label-text">E-mail id</span>
+											<input
+												type="email"
+												placeholder="name@example.com"
+												value={managerEmail}
+												onChange={e => setManagerEmail(e.target.value)}
+												aria-invalid={Boolean(fieldErrors.managerEmail)}
+											/>
+											{fieldErrors.managerEmail ? <span className="ws-uin-field-error">{fieldErrors.managerEmail}</span> : null}
+										</label>
+										<label className="ws-uin-party-fields__full">
+											<span className="label-text">Address of the Property Manager</span>
+											<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} rows={3} />
+										</label>
+									</div>
+								) : (
+									<p className="ws-uin-manager-same-note">
+										Using landlord details for the property manager. No extra entry needed.
+									</p>
+								)}
+							</div>
+
+							<div className="ws-uin-party-block">
+								<header className="ws-uin-party-block__head">
+									<span className="ws-uin-party-block__num">4</span>
+									<div>
+										<h3 className="ws-uin-party-block__title">Premises &amp; rent details</h3>
+										<p className="ws-uin-party-block__lead">Describe the property, possession date, rent, charges and tenancy duration.</p>
+									</div>
+								</header>
+								<div className="form-group-row">
+									<label><span className="label-text">Description of premises let to the tenant Including appurtenant land, if any</span>
+										<textarea value={propertyPremisesDescription} onChange={e => setPropertyPremisesDescription(e.target.value)} />
+									</label>
 								</div>
-							</div>
 
-							<div className="form-group-row">
-								<label><span className="label-text">4. Description of previous tenancy, if any</span>
-									<textarea value={tenantPreviousTenancy} onChange={e => setTenantPreviousTenancy(e.target.value)} />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text">5. Description of premises let to the tenant Including appurtenant land, if any</span>
-									<textarea value={propertyPremisesDescription} onChange={e => setPropertyPremisesDescription(e.target.value)} />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text required">6. Date from which possession is given to the tenant</span>
-									<input type="date" value={propertyPossessionDate} onChange={e => setPropertyPossessionDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text required">7. Rent payable as in section 8 (Monthly Rent ₹)</span>
-									<input type="number" value={propertyRentPayable} onChange={e => setPropertyRentPayable(e.target.value)} onWheel={e => e.target.blur()} min="0" required />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text">8. Furniture and other equipment provided to the tenant</span>
-									<textarea value={propertyFurnitureDescription} onChange={e => setPropertyFurnitureDescription(e.target.value)} />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text">9. Other charges payable</span></label>
-								<div className="form-grid">
-									<label><span className="label-text">(a) Electricity</span><input type="number" value={propertyChargeElectricity} onChange={e => setPropertyChargeElectricity(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
-									<label><span className="label-text">(b) Water</span><input type="number" value={propertyChargeWater} onChange={e => setPropertyChargeWater(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
-									<label><span className="label-text">(c) Extra furnishing, fittings and fixtures</span><input type="number" value={propertyChargeFurnishing} onChange={e => setPropertyChargeFurnishing(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
-									<label><span className="label-text">(d) Other services</span><input type="number" value={propertyChargeOtherServices} onChange={e => setPropertyChargeOtherServices(e.target.value)} onWheel={e => e.target.blur()} min="0" /></label>
+								<div className="form-group-row">
+									<label><span className="label-text required">Tenancy period</span></label>
+									<div className="form-grid ws-uin-date-grid">
+										<label>
+											<span className="label-text required">Possession date</span>
+											<input type="date" value={propertyPossessionDate} onChange={e => setPropertyPossessionDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required />
+										</label>
+										<label>
+											<span className="label-text required">End date</span>
+											<input type="date" value={propertyTenancyEndDate} onChange={e => setPropertyTenancyEndDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required min={propertyPossessionDate} />
+										</label>
+										<label>
+											<span className="label-text">Duration</span>
+											<input type="text" value={propertyTenancyDuration} readOnly disabled className="readonly-input" />
+										</label>
+									</div>
 								</div>
-							</div>
 
-							<div className="form-group-row">
-								<label><span className="label-text required">10. Duration of tenancy (Period for which let)</span></label>
-								<div className="form-grid">
-									<label><span className="label-text">End Date</span><input type="date" value={propertyTenancyEndDate} onChange={e => setPropertyTenancyEndDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required min={propertyPossessionDate} /></label>
-									<label><span className="label-text">Duration</span><input type="text" value={propertyTenancyDuration} readOnly disabled className="readonly-input" /></label>
+								<div className="form-group-row">
+									<label><span className="label-text required">Rent payable as in section 8 (Monthly Rent ₹)</span>
+										<input type="number" value={propertyRentPayable} onChange={e => setPropertyRentPayable(e.target.value)} onWheel={e => e.target.blur()} min="0" required />
+									</label>
 								</div>
-							</div>
 
-							<div className="form-group-row">
-								<label><span className="label-text required">11. Permanent Account Number (PAN) of landlord:</span>
-									<input type="text" value={landlordPan} onChange={e => setLandlordPan(e.target.value.toUpperCase())} required />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text required">12. Mobile Number and E-mail id of landlord (if available)</span></label>
-								<div className="form-grid">
-									<input type="tel" placeholder="Mobile Number" value={landlordPhone} onChange={e => setLandlordPhone(e.target.value)} required />
-									<input type="email" placeholder="E-mail id" value={landlordEmail} onChange={e => setLandlordEmail(e.target.value)} required={initiatorRole === 'LANDLORD'} />
+								<div className="form-group-row">
+									<label><span className="label-text">Furniture and other equipment provided to the tenant</span>
+										<textarea value={propertyFurnitureDescription} onChange={e => setPropertyFurnitureDescription(e.target.value)} />
+									</label>
 								</div>
-							</div>
 
-							<div className="form-group-row">
-								<label><span className="label-text required">13. Permanent Account Number (PAN) of tenant</span>
-									<input type="text" value={tenantPan} onChange={e => setTenantPan(e.target.value.toUpperCase())} required />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text required">14. Mobile Number and E-mail id of tenant</span></label>
-								<div className="form-grid">
-									<input type="tel" placeholder="Mobile Number" value={tenantPhone} onChange={e => setTenantPhone(e.target.value)} required />
-									<input type="email" placeholder="E-mail id" value={tenantEmail} onChange={e => setTenantEmail(e.target.value)} required={initiatorRole === 'TENANT'} />
-								</div>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text">15. Permanent Account Number (PAN) of Property Manager (if any)</span>
-									<input type="text" value={managerPan} onChange={e => setManagerPan(e.target.value.toUpperCase())} />
-								</label>
-							</div>
-
-							<div className="form-group-row">
-								<label><span className="label-text">16. Mobile Number and E-mail id of Property Manager (if any)</span></label>
-								<div className="form-grid">
-									<input type="tel" placeholder="Mobile Number" value={managerPhone} onChange={e => setManagerPhone(e.target.value)} />
-									<input type="email" placeholder="E-mail id" value={managerEmail} onChange={e => setManagerEmail(e.target.value)} />
+								<div className="form-group-row">
+									<label><span className="label-text">Other charges payable</span></label>
+									<div className="ws-uin-charges-grid">
+										<label>
+											<span className="label-text">(a) Electricity</span>
+											<input type="number" value={propertyChargeElectricity} onChange={e => setPropertyChargeElectricity(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+										</label>
+										<label>
+											<span className="label-text">(b) Water</span>
+											<input type="number" value={propertyChargeWater} onChange={e => setPropertyChargeWater(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+										</label>
+										<label>
+											<span className="label-text">(c) Extra furnishing, fittings and fixtures</span>
+											<input type="number" value={propertyChargeFurnishing} onChange={e => setPropertyChargeFurnishing(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+										</label>
+										<label>
+											<span className="label-text">(d) Other services</span>
+											<input type="number" value={propertyChargeOtherServices} onChange={e => setPropertyChargeOtherServices(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+										</label>
+									</div>
+									<div className="ws-uin-rent-total">
+										<span>Total monthly amount</span>
+										<strong>₹{totalMonthlyRent.toLocaleString('en-IN')}</strong>
+									</div>
+									<p className="ws-uin-rent-total-hint">Empty charge fields are not counted. Total = rent + entered charges.</p>
 								</div>
 							</div>
 						</section>
@@ -1450,7 +1799,7 @@ function TenancyCertificate() {
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>2.</div>
 									<div style={{ flex: '1.5' }}>Name and address of the Property Manager (if any)</div>
-									<div style={{ flex: '2' }}>: {managerName && managerName !== 'NA' ? `${managerName}, ${managerAddress}` : ''}</div>
+									<div style={{ flex: '2' }}>: {[cleanOptionalValue(managerName), cleanOptionalValue(managerAddress)].filter(Boolean).join(', ')}</div>
 								</div>
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>3.</div>
@@ -1470,7 +1819,7 @@ function TenancyCertificate() {
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>6.</div>
 									<div style={{ flex: '1.5' }}>Date from which possession is given to the tenant</div>
-									<div style={{ flex: '2' }}>: {propertyPossessionDate}</div>
+									<div style={{ flex: '2' }}>: {formatDate(propertyPossessionDate)}</div>
 								</div>
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>7.</div>
@@ -1507,7 +1856,7 @@ function TenancyCertificate() {
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>11.</div>
 									<div style={{ flex: '1.5' }}>Duration of tenancy (Period for which let)</div>
-									<div style={{ flex: '2' }}>: {propertyTenancyDuration} (Till {propertyTenancyEndDate})</div>
+									<div style={{ flex: '2' }}>: {propertyTenancyDuration} (Till {formatDate(propertyTenancyEndDate)})</div>
 								</div>
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>12.</div>
@@ -1542,7 +1891,7 @@ function TenancyCertificate() {
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>18.</div>
 									<div style={{ flex: '1.5' }}>Permanent Account Number (PAN)of Property Manager (if any)</div>
-									<div style={{ flex: '2' }}>: {managerPan && managerPan !== 'NA' ? managerPan : ''}</div>
+									<div style={{ flex: '2' }}>: {cleanOptionalValue(managerPan)}</div>
 								</div>
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>19.</div>
@@ -1552,7 +1901,7 @@ function TenancyCertificate() {
 								<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 									<div style={{ width: '40px' }}>20.</div>
 									<div style={{ flex: '1.5' }}>Mobile Number and E-mail id of<br />Property Manager (if any)</div>
-									<div style={{ flex: '2' }}>: {managerPhone && managerPhone !== 'NA' ? `${managerPhone}, ${managerEmail !== 'noemail@noemail.com' ? managerEmail : ''}` : ''}</div>
+									<div style={{ flex: '2' }}>: {[cleanOptionalValue(managerPhone), cleanOptionalValue(managerEmail)].filter(Boolean).join(', ')}</div>
 								</div>
 							</div>
 
@@ -1606,81 +1955,133 @@ function TenancyCertificate() {
 				)}
 
 				{tenancyStep === 5 && (
-					<fieldset className="tenancy-fieldset ws-uin-payment-step" style={{ border: 'none', padding: 0, display: 'block' }}>
-						<div className="ws-uin-payment-card" style={{
-							textAlign: 'center',
-							padding: '20px 25px',
-							background: '#ffffff',
-							borderRadius: '12px',
-							boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
-							border: '1px solid #e2e8f0',
-							maxWidth: '450px',
-							margin: '0 auto'
-						}}>
-							<div style={{
-								width: '40px', height: '40px', borderRadius: '50%', background: '#f0fdf4', color: '#16a34a',
-								display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', margin: '0 auto 10px'
-							}}>
-								₹
-							</div>
-							<h2 className="ws-uin-payment-card-title" style={{ fontSize: '18px', color: '#0f172a', margin: '0 0 5px' }}>Application fee payment</h2>
-							<p className="ws-uin-payment-card-lead" style={{ color: '#64748b', fontSize: '13px', lineHeight: '1.4', margin: '0 0 15px' }}>
-								Please process your application fee to finalize the submission. Your application will be officially lodged once the transaction is verified.
-							</p>
-
-							<div className="ws-uin-payment-summary" style={{
-								background: '#f8fafc',
-								borderRadius: '8px',
-								padding: '12px 16px',
-								marginBottom: '20px',
-								textAlign: 'left'
-							}}>
-								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-									<span style={{ color: '#64748b' }}>Application type</span>
-									<strong style={{ color: '#0f172a' }}>{applyType || '—'}</strong>
-								</div>
-								{draftApplicationNo ? (
-									<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-										<span style={{ color: '#64748b' }}>Draft reference</span>
-										<strong style={{ color: '#0f172a' }}>{draftApplicationNo}</strong>
+					<fieldset className="tenancy-fieldset ws-uin-payment-step">
+						<div className={`ws-uin-pay${paymentComplete ? ' is-paid' : ''}`}>
+							<section className="ws-uin-pay-bill">
+								<h2 className="ws-uin-pay-title">Bill summary</h2>
+								<div className="ws-uin-pay-bill-rows">
+									<div className="ws-uin-pay-row">
+										<span>Service</span>
+										<strong>Tenancy Certificate (UIN)</strong>
 									</div>
-								) : null}
-								<div className="ws-uin-payment-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', marginTop: '8px' }}>
-									<span style={{ color: '#0f172a', fontWeight: '600' }}>Amount payable</span>
-									<strong style={{ color: '#2563eb', fontSize: '16px' }}>₹{feeAmount}</strong>
+									<div className="ws-uin-pay-row">
+										<span>Application type</span>
+										<strong>{applyType || '—'}</strong>
+									</div>
+									{draftApplicationNo ? (
+										<div className="ws-uin-pay-row">
+											<span>Draft reference</span>
+											<strong>{draftApplicationNo}</strong>
+										</div>
+									) : null}
+									<div className="ws-uin-pay-row">
+										<span>Fee</span>
+										<strong>₹{feeAmount}</strong>
+									</div>
+									<div className="ws-uin-pay-row ws-uin-pay-row--total">
+										<span>Total payable</span>
+										<strong>₹{feeAmount}</strong>
+									</div>
 								</div>
-							</div>
+								{paymentComplete ? (
+									<div className="ws-uin-pay-paid" role="status">
+										<strong>Payment successful</strong>
+										<span>
+											₹{feeAmount} paid
+											{paymentGrn ? ` · GRN ${paymentGrn}` : ''}
+										</span>
+									</div>
+								) : (
+									<p className="ws-uin-pay-hint">Complete payment on the right to continue.</p>
+								)}
+							</section>
 
-							{!paymentComplete ? (
-								<button
-									type="button"
-									className="ws-btn ws-btn--primary ws-uin-payment-pay-btn"
-									onClick={handleMockPayment}
-									disabled={paymentSimulating || draftSaving}
-									style={{
-										width: '100%',
-										padding: '10px',
-										fontSize: '14px',
-										fontWeight: '600',
-										borderRadius: '8px',
-										background: '#2563eb',
-										boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'
-									}}
-								>
-									{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount} via eGRAS`}
-								</button>
-							) : (
-								<div className="ws-alert ws-alert--success ws-uin-payment-success" style={{
-									background: '#ecfdf5', color: '#065f46', border: '1px solid #10b981', borderRadius: '8px', padding: '10px', fontWeight: '500', fontSize: '13px'
-								}}>
-									<span style={{ display: 'block', fontSize: '14px', marginBottom: '3px' }}>✓ Payment Successful</span>
-									₹{feeAmount} paid.{paymentGrn ? ` GRN: ${paymentGrn}` : ''}
-								</div>
-							)}
+							<section className="ws-uin-pay-method">
+								<h2 className="ws-uin-pay-title">Pay now</h2>
+								{!paymentComplete ? (
+									<>
+										<div className="ws-uin-pay-qr-wrap">
+											<div className="ws-uin-pay-qr" aria-hidden>
+												<svg viewBox="0 0 120 120" width="132" height="132" role="img">
+													<title>Demo QR code</title>
+													<rect width="120" height="120" fill="#fff" />
+													<rect x="8" y="8" width="28" height="28" fill="#0f172a" />
+													<rect x="14" y="14" width="16" height="16" fill="#fff" />
+													<rect x="18" y="18" width="8" height="8" fill="#0f172a" />
+													<rect x="84" y="8" width="28" height="28" fill="#0f172a" />
+													<rect x="90" y="14" width="16" height="16" fill="#fff" />
+													<rect x="94" y="18" width="8" height="8" fill="#0f172a" />
+													<rect x="8" y="84" width="28" height="28" fill="#0f172a" />
+													<rect x="14" y="90" width="16" height="16" fill="#fff" />
+													<rect x="18" y="94" width="8" height="8" fill="#0f172a" />
+													<rect x="44" y="12" width="8" height="8" fill="#0f172a" />
+													<rect x="56" y="12" width="8" height="8" fill="#0f172a" />
+													<rect x="68" y="20" width="8" height="8" fill="#0f172a" />
+													<rect x="44" y="32" width="8" height="8" fill="#0f172a" />
+													<rect x="60" y="32" width="8" height="8" fill="#0f172a" />
+													<rect x="44" y="48" width="8" height="8" fill="#0f172a" />
+													<rect x="56" y="48" width="8" height="8" fill="#0f172a" />
+													<rect x="68" y="48" width="8" height="8" fill="#0f172a" />
+													<rect x="80" y="48" width="8" height="8" fill="#0f172a" />
+													<rect x="92" y="48" width="8" height="8" fill="#0f172a" />
+													<rect x="104" y="48" width="8" height="8" fill="#0f172a" />
+													<rect x="44" y="60" width="8" height="8" fill="#0f172a" />
+													<rect x="68" y="60" width="8" height="8" fill="#0f172a" />
+													<rect x="92" y="60" width="8" height="8" fill="#0f172a" />
+													<rect x="44" y="72" width="8" height="8" fill="#0f172a" />
+													<rect x="56" y="72" width="8" height="8" fill="#0f172a" />
+													<rect x="80" y="72" width="8" height="8" fill="#0f172a" />
+													<rect x="104" y="72" width="8" height="8" fill="#0f172a" />
+													<rect x="56" y="84" width="8" height="8" fill="#0f172a" />
+													<rect x="68" y="84" width="8" height="8" fill="#0f172a" />
+													<rect x="92" y="84" width="8" height="8" fill="#0f172a" />
+													<rect x="56" y="96" width="8" height="8" fill="#0f172a" />
+													<rect x="80" y="96" width="8" height="8" fill="#0f172a" />
+													<rect x="104" y="96" width="8" height="8" fill="#0f172a" />
+													<rect x="68" y="108" width="8" height="8" fill="#0f172a" />
+													<rect x="92" y="108" width="8" height="8" fill="#0f172a" />
+												</svg>
+											</div>
+											<p className="ws-uin-pay-qr-caption">Scan UPI QR to pay ₹{feeAmount}</p>
+										</div>
 
-							<p className="ws-uin-payment-note" style={{ color: '#94a3b8', fontSize: '11px', margin: '15px 0 0' }}>
-								Secure demo step. No real transaction.
-							</p>
+										<div className="ws-uin-pay-or">or</div>
+
+										<div className="ws-uin-pay-bank">
+											<div className="ws-uin-pay-bank-row">
+												<span>Account name</span>
+												<strong>Govt. of Assam — eGRAS</strong>
+											</div>
+											<div className="ws-uin-pay-bank-row">
+												<span>Account no.</span>
+												<strong>5010023487612</strong>
+											</div>
+											<div className="ws-uin-pay-bank-row">
+												<span>IFSC</span>
+												<strong>SBIN0001234</strong>
+											</div>
+											<div className="ws-uin-pay-bank-row">
+												<span>UPI ID</span>
+												<strong>uinfee@assam</strong>
+											</div>
+										</div>
+
+										<button
+											type="button"
+											className="ws-btn ws-btn--primary ws-uin-pay-btn"
+											onClick={handleMockPayment}
+											disabled={paymentSimulating || draftSaving}
+										>
+											{paymentSimulating ? 'Confirming…' : `I have paid ₹${feeAmount}`}
+										</button>
+										<p className="ws-uin-pay-note">Demo only — no real bank transfer.</p>
+									</>
+								) : (
+									<div className="ws-uin-pay-done">
+										<p>Payment confirmed. You can submit the application.</p>
+									</div>
+								)}
+							</section>
 						</div>
 					</fieldset>
 				)}

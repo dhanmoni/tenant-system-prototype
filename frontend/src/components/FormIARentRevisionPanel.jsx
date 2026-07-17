@@ -192,24 +192,24 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Landlord / Tenant Details</legend>
+					<legend>Landlord / Tenant details</legend>
 
 					<label>
 						<span className="label-text required">Landlord name</span>
 						<input type="text" value={landlordName} onChange={(e) => setLandlordName(e.target.value)} required />
 					</label>
 					<label>
-						<span className="label-text required">Landlord address</span>
-						<textarea value={landlordAddress} onChange={(e) => setLandlordAddress(e.target.value)} required />
-					</label>
-
-					<label>
 						<span className="label-text required">Tenant name</span>
 						<input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} required />
 					</label>
-					<label>
+
+					<label className="tenancy-field-full">
+						<span className="label-text required">Landlord address</span>
+						<textarea value={landlordAddress} onChange={(e) => setLandlordAddress(e.target.value)} required rows={3} />
+					</label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Tenant address</span>
-						<textarea value={tenantAddress} onChange={(e) => setTenantAddress(e.target.value)} required />
+						<textarea value={tenantAddress} onChange={(e) => setTenantAddress(e.target.value)} required rows={3} />
 					</label>
 
 					<label>
@@ -218,7 +218,7 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 					</label>
 					<label>
 						<span className="label-text">Property manager address (if any)</span>
-						<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} />
+						<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} rows={2} />
 					</label>
 				</fieldset>
 
@@ -228,26 +228,30 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 						value={rentedPremisesDescription}
 						onChange={(e) => setRentedPremisesDescription(e.target.value)}
 						required
+						rows={3}
 					/>
 				</label>
 
-				<label>
-					<span className="label-text required">Existing details of other charges</span>
-					<textarea
-						value={existingOtherChargesDetails}
-						onChange={(e) => setExistingOtherChargesDetails(e.target.value)}
-						required
-					/>
-				</label>
-
-				<label>
-					<span className="label-text required">Proposed other charges</span>
-					<textarea
-						value={proposedOtherChargesDetails}
-						onChange={(e) => setProposedOtherChargesDetails(e.target.value)}
-						required
-					/>
-				</label>
+				<div className="service-form-fields">
+					<label>
+						<span className="label-text required">Existing details of other charges</span>
+						<textarea
+							value={existingOtherChargesDetails}
+							onChange={(e) => setExistingOtherChargesDetails(e.target.value)}
+							required
+							rows={3}
+						/>
+					</label>
+					<label>
+						<span className="label-text required">Proposed other charges</span>
+						<textarea
+							value={proposedOtherChargesDetails}
+							onChange={(e) => setProposedOtherChargesDetails(e.target.value)}
+							required
+							rows={3}
+						/>
+					</label>
+				</div>
 
 				<label>
 					<span className="label-text required">Reason for fixation / revision of other charges</span>
@@ -255,11 +259,12 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 						value={reasonForOtherChargesRevision}
 						onChange={(e) => setReasonForOtherChargesRevision(e.target.value)}
 						required
+						rows={3}
 					/>
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Signature</legend>
+					<legend>Signature</legend>
 
 					<label>
 						<span className="label-text">Signed by</span>
@@ -274,7 +279,7 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 						<input type="text" value={signatureName} onChange={(e) => setSignatureName(e.target.value)} required />
 					</label>
 
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text">Signature image (optional)</span>
 						<input
 							type="file"

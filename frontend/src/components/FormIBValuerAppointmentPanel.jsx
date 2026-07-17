@@ -162,7 +162,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 				/>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Applicant details</legend>
+					<legend>Applicant details</legend>
 
 					<label>
 						<span className="label-text required">Applicant name (I, ...)</span>
@@ -172,6 +172,18 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 							onChange={(e) => setApplicantName(e.target.value)}
 							required
 						/>
+					</label>
+
+					<label>
+						<span className="label-text required">Landlord or tenant</span>
+						<select
+							value={applicantLandlordOrTenant}
+							onChange={(e) => setApplicantLandlordOrTenant(e.target.value)}
+							required
+						>
+							<option value="landlord">Landlord</option>
+							<option value="tenant">Tenant</option>
+						</select>
 					</label>
 
 					<label>
@@ -197,7 +209,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 						/>
 					</label>
 
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Resident of (place)</span>
 						<input
 							type="text"
@@ -206,41 +218,31 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 							required
 						/>
 					</label>
-
-					<label>
-						<span className="label-text required">Landlord or tenant</span>
-						<select
-							value={applicantLandlordOrTenant}
-							onChange={(e) => setApplicantLandlordOrTenant(e.target.value)}
-							required
-						>
-							<option value="landlord">Landlord</option>
-							<option value="tenant">Tenant</option>
-						</select>
-					</label>
 				</fieldset>
 
-				<label>
-					<span className="label-text required">Premises situated at</span>
-					<textarea
-						value={premisesSituatedAddress}
-						onChange={(e) => setPremisesSituatedAddress(e.target.value)}
-						required
-					/>
-				</label>
-
-				<label>
-					<span className="label-text required">District</span>
-					<input
-						type="text"
-						value={district}
-						onChange={(e) => setDistrict(e.target.value)}
-						required
-					/>
-				</label>
+				<div className="service-form-fields">
+					<label className="service-form-fields__full">
+						<span className="label-text required">Premises situated at</span>
+						<textarea
+							value={premisesSituatedAddress}
+							onChange={(e) => setPremisesSituatedAddress(e.target.value)}
+							required
+							rows={3}
+						/>
+					</label>
+					<label>
+						<span className="label-text required">District</span>
+						<input
+							type="text"
+							value={district}
+							onChange={(e) => setDistrict(e.target.value)}
+							required
+						/>
+					</label>
+				</div>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Signature</legend>
+					<legend>Signature</legend>
 
 					<label>
 						<span className="label-text">Signed by</span>
@@ -260,7 +262,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 						/>
 					</label>
 
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text">Signature image (optional)</span>
 						<input
 							type="file"

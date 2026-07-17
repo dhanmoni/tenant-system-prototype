@@ -6,6 +6,14 @@ export function storageUrl(path) {
 	return `${API_BASE}/storage/${path}`
 }
 
+/** Strip legacy optional placeholders so empty fields stay blank in the UI. */
+export function cleanOptionalValue(value) {
+	if (value == null) return ''
+	const v = String(value).trim()
+	if (!v || v === 'NA' || v === 'noemail@noemail.com') return ''
+	return v
+}
+
 /** Build multipart FormData for draft save / final submit */
 export function buildTenancyFormData(
 	state,
@@ -38,6 +46,7 @@ export function buildTenancyFormData(
 		tenantAadhar,
 		tenantPreviousTenancy,
 		propertyPossessionDate,
+		propertyTenancyEndDate,
 		propertyRentPayable,
 		propertyPremisesDescription,
 		propertyFurnitureDescription,
@@ -68,11 +77,15 @@ export function buildTenancyFormData(
 	const appendStep3 = through >= 3
 
 	if (appendStep1) {
+		const isRural = tenancyAreaType === 'Rural'
 		formData.append('initiator_role', initiatorRole || '')
 		formData.append('registration_date', tenancyRegistrationDate || '')
 		formData.append('office_id', tenancyOfficeId || '')
-		formData.append('village_ward_id', tenancyVillageWardId || '')
+		// Rural applications do not capture ward
+		formData.append('village_ward_id', isRural ? '' : (tenancyVillageWardId || ''))
 		formData.append('village_name', tenancyVillageName || '')
+		formData.append('area_type', tenancyAreaType || '')
+		formData.append('local_body', tenancyLocalBody || '')
 		formData.append('apply_type', applyType || 'Individual')
 	}
 
@@ -83,11 +96,11 @@ export function buildTenancyFormData(
 		formData.append('landlord_phone', landlordPhone || '')
 		formData.append('landlord_pan', landlordPan || '')
 		if (landlordAadhar) formData.append('landlord_aadhar', landlordAadhar)
-		formData.append('manager_name', managerName || '')
-		formData.append('manager_address', managerAddress || '')
-		formData.append('manager_email', managerEmail || '')
-		formData.append('manager_phone', managerPhone || '')
-		formData.append('manager_pan', managerPan || '')
+		formData.append('manager_name', cleanOptionalValue(managerName))
+		formData.append('manager_address', cleanOptionalValue(managerAddress))
+		formData.append('manager_email', cleanOptionalValue(managerEmail))
+		formData.append('manager_phone', cleanOptionalValue(managerPhone))
+		formData.append('manager_pan', cleanOptionalValue(managerPan))
 		if (managerAadhar) formData.append('manager_aadhar', managerAadhar)
 		formData.append('tenant_name', tenantName || '')
 		formData.append('tenant_address', tenantAddress || '')
@@ -97,6 +110,7 @@ export function buildTenancyFormData(
 		if (tenantAadhar) formData.append('tenant_aadhar', tenantAadhar)
 		formData.append('tenant_previous_tenancy', tenantPreviousTenancy || '')
 		if (propertyPossessionDate) formData.append('property_possession_date', propertyPossessionDate)
+		if (propertyTenancyEndDate) formData.append('property_tenancy_end_date', propertyTenancyEndDate)
 		formData.append('property_rent_payable', String(Number(propertyRentPayable) || 0))
 		formData.append('property_premises_description', propertyPremisesDescription || '')
 		formData.append('property_furniture_description', propertyFurnitureDescription || '')
@@ -154,6 +168,7 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 		setTenantAadhar,
 		setTenantPreviousTenancy,
 		setPropertyPossessionDate,
+		setPropertyTenancyEndDate,
 		setPropertyRentPayable,
 		setPropertyPremisesDescription,
 		setPropertyFurnitureDescription,
@@ -177,14 +192,24 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 	if (draft.initiator_role) setInitiatorRole(draft.initiator_role)
 	if (draft.registration_date) setTenancyRegistrationDate(String(draft.registration_date).slice(0, 10))
 	if (draft.office_id) setTenancyOfficeId(String(draft.office_id))
-	if (draft.village_ward_id) {
-		setTenancyVillageWardId(String(draft.village_ward_id))
-		const districtId = draft.office?.district_id || draft.village_ward?.district_id
-		if (districtId) {
-			setTenancyDistrictId(String(districtId))
-			loadVillageWards?.(String(districtId))
-		}
+	if (draft.area_type) setTenancyAreaType?.(draft.area_type)
+	if (draft.local_body) setTenancyLocalBody?.(draft.local_body)
+
+	const districtId =
+		draft.office?.district_id ||
+		draft.village_ward?.district_id ||
+		null
+	if (districtId) {
+		setTenancyDistrictId(String(districtId))
+		loadVillageWards?.(String(districtId))
 	}
+
+	if (draft.area_type === 'Rural') {
+		setTenancyVillageWardId('')
+	} else if (draft.village_ward_id) {
+		setTenancyVillageWardId(String(draft.village_ward_id))
+	}
+
 	if (draft.village_name) {
 		setTenancyVillageName?.(draft.village_name)
 	}
@@ -195,12 +220,12 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 	setLandlordPhone(draft.landlord_phone || '')
 	setLandlordPan(draft.landlord_pan || '')
 	setLandlordAadhar(draft.landlord_aadhar || '')
-	setManagerName(draft.manager_name || '')
-	setManagerAddress(draft.manager_address || '')
-	setManagerEmail(draft.manager_email || '')
-	setManagerPhone(draft.manager_phone || '')
-	setManagerPan(draft.manager_pan || '')
-	setManagerAadhar(draft.manager_aadhar || '')
+	setManagerName(cleanOptionalValue(draft.manager_name))
+	setManagerAddress(cleanOptionalValue(draft.manager_address))
+	setManagerEmail(cleanOptionalValue(draft.manager_email))
+	setManagerPhone(cleanOptionalValue(draft.manager_phone))
+	setManagerPan(cleanOptionalValue(draft.manager_pan))
+	setManagerAadhar(cleanOptionalValue(draft.manager_aadhar))
 	setTenantName(draft.tenant_name || '')
 	setTenantAddress(draft.tenant_address || '')
 	setTenantEmail(draft.tenant_email || '')
@@ -210,6 +235,9 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 	setTenantPreviousTenancy(draft.tenant_previous_tenancy || '')
 	if (draft.property_possession_date) {
 		setPropertyPossessionDate(String(draft.property_possession_date).slice(0, 10))
+	}
+	if (draft.property_tenancy_end_date && setPropertyTenancyEndDate) {
+		setPropertyTenancyEndDate(String(draft.property_tenancy_end_date).slice(0, 10))
 	}
 	setPropertyRentPayable(
 		draft.property_rent_payable != null ? String(draft.property_rent_payable) : ''

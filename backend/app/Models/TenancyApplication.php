@@ -61,6 +61,7 @@ class TenancyApplication extends Model
         'tenant_aadhar',
         'tenant_previous_tenancy',
         'property_possession_date',
+        'property_tenancy_end_date',
         'property_rent_payable',
         'property_premises_description',
         'property_furniture_description',

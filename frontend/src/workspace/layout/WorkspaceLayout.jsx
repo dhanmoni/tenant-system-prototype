@@ -5,11 +5,14 @@ import ProfileCompletionModal from '../../components/dashboard/ProfileCompletion
 import { Icon } from '../../components/dashboard/Icons'
 import useDashboardRouteLoader from '../../hooks/useDashboardRouteLoader'
 import { ROLES } from '../../constants/roles'
+import { getRoleLabel } from '../../constants/roleLabels'
 import {
 	isProfileComplete,
+	resolvePassportPhotoUrl,
 	PROFILE_REMINDER_DISMISSED_KEY,
 } from '../../utils/profileCompleteness'
-import { formatDisplayName } from '../../utils/formatters'
+import { useLanguage } from '../../i18n'
+import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
 import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import '../styles/workspace.css'
@@ -56,6 +59,7 @@ function workspaceLoaderLabel(pathname) {
 function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	const location = useLocation()
 	const navigate = useNavigate()
+	const { t } = useLanguage()
 	const routeLoading = useDashboardRouteLoader(true)
 	const loaderLabel = workspaceLoaderLabel(location.pathname)
 	const [navOpen, setNavOpen] = useState(false)
@@ -69,32 +73,68 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	})
 	const [notifications, setNotifications] = useState(DEMO_NOTIFICATIONS)
 	const notifRef = useRef(null)
+	const [profiles, setProfiles] = useState([])
+	const [isSwitching, setIsSwitching] = useState(false)
+	const [profilePickerOpen, setProfilePickerOpen] = useState(false)
 	const [profileIncomplete, setProfileIncomplete] = useState(false)
 	const [reminderDismissed, setReminderDismissed] = useState(
 		() => sessionStorage.getItem(PROFILE_REMINDER_DISMISSED_KEY) === '1'
 	)
 
 	const topbarName = formatDisplayName(user?.name)
+	const topbarAvatarUrl = resolvePassportPhotoUrl(user)
+	const translateRole = (role) => {
+		const key = `role.${role}`
+		const translated = t(key)
+		return translated === key ? getRoleLabel(role) : translated
+	}
+	const currentRoleLabel = translateRole(user?.role)
 	const unreadCount = notifications.filter((n) => n.unread).length
 
-	// Close mobile drawer on route change
+	// Close mobile drawer / pickers on route change
 	useEffect(() => {
 		setNavOpen(false)
 		setNotifOpen(false)
+		setProfilePickerOpen(false)
 	}, [location.pathname])
 
-	// Escape closes drawer / notifications
 	useEffect(() => {
-		if (!navOpen && !notifOpen) return undefined
+		api.get('/api/user-profiles')
+			.then((res) => {
+				if (res.data.profiles && res.data.profiles.length > 1) {
+					setProfiles(res.data.profiles)
+				} else {
+					setProfiles([])
+				}
+			})
+			.catch((err) => console.error('Failed to fetch user profiles:', err))
+	}, [user?.id])
+
+	const handleProfileSwitch = async (targetId) => {
+		if (!targetId || String(targetId) === String(user.id) || isSwitching) return
+		setIsSwitching(true)
+		try {
+			await api.post('/api/switch-profile', { user_id: targetId })
+			window.location.href = '/dashboard'
+		} catch (err) {
+			console.error(err)
+			setIsSwitching(false)
+		}
+	}
+
+	// Escape closes drawer / notifications / profile picker
+	useEffect(() => {
+		if (!navOpen && !notifOpen && !profilePickerOpen) return undefined
 		const onKeyDown = (event) => {
 			if (event.key === 'Escape') {
 				setNavOpen(false)
 				setNotifOpen(false)
+				setProfilePickerOpen(false)
 			}
 		}
 		document.addEventListener('keydown', onKeyDown)
 		return () => document.removeEventListener('keydown', onKeyDown)
-	}, [navOpen, notifOpen])
+	}, [navOpen, notifOpen, profilePickerOpen])
 
 	// Click outside closes notifications
 	useEffect(() => {
@@ -107,6 +147,16 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		document.addEventListener('mousedown', onPointerDown)
 		return () => document.removeEventListener('mousedown', onPointerDown)
 	}, [notifOpen])
+
+	// Lock body scroll while profile picker is open
+	useEffect(() => {
+		if (!profilePickerOpen) return undefined
+		const prev = document.body.style.overflow
+		document.body.style.overflow = 'hidden'
+		return () => {
+			document.body.style.overflow = prev
+		}
+	}, [profilePickerOpen])
 
 	// Check profile once per login — not on every page navigation
 	useEffect(() => {
@@ -198,7 +248,6 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 				/>
 				<WorkspaceSidebar
 					user={user}
-					onLogout={onLogout}
 					open={navOpen}
 					onClose={() => setNavOpen(false)}
 					collapsed={sidebarCollapsed}
@@ -210,7 +259,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 							<button
 								type="button"
 								className="ws-mobile-menu-btn"
-								aria-label={navOpen ? 'Close navigation menu' : 'Open navigation menu'}
+								aria-label={navOpen ? t('ws.nav.closeMenu') : t('ws.nav.openMenu')}
 								aria-expanded={navOpen}
 								aria-controls="workspace-primary-nav"
 								onClick={() => setNavOpen((open) => !open)}
@@ -223,24 +272,27 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 							</button>
 							<div className="ws-topbar-brand">
 								<span className="ws-topbar-logo" aria-hidden>ATS</span>
-								<span className="ws-topbar-title">Tenancy Portal</span>
+								<span className="ws-topbar-title">{t('ws.brand.short')}</span>
 							</div>
 						</div>
 						<div className="ws-topbar-right">
 							<div className="ws-topbar-notif" ref={notifRef}>
 								<button
 									type="button"
-									className={`ws-topbar-icon-btn${notifOpen ? ' is-open' : ''}`}
+									className={`ws-topbar-btn ws-topbar-btn--icon${notifOpen ? ' is-open' : ''}`}
 									aria-label={
 										unreadCount
-											? `Notifications, ${unreadCount} unread`
-											: 'Notifications'
+											? t('ws.top.notificationsUnread', { count: unreadCount })
+											: t('ws.top.notifications')
 									}
 									aria-expanded={notifOpen}
 									aria-haspopup="true"
-									onClick={() => setNotifOpen((open) => !open)}
+									onClick={() => {
+										setProfilePickerOpen(false)
+										setNotifOpen((open) => !open)
+									}}
 								>
-									<Icon name="bell" className="ws-topbar-icon" />
+									<Icon name="bell" className="ws-topbar-btn-icon" />
 									{unreadCount > 0 ? (
 										<span className="ws-topbar-notif-badge" aria-hidden>
 											{unreadCount > 9 ? '9+' : unreadCount}
@@ -248,16 +300,16 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 									) : null}
 								</button>
 								{notifOpen ? (
-									<div className="ws-topbar-notif-panel" role="menu" aria-label="Notifications">
+									<div className="ws-topbar-notif-panel" role="menu" aria-label={t('ws.top.notifications')}>
 										<div className="ws-topbar-notif-head">
-											<strong>Notifications</strong>
+											<strong>{t('ws.top.notifications')}</strong>
 											{unreadCount > 0 ? (
 												<button
 													type="button"
 													className="ws-topbar-notif-mark"
 													onClick={markAllNotificationsRead}
 												>
-													Mark all read
+													{t('ws.top.markAllRead')}
 												</button>
 											) : null}
 										</div>
@@ -273,21 +325,64 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 												</li>
 											))}
 										</ul>
-										<p className="ws-topbar-notif-foot">Demo notifications for preview</p>
+										<p className="ws-topbar-notif-foot">{t('ws.top.notifDemo')}</p>
 									</div>
 								) : null}
 							</div>
-							<span className="ws-topbar-user">
-								<span className="ws-topbar-user-name">{topbarName}</span>
-							</span>
+
 							<button
 								type="button"
-								className="ws-topbar-icon-btn ws-topbar-logout"
-								onClick={onLogout}
-								aria-label="Sign out"
-								title="Sign out"
+								className={`ws-topbar-btn ws-topbar-btn--profile${profilePickerOpen ? ' is-open' : ''}`}
+								aria-haspopup={profiles.length > 1 ? 'dialog' : undefined}
+								aria-expanded={profiles.length > 1 ? profilePickerOpen : undefined}
+								disabled={isSwitching}
+								title={
+									profiles.length > 1
+										? t('ws.top.switchProfile')
+										: t('ws.top.openProfile')
+								}
+								onClick={() => {
+									setNotifOpen(false)
+									if (profiles.length > 1) {
+										setProfilePickerOpen(true)
+									} else {
+										navigate('/dashboard/profile')
+									}
+								}}
 							>
-								<Icon name="logout" className="ws-topbar-icon" />
+								<span
+									className={`ws-topbar-profile-avatar${topbarAvatarUrl ? ' has-photo' : ''}`}
+									aria-hidden
+								>
+									{topbarAvatarUrl ? (
+										<img
+											src={topbarAvatarUrl}
+											alt=""
+											className="ws-topbar-profile-avatar-img"
+										/>
+									) : (
+										(topbarName || 'U').charAt(0).toUpperCase()
+									)}
+								</span>
+								<span className="ws-topbar-profile-text">
+									<span className="ws-topbar-profile-name">{topbarName}</span>
+									<span className="ws-topbar-profile-role">
+										{currentRoleLabel}
+										{profiles.length > 1 ? ` · ${t('ws.top.switch')}` : ''}
+									</span>
+								</span>
+								{profiles.length > 1 ? (
+									<Icon name="chevron" className="ws-topbar-profile-chevron" />
+								) : null}
+							</button>
+
+							<button
+								type="button"
+								className="ws-topbar-btn ws-topbar-btn--logout"
+								onClick={onLogout}
+							>
+								<Icon name="logout" className="ws-topbar-btn-icon" />
+								<span>{t('ws.top.signOut')}</span>
 							</button>
 						</div>
 					</header>
@@ -302,6 +397,103 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 					</div>
 				</div>
 			</div>
+
+			{profilePickerOpen && profiles.length > 1 ? (
+				<div
+					className="ws-profile-picker-overlay"
+					role="presentation"
+					onClick={() => !isSwitching && setProfilePickerOpen(false)}
+				>
+					<div
+						className="ws-profile-picker"
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="ws-profile-picker-title"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<header className="ws-profile-picker-head">
+							<div>
+								<h2 id="ws-profile-picker-title" className="ws-profile-picker-title">
+									{t('ws.picker.title')}
+								</h2>
+								<p className="ws-profile-picker-lead">
+									{t('ws.picker.lead')}
+								</p>
+							</div>
+							<button
+								type="button"
+								className="ws-profile-picker-close"
+								aria-label={t('ws.picker.close')}
+								disabled={isSwitching}
+								onClick={() => setProfilePickerOpen(false)}
+							>
+								×
+							</button>
+						</header>
+
+						<div className="ws-profile-picker-list" role="list">
+							{profiles.map((profile) => {
+								const isCurrent = String(profile.id) === String(user.id)
+								const roleLabel = translateRole(profile.role)
+								const displayName = formatDisplayName(profile.name)
+								const initial = (displayName || 'U').charAt(0).toUpperCase()
+								const avatarUrl = resolvePassportPhotoUrl(profile)
+								const email = formatDisplayEmail(profile.email)
+								const districtName =
+									profile.district?.name ||
+									profile.district_name ||
+									null
+
+								return (
+									<button
+										key={profile.id}
+										type="button"
+										role="listitem"
+										className={`ws-profile-picker-card${isCurrent ? ' is-current' : ''}`}
+										disabled={isSwitching || isCurrent}
+										aria-current={isCurrent ? 'true' : undefined}
+										onClick={() => handleProfileSwitch(profile.id)}
+									>
+										<span
+											className={`ws-profile-picker-avatar${avatarUrl ? ' has-photo' : ''}`}
+											aria-hidden
+										>
+											{avatarUrl ? (
+												<img
+													src={avatarUrl}
+													alt=""
+													className="ws-profile-picker-avatar-img"
+												/>
+											) : (
+												initial
+											)}
+										</span>
+										<span className="ws-profile-picker-copy">
+											<span className="ws-profile-picker-name">{displayName}</span>
+											<span className="ws-profile-picker-role">{roleLabel}</span>
+											{email ? (
+												<span className="ws-profile-picker-meta">{email}</span>
+											) : null}
+											{districtName ? (
+												<span className="ws-profile-picker-meta">
+													{districtName}
+												</span>
+											) : null}
+										</span>
+										{isCurrent ? (
+											<span className="ws-profile-picker-badge">{t('ws.picker.current')}</span>
+										) : (
+											<span className="ws-profile-picker-action">
+												{isSwitching ? t('ws.picker.switching') : t('ws.picker.use')}
+											</span>
+										)}
+									</button>
+								)
+							})}
+						</div>
+					</div>
+				</div>
+			) : null}
 
 			{user?.role === ROLES.USER ? (
 				<ProfileCompletionModal

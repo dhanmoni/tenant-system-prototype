@@ -109,7 +109,7 @@ function ApplicationDetails() {
 					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 						<div style={{ width: '40px' }}>6.</div>
 						<div style={{ flex: '1.5' }}>Date from which possession is given to the tenant</div>
-						<div style={{ flex: '2' }}>: {application.property_possession_date}</div>
+						<div style={{ flex: '2' }}>: {formatDate(application.property_possession_date)}</div>
 					</div>
 					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 						<div style={{ width: '40px' }}>7.</div>
@@ -146,7 +146,7 @@ function ApplicationDetails() {
 					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 						<div style={{ width: '40px' }}>11.</div>
 						<div style={{ flex: '1.5' }}>Duration of tenancy (Period for which let)</div>
-						<div style={{ flex: '2' }}>: {application.property_tenancy_duration} {application.property_tenancy_end_date ? `(Till ${application.property_tenancy_end_date})` : ''}</div>
+						<div style={{ flex: '2' }}>: {application.property_tenancy_duration} {application.property_tenancy_end_date ? `(Till ${formatDate(application.property_tenancy_end_date)})` : ''}</div>
 					</div>
 					<div className="preview-list-item" style={{ display: 'flex', marginBottom: '15px' }}>
 						<div style={{ width: '40px' }}>12.</div>

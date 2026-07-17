@@ -540,6 +540,10 @@ const AdminApplicationDetails = () => {
 			return formatDateTime(value) || formatDate(value) || value
 		}
 
+		if (key.endsWith('_date')) {
+			return formatDate(value)
+		}
+
 		if (typeof value === 'object') {
 			if (value?.name) return value.name
 			return JSON.stringify(value)
