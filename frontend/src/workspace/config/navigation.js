@@ -5,36 +5,41 @@ import {
 	PRINCIPAL_ROLES,
 } from '../../constants/roles'
 
-/** Sidebar navigation groups per role — workspace module only. */
+/** Sidebar navigation groups per role — labels via i18n keys (`ws.nav.*`). */
 export function getWorkspaceNavigation(user) {
 	if (!user?.role) return []
 
 	if (user.role === ROLES.USER) {
 		return [
 			{
-				section: 'Workspace',
+				sectionKey: 'ws.nav.workspace',
 				items: [
-					{ to: '/dashboard', label: 'Dashboard', icon: 'dashboard', end: true },
-					{ to: '/dashboard/tenancy-certificate', label: 'Apply for UIN', icon: 'documentPlus' },
-					{ to: '/dashboard/status', label: 'UIN Status', icon: 'status' },
-					{ to: '/dashboard/services', label: 'All services', icon: 'services' },
+					{ to: '/dashboard', labelKey: 'ws.nav.dashboard', icon: 'dashboard', end: true },
+					{
+						to: '/dashboard/tenancy-certificate',
+						labelKey: 'ws.nav.applyUin',
+						icon: 'documentPlus',
+					},
+					{ to: '/dashboard/status', labelKey: 'ws.nav.uinStatus', icon: 'status' },
+					{ to: '/dashboard/services', labelKey: 'ws.nav.allServices', icon: 'services' },
 				],
 			},
 			{
-				section: 'Account',
-				items: [{ to: '/dashboard/profile', label: 'My profile', icon: 'user' }],
+				sectionKey: 'ws.nav.account',
+				items: [{ to: '/dashboard/profile', labelKey: 'ws.nav.myProfile', icon: 'user' }],
 			},
 		]
 	}
 
 	const items = [
-		{ to: '/dashboard', label: 'Dashboard', icon: 'dashboard', end: true },
+		{ to: '/dashboard', labelKey: 'ws.nav.dashboard', icon: 'dashboard', end: true },
 	]
 
 	if (ADMIN_ROLES.includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/users',
-			label: user.role === ROLES.SUPER_ADMIN ? 'User management' : 'Staff directory',
+			labelKey:
+				user.role === ROLES.SUPER_ADMIN ? 'ws.nav.userManagement' : 'ws.nav.staffDirectory',
 			icon: 'users',
 		})
 	}
@@ -42,7 +47,7 @@ export function getWorkspaceNavigation(user) {
 	if (PRINCIPAL_ROLES.includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/users',
-			label: 'Manage assistants',
+			labelKey: 'ws.nav.manageAssistants',
 			icon: 'users',
 		})
 	}
@@ -50,7 +55,7 @@ export function getWorkspaceNavigation(user) {
 	if ([...ASSISTANT_ROLES, ROLES.VALUER].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/inbox',
-			label: 'Application inbox',
+			labelKey: 'ws.nav.applicationInbox',
 			icon: 'list',
 		})
 	}
@@ -58,27 +63,35 @@ export function getWorkspaceNavigation(user) {
 	if ([...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/applications',
-			label: 'Service applications',
+			labelKey: 'ws.nav.serviceApplications',
 			icon: 'services',
 		})
 	}
 
 	if (ADMIN_ROLES.includes(user.role)) {
-		items.push({ to: '/dashboard/admin/tenancy', label: 'Tenancy applications', icon: 'file' })
+		items.push({
+			to: '/dashboard/admin/tenancy',
+			labelKey: 'ws.nav.tenancyApplications',
+			icon: 'file',
+		})
 	}
 
 	if (user.role === ROLES.SUPER_ADMIN) {
 		items.push(
-			{ to: '/dashboard/admin/applications', label: 'Service applications', icon: 'services' },
-			{ to: '/dashboard/admin/districts', label: 'Districts', icon: 'map' }
+			{
+				to: '/dashboard/admin/applications',
+				labelKey: 'ws.nav.serviceApplications',
+				icon: 'services',
+			},
+			{ to: '/dashboard/admin/districts', labelKey: 'ws.nav.districts', icon: 'map' }
 		)
 	}
 
 	return [
-		{ section: 'Workspace', items },
+		{ sectionKey: 'ws.nav.workspace', items },
 		{
-			section: 'Account',
-			items: [{ to: '/dashboard/profile', label: 'My profile', icon: 'user' }],
+			sectionKey: 'ws.nav.account',
+			items: [{ to: '/dashboard/profile', labelKey: 'ws.nav.myProfile', icon: 'user' }],
 		},
 	]
 }

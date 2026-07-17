@@ -171,11 +171,11 @@ class UserSeeder extends Seeder
                 'approved_at' => now(),
             ],
             [
-                'name' => 'Valuer',
-                'email' => 'valuer@nic.in',
+                'name' => 'Legacy Valuer Alt',
+                'email' => 'valuer.alt@nic.in',
                 'password' => 'password',
                 'role' => User::ROLE_VALUER,
-                'district_id' => $district->id,
+                'district_id' => $firstDistrict->id,
                 'phone' => '9333333333',
                 'approved_at' => now(),
             ],
@@ -187,7 +187,68 @@ class UserSeeder extends Seeder
                 'district_id' => $firstDistrict->id,
                 'phone' => '9444444444',
                 'approved_at' => now(),
-            ]
+            ],
+
+            // ── Multi-role demos (same phone → role switcher in top bar) ──
+            // Pair 1: Citizen + RA Assistant
+            [
+                'name' => 'Dual Role Citizen',
+                'email' => 'dual.citizen@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_USER,
+                'district_id' => $firstDistrict->id,
+                'phone' => '9000000001',
+                'approved_at' => now(),
+            ],
+            [
+                'name' => 'Dual Role RA Assistant',
+                'email' => 'dual.ra.assistant@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_RA_ASSISTANT,
+                'district_id' => $firstDistrict->id,
+                'phone' => '9000000001',
+                'approved_at' => now(),
+            ],
+
+            // Pair 2: Citizen + Rent Authority
+            [
+                'name' => 'Dual Role Citizen RA',
+                'email' => 'dual2.citizen@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_USER,
+                'district_id' => $firstDistrict->id,
+                'phone' => '9000000002',
+                'approved_at' => now(),
+            ],
+            [
+                'name' => 'Dual Role Rent Authority',
+                'email' => 'dual2.rent.authority@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_RENT_AUTHORITY,
+                'district_id' => $firstDistrict->id,
+                'phone' => '9000000002',
+                'approved_at' => now(),
+            ],
+
+            // Pair 3: Citizen + District Admin
+            [
+                'name' => 'Dual Role Citizen DA',
+                'email' => 'dual3.citizen@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_USER,
+                'district_id' => $firstDistrict->id,
+                'phone' => '9000000003',
+                'approved_at' => now(),
+            ],
+            [
+                'name' => 'Dual Role District Admin',
+                'email' => 'dual3.district.admin@nic.in',
+                'password' => 'password',
+                'role' => User::ROLE_DISTRICT_ADMIN,
+                'district_id' => $firstDistrict->id,
+                'phone' => '9000000003',
+                'approved_at' => now(),
+            ],
         ]);
 
         foreach ($users as $data) {
@@ -203,13 +264,13 @@ class UserSeeder extends Seeder
 
             // Link to district if needed
             if ($user->role === User::ROLE_DISTRICT_ADMIN) {
-                $user->district->update(['district_admin_id' => $user->id]);
+                $user->district?->update(['district_admin_id' => $user->id]);
             } elseif ($user->role === User::ROLE_RENT_AUTHORITY) {
-                $user->district->update(['assistant_director_id' => $user->id]);
+                $user->district?->update(['assistant_director_id' => $user->id]);
             } elseif ($user->role === User::ROLE_RENT_COURT) {
-                $user->district->update(['district_head_id' => $user->id]);
+                $user->district?->update(['district_head_id' => $user->id]);
             } elseif ($user->role === User::ROLE_RENT_TRIBUNAL) {
-                $user->district->update(['rent_tribunal_id' => $user->id]);
+                $user->district?->update(['rent_tribunal_id' => $user->id]);
             }
         }
     }

@@ -17,6 +17,7 @@ import StatesOverviewTable from '../../components/dashboard/StatesOverviewTable'
 import FormTypeTable from '../../components/dashboard/FormTypeTable'
 import RecentApplicationsTable from '../../components/dashboard/RecentApplicationsTable'
 import RoleActionCards from '../../components/dashboard/RoleActionCards'
+import NexusStatCard from '../../components/dashboard/NexusStatCard'
 import SuperAdminDashboard from './SuperAdminDashboard'
 
 function OfficialOverview() {
@@ -57,9 +58,23 @@ function OfficialOverview() {
 				value: s.district_name || user?.district?.name || '—',
 				isText: true,
 				hint: 'Your assignment',
+				icon: 'building',
+				tone: 'default',
 			},
-			{ label: 'Users', value: s.users_count, hint: 'In district' },
-			{ label: 'Form applications', value: s.service_applications, hint: 'In your scope' },
+			{
+				label: 'Users',
+				value: s.users_count,
+				hint: 'In district',
+				icon: 'users',
+				tone: 'violet',
+			},
+			{
+				label: 'Form applications',
+				value: s.service_applications,
+				hint: 'In your scope',
+				icon: 'file',
+				tone: 'accent',
+			},
 		]
 
 		if (ADMIN_ROLES.includes(user?.role)) {
@@ -67,6 +82,8 @@ function OfficialOverview() {
 				label: 'UIN applications',
 				value: s.tenancy_applications,
 				hint: 'Tenancy applications',
+				icon: 'documentPlus',
+				tone: 'success',
 			})
 		}
 		if (ASSISTANT_ROLES.includes(user?.role)) {
@@ -74,7 +91,8 @@ function OfficialOverview() {
 				label: 'Awaiting verification',
 				value: s.pending_review,
 				hint: 'Inbox queue',
-				highlight: true,
+				icon: 'clock',
+				tone: 'warning',
 			})
 		}
 		if (PRINCIPAL_ROLES.includes(user?.role)) {
@@ -82,13 +100,26 @@ function OfficialOverview() {
 				label: 'Awaiting decision',
 				value: s.in_review,
 				hint: 'Forwarded to you',
-				highlight: true,
+				icon: 'status',
+				tone: 'warning',
 			})
 		}
 		if (isDistrictAdmin) {
 			cards.push(
-				{ label: 'Pending (submitted)', value: s.pending_review, hint: 'District-wide' },
-				{ label: 'In review', value: s.in_review, hint: 'District-wide' }
+				{
+					label: 'Pending (submitted)',
+					value: s.pending_review,
+					hint: 'District-wide',
+					icon: 'clock',
+					tone: 'warning',
+				},
+				{
+					label: 'In review',
+					value: s.in_review,
+					hint: 'District-wide',
+					icon: 'timeline',
+					tone: 'accent',
+				}
 			)
 		}
 
@@ -145,22 +176,17 @@ function OfficialOverview() {
 				<div className="ws-dashboard-loading">Loading dashboard…</div>
 			) : (
 				<>
-					<div className="ws-stats-grid ws-stats-grid--dashboard">
+					<div className="ws-stats-grid ws-stats-grid--dashboard" aria-label="Key metrics">
 						{statCards.map((card) => (
-							<div
+							<NexusStatCard
 								key={card.label}
-								className={`ws-stat-card${card.highlight ? ' ws-stat-card--highlight' : ''}`}
-							>
-								<div className="ws-stat-card-label">{card.label}</div>
-								<div
-									className={`ws-stat-card-value${card.isText ? ' ws-stat-card-value--text' : ''}`}
-								>
-									{card.value ?? '—'}
-								</div>
-								{card.hint ? (
-									<div className="ws-stat-card-hint">{card.hint}</div>
-								) : null}
-							</div>
+								label={card.label}
+								value={card.value}
+								hint={card.hint}
+								icon={card.icon}
+								tone={card.tone}
+								isText={card.isText}
+							/>
 						))}
 					</div>
 
@@ -190,6 +216,18 @@ function OfficialOverview() {
 						</section>
 					</div>
 
+					<section className="ws-card">
+						<div className="ws-card-header">
+							<h2 className="ws-card-title">Recent applications</h2>
+						</div>
+						<div className="ws-card-body ws-card-body--pad ws-card-body--table">
+							<RecentApplicationsTable
+								applications={stats?.recent_applications}
+								showProgress
+							/>
+						</div>
+					</section>
+
 					{showDistrictMap ? (
 						<section className="ws-card">
 							<div className="ws-card-header">
@@ -204,45 +242,35 @@ function OfficialOverview() {
 						</section>
 					) : null}
 
-					<div className="ws-dashboard-split">
-						{showStatesTable ? (
-							<section className="ws-card">
-								<div className="ws-card-header">
-									<h2 className="ws-card-title">States overview</h2>
-								</div>
-								<div className="ws-card-body ws-card-body--pad">
-									<p className="ws-dashboard-hint">
-										Registered states and union territories with district and application
-										counts.
-									</p>
-									<StatesOverviewTable states={stats?.states_overview} />
-								</div>
-							</section>
-						) : null}
+					{showStatesTable || showFormBreakdown ? (
+						<div className="ws-dashboard-split">
+							{showStatesTable ? (
+								<section className="ws-card">
+									<div className="ws-card-header">
+										<h2 className="ws-card-title">States overview</h2>
+									</div>
+									<div className="ws-card-body ws-card-body--pad">
+										<p className="ws-dashboard-hint">
+											Registered states and union territories with district and
+											application counts.
+										</p>
+										<StatesOverviewTable states={stats?.states_overview} />
+									</div>
+								</section>
+							) : null}
 
-						{showFormBreakdown ? (
-							<section className="ws-card">
-								<div className="ws-card-header">
-									<h2 className="ws-card-title">Forms in your scope</h2>
-								</div>
-								<div className="ws-card-body ws-card-body--pad">
-									<FormTypeTable forms={stats?.form_type_breakdown} />
-								</div>
-							</section>
-						) : null}
-					</div>
-
-					<section className="ws-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Recent applications</h2>
+							{showFormBreakdown ? (
+								<section className="ws-card">
+									<div className="ws-card-header">
+										<h2 className="ws-card-title">Forms in your scope</h2>
+									</div>
+									<div className="ws-card-body ws-card-body--pad">
+										<FormTypeTable forms={stats?.form_type_breakdown} />
+									</div>
+								</section>
+							) : null}
 						</div>
-						<div className="ws-card-body ws-card-body--pad ws-card-body--table">
-							<RecentApplicationsTable
-								applications={stats?.recent_applications}
-								showProgress
-							/>
-						</div>
-					</section>
+					) : null}
 				</>
 			)}
 		</div>

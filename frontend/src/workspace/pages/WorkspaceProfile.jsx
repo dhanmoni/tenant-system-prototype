@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
@@ -8,9 +8,10 @@ import { formatDisplayEmail, formatDisplayName } from '../../utils/formatters'
 function WorkspaceProfile() {
 	const { user, onUserUpdate } = useOutletContext()
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
 	const [profileLoading, setProfileLoading] = useState(false)
 	const [profileEditing, setProfileEditing] = useState(false)
+	const [saveToast, setSaveToast] = useState('')
+	const saveToastTimerRef = useRef(null)
 
 	const [profileName, setProfileName] = useState('')
 	const [profileEmail, setProfileEmail] = useState('')
@@ -27,13 +28,24 @@ function WorkspaceProfile() {
 	const displayEmail = formatDisplayEmail(profileEmail || user?.email)
 	const roleLabel = getRoleLabel(user?.role)
 
+	const showSaveToast = useCallback((message = 'Profile saved.') => {
+		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+		setSaveToast(message)
+		saveToastTimerRef.current = setTimeout(() => {
+			setSaveToast('')
+			saveToastTimerRef.current = null
+		}, 2800)
+	}, [])
+
 	useEffect(() => {
 		loadProfile()
+		return () => {
+			if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+		}
 	}, [])
 
 	const loadProfile = async () => {
 		setError('')
-		setSuccess('')
 		setProfileLoading(true)
 		try {
 			const { data } = await api.get('/api/profile')
@@ -72,10 +84,32 @@ function WorkspaceProfile() {
 		}
 	}
 
+	const handlePhotoChange = (e) => {
+		const file = e.target.files?.[0] || null
+		setProfilePhoto(file)
+		setError('')
+		if (file) {
+			const reader = new FileReader()
+			reader.onload = () => setProfilePhotoPreview(reader.result?.toString() || '')
+			reader.readAsDataURL(file)
+		}
+	}
+
+	const startEditing = () => {
+		setProfileEditing(true)
+		setError('')
+	}
+
+	const cancelEditing = () => {
+		setProfileEditing(false)
+		setError('')
+		setProfilePhoto(null)
+		loadProfile()
+	}
+
 	const handleProfileSubmit = async (e) => {
 		e.preventDefault()
 		setError('')
-		setSuccess('')
 		setProfileLoading(true)
 		try {
 			await csrf()
@@ -110,8 +144,8 @@ function WorkspaceProfile() {
 			}
 
 			setProfilePhoto(null)
-			setSuccess('Profile saved successfully.')
 			setProfileEditing(false)
+			showSaveToast('Profile saved.')
 		} catch (err) {
 			const data = err?.response?.data
 			const errors = data?.errors || {}
@@ -139,289 +173,198 @@ function WorkspaceProfile() {
 
 	return (
 		<div className="ws-page ws-profile-page">
+			{saveToast ? (
+				<div className="ws-uin-save-toast" role="status" aria-live="polite">
+					{saveToast}
+				</div>
+			) : null}
+
 			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
 				<Link to="/dashboard">Dashboard</Link>
 				<span className="ws-breadcrumb-sep">/</span>
 				<span>My profile</span>
 			</nav>
 
-			<section className="ws-profile-hero">
-				<div className="ws-profile-hero-main">
-					{profilePhotoPreview ? (
-						<img src={profilePhotoPreview} alt="" className="ws-profile-hero-photo" />
-					) : (
-						<span className="ws-profile-hero-photo-fallback" aria-hidden>
-							<Icon name="user" />
-						</span>
-					)}
-					<div className="ws-profile-hero-info">
-						<h1 className="ws-profile-hero-name">{displayName}</h1>
-						<p className="ws-profile-hero-email">{displayEmail}</p>
-						<div className="ws-profile-hero-meta">
-							<span className="ws-profile-hero-pill">{roleLabel}</span>
-							{profileDistrict ? (
-								<span className="ws-profile-hero-pill">{profileDistrict}</span>
-							) : null}
-							<span
-								className={`ws-profile-hero-pill ws-profile-hero-pill--${
-									hasProfile ? 'complete' : 'pending'
-								}`}
-							>
-								{hasProfile ? 'Profile complete' : 'Profile incomplete'}
-							</span>
+			{!profileEditing ? (
+				<section className="ws-profile-minimal">
+					<header className="ws-profile-minimal-head">
+						<div className="ws-profile-minimal-photo">
+							{profilePhotoPreview ? (
+								<img src={profilePhotoPreview} alt="" />
+							) : (
+								<span className="ws-profile-minimal-photo-fallback" aria-hidden>
+									<Icon name="user" />
+								</span>
+							)}
 						</div>
-					</div>
-				</div>
-				{hasProfile && !profileEditing ? (
-					<button
-						type="button"
-						className="ws-btn ws-btn--primary"
-						onClick={() => {
-							setProfileEditing(true)
-							setSuccess('')
-							setError('')
-						}}
-					>
-						Edit profile
-					</button>
-				) : null}
-			</section>
-
-			{!hasProfile ? (
-				<div className="ws-alert ws-alert--warning" role="status">
-					Complete your profile so future applications can be auto-filled.
-				</div>
-			) : null}
-
-			{error ? (
-				<div className="ws-profile-alert ws-profile-alert--error" role="alert">
-					{error}
-				</div>
-			) : null}
-			{success ? (
-				<div className="ws-profile-alert ws-profile-alert--success" role="status">
-					{success}
-				</div>
-			) : null}
-
-			{hasProfile && !profileEditing ? (
-				<div className="ws-profile-details">
-					<section className="ws-card ws-profile-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Personal details</h2>
-						</div>
-						<div className="ws-card-body ws-profile-card-body">
-							<dl className="ws-profile-dl">
-								<div className="ws-profile-dl-row">
-									<dt>Name</dt>
-									<dd>{profileName}</dd>
-								</div>
-								<div className="ws-profile-dl-row">
-									<dt>Email</dt>
-									<dd>{profileEmail}</dd>
-								</div>
-								<div className="ws-profile-dl-row">
-									<dt>Phone</dt>
-									<dd>{profilePhone || '—'}</dd>
-								</div>
-							</dl>
-						</div>
-					</section>
-
-					<section className="ws-card ws-profile-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Address</h2>
-						</div>
-						<div className="ws-card-body ws-profile-card-body">
-							<dl className="ws-profile-dl">
-								<div className="ws-profile-dl-row ws-profile-dl-row--full">
-									<dt>Address</dt>
-									<dd>{profileAddress}</dd>
-								</div>
-								<div className="ws-profile-dl-row">
-									<dt>District</dt>
-									<dd>{profileDistrict || '—'}</dd>
-								</div>
-								<div className="ws-profile-dl-row">
-									<dt>PIN code</dt>
-									<dd>{profilePin}</dd>
-								</div>
-							</dl>
-						</div>
-					</section>
-
-					<section className="ws-card ws-profile-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Identity</h2>
-						</div>
-						<div className="ws-card-body ws-profile-card-body">
-							<dl className="ws-profile-dl">
-								<div className="ws-profile-dl-row">
-									<dt>PAN card</dt>
-									<dd>{profilePan}</dd>
-								</div>
-							</dl>
-						</div>
-					</section>
-				</div>
-			) : (
-				<form className="ws-profile-form" onSubmit={handleProfileSubmit} noValidate>
-					<section className="ws-card ws-profile-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Profile photo</h2>
-						</div>
-						<div className="ws-card-body ws-profile-card-body">
-							<div className="ws-profile-photo-upload">
-								{profilePhotoPreview ? (
-									<img
-										src={profilePhotoPreview}
-										alt=""
-										className="ws-profile-photo-preview"
-									/>
-								) : (
-									<span className="ws-profile-photo-fallback" aria-hidden>
-										<Icon name="user" />
-									</span>
-								)}
-								<div className="ws-profile-photo-actions">
-									<label className="ws-profile-file-label">
-										<input
-											type="file"
-											accept="image/png,image/jpeg"
-											required={!profilePhotoPreview}
-											className="ws-profile-file-input"
-											onChange={(e) => {
-												const file = e.target.files?.[0] || null
-												setProfilePhoto(file)
-												if (file) {
-													const reader = new FileReader()
-													reader.onload = () =>
-														setProfilePhotoPreview(
-															reader.result?.toString() || ''
-														)
-													reader.readAsDataURL(file)
-												}
-											}}
-										/>
-										<span className="ws-btn ws-btn--outline">
-											{profilePhotoPreview ? 'Change photo' : 'Upload photo'}
-										</span>
-									</label>
-									<p className="ws-profile-hint">
-										Passport-size photo. PNG or JPEG only.
-									</p>
-								</div>
+						<div className="ws-profile-minimal-identity">
+							<h1>{displayName}</h1>
+							<p>{displayEmail}</p>
+							<div className="ws-profile-minimal-meta">
+								<span>{roleLabel}</span>
+								{profileDistrict ? <span>{profileDistrict}</span> : null}
 							</div>
 						</div>
-					</section>
-
-					<section className="ws-card ws-profile-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Account details</h2>
-						</div>
-						<div className="ws-card-body ws-profile-card-body ws-profile-fields">
-							<label className="ws-profile-field">
-								<span className="ws-profile-field-label">Name</span>
-								<input type="text" value={profileName} readOnly />
-							</label>
-							<label className="ws-profile-field">
-								<span className="ws-profile-field-label">Email</span>
-								<input type="email" value={profileEmail} readOnly />
-							</label>
-							<label className="ws-profile-field">
-								<span className="ws-profile-field-label">Phone</span>
-								<input type="text" value={profilePhone} readOnly />
-							</label>
-							<label className="ws-profile-field">
-								<span className="ws-profile-field-label">District</span>
-								<input type="text" value={profileDistrict} readOnly />
-							</label>
-						</div>
-					</section>
-
-					<section className="ws-card ws-profile-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Address</h2>
-						</div>
-						<div className="ws-card-body ws-profile-card-body ws-profile-fields">
-							<label className="ws-profile-field ws-profile-field--full">
-								<span className="ws-profile-field-label">Address</span>
-								<textarea
-									rows={4}
-									value={profileAddress}
-									onChange={(e) => setProfileAddress(e.target.value)}
-									maxLength={500}
-									required
-								/>
-							</label>
-							<label className="ws-profile-field">
-								<span className="ws-profile-field-label">PIN code</span>
-								<input
-									type="text"
-									inputMode="numeric"
-									value={profilePin}
-									onChange={(e) => {
-										if (/^\d*$/.test(e.target.value)) {
-											setProfilePin(e.target.value)
-										}
-									}}
-									pattern="^\d{6}$"
-									title="Enter a 6 digit PIN code."
-									maxLength={6}
-									required
-								/>
-							</label>
-						</div>
-					</section>
-
-					<section className="ws-card ws-profile-card">
-						<div className="ws-card-header">
-							<h2 className="ws-card-title">Identity</h2>
-						</div>
-						<div className="ws-card-body ws-profile-card-body ws-profile-fields">
-							<label className="ws-profile-field">
-								<span className="ws-profile-field-label">PAN card</span>
-								<input
-									type="text"
-									value={profilePan}
-									onChange={(e) => {
-										const next = e.target.value.toUpperCase()
-										if (/^[A-Z0-9]*$/.test(next)) {
-											setProfilePan(next)
-										}
-									}}
-									pattern="^[A-Z]{5}[0-9]{4}[A-Z]$"
-									title="Enter a valid PAN (e.g. ABCDE1234F)."
-									maxLength={10}
-									required
-								/>
-							</label>
-						</div>
-					</section>
-
-					<div className="ws-profile-form-actions">
 						<button
-							type="submit"
-							className="ws-btn ws-btn--primary"
-							disabled={profileLoading}
+							type="button"
+							className="ws-btn ws-btn--primary ws-profile-minimal-edit"
+							onClick={startEditing}
 						>
-							{profileLoading ? 'Saving…' : 'Save profile'}
+							Edit
 						</button>
+					</header>
+
+					{error ? (
+						<div className="ws-profile-alert ws-profile-alert--error" role="alert">
+							{error}
+						</div>
+					) : null}
+
+					<div className="ws-profile-minimal-grid ws-profile-minimal-grid--view">
+						<div className="ws-profile-view-item">
+							<span className="ws-profile-field-label">Name</span>
+							<strong>{profileName || '—'}</strong>
+						</div>
+						<div className="ws-profile-view-item">
+							<span className="ws-profile-field-label">Phone</span>
+							<strong>{profilePhone || '—'}</strong>
+						</div>
+						<div className="ws-profile-view-item">
+							<span className="ws-profile-field-label">Email</span>
+							<strong>{profileEmail || '—'}</strong>
+						</div>
+						<div className="ws-profile-view-item">
+							<span className="ws-profile-field-label">District</span>
+							<strong>{profileDistrict || '—'}</strong>
+						</div>
+						<div className="ws-profile-view-item ws-profile-view-item--full">
+							<span className="ws-profile-field-label">Address</span>
+							<strong>{profileAddress || '—'}</strong>
+						</div>
+						<div className="ws-profile-view-item">
+							<span className="ws-profile-field-label">PIN code</span>
+							<strong>{profilePin || '—'}</strong>
+						</div>
+						<div className="ws-profile-view-item">
+							<span className="ws-profile-field-label">PAN card</span>
+							<strong>{profilePan || '—'}</strong>
+						</div>
+					</div>
+				</section>
+			) : (
+				<form className="ws-profile-minimal" onSubmit={handleProfileSubmit} noValidate>
+					<header className="ws-profile-minimal-head">
+						<div className="ws-profile-minimal-photo">
+							{profilePhotoPreview ? (
+								<img src={profilePhotoPreview} alt="" />
+							) : (
+								<span className="ws-profile-minimal-photo-fallback" aria-hidden>
+									<Icon name="user" />
+								</span>
+							)}
+							<label className="ws-profile-minimal-photo-btn">
+								<input
+									type="file"
+									accept="image/png,image/jpeg"
+									required={!profilePhotoPreview}
+									onChange={handlePhotoChange}
+								/>
+								{profilePhotoPreview ? 'Change' : 'Upload'}
+							</label>
+						</div>
+						<div className="ws-profile-minimal-identity">
+							<h1>{displayName}</h1>
+							<p>{displayEmail}</p>
+							<div className="ws-profile-minimal-meta">
+								<span>{roleLabel}</span>
+								{profileDistrict ? <span>{profileDistrict}</span> : null}
+							</div>
+						</div>
+					</header>
+
+					{error ? (
+						<div className="ws-profile-alert ws-profile-alert--error" role="alert">
+							{error}
+						</div>
+					) : null}
+
+					<div className="ws-profile-minimal-grid">
+						<label className="ws-profile-field">
+							<span className="ws-profile-field-label">Name</span>
+							<input type="text" value={profileName} readOnly />
+						</label>
+						<label className="ws-profile-field">
+							<span className="ws-profile-field-label">Phone</span>
+							<input type="text" value={profilePhone} readOnly />
+						</label>
+						<label className="ws-profile-field">
+							<span className="ws-profile-field-label">Email</span>
+							<input type="email" value={profileEmail} readOnly />
+						</label>
+						<label className="ws-profile-field">
+							<span className="ws-profile-field-label">District</span>
+							<input type="text" value={profileDistrict} readOnly />
+						</label>
+						<label className="ws-profile-field ws-profile-field--full">
+							<span className="ws-profile-field-label">Address</span>
+							<textarea
+								rows={3}
+								value={profileAddress}
+								onChange={(e) => setProfileAddress(e.target.value)}
+								maxLength={500}
+								required
+							/>
+						</label>
+						<label className="ws-profile-field">
+							<span className="ws-profile-field-label">PIN code</span>
+							<input
+								type="text"
+								inputMode="numeric"
+								value={profilePin}
+								onChange={(e) => {
+									if (/^\d*$/.test(e.target.value)) setProfilePin(e.target.value)
+								}}
+								pattern="^\d{6}$"
+								title="Enter a 6 digit PIN code."
+								maxLength={6}
+								required
+							/>
+						</label>
+						<label className="ws-profile-field">
+							<span className="ws-profile-field-label">PAN card</span>
+							<input
+								type="text"
+								value={profilePan}
+								onChange={(e) => {
+									const next = e.target.value.toUpperCase()
+									if (/^[A-Z0-9]*$/.test(next)) setProfilePan(next)
+								}}
+								pattern="^[A-Z]{5}[0-9]{4}[A-Z]$"
+								title="Enter a valid PAN (e.g. ABCDE1234F)."
+								maxLength={10}
+								required
+							/>
+						</label>
+					</div>
+
+					<div className="ws-profile-minimal-actions">
 						{hasProfile ? (
 							<button
 								type="button"
 								className="ws-btn ws-btn--outline"
 								disabled={profileLoading}
-								onClick={() => {
-									setProfileEditing(false)
-									setSuccess('')
-									setError('')
-									loadProfile()
-								}}
+								onClick={cancelEditing}
 							>
 								Cancel
 							</button>
 						) : null}
+						<button
+							type="submit"
+							className="ws-btn ws-btn--primary"
+							disabled={profileLoading}
+						>
+							{profileLoading ? 'Saving…' : 'Save'}
+						</button>
 					</div>
 				</form>
 			)}

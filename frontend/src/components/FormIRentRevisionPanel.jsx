@@ -200,7 +200,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Landlord / Tenant Details</legend>
+					<legend>Landlord / Tenant details</legend>
 
 					<label>
 						<span className="label-text required">Landlord name</span>
@@ -212,15 +212,6 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						/>
 					</label>
 					<label>
-						<span className="label-text required">Landlord address</span>
-						<textarea
-							value={landlordAddress}
-							onChange={(e) => setLandlordAddress(e.target.value)}
-							required
-						/>
-					</label>
-
-					<label>
 						<span className="label-text required">Tenant name</span>
 						<input
 							type="text"
@@ -229,12 +220,23 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 							required
 						/>
 					</label>
-					<label>
+
+					<label className="tenancy-field-full">
+						<span className="label-text required">Landlord address</span>
+						<textarea
+							value={landlordAddress}
+							onChange={(e) => setLandlordAddress(e.target.value)}
+							required
+							rows={3}
+						/>
+					</label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Tenant address</span>
 						<textarea
 							value={tenantAddress}
 							onChange={(e) => setTenantAddress(e.target.value)}
 							required
+							rows={3}
 						/>
 					</label>
 
@@ -244,7 +246,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 					</label>
 					<label>
 						<span className="label-text">Property manager address (if any)</span>
-						<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} />
+						<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} rows={2} />
 					</label>
 				</fieldset>
 
@@ -254,32 +256,34 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						value={rentedPremisesDescription}
 						onChange={(e) => setRentedPremisesDescription(e.target.value)}
 						required
+						rows={3}
 					/>
 				</label>
 
-				<label>
-					<span className="label-text required">Present monthly rent</span>
-					<input
-						type="text"
-						value={presentMonthlyRent}
-						onChange={(e) => setPresentMonthlyRent(e.target.value)}
-						required
-						inputMode="decimal"
-						placeholder="e.g. 25000 or 25,000.50"
-					/>
-				</label>
-
-				<label>
-					<span className="label-text required">Proposed monthly rent</span>
-					<input
-						type="text"
-						value={proposedMonthlyRent}
-						onChange={(e) => setProposedMonthlyRent(e.target.value)}
-						required
-						inputMode="decimal"
-						placeholder="e.g. 27000 or 27,000.00"
-					/>
-				</label>
+				<div className="service-form-fields">
+					<label>
+						<span className="label-text required">Present monthly rent</span>
+						<input
+							type="text"
+							value={presentMonthlyRent}
+							onChange={(e) => setPresentMonthlyRent(e.target.value)}
+							required
+							inputMode="decimal"
+							placeholder="e.g. 25000 or 25,000.50"
+						/>
+					</label>
+					<label>
+						<span className="label-text required">Proposed monthly rent</span>
+						<input
+							type="text"
+							value={proposedMonthlyRent}
+							onChange={(e) => setProposedMonthlyRent(e.target.value)}
+							required
+							inputMode="decimal"
+							placeholder="e.g. 27000 or 27,000.00"
+						/>
+					</label>
+				</div>
 
 				<label>
 					<span className="label-text required">Reason for fixation / revision of rent</span>
@@ -287,11 +291,12 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						value={reasonForRentRevision}
 						onChange={(e) => setReasonForRentRevision(e.target.value)}
 						required
+						rows={3}
 					/>
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Signature</legend>
+					<legend>Signature</legend>
 
 					<label>
 						<span className="label-text">Signed by</span>
@@ -306,7 +311,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						<input type="text" value={signatureName} onChange={(e) => setSignatureName(e.target.value)} required />
 					</label>
 
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text">Signature image (optional)</span>
 						<input
 							type="file"

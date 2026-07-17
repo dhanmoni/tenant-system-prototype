@@ -222,72 +222,77 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				/>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">A. Applicant</legend>
+					<legend>A. Applicant</legend>
 					<label>
 						<span className="label-text required">Name of the Applicant</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Applicant residential address</span>
 						<textarea
 							value={applicantResidentialAddress}
 							onChange={(e) => setApplicantResidentialAddress(e.target.value)}
 							required
+							rows={3}
 						/>
 					</label>
 				</fieldset>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">B. Opposite Party</legend>
+					<legend>B. Opposite Party</legend>
 					<label>
 						<span className="label-text required">Name of the Opposite Party</span>
 						<input type="text" value={oppositePartyName} onChange={(e) => setOppositePartyName(e.target.value)} required />
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Opposite party residential address</span>
 						<textarea
 							value={oppositePartyResidentialAddress}
 							onChange={(e) => setOppositePartyResidentialAddress(e.target.value)}
 							required
+							rows={3}
 						/>
 					</label>
 				</fieldset>
 
-				<label>
-					<span className="label-text">1) Particulars of violation against which application is made</span>
-					<textarea value={particularsOfViolation} onChange={(e) => setParticularsOfViolation(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">2) Jurisdiction of the Rent Authority</span>
-					<textarea value={jurisdictionOfRentAuthority} onChange={(e) => setJurisdictionOfRentAuthority(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">3) Facts of the case</span>
-					<textarea value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">4) Grounds for relief</span>
-					<textarea value={groundsForRelief} onChange={(e) => setGroundsForRelief(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">5) Matters not previously filed or pending</span>
-					<textarea value={mattersNotPreviouslyFiledOrPending} onChange={(e) => setMattersNotPreviouslyFiledOrPending(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">6) Relief sought</span>
-					<textarea value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">7) Interim order sought</span>
-					<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">8) List of enclosures</span>
-					<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} />
-				</label>
+				<fieldset className="tenancy-fieldset">
+					<legend>Case details</legend>
+					<label className="tenancy-field-full">
+						<span className="label-text">1) Particulars of violation against which application is made</span>
+						<textarea value={particularsOfViolation} onChange={(e) => setParticularsOfViolation(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">2) Jurisdiction of the Rent Authority</span>
+						<textarea value={jurisdictionOfRentAuthority} onChange={(e) => setJurisdictionOfRentAuthority(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">3) Facts of the case</span>
+						<textarea value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">4) Grounds for relief</span>
+						<textarea value={groundsForRelief} onChange={(e) => setGroundsForRelief(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">5) Matters not previously filed or pending</span>
+						<textarea value={mattersNotPreviouslyFiledOrPending} onChange={(e) => setMattersNotPreviouslyFiledOrPending(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">6) Relief sought</span>
+						<textarea value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">7) Interim order sought</span>
+						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">8) List of enclosures</span>
+						<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
+					</label>
+				</fieldset>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Verification / Signature</legend>
+					<legend>Verification / Signature</legend>
 					<label>
 						<span className="label-text required">Applicant name</span>
 						<input
@@ -330,6 +335,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 						<textarea
 							value={verificationAddress}
 							onChange={(e) => setVerificationAddress(e.target.value)}
+							rows={3}
 						/>
 					</label>
 					<label>
@@ -380,7 +386,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 							onChange={(e) => setVerificationPlace(e.target.value)}
 						/>
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text">Signature image (optional)</span>
 						<input type="file" accept="image/*" onChange={(e) => setSignatureImage(e.target.files?.[0] || null)} />
 					</label>

@@ -1,14 +1,5 @@
 import { useMemo } from 'react'
-
-function InsightCard({ label, value, detail, tone = 'default' }) {
-	return (
-		<div className={`ws-insight-card ws-insight-card--${tone}`}>
-			<p className="ws-insight-card-label">{label}</p>
-			<p className="ws-insight-card-value">{value}</p>
-			{detail ? <p className="ws-insight-card-detail">{detail}</p> : null}
-		</div>
-	)
-}
+import NexusStatCard from './NexusStatCard'
 
 function InsightHighlights({ stats }) {
 	const insights = useMemo(() => {
@@ -34,34 +25,39 @@ function InsightHighlights({ stats }) {
 				key: 'total',
 				label: 'Total applications',
 				value: totalApps.toLocaleString('en-IN'),
-				detail: `${s.tenancy_applications ?? 0} UIN · ${s.service_applications ?? 0} forms`,
+				hint: `${s.tenancy_applications ?? 0} UIN · ${s.service_applications ?? 0} forms`,
 				tone: 'default',
+				icon: 'list',
 			},
 			{
 				key: 'backlog',
 				label: 'Active queue',
 				value: backlog.toLocaleString('en-IN'),
-				detail: `${s.pending_review ?? 0} submitted · ${s.in_review ?? 0} in review`,
+				hint: `${s.pending_review ?? 0} submitted · ${s.in_review ?? 0} in review`,
 				tone: backlog > 0 ? 'warning' : 'success',
+				icon: 'clock',
 			},
 			{
 				key: 'completion',
 				label: 'Form completion rate',
 				value: completionRate != null ? `${completionRate}%` : '—',
-				detail:
+				hint:
 					completionRate != null
-						? `${completed} of ${serviceTotal} Assam Tenancy Act forms completed`
+						? `${completed} of ${serviceTotal} forms completed`
 						: 'No form submissions yet',
 				tone: completionRate != null && completionRate >= 50 ? 'success' : 'default',
+				icon: 'check',
 			},
 			{
 				key: 'coverage',
 				label: 'District activity',
 				value: topDistrict?.name || '—',
-				detail: topDistrict
-					? `${topDistrict.total_applications ?? 0} apps · avg ${avgPerDistrict ?? 0} per district`
+				hint: topDistrict
+					? `${topDistrict.total_applications ?? 0} apps · avg ${avgPerDistrict ?? 0} / district`
 					: `${s.districts_count ?? 0} districts configured`,
-				tone: 'accent',
+				tone: 'violet',
+				icon: 'map',
+				isText: Boolean(topDistrict?.name),
 			},
 		]
 	}, [stats])
@@ -70,11 +66,13 @@ function InsightHighlights({ stats }) {
 		<div className="ws-insight-grid" role="list" aria-label="Key insights">
 			{insights.map((item) => (
 				<div key={item.key} role="listitem">
-					<InsightCard
+					<NexusStatCard
 						label={item.label}
 						value={item.value}
-						detail={item.detail}
+						hint={item.hint}
 						tone={item.tone}
+						icon={item.icon}
+						isText={item.isText}
 					/>
 				</div>
 			))}

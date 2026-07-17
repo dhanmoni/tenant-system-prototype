@@ -238,72 +238,77 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">A. Applicant</legend>
+					<legend>A. Applicant</legend>
 					<label>
 						<span className="label-text required">Name of the Applicant</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Applicant residential address</span>
 						<textarea
 							value={applicantResidentialAddress}
 							onChange={(e) => setApplicantResidentialAddress(e.target.value)}
 							required
+							rows={3}
 						/>
 					</label>
 				</fieldset>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">B. Respondent</legend>
+					<legend>B. Respondent</legend>
 					<label>
 						<span className="label-text required">Name of the Respondent</span>
 						<input type="text" value={respondentName} onChange={(e) => setRespondentName(e.target.value)} required />
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Respondent residential address</span>
 						<textarea
 							value={respondentResidentialAddress}
 							onChange={(e) => setRespondentResidentialAddress(e.target.value)}
 							required
+							rows={3}
 						/>
 					</label>
 				</fieldset>
 
-				<label>
-					<span className="label-text">Particulars of application</span>
-					<textarea value={particularsOfApplication} onChange={(e) => setParticularsOfApplication(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Jurisdiction of the Rent Court</span>
-					<textarea value={jurisdictionOfRentCourt} onChange={(e) => setJurisdictionOfRentCourt(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Facts of the case</span>
-					<textarea value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Grounds for relief</span>
-					<textarea value={groundsForRelief} onChange={(e) => setGroundsForRelief(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Matters not previously filed or pending</span>
-					<textarea value={mattersNotPreviouslyFiledOrPending} onChange={(e) => setMattersNotPreviouslyFiledOrPending(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Relief sought</span>
-					<textarea value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Interim order sought</span>
-					<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">List of enclosures</span>
-					<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} />
-				</label>
+				<fieldset className="tenancy-fieldset">
+					<legend>Case details</legend>
+					<label className="tenancy-field-full">
+						<span className="label-text">Particulars of application</span>
+						<textarea value={particularsOfApplication} onChange={(e) => setParticularsOfApplication(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Jurisdiction of the Rent Court</span>
+						<textarea value={jurisdictionOfRentCourt} onChange={(e) => setJurisdictionOfRentCourt(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Facts of the case</span>
+						<textarea value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Grounds for relief</span>
+						<textarea value={groundsForRelief} onChange={(e) => setGroundsForRelief(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Matters not previously filed or pending</span>
+						<textarea value={mattersNotPreviouslyFiledOrPending} onChange={(e) => setMattersNotPreviouslyFiledOrPending(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Relief sought</span>
+						<textarea value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Interim order sought</span>
+						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">List of enclosures</span>
+						<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
+					</label>
+				</fieldset>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Verification / Signature</legend>
+					<legend>Verification / Signature</legend>
 					<label>
 						<span className="label-text required">Applicant name</span>
 						<input
@@ -331,7 +336,7 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 					</label>
 					<label className="tenancy-field-full">
 						<span className="label-text">Address for verification</span>
-						<textarea value={verificationAddress} onChange={(e) => setVerificationAddress(e.target.value)} />
+						<textarea value={verificationAddress} onChange={(e) => setVerificationAddress(e.target.value)} rows={3} />
 					</label>
 					<label>
 						<span className="label-text">Paras true to personal knowledge - from</span>
@@ -357,7 +362,7 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 						<span className="label-text">Place</span>
 						<input type="text" value={verificationPlace} onChange={(e) => setVerificationPlace(e.target.value)} />
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text">Signature image (optional)</span>
 						<input type="file" accept="image/*" onChange={(e) => setSignatureImage(e.target.files?.[0] || null)} />
 					</label>

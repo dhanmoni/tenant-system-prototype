@@ -116,18 +116,39 @@ function UserOverview() {
 				<div className="ws-citizen-welcome-accent" aria-hidden />
 				<div className="ws-citizen-welcome-inner">
 					<div className="ws-citizen-welcome-stats" aria-label="Application summary">
-						<div className="ws-citizen-stat-card">
-							<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.total}</span>
-							<span className="ws-citizen-stat-card-label">Total applications</span>
-						</div>
-						<div className="ws-citizen-stat-card ws-citizen-stat-card--progress">
-							<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.inReview}</span>
-							<span className="ws-citizen-stat-card-label">In progress</span>
-						</div>
-						<div className="ws-citizen-stat-card ws-citizen-stat-card--done">
-							<span className="ws-citizen-stat-card-value">{loading ? '…' : stats.completed}</span>
-							<span className="ws-citizen-stat-card-label">Completed</span>
-						</div>
+						<article className="ws-citizen-stat-card ws-citizen-stat-card--total">
+							<div className="ws-citizen-stat-card-top">
+								<span className="ws-citizen-stat-card-icon" aria-hidden>
+									<Icon name="list" />
+								</span>
+								<span className="ws-citizen-stat-card-label">Total applications</span>
+							</div>
+							<span className="ws-citizen-stat-card-value">
+								{loading ? '…' : stats.total}
+							</span>
+						</article>
+						<article className="ws-citizen-stat-card ws-citizen-stat-card--progress">
+							<div className="ws-citizen-stat-card-top">
+								<span className="ws-citizen-stat-card-icon" aria-hidden>
+									<Icon name="clock" />
+								</span>
+								<span className="ws-citizen-stat-card-label">In progress</span>
+							</div>
+							<span className="ws-citizen-stat-card-value">
+								{loading ? '…' : stats.inReview}
+							</span>
+						</article>
+						<article className="ws-citizen-stat-card ws-citizen-stat-card--done">
+							<div className="ws-citizen-stat-card-top">
+								<span className="ws-citizen-stat-card-icon" aria-hidden>
+									<Icon name="check" />
+								</span>
+								<span className="ws-citizen-stat-card-label">Completed</span>
+							</div>
+							<span className="ws-citizen-stat-card-value">
+								{loading ? '…' : stats.completed}
+							</span>
+						</article>
 					</div>
 				</div>
 			</header>

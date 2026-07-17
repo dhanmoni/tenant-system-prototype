@@ -1,3 +1,5 @@
+import NexusStatCard from './NexusStatCard'
+
 function StatGroup({ title, stats }) {
 	if (!stats?.length) return null
 
@@ -6,18 +8,16 @@ function StatGroup({ title, stats }) {
 			<h3 className="ws-stat-group-title">{title}</h3>
 			<div className="ws-stat-group-grid">
 				{stats.map((item) => (
-					<div
+					<NexusStatCard
 						key={item.label}
-						className={`ws-stat-card ws-stat-card--compact${item.highlight ? ' ws-stat-card--highlight' : ''}`}
-					>
-						<div className="ws-stat-card-label">{item.label}</div>
-						<div
-							className={`ws-stat-card-value${item.isText ? ' ws-stat-card-value--text' : ''}`}
-						>
-							{item.value ?? '—'}
-						</div>
-						{item.hint ? <div className="ws-stat-card-hint">{item.hint}</div> : null}
-					</div>
+						label={item.label}
+						value={item.value}
+						hint={item.hint}
+						icon={item.icon}
+						tone={item.highlight ? 'warning' : item.tone || 'default'}
+						isText={item.isText}
+						compact
+					/>
 				))}
 			</div>
 		</div>

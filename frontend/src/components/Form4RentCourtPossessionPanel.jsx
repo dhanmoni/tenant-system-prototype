@@ -205,62 +205,61 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Applicant details</legend>
+					<legend>Applicant details</legend>
 
 					<label>
 						<span className="label-text required">Name of the Applicant</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
 					<label>
+						<span className="label-text">Tenant name (optional)</span>
+						<input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
+					</label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Applicant residential address</span>
 						<textarea
 							value={applicantResidentialAddress}
 							onChange={(e) => setApplicantResidentialAddress(e.target.value)}
 							required
+							rows={3}
 						/>
 					</label>
 				</fieldset>
 
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Tenant details</legend>
-
-					<label>
-						<span className="label-text">Tenant name (optional)</span>
-						<input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
+					<legend>Case details</legend>
+					<label className="tenancy-field-full">
+						<span className="label-text">Jurisdiction of the Rent Court (optional)</span>
+						<textarea value={jurisdictionStatement} onChange={(e) => setJurisdictionStatement(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Facts of the case (optional)</span>
+						<textarea value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Grounds for relief (optional)</span>
+						<textarea value={groundsForRelief} onChange={(e) => setGroundsForRelief(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Matters not previously filed or pending (optional)</span>
+						<textarea value={mattersNotPreviouslyFiled} onChange={(e) => setMattersNotPreviouslyFiled(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Relief sought (optional)</span>
+						<textarea value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">Interim order sought (optional)</span>
+						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
+					</label>
+					<label className="tenancy-field-full">
+						<span className="label-text">List of enclosures (optional)</span>
+						<textarea value={enclosuresList} onChange={(e) => setEnclosuresList(e.target.value)} rows={3} />
 					</label>
 				</fieldset>
 
-				<label>
-					<span className="label-text">Jurisdiction of the Rent Court (optional)</span>
-					<textarea value={jurisdictionStatement} onChange={(e) => setJurisdictionStatement(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Facts of the case (optional)</span>
-					<textarea value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Grounds for relief (optional)</span>
-					<textarea value={groundsForRelief} onChange={(e) => setGroundsForRelief(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Matters not previously filed or pending (optional)</span>
-					<textarea value={mattersNotPreviouslyFiled} onChange={(e) => setMattersNotPreviouslyFiled(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Relief sought (optional)</span>
-					<textarea value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">Interim order sought (optional)</span>
-					<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} />
-				</label>
-				<label>
-					<span className="label-text">List of enclosures (optional)</span>
-					<textarea value={enclosuresList} onChange={(e) => setEnclosuresList(e.target.value)} />
-				</label>
-
 				<fieldset className="tenancy-fieldset">
-					<legend className="tenancy-legend-italic">Verification / Signature</legend>
+					<legend>Verification / Signature</legend>
 					<label>
 						<span className="label-text required">Applicant name</span>
 						<input
@@ -303,6 +302,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 						<textarea
 							value={verificationAddress}
 							onChange={(e) => setVerificationAddress(e.target.value)}
+							rows={3}
 						/>
 					</label>
 					<label>
@@ -353,7 +353,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 							onChange={(e) => setVerificationPlace(e.target.value)}
 						/>
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text">Signature image (optional)</span>
 						<input type="file" accept="image/*" onChange={(e) => setSignatureImage(e.target.files?.[0] || null)} />
 					</label>

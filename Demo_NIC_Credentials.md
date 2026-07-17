@@ -170,6 +170,20 @@ The official dashboard shows your **official email** and role, **stat cards and 
 | **Sonitpur**   | **General User**      | `9888880309`      | `sonitpur.tenant@nic.in`        | `123456` |
 
 
+### Multi-role demos (same phone → role switcher)
+
+These accounts share one phone across **two user profiles**. After login, use the **role switcher** in the top bar to flip between Citizen and official dashboards.
+
+| Shared phone | Roles (switch between) | Profile emails | OTP |
+| ------------ | ---------------------- | -------------- | --- |
+| `9000000001` | **Citizen** + **RA Assistant** | `dual.citizen@nic.in` · `dual.ra.assistant@nic.in` | `123456` |
+| `9000000002` | **Citizen** + **Rent Authority** | `dual2.citizen@nic.in` · `dual2.rent.authority@nic.in` | `123456` |
+| `9000000003` | **Citizen** + **District Admin** | `dual3.citizen@nic.in` · `dual3.district.admin@nic.in` | `123456` |
+
+**How to try:** Login with phone `9000000001` + OTP `123456` → open the role dropdown in the top bar → switch Citizen ↔ RA Assistant.
+
+District for all multi-role demos: **Kamrup**.
+
 ---
 
 ## Database & seeding
