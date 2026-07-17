@@ -14,6 +14,7 @@ import {
 import { useLanguage } from '../../i18n'
 import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
 import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
+import WorkspacePageSearch from '../components/WorkspacePageSearch'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import '../styles/workspace.css'
 
@@ -329,6 +330,8 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 									</div>
 								) : null}
 							</div>
+
+							<WorkspacePageSearch user={user} />
 
 							<button
 								type="button"

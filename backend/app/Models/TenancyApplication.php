@@ -121,6 +121,7 @@ class TenancyApplication extends Model
         string $tenantPhone,
         string $registrationDate,
         $villageWardId,
+        ?string $villageName = null,
         ?string $salt = null
     ): string {
         // Normalize inputs
@@ -137,7 +138,13 @@ class TenancyApplication extends Model
         $registrationDate = date('Y-m-d', strtotime($registrationDate));
         $villageWardId = (string) $villageWardId;
 
+        $villageName = $villageName !== null ? trim((string) $villageName) : null;
+
+        // ref_code fingerprint: phones + date + location identifiers + optional salt
         $parts = [$landlordPhone, $tenantPhone, $registrationDate, $villageWardId];
+        if ($villageName !== null && $villageName !== '') {
+            $parts[] = $villageName;
+        }
         if ($salt) {
             $parts[] = $salt;
         }

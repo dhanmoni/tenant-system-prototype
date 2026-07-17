@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
-import { Link, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
-import { buildTenancyFormData, applyDraftToForm, cleanOptionalValue } from '../../utils/tenancyDraft'
-import { formatDate } from '../../utils/formatters'
+import { buildTenancyFormData, applyDraftToForm, applyInitiatorProfileAutofill, cleanOptionalValue } from '../../utils/tenancyDraft'
+import { formatDate, formatDateTime } from '../../utils/formatters'
 import { Icon } from '../../components/dashboard/Icons'
 import DocumentUploadSlot from '../../components/forms/DocumentUploadSlot'
+import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
-	const [searchParams] = useSearchParams()
+	const location = useLocation()
+	const [searchParams, setSearchParams] = useSearchParams()
+	const draftParam = searchParams.get('draft')
 	const PASSPORT_WIDTH = 350
 	const PASSPORT_HEIGHT = 450
 	const PASSPORT_TOP_BIAS = 0.18
@@ -18,16 +21,27 @@ function TenancyCertificate() {
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
 	const [saveToast, setSaveToast] = useState('')
+	const [errorToast, setErrorToast] = useState('')
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
 	const [draftSaving, setDraftSaving] = useState(false)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
 	const [pageReady, setPageReady] = useState(false)
 	const [draftLoaded, setDraftLoaded] = useState(false)
+	const [startOverOpen, setStartOverOpen] = useState(false)
+	const [startOverBusy, setStartOverBusy] = useState(false)
+	const [draftsModalOpen, setDraftsModalOpen] = useState(false)
+	const [draftsModalMessage, setDraftsModalMessage] = useState('')
+	const [draftsDiscardBusy, setDraftsDiscardBusy] = useState(false)
+	const [draftsLoading, setDraftsLoading] = useState(false)
 	const [conflictData, setConflictData] = useState(null)
 	const [submittedApp, setSubmittedApp] = useState(null)
 	const [linkCopied, setLinkCopied] = useState(false)
 	const saveToastTimerRef = useRef(null)
+	const errorToastTimerRef = useRef(null)
+	const visitInitKeyRef = useRef(null)
+	const allowLeaveRef = useRef(false)
+	const [serverDrafts, setServerDrafts] = useState([])
 
 	// Payment State
 	const [paymentComplete, setPaymentComplete] = useState(false)
@@ -65,7 +79,6 @@ function TenancyCertificate() {
 	const [managerPhone, setManagerPhone] = useState('')
 	const [managerPan, setManagerPan] = useState('')
 	const [managerAadhar, setManagerAadhar] = useState('')
-	const [managerMode, setManagerMode] = useState('enter') // 'same' | 'enter'
 
 	const [tenantName, setTenantName] = useState('')
 	const [tenantAddress, setTenantAddress] = useState('')
@@ -110,14 +123,39 @@ function TenancyCertificate() {
 	const [profileAddress, setProfileAddress] = useState('')
 	const [profilePin, setProfilePin] = useState('')
 	const [profilePan, setProfilePan] = useState('')
-	const [profilePhotoPreview, setProfilePhotoPreview] = useState('')
-	const [profileDistrictId, setProfileDistrictId] = useState('')
-	const [profileOfficeId, setProfileOfficeId] = useState('')
 
+	const applyProfileUser = useCallback((profileUser = {}) => {
+		if (!profileUser) return
+		setProfileType(profileUser.profile_type || '')
+		setProfileName(profileUser.name || '')
+		setProfileEmail(profileUser.email || '')
+		setProfilePhone(profileUser.phone || '')
+		setProfileAddress(profileUser.address || '')
+		setProfilePin(profileUser.pin_code || '')
+		setProfilePan(profileUser.pan_card || '')
+	}, [])
 
+	const getProfileSnapshot = useCallback(() => ({
+		name: profileName || user?.name || '',
+		email: profileEmail || user?.email || '',
+		phone: profilePhone || user?.phone || '',
+		address: profileAddress || user?.address || '',
+		pin_code: profilePin || user?.pin_code || '',
+		pan_card: profilePan || user?.pan_card || '',
+		profile_type: profileType || user?.profile_type || '',
+	}), [profileName, profileEmail, profilePhone, profileAddress, profilePin, profilePan, profileType, user])
 
 	const populateFromDraft = useCallback(
 		(draft) => {
+			const profileSnapshot = {
+				name: user?.name || profileName || '',
+				email: user?.email || profileEmail || '',
+				phone: user?.phone || profilePhone || '',
+				address: user?.address || profileAddress || '',
+				pin_code: user?.pin_code || profilePin || '',
+				pan_card: user?.pan_card || profilePan || '',
+				profile_type: user?.profile_type || profileType || '',
+			}
 			applyDraftToForm(draft, {
 				setDraftApplicationNo,
 				setSavedWizardStep,
@@ -164,9 +202,9 @@ function TenancyCertificate() {
 				setLandlordSignaturePreview,
 				setTenantPhotoPreview,
 				setTenantSignaturePreview,
-			}, { loadVillageWards: loadTenancyVillageWards })
+			}, { loadVillageWards: loadTenancyVillageWards, profile: profileSnapshot })
 		},
-		[]
+		[user, profileName, profileEmail, profilePhone, profileAddress, profilePin, profilePan, profileType]
 	)
 	
 	const availableLocalBodies = useMemo(() => {
@@ -207,96 +245,83 @@ function TenancyCertificate() {
 		return tenancyOffices.filter(o => o.district_id == tenancyDistrictId);
 	}, [tenancyOffices, tenancyDistrictId]);
 
-	// Auto-select circle office if there's only one for the selected district
-	useEffect(() => {
-		if (tenancyDistrictId && availableOffices.length === 1) {
-			if (tenancyOfficeId !== String(availableOffices[0].id)) {
-				setTenancyOfficeId(String(availableOffices[0].id));
-			}
+	const fetchServerDrafts = useCallback(async () => {
+		setDraftsLoading(true)
+		try {
+			const { data } = await api.get('/api/tenancy-applications/drafts')
+			const list = Array.isArray(data?.drafts) ? data.drafts : []
+			setServerDrafts(list.filter((d) => d?.application_no))
+			return list
+		} catch {
+			setServerDrafts([])
+			return []
+		} finally {
+			setDraftsLoading(false)
 		}
-	}, [tenancyDistrictId, availableOffices, tenancyOfficeId]);
+	}, [])
 
-
-
+	const openDraftsModal = useCallback(() => {
+		setDraftsModalMessage('')
+		setDraftsModalOpen(true)
+		void fetchServerDrafts()
+	}, [fetchServerDrafts])
 
 	const loadDraft = useCallback(async () => {
+		const draftNo = searchParams.get('draft')
+		if (!draftNo) {
+			setDraftLoaded(true)
+			return
+		}
+
 		try {
-			const draftNo = searchParams.get('draft')
-			if (draftNo) {
-				const { data } = await api.get(`/api/tenancy-applications/${draftNo}`)
-				const app = data.application || data
-				if (app?.status === 'DRAFT') {
-					populateFromDraft(app)
-					return
-				}
+			const { data } = await api.get(
+				`/api/tenancy-applications/${encodeURIComponent(draftNo)}`
+			)
+			const app = data.application || data
+			if (String(app?.status || '').toUpperCase() === 'DRAFT') {
+				populateFromDraft(app)
+				void fetchServerDrafts()
+				return
 			}
-			const { data } = await api.get('/api/tenancy-applications/draft/current')
-			if (data.draft) {
-				populateFromDraft(data.draft)
-			}
+			setError('This application can no longer be continued from here.')
 		} catch (err) {
 			console.error('Failed to load draft', err)
+			setError(err?.response?.data?.message || 'Failed to load saved application.')
 		} finally {
 			setDraftLoaded(true)
 		}
-	}, [populateFromDraft, searchParams])
+	}, [populateFromDraft, searchParams, fetchServerDrafts])
 
 	const loadProfile = async () => {
 		try {
 			const { data } = await api.get('/api/profile')
-			const p = data.user || {}
-			setProfileType(p.profile_type || '')
-			setProfileName(p.name || '')
-			setProfileEmail(p.email || '')
-			setProfilePhone(p.phone || '')
-			setProfileAddress(p.address || '')
-			setProfilePin(p.pin_code || '')
-			setProfilePan(p.pan_card || '')
-			setProfileDistrictId(p.district_id || '')
-			setProfileOfficeId(p.office_id || '')
-
-			const photoUrl = p.passport_photo_url
-			const photoPath = p.passport_photo_path || p.user_passport_photo_path
-			if (photoUrl) setProfilePhotoPreview(photoUrl)
-			else if (photoPath) setProfilePhotoPreview(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${photoPath}`)
-		} catch (err) { console.error('Failed to load profile for prefill') }
+			applyProfileUser(data.user || {})
+		} catch (err) {
+			console.error('Failed to load profile for prefill')
+			applyProfileUser(user || {})
+		}
 	}
 
 	
-	// Auto-fill district and office from profile once draft is loaded (if they are still empty)
-	useEffect(() => {
-		if (draftLoaded) {
-			if (!tenancyDistrictId && profileDistrictId) {
-				setTenancyDistrictId(String(profileDistrictId));
-				loadTenancyVillageWards(String(profileDistrictId));
-			}
-			if (!tenancyOfficeId && profileOfficeId) {
-				setTenancyOfficeId(String(profileOfficeId));
-			}
-		}
-	}, [draftLoaded, profileDistrictId, profileOfficeId]); // Intentionally omitting tenancyDistrictId/tenancyOfficeId so it doesn't re-fill if user clears them
-
 	const profileAddressLine = [profileAddress, profilePin].filter(Boolean).join(', ')
 
 	const fillProfileIntoRole = useCallback((role) => {
-		if (!role || !profileName) return
-
-		if (role === 'LANDLORD') {
-			setLandlordName(profileName)
-			setLandlordAddress(profileAddressLine || profileAddress)
-			setLandlordEmail(profileEmail)
-			setLandlordPhone(profilePhone)
-			setLandlordPan(profilePan)
-			if (profilePhotoPreview) setLandlordPhotoPreview(profilePhotoPreview)
-		} else if (role === 'TENANT') {
-			setTenantName(profileName)
-			setTenantAddress(profileAddressLine || profileAddress)
-			setTenantEmail(profileEmail)
-			setTenantPhone(profilePhone)
-			setTenantPan(profilePan)
-			if (profilePhotoPreview) setTenantPhotoPreview(profilePhotoPreview)
-		}
-	}, [profileName, profileAddress, profileAddressLine, profileEmail, profilePhone, profilePan, profilePhotoPreview])
+		if (!role) return
+		const snapshot = getProfileSnapshot()
+		if (!snapshot.name) return
+		applyInitiatorProfileAutofill(role, snapshot, {
+			setLandlordName,
+			setLandlordAddress,
+			setLandlordEmail,
+			setLandlordPhone,
+			setLandlordPan,
+			setTenantName,
+			setTenantAddress,
+			setTenantEmail,
+			setTenantPhone,
+			setTenantPan,
+		})
+	}, [getProfileSnapshot])
 
 	const clearPartyIfMatchesProfile = useCallback((role) => {
 		if (!profileName) return
@@ -308,16 +333,14 @@ function TenancyCertificate() {
 			setLandlordEmail((v) => (v === profileEmail ? '' : v))
 			setLandlordPhone((v) => (v === profilePhone ? '' : v))
 			setLandlordPan((v) => (v === profilePan ? '' : v))
-			setLandlordPhotoPreview((v) => (v === profilePhotoPreview ? '' : v))
 		} else if (role === 'TENANT') {
 			setTenantName((v) => (v === profileName ? '' : v))
 			setTenantAddress((v) => (v === addr || v === profileAddress ? '' : v))
 			setTenantEmail((v) => (v === profileEmail ? '' : v))
 			setTenantPhone((v) => (v === profilePhone ? '' : v))
 			setTenantPan((v) => (v === profilePan ? '' : v))
-			setTenantPhotoPreview((v) => (v === profilePhotoPreview ? '' : v))
 		}
-	}, [profileName, profileAddress, profileAddressLine, profileEmail, profilePhone, profilePan, profilePhotoPreview])
+	}, [profileName, profileAddress, profileAddressLine, profileEmail, profilePhone, profilePan])
 
 	const handleInitiatorRoleChange = (role) => {
 		if (role === initiatorRole) return
@@ -327,33 +350,46 @@ function TenancyCertificate() {
 		if (previous) clearPartyIfMatchesProfile(previous)
 	}
 
-	// Default role from profile type (new applications only)
+	// Fresh apply defaults to Landlord (draft resume keeps saved role)
 	useEffect(() => {
-		if (!draftLoaded || initiatorRole || !profileType) return
-		if (profileType === 'landlord') setInitiatorRole('LANDLORD')
-		else if (profileType === 'tenant') setInitiatorRole('TENANT')
-	}, [draftLoaded, initiatorRole, profileType])
+		if (draftParam || !draftLoaded || initiatorRole) return
+		setInitiatorRole('LANDLORD')
+	}, [draftParam, draftLoaded, initiatorRole])
 
-	// Fill initiator section once profile is ready (and fields are still empty)
+	// Fill initiator section from profile when fields are empty (after draft load or fresh default)
 	useEffect(() => {
-		if (!draftLoaded || !initiatorRole || !profileName) return
+		if (!draftLoaded || !initiatorRole) return
+		if (draftParam && !draftApplicationNo) return
+		const snapshot = getProfileSnapshot()
+		if (!snapshot.name) return
+		const needsAutofill =
+			initiatorRole === 'LANDLORD'
+				? !landlordName.trim()
+				: initiatorRole === 'TENANT'
+					? !tenantName.trim()
+					: false
+		if (!needsAutofill) return
+		fillProfileIntoRole(initiatorRole)
+	}, [
+		draftParam,
+		draftApplicationNo,
+		draftLoaded,
+		initiatorRole,
+		landlordName,
+		tenantName,
+		getProfileSnapshot,
+		fillProfileIntoRole,
+	])
 
-		if (initiatorRole === 'LANDLORD') {
-			setLandlordName((v) => v || profileName)
-			setLandlordAddress((v) => v || profileAddressLine || profileAddress)
-			setLandlordEmail((v) => v || profileEmail)
-			setLandlordPhone((v) => v || profilePhone)
-			setLandlordPan((v) => v || profilePan)
-			if (profilePhotoPreview) setLandlordPhotoPreview((v) => v || profilePhotoPreview)
-		} else if (initiatorRole === 'TENANT') {
-			setTenantName((v) => v || profileName)
-			setTenantAddress((v) => v || profileAddressLine || profileAddress)
-			setTenantEmail((v) => v || profileEmail)
-			setTenantPhone((v) => v || profilePhone)
-			setTenantPan((v) => v || profilePan)
-			if (profilePhotoPreview) setTenantPhotoPreview((v) => v || profilePhotoPreview)
-		}
-	}, [draftLoaded, initiatorRole, profileName, profileAddress, profileAddressLine, profileEmail, profilePhone, profilePan, profilePhotoPreview])
+	// If draft restored office_id but not district (office relation missing), derive district
+	useEffect(() => {
+		if (!draftLoaded || tenancyDistrictId || !tenancyOfficeId || !tenancyOffices.length) return
+		const office = tenancyOffices.find((o) => String(o.id) === String(tenancyOfficeId))
+		if (!office?.district_id) return
+		const districtId = String(office.district_id)
+		setTenancyDistrictId(districtId)
+		loadTenancyVillageWards(districtId)
+	}, [draftLoaded, tenancyDistrictId, tenancyOfficeId, tenancyOffices])
 
 	useEffect(() => {
 		if (propertyPossessionDate && propertyTenancyEndDate) {
@@ -401,12 +437,15 @@ function TenancyCertificate() {
 	}
 
 	useEffect(() => {
+		if (user) applyProfileUser(user)
+	}, [user, applyProfileUser])
+
+	useEffect(() => {
 		const init = async () => {
 			await Promise.all([
 				loadProfile(),
 				loadTenancyDistricts(),
 				loadTenancyOffices(),
-				loadDraft(),
 			])
 			setPageReady(true)
 		}
@@ -414,17 +453,151 @@ function TenancyCertificate() {
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
-	const resetTenancyForm = () => {
-		setTenancyStep(1); setDraftApplicationNo(null); setSavedWizardStep(0); setTenancyRegistrationDate(''); setTenancyOfficeId('');
-		setAgreementFile(null); setAgreementPreviewUrl(''); setLandlordPhotoFile(null); setLandlordPhotoPreview(profileType === 'landlord' ? profilePhotoPreview : '');
-		setLandlordSignatureFile(null); setLandlordSignaturePreview(''); setTenantPhotoFile(null); setTenantPhotoPreview(profileType === 'tenant' ? profilePhotoPreview : '');
-		setTenantSignatureFile(null); setTenantSignaturePreview(''); setManagerName(''); setManagerAddress(''); setManagerEmail(''); setManagerPhone(''); setManagerPan('');
-		setTenantPreviousTenancy(''); setPropertyPossessionDate(''); setPropertyRentPayable(''); setPropertyPremisesDescription(''); setPropertyFurnitureDescription('');
-		setPropertyChargeElectricity(''); setPropertyChargeWater(''); setPropertyChargeFurnishing(''); setPropertyChargeOtherServices(''); setPropertyTenancyDuration('');
-		setPropertyTenancyEndDate(''); setSuccess(''); setError(''); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyVillageName(''); setTenancyDistrictId(''); setTenancyAreaType(''); setTenancyLocalBody('');
-		setPaymentComplete(false); setPaymentSimulating(false); setPaymentGrn(''); setDeclarationChecked(false);
-		setInitiatorRole(profileType === 'landlord' ? 'LANDLORD' : profileType === 'tenant' ? 'TENANT' : '')
+	const resetTenancyFormFields = useCallback(() => {
+		setTenancyStep(1)
+		setDraftApplicationNo(null)
+		setSavedWizardStep(0)
+		setTenancyRegistrationDate('')
+		setTenancyOfficeId('')
+		setAgreementFile(null)
+		setAgreementPreviewUrl('')
+		setLandlordPhotoFile(null)
+		setLandlordPhotoPreview('')
+		setLandlordSignatureFile(null)
+		setLandlordSignaturePreview('')
+		setTenantPhotoFile(null)
+		setTenantPhotoPreview('')
+		setTenantSignatureFile(null)
+		setTenantSignaturePreview('')
+		setLandlordPanFile(null)
+		setTenantPanFile(null)
+		setManagerPanFile(null)
+		setManagerName('')
+		setManagerAddress('')
+		setManagerEmail('')
+		setManagerPhone('')
+		setManagerPan('')
+		setManagerAadhar('')
+		setLandlordName('')
+		setLandlordAddress('')
+		setLandlordEmail('')
+		setLandlordPhone('')
+		setLandlordPan('')
+		setLandlordAadhar('')
+		setTenantName('')
+		setTenantAddress('')
+		setTenantEmail('')
+		setTenantPhone('')
+		setTenantPan('')
+		setTenantAadhar('')
+		setTenantPreviousTenancy('')
+		setPropertyPossessionDate('')
+		setPropertyRentPayable('')
+		setPropertyPremisesDescription('')
+		setPropertyFurnitureDescription('')
+		setPropertyChargeElectricity('')
+		setPropertyChargeWater('')
+		setPropertyChargeFurnishing('')
+		setPropertyChargeOtherServices('')
+		setPropertyTenancyDuration('')
+		setPropertyTenancyEndDate('')
+		setSuccess('')
+		setError('')
+		setTenancyVillageWardId('')
+		setTenancyVillageWards([])
+		setTenancyVillageName('')
+		setTenancyDistrictId('')
+		setTenancyAreaType('')
+		setTenancyLocalBody('')
+		setPaymentComplete(false)
+		setPaymentSimulating(false)
+		setPaymentGrn('')
+		setDeclarationChecked(false)
+		setInitiatorRole('')
+	}, [])
+
+	const clearTenancyFormFields = useCallback(() => {
+		resetTenancyFormFields()
+		if (searchParams.get('draft')) {
+			setSearchParams({}, { replace: true })
+		}
+	}, [resetTenancyFormFields, searchParams, setSearchParams])
+
+	const getActiveDraftNo = useCallback(
+		() => draftApplicationNo || draftParam || null,
+		[draftApplicationNo, draftParam]
+	)
+
+	const resumeFromDraft = useCallback((draftNo) => {
+		if (!draftNo) return
+		setError('')
+		setDraftsModalOpen(false)
+		setDraftsModalMessage('')
+		setSearchParams({ draft: draftNo }, { replace: true })
+	}, [setSearchParams])
+
+	const discardSavedDraft = useCallback(async (draftNo) => {
+		const targetNo = draftNo || getActiveDraftNo()
+		if (!targetNo) return
+		setDraftsDiscardBusy(true)
+		try {
+			await csrf()
+			await api.delete(`/api/tenancy-applications/${targetNo}/draft`)
+			setServerDrafts((prev) => prev.filter((d) => d.application_no !== targetNo))
+			if (draftApplicationNo === targetNo || draftParam === targetNo) {
+				clearTenancyFormFields()
+			}
+			setError('')
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to discard draft')
+		} finally {
+			setDraftsDiscardBusy(false)
+		}
+	}, [getActiveDraftNo, draftApplicationNo, draftParam, clearTenancyFormFields])
+
+	useEffect(() => {
+		if (!pageReady) return
+
+		const visitKey = `${location.key}|${draftParam || ''}`
+		if (visitInitKeyRef.current === visitKey) return
+		visitInitKeyRef.current = visitKey
+
+		if (!draftParam) {
+			resetTenancyFormFields()
+			setDraftLoaded(false)
+			void (async () => {
+				await fetchServerDrafts()
+				setDraftLoaded(true)
+			})()
+			return
+		}
+
+		setDraftLoaded(false)
+		resetTenancyFormFields()
+		loadDraft()
+	}, [pageReady, draftParam, location.key, loadDraft, resetTenancyFormFields, fetchServerDrafts])
+
+	const resetTenancyForm = async () => {
+		const draftNo = getActiveDraftNo()
+		setStartOverBusy(true)
+		try {
+			if (draftNo) {
+				await csrf()
+				await api.delete(`/api/tenancy-applications/${draftNo}/draft`)
+				setServerDrafts((prev) => prev.filter((d) => d.application_no !== draftNo))
+			}
+			clearTenancyFormFields()
+			setStartOverOpen(false)
+			setError('')
+		} catch (err) {
+			const msg = err?.response?.data?.message || 'Failed to start over'
+			setError(msg)
+		} finally {
+			setStartOverBusy(false)
+		}
 	}
+
+	const isResumedSession = Boolean(draftParam || draftApplicationNo)
 
 	const applyType = (() => {
 		if (!tenancyRegistrationDate) return ''
@@ -495,9 +668,7 @@ function TenancyCertificate() {
 		fieldErrors.landlordPhone || fieldErrors.tenantPhone ||
 		fieldErrors.landlordPan || fieldErrors.tenantPan ||
 		fieldErrors.landlordEmail || fieldErrors.tenantEmail ||
-		(managerMode === 'enter' && (
-			fieldErrors.managerPhone || fieldErrors.managerPan || fieldErrors.managerEmail
-		))
+		fieldErrors.managerPhone || fieldErrors.managerPan || fieldErrors.managerEmail
 	)
 
 	const parseCharge = (value) => {
@@ -522,26 +693,6 @@ function TenancyCertificate() {
 		propertyChargeFurnishing,
 		propertyChargeOtherServices,
 	])
-
-	useEffect(() => {
-		if (managerMode !== 'same') return
-		setManagerName(landlordName)
-		setManagerAddress(landlordAddress)
-		setManagerEmail(landlordEmail)
-		setManagerPhone(landlordPhone)
-		setManagerPan(landlordPan)
-	}, [managerMode, landlordName, landlordAddress, landlordEmail, landlordPhone, landlordPan])
-
-	const handleManagerModeChange = (mode) => {
-		setManagerMode(mode)
-		if (mode === 'enter') {
-			setManagerName('')
-			setManagerAddress('')
-			setManagerEmail('')
-			setManagerPhone('')
-			setManagerPan('')
-		}
-	}
 
 	const feeAmount = (() => {
 		if (!applyType) return 0
@@ -718,6 +869,50 @@ function TenancyCertificate() {
 		managerPanFile,
 	})
 
+	const hasApplyProgress = useMemo(() => {
+		if (tenancyStep > 1) return true
+		if (draftApplicationNo) return true
+		if (tenancyRegistrationDate || tenancyOfficeId || initiatorRole) return true
+		if (landlordName.trim() || tenantName.trim() || managerName.trim()) return true
+		if (agreementFile || landlordPhotoFile || tenantPhotoFile) return true
+		if (paymentComplete || declarationChecked) return true
+		return false
+	}, [
+		tenancyStep,
+		draftApplicationNo,
+		tenancyRegistrationDate,
+		tenancyOfficeId,
+		initiatorRole,
+		landlordName,
+		tenantName,
+		managerName,
+		agreementFile,
+		landlordPhotoFile,
+		tenantPhotoFile,
+		paymentComplete,
+		declarationChecked,
+	])
+
+	const showRefreshWarning =
+		pageReady && draftLoaded && !submittedApp && !draftParam && !draftApplicationNo
+
+	const leaveWarningMessage =
+		'Refreshing before you save will clear this form. Click Save & continue first — then a refresh will reopen the same draft.'
+
+	useEffect(() => {
+		if (!showRefreshWarning || !hasApplyProgress) return undefined
+
+		const onBeforeUnload = (event) => {
+			if (allowLeaveRef.current) return
+			event.preventDefault()
+			event.returnValue = leaveWarningMessage
+			return leaveWarningMessage
+		}
+
+		window.addEventListener('beforeunload', onBeforeUnload)
+		return () => window.removeEventListener('beforeunload', onBeforeUnload)
+	}, [showRefreshWarning, hasApplyProgress, leaveWarningMessage])
+
 	const showSaveToast = useCallback((message = 'Progress saved.') => {
 		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
 		setSaveToast(message)
@@ -727,8 +922,20 @@ function TenancyCertificate() {
 		}, 2800)
 	}, [])
 
+	const showErrorToast = useCallback((message) => {
+		if (!message) return
+		if (errorToastTimerRef.current) clearTimeout(errorToastTimerRef.current)
+		setError(message)
+		setErrorToast(message)
+		errorToastTimerRef.current = setTimeout(() => {
+			setErrorToast('')
+			errorToastTimerRef.current = null
+		}, 3500)
+	}, [])
+
 	useEffect(() => () => {
 		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+		if (errorToastTimerRef.current) clearTimeout(errorToastTimerRef.current)
 	}, [])
 
 	const saveDraftStep = async (step) => {
@@ -742,6 +949,7 @@ function TenancyCertificate() {
 			const formData = buildTenancyFormData(getFormState(), {
 				wizardStep: step,
 				includeThroughStep: throughStep,
+				profile: getProfileSnapshot(),
 			})
 			let data
 			if (!draftApplicationNo) {
@@ -759,7 +967,16 @@ function TenancyCertificate() {
 			const draft = data.draft || data
 			if (draft?.application_no) {
 				setDraftApplicationNo(draft.application_no)
+				setServerDrafts((prev) => {
+					const others = prev.filter((d) => d.application_no !== draft.application_no)
+					return [draft, ...others]
+				})
 				setSavedWizardStep(Math.max(step, Number(draft.wizard_step) || step))
+				// Keep draft in the URL so a refresh reloads this same draft (not a blank form).
+				if (draftParam !== draft.application_no) {
+					visitInitKeyRef.current = `${location.key}|${draft.application_no}`
+					setSearchParams({ draft: draft.application_no }, { replace: true })
+				}
 			}
 			setSuccess('Progress saved.')
 			if (window.toastTimer) clearTimeout(window.toastTimer)
@@ -775,6 +992,7 @@ function TenancyCertificate() {
 				if (list.length) msg = list.join('. ')
 			}
 			setError(msg)
+			showErrorToast(msg)
 			return false
 		} finally {
 			setDraftSaving(false)
@@ -796,14 +1014,11 @@ function TenancyCertificate() {
 			if (draftApplicationNo) {
 				const res = await api.post(
 					`/api/tenancy-applications/${draftApplicationNo}/submit`,
-					formData,
-					{ headers: { 'Content-Type': 'multipart/form-data' } }
+					formData
 				)
 				data = res.data
 			} else {
-				const res = await api.post('/api/tenancy-applications', formData, {
-					headers: { 'Content-Type': 'multipart/form-data' },
-				})
+				const res = await api.post('/api/tenancy-applications', formData)
 				data = res.data
 			}
 			setConflictData(null)
@@ -824,7 +1039,7 @@ function TenancyCertificate() {
 			const data = err?.response?.data
 			if (err?.response?.status === 409 && data?.conflict) {
 				setConflictData(data)
-				setError(data.message)
+				showErrorToast(data.message || 'An application with these details already exists.')
 				return
 			}
 
@@ -834,7 +1049,7 @@ function TenancyCertificate() {
 				const list = Object.entries(errors).flatMap(([field, messages]) => (Array.isArray(messages) ? messages : [messages]).map(m => `${field}: ${m}`))
 				if (list.length) msg = list.join('. ')
 			}
-			setError(msg)
+			showErrorToast(msg)
 		} finally { setTenancySubmitting(false) }
 	}
 
@@ -859,6 +1074,34 @@ function TenancyCertificate() {
 		}
 	}, [])
 
+	const scrollToFirstError = useCallback((root = null) => {
+		const scope = root && root.querySelector ? root : document
+		const pageRoot = document.querySelector('.ws-uin-apply') || document
+		const target =
+			scope.querySelector?.('.ws-uin-field-error')?.closest('label') ||
+			scope.querySelector?.('[aria-invalid="true"]') ||
+			scope.querySelector?.(':invalid') ||
+			pageRoot.querySelector?.('.ws-alert--error')
+
+		if (!target) {
+			scrollFormToTop()
+			return
+		}
+
+		target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+		const focusEl =
+			target.matches?.('input, select, textarea, button')
+				? target
+				: target.querySelector?.('input, select, textarea, button')
+		if (focusEl && typeof focusEl.focus === 'function') {
+			try {
+				focusEl.focus({ preventScroll: true })
+			} catch {
+				focusEl.focus()
+			}
+		}
+	}, [scrollFormToTop])
+
 	useEffect(() => {
 		scrollFormToTop()
 	}, [tenancyStep, scrollFormToTop])
@@ -876,16 +1119,54 @@ function TenancyCertificate() {
 
 	const handleContinue = async (e) => {
 		e.preventDefault()
+		const form = e.currentTarget
+		setError('')
+
 		if (tenancyStep === 1 && registrationTooOld) return
+
 		if (tenancyStep === 2) {
-			if (hasStep2FieldErrors) return
-			if (initiatorRole === 'LANDLORD' && !landlordEmail.trim()) return
-			if (initiatorRole === 'TENANT' && !tenantEmail.trim()) return
-			if (!landlordPhone || !tenantPhone || !landlordPan || !tenantPan) return
+			if (hasStep2FieldErrors) {
+				showErrorToast('Please correct the highlighted fields before continuing.')
+				requestAnimationFrame(() => scrollToFirstError(form))
+				return
+			}
+			if (initiatorRole === 'LANDLORD' && !landlordEmail.trim()) {
+				showErrorToast('Please enter your email address.')
+				requestAnimationFrame(() => scrollToFirstError(form))
+				return
+			}
+			if (initiatorRole === 'TENANT' && !tenantEmail.trim()) {
+				showErrorToast('Please enter your email address.')
+				requestAnimationFrame(() => scrollToFirstError(form))
+				return
+			}
+			if (!landlordPhone || !tenantPhone || !landlordPan || !tenantPan) {
+				showErrorToast('Please complete all required party details before continuing.')
+				requestAnimationFrame(() => scrollToFirstError(form))
+				return
+			}
+			if (typeof form?.checkValidity === 'function' && !form.checkValidity()) {
+				showErrorToast('Please fill in the required fields highlighted below.')
+				const firstInvalid = form.querySelector(':invalid')
+				if (firstInvalid) {
+					firstInvalid.setAttribute('aria-invalid', 'true')
+					firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' })
+					try {
+						firstInvalid.focus({ preventScroll: true })
+					} catch {
+						firstInvalid.focus()
+					}
+				} else {
+					requestAnimationFrame(() => scrollToFirstError(form))
+				}
+				return
+			}
 		}
+
 		if (tenancyStep === 4) {
 			if (!declarationChecked) {
-				setError('You must accept the declaration to proceed to payment.')
+				showErrorToast('You must accept the declaration to proceed to payment.')
+				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			const ok = await saveDraftStep(4)
@@ -894,11 +1175,13 @@ function TenancyCertificate() {
 		}
 		if (tenancyStep === 5) {
 			if (!paymentComplete) {
-				setError('You must complete the fee payment before submitting.')
+				showErrorToast('You must complete the fee payment before submitting.')
+				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			if (!declarationChecked) {
-				setError('You must accept the declaration to submit.')
+				showErrorToast('You must accept the declaration to submit.')
+				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			submitTenancyApplication()
@@ -906,6 +1189,7 @@ function TenancyCertificate() {
 		}
 		const ok = await saveDraftStep(tenancyStep)
 		if (ok) setTenancyStep((prev) => Math.min(TOTAL_STEPS, prev + 1))
+		else requestAnimationFrame(() => scrollToFirstError(form))
 	}
 
 	const openInPrintWindow = (html) => {
@@ -1068,6 +1352,12 @@ function TenancyCertificate() {
 					{saveToast}
 				</div>
 			) : null}
+			{errorToast ? (
+				<div className="ws-uin-progress-toast ws-uin-progress-toast--error" role="alert" aria-live="assertive">
+					<span className="ws-uin-progress-toast__icon" aria-hidden>!</span>
+					{errorToast}
+				</div>
+			) : null}
 			{!pageReady ? (
 				<div className="ws-uin-apply-loading" role="status" aria-live="polite">
 					Loading application…
@@ -1081,19 +1371,64 @@ function TenancyCertificate() {
 			</nav>
 
 			<header className="ws-uin-apply-head">
-				<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
-				<p className="ws-uin-apply-lead">
-					Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
-				</p>
-				{draftApplicationNo ? (
-					<p className="ws-uin-apply-draft-id">
-						Draft: <strong>{draftApplicationNo}</strong>
-					</p>
-				) : null}
+				<div className="ws-uin-apply-head__row">
+					<div className="ws-uin-apply-head__copy">
+						<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
+						<p className="ws-uin-apply-lead">
+							Complete each stage in order. Click <strong>Save &amp; continue</strong> after each
+							stage to save your progress.
+						</p>
+						{showRefreshWarning ? (
+							<p className="ws-uin-refresh-note" role="status">
+								Refresh clears this form until you save. After{' '}
+								<strong>Save &amp; continue</strong>, a refresh will reopen the same draft.
+							</p>
+						) : null}
+						{draftApplicationNo ? (
+							<p className="ws-uin-draft-line" role="status">
+								<span className="ws-uin-draft-line__dot" aria-hidden />
+								Saved draft <strong>{draftApplicationNo}</strong>
+								{draftParam ? ' — safe to refresh' : null}
+							</p>
+						) : null}
+					</div>
+					<div className="ws-uin-apply-head__actions">
+						<button
+							type="button"
+							className="ws-btn ws-btn--secondary ws-uin-drafts-btn"
+							onClick={() => openDraftsModal()}
+						>
+							<Icon name="file" />
+							<span>Drafts</span>
+							{serverDrafts.length > 0 ? (
+								<span className="ws-uin-drafts-btn__badge" aria-label={`${serverDrafts.length} saved drafts`}>
+									{serverDrafts.length}
+								</span>
+							) : null}
+						</button>
+						{isResumedSession ? (
+							<button
+								type="button"
+								className="ws-btn ws-uin-start-over"
+								onClick={() => setStartOverOpen(true)}
+							>
+								Start over
+							</button>
+						) : null}
+					</div>
+				</div>
 			</header>
 
-			<nav className="ws-uin-h-stepper" aria-label="Application stages">
-				<div className="ws-uin-h-stepper__track" aria-hidden />
+			<nav
+				className="ws-uin-h-stepper"
+				aria-label="Application stages"
+				style={{
+					'--ws-uin-progress': `${TOTAL_STEPS <= 1 ? 0 : ((tenancyStep - 1) / (TOTAL_STEPS - 1)) * 100}%`,
+				}}
+			>
+				<div className="ws-uin-h-stepper__track" aria-hidden>
+					<span className="ws-uin-h-stepper__progress" />
+				</div>
 				<ol className="ws-uin-h-stepper__list">
 					{tenancySteps.map((step) => {
 						const done = tenancyStep > step.id || savedWizardStep >= step.id
@@ -1121,36 +1456,42 @@ function TenancyCertificate() {
 
 			<div className="ws-uin-apply-body-full">
 				<div className="ws-uin-apply-main">
-					{error ? <div className="ws-alert ws-alert--error" style={{ borderRadius: '8px' }}>{error}</div> : null}
+					{error && !errorToast ? <div className="ws-alert ws-alert--error" style={{ borderRadius: '8px' }}>{error}</div> : null}
 
 					{conflictData && (
 						<div className="conflict-notice-box">
-							<p>An application with these details already exists (Application No: <strong>{conflictData.existing_application?.application_no}</strong>).</p>
+							<p>
+								Another active application already uses the same landlord/tenant phone and agreement
+								date (Application No:{' '}
+								<strong>{conflictData.existing_application?.application_no}</strong>).
+							</p>
 							<div className="conflict-actions">
-								<button type="button" className="secondary" onClick={() => navigate(`/dashboard/status?app_no=${conflictData.existing_application?.application_no}`)}>View Existing Application</button>
-								<button type="button" className="danger" onClick={() => submitTenancyApplication(true)}>Start Fresh Application Anyway</button>
+								<button
+									type="button"
+									className="secondary"
+									onClick={() =>
+										navigate(
+											`/dashboard/status?app_no=${conflictData.existing_application?.application_no}`
+										)
+									}
+								>
+									View existing application
+								</button>
+								<button
+									type="button"
+									className="danger"
+									disabled={tenancySubmitting}
+									onClick={() => submitTenancyApplication(true)}
+								>
+									{tenancySubmitting ? 'Submitting…' : 'Submit as a new application'}
+								</button>
 							</div>
 						</div>
 					)}
 
 					{success ? (
-						<div style={{
-							position: 'fixed',
-							top: '30px',
-							right: '30px',
-							background: '#1f2937',
-							color: '#ffffff',
-							padding: '12px 24px',
-							borderRadius: '8px',
-							boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-							zIndex: 9999,
-							display: 'flex',
-							alignItems: 'center',
-							gap: '12px',
-							fontSize: '15px',
-							fontWeight: '500'
-						}}>
-							<span style={{ background: '#10b981', color: '#fff', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>✓</span>
+						<div className="ws-uin-progress-toast" role="status" aria-live="polite">
+							<span className="ws-uin-progress-toast__icon" aria-hidden>✓</span>
 							{success}
 						</div>
 					) : null}
@@ -1163,17 +1504,18 @@ function TenancyCertificate() {
 			<form
 				className={`tenancy-form ws-uin-apply-form${tenancyStep === 4 ? ' ws-uin-apply-form--preview-step' : ''}`}
 				onSubmit={handleContinue}
+				noValidate
 			>
 				<header className="ws-uin-apply-form-head">
-					<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
-					<p className="ws-uin-apply-lead">
-						Complete each stage in order. Your progress is saved when you continue — you can return to earlier stages to make changes.
-					</p>
-					<p className="ws-uin-apply-type-note">
-						<strong>Joint</strong> (agreement within 2 months): both parties complete the form.
-						<strong> Individual</strong> (2–3 months): you apply alone.
-						Agreements older than 3 months are not eligible.
-					</p>
+					<div className="ws-uin-apply-type-note" role="note">
+						<p>
+							<strong>Joint</strong> (within 2 months) — both parties complete the form.
+						</p>
+						<p>
+							<strong>Individual</strong> (2–3 months) — you apply alone. Agreements older than 3
+							months are not eligible.
+						</p>
+					</div>
 				</header>
 
 				{tenancyStep === 1 && (
@@ -1181,8 +1523,15 @@ function TenancyCertificate() {
 						<div className="form-grid">
 							<div className="ws-uin-role-toggle-field">
 								<span className="label-text required">Initiating as</span>
-								<div className="ws-uin-role-toggle" role="radiogroup" aria-label="Initiating as">
-									<label className={`ws-uin-role-toggle__btn${initiatorRole === 'LANDLORD' ? ' is-active' : ''}`}>
+								<div
+									className={`ws-uin-role-toggle${initiatorRole === 'TENANT' ? ' is-tenant' : ' is-landlord'}`}
+									role="radiogroup"
+									aria-label="Initiating as"
+								>
+									<span className="ws-uin-role-toggle__indicator" aria-hidden />
+									<label
+										className={`ws-uin-role-toggle__btn${initiatorRole === 'LANDLORD' ? ' is-active' : ''}`}
+									>
 										<input
 											type="radio"
 											name="initiatorRole"
@@ -1191,18 +1540,21 @@ function TenancyCertificate() {
 											onChange={() => handleInitiatorRoleChange('LANDLORD')}
 											required
 										/>
-										Landlord
+										<Icon name="building" />
+										<span>Landlord</span>
 									</label>
-									<label className={`ws-uin-role-toggle__btn${initiatorRole === 'TENANT' ? ' is-active' : ''}`}>
+									<label
+										className={`ws-uin-role-toggle__btn${initiatorRole === 'TENANT' ? ' is-active' : ''}`}
+									>
 										<input
 											type="radio"
 											name="initiatorRole"
 											value="TENANT"
 											checked={initiatorRole === 'TENANT'}
 											onChange={() => handleInitiatorRoleChange('TENANT')}
-											required
 										/>
-										Tenant
+										<Icon name="user" />
+										<span>Tenant</span>
 									</label>
 								</div>
 								<span className="ws-uin-field-hint">Your profile details will auto-fill the matching section in Tenancy Details.</span>
@@ -1250,6 +1602,14 @@ function TenancyCertificate() {
 								</select>
 							</label>
 
+							<label>
+								<span className="label-text required">Circle Office</span>
+								<select value={tenancyOfficeId} onChange={e => setTenancyOfficeId(e.target.value)} required disabled={!tenancyDistrictId}>
+									<option value="">Select Office</option>
+									{availableOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+								</select>
+							</label>
+
 							<div className="radio-group-container">
 								<span className="label-text required">Area Type</span>
 								<div className="radio-group" style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
@@ -1291,14 +1651,6 @@ function TenancyCertificate() {
 									</select>
 								</label>
 							)}
-
-							<label>
-								<span className="label-text required">Circle Office:</span>
-								<select value={tenancyOfficeId} onChange={e => setTenancyOfficeId(e.target.value)} required>
-									<option value="">Select Office</option>
-									{availableOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-								</select>
-							</label>
 						</div>
 					</fieldset>
 				)}
@@ -1358,7 +1710,9 @@ function TenancyCertificate() {
 										{fieldErrors.landlordPhone ? <span className="ws-uin-field-error">{fieldErrors.landlordPhone}</span> : null}
 									</label>
 									<label>
-										<span className="label-text required">E-mail id</span>
+										<span className={`label-text${initiatorRole === 'LANDLORD' ? ' required' : ''}`}>
+											E-mail id
+										</span>
 										<input
 											type="email"
 											placeholder="name@example.com"
@@ -1425,7 +1779,9 @@ function TenancyCertificate() {
 										{fieldErrors.tenantPhone ? <span className="ws-uin-field-error">{fieldErrors.tenantPhone}</span> : null}
 									</label>
 									<label>
-										<span className="label-text required">E-mail id</span>
+										<span className={`label-text${initiatorRole === 'TENANT' ? ' required' : ''}`}>
+											E-mail id
+										</span>
 										<input
 											type="email"
 											placeholder="name@example.com"
@@ -1452,74 +1808,60 @@ function TenancyCertificate() {
 									<span className="ws-uin-party-block__num">3</span>
 									<div>
 										<h3 className="ws-uin-party-block__title">Property manager details</h3>
-										<p className="ws-uin-party-block__lead">Optional — tick if the landlord is also the property manager, otherwise enter details below.</p>
+										<p className="ws-uin-party-block__lead">Enter property manager details if applicable.</p>
 									</div>
 								</header>
-								<label className="ws-uin-manager-check">
-									<input
-										type="checkbox"
-										checked={managerMode === 'same'}
-										onChange={(e) => handleManagerModeChange(e.target.checked ? 'same' : 'enter')}
-									/>
-									<span>Same as landlord</span>
-								</label>
-								{managerMode === 'enter' ? (
-									<div className="ws-uin-party-fields">
-										<label>
-											<span className="label-text">Name of the Property Manager</span>
-											<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} />
-										</label>
-										<label>
-											<span className="label-text">PAN of Property Manager</span>
-											<input
-												type="text"
-												value={managerPan}
-												onChange={e => {
-													const next = e.target.value.toUpperCase()
-													if (/^[A-Z0-9]*$/.test(next)) setManagerPan(next.slice(0, 10))
-												}}
-												maxLength={10}
-												aria-invalid={Boolean(fieldErrors.managerPan)}
-											/>
-											{fieldErrors.managerPan ? <span className="ws-uin-field-error">{fieldErrors.managerPan}</span> : null}
-										</label>
-										<label>
-											<span className="label-text">Mobile Number</span>
-											<input
-												type="tel"
-												inputMode="numeric"
-												placeholder="10-digit mobile"
-												value={managerPhone}
-												onChange={e => {
-													const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
-													setManagerPhone(digits)
-												}}
-												maxLength={10}
-												aria-invalid={Boolean(fieldErrors.managerPhone)}
-											/>
-											{fieldErrors.managerPhone ? <span className="ws-uin-field-error">{fieldErrors.managerPhone}</span> : null}
-										</label>
-										<label>
-											<span className="label-text">E-mail id</span>
-											<input
-												type="email"
-												placeholder="name@example.com"
-												value={managerEmail}
-												onChange={e => setManagerEmail(e.target.value)}
-												aria-invalid={Boolean(fieldErrors.managerEmail)}
-											/>
-											{fieldErrors.managerEmail ? <span className="ws-uin-field-error">{fieldErrors.managerEmail}</span> : null}
-										</label>
-										<label className="ws-uin-party-fields__full">
-											<span className="label-text">Address of the Property Manager</span>
-											<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} rows={3} />
-										</label>
-									</div>
-								) : (
-									<p className="ws-uin-manager-same-note">
-										Using landlord details for the property manager. No extra entry needed.
-									</p>
-								)}
+								<div className="ws-uin-party-fields">
+									<label>
+										<span className="label-text">Name of the Property Manager</span>
+										<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} />
+									</label>
+									<label>
+										<span className="label-text">PAN of Property Manager</span>
+										<input
+											type="text"
+											value={managerPan}
+											onChange={e => {
+												const next = e.target.value.toUpperCase()
+												if (/^[A-Z0-9]*$/.test(next)) setManagerPan(next.slice(0, 10))
+											}}
+											maxLength={10}
+											aria-invalid={Boolean(fieldErrors.managerPan)}
+										/>
+										{fieldErrors.managerPan ? <span className="ws-uin-field-error">{fieldErrors.managerPan}</span> : null}
+									</label>
+									<label>
+										<span className="label-text">Mobile Number</span>
+										<input
+											type="tel"
+											inputMode="numeric"
+											placeholder="10-digit mobile"
+											value={managerPhone}
+											onChange={e => {
+												const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
+												setManagerPhone(digits)
+											}}
+											maxLength={10}
+											aria-invalid={Boolean(fieldErrors.managerPhone)}
+										/>
+										{fieldErrors.managerPhone ? <span className="ws-uin-field-error">{fieldErrors.managerPhone}</span> : null}
+									</label>
+									<label>
+										<span className="label-text">E-mail id</span>
+										<input
+											type="email"
+											placeholder="name@example.com"
+											value={managerEmail}
+											onChange={e => setManagerEmail(e.target.value)}
+											aria-invalid={Boolean(fieldErrors.managerEmail)}
+										/>
+										{fieldErrors.managerEmail ? <span className="ws-uin-field-error">{fieldErrors.managerEmail}</span> : null}
+									</label>
+									<label className="ws-uin-party-fields__full">
+										<span className="label-text">Address of the Property Manager</span>
+										<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} rows={3} />
+									</label>
+								</div>
 							</div>
 
 							<div className="ws-uin-party-block">
@@ -1541,28 +1883,67 @@ function TenancyCertificate() {
 									<div className="form-grid ws-uin-date-grid">
 										<label>
 											<span className="label-text required">Possession date</span>
-											<input type="date" value={propertyPossessionDate} onChange={e => setPropertyPossessionDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required />
+											<input
+												type="date"
+												name="property_possession_date"
+												autoComplete="off"
+												value={propertyPossessionDate}
+												onChange={e => setPropertyPossessionDate(e.target.value)}
+												onClick={(e) => e.target.showPicker && e.target.showPicker()}
+												required
+											/>
 										</label>
 										<label>
 											<span className="label-text required">End date</span>
-											<input type="date" value={propertyTenancyEndDate} onChange={e => setPropertyTenancyEndDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required min={propertyPossessionDate} />
+											<input
+												type="date"
+												name="property_tenancy_end_date"
+												autoComplete="off"
+												value={propertyTenancyEndDate}
+												onChange={e => setPropertyTenancyEndDate(e.target.value)}
+												onClick={(e) => e.target.showPicker && e.target.showPicker()}
+												required
+												min={propertyPossessionDate}
+											/>
 										</label>
 										<label>
 											<span className="label-text">Duration</span>
-											<input type="text" value={propertyTenancyDuration} readOnly disabled className="readonly-input" />
+											<input
+												type="text"
+												name="property_tenancy_duration"
+												autoComplete="off"
+												value={propertyTenancyDuration}
+												readOnly
+												disabled
+												className="readonly-input"
+											/>
 										</label>
 									</div>
 								</div>
 
 								<div className="form-group-row">
 									<label><span className="label-text required">Rent payable as in section 8 (Monthly Rent ₹)</span>
-										<input type="number" value={propertyRentPayable} onChange={e => setPropertyRentPayable(e.target.value)} onWheel={e => e.target.blur()} min="0" required />
+										<input
+											type="number"
+											name="property_rent_payable"
+											autoComplete="off"
+											value={propertyRentPayable}
+											onChange={e => setPropertyRentPayable(e.target.value)}
+											onWheel={e => e.target.blur()}
+											min="0"
+											required
+										/>
 									</label>
 								</div>
 
 								<div className="form-group-row">
 									<label><span className="label-text">Furniture and other equipment provided to the tenant</span>
-										<textarea value={propertyFurnitureDescription} onChange={e => setPropertyFurnitureDescription(e.target.value)} />
+										<textarea
+											name="property_furniture_description"
+											autoComplete="off"
+											value={propertyFurnitureDescription}
+											onChange={e => setPropertyFurnitureDescription(e.target.value)}
+										/>
 									</label>
 								</div>
 
@@ -1571,19 +1952,19 @@ function TenancyCertificate() {
 									<div className="ws-uin-charges-grid">
 										<label>
 											<span className="label-text">(a) Electricity</span>
-											<input type="number" value={propertyChargeElectricity} onChange={e => setPropertyChargeElectricity(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+											<input type="number" name="property_charge_electricity" autoComplete="off" value={propertyChargeElectricity} onChange={e => setPropertyChargeElectricity(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 										<label>
 											<span className="label-text">(b) Water</span>
-											<input type="number" value={propertyChargeWater} onChange={e => setPropertyChargeWater(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+											<input type="number" name="property_charge_water" autoComplete="off" value={propertyChargeWater} onChange={e => setPropertyChargeWater(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 										<label>
 											<span className="label-text">(c) Extra furnishing, fittings and fixtures</span>
-											<input type="number" value={propertyChargeFurnishing} onChange={e => setPropertyChargeFurnishing(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+											<input type="number" name="property_charge_furnishing" autoComplete="off" value={propertyChargeFurnishing} onChange={e => setPropertyChargeFurnishing(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 										<label>
 											<span className="label-text">(d) Other services</span>
-											<input type="number" value={propertyChargeOtherServices} onChange={e => setPropertyChargeOtherServices(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
+											<input type="number" name="property_charge_other_services" autoComplete="off" value={propertyChargeOtherServices} onChange={e => setPropertyChargeOtherServices(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 									</div>
 									<div className="ws-uin-rent-total">
@@ -1605,11 +1986,15 @@ function TenancyCertificate() {
 								<p className="tenancy-docs-step__lead">
 									All items below are mandatory. Use the preview icon after each upload to verify the file.
 								</p>
+								<p className="tenancy-docs-step__disclaimer" role="note">
+									<strong>File upload guidelines:</strong> Accepted formats — PDF, JPG, JPEG, PNG.
+									Maximum size — <strong>2 MB</strong> per file. Scanned copies must be clear and readable.
+								</p>
 								<ul className="tenancy-docs-step__checklist" aria-label="Required documents">
-									<li>Registered tenancy agreement (PDF)</li>
-									<li>Passport-size photograph</li>
-									<li>PAN Card</li>
-									<li>Signature</li>
+									<li>Registered tenancy agreement (PDF, max 2 MB)</li>
+									<li>Passport-size photograph (JPG / JPEG / PNG, max 2 MB)</li>
+									<li>PAN Card (PDF / JPG / JPEG / PNG, max 2 MB)</li>
+									<li>Signature (JPG / JPEG / PNG, max 2 MB)</li>
 								</ul>
 							</header>
 
@@ -1619,19 +2004,20 @@ function TenancyCertificate() {
 										<span className="tenancy-doc-card__num">1</span>
 										<div>
 											<h3 className="tenancy-doc-card__title">Registered tenancy agreement</h3>
-											<p className="tenancy-doc-card__meta">PDF only · scanned copy of the registered agreement</p>
+											<p className="tenancy-doc-card__meta">PDF only · max 2 MB · scanned copy of the registered agreement</p>
 										</div>
 									</div>
 									<div className={`tenancy-doc-slot tenancy-doc-slot--wide${agreementFile ? ' is-uploaded' : ''}`}>
 										<div className="tenancy-doc-slot__head">
 											<span className="tenancy-doc-slot__title is-required">Registered tenancy agreement (PDF)</span>
+											<span className="tenancy-doc-slot__hint">Accepted: PDF · Max size: 2 MB</span>
 										</div>
 										<div className="tenancy-doc-slot__row">
 											<input
 												id="uin-agreement-file"
 												className="tenancy-doc-slot__input"
 												type="file"
-												accept=".pdf"
+												accept=".pdf,application/pdf"
 												required={!agreementFile}
 												onChange={e => {
 													const f = e.target.files[0]
@@ -1672,7 +2058,7 @@ function TenancyCertificate() {
 										<div>
 											<h3 className="tenancy-doc-card__title">Personal documents</h3>
 											<p className="tenancy-doc-card__meta">
-												{initiatorRole === 'TENANT' ? 'Tenant' : 'Landlord'} photograph, signature, and PAN card
+												{initiatorRole === 'TENANT' ? 'Tenant' : 'Landlord'} photograph, signature, and PAN card — JPG / JPEG / PNG / PDF (where allowed) · max 2 MB each
 											</p>
 										</div>
 									</div>
@@ -1682,8 +2068,8 @@ function TenancyCertificate() {
 												<DocumentUploadSlot
 													id="uin-tenant-photo"
 													label="Passport-size photograph"
-													accept="image/*"
-													hint="Auto-cropped to passport ratio."
+													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB · Auto-cropped to passport ratio."
 													required
 													onChange={async (e) => {
 														const f = e.target.files[0]
@@ -1697,7 +2083,8 @@ function TenancyCertificate() {
 												<DocumentUploadSlot
 													id="uin-tenant-signature"
 													label="Signature"
-													accept="image/*"
+													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
 													required
 													onChange={e => {
 														const f = e.target.files[0]
@@ -1712,7 +2099,8 @@ function TenancyCertificate() {
 												<DocumentUploadSlot
 													id="uin-tenant-pan"
 													label="PAN card document"
-													accept=".pdf,image/*"
+													accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+													hint="Accepted: PDF, JPG, JPEG, PNG · Max size: 2 MB"
 													required
 													onChange={e => setTenantPanFile(e.target.files[0])}
 													file={tenantPanFile}
@@ -1726,8 +2114,8 @@ function TenancyCertificate() {
 												<DocumentUploadSlot
 													id="uin-landlord-photo"
 													label="Passport-size photograph"
-													accept="image/*"
-													hint="Auto-cropped to passport ratio."
+													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB · Auto-cropped to passport ratio."
 													required
 													onChange={async (e) => {
 														const f = e.target.files[0]
@@ -1741,7 +2129,8 @@ function TenancyCertificate() {
 												<DocumentUploadSlot
 													id="uin-landlord-signature"
 													label="Signature"
-													accept="image/*"
+													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
 													required
 													onChange={e => {
 														const f = e.target.files[0]
@@ -1756,7 +2145,8 @@ function TenancyCertificate() {
 												<DocumentUploadSlot
 													id="uin-landlord-pan"
 													label="PAN card document"
-													accept=".pdf,image/*"
+													accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+													hint="Accepted: PDF, JPG, JPEG, PNG · Max size: 2 MB"
 													required
 													onChange={e => setLandlordPanFile(e.target.files[0])}
 													file={landlordPanFile}
@@ -1956,7 +2346,7 @@ function TenancyCertificate() {
 
 				{tenancyStep === 5 && (
 					<fieldset className="tenancy-fieldset ws-uin-payment-step">
-						<div className={`ws-uin-pay${paymentComplete ? ' is-paid' : ''}`}>
+						<div className={`ws-uin-pay ws-uin-pay--simple${paymentComplete ? ' is-paid' : ''}`}>
 							<section className="ws-uin-pay-bill">
 								<h2 className="ws-uin-pay-title">Bill summary</h2>
 								<div className="ws-uin-pay-bill-rows">
@@ -1968,12 +2358,6 @@ function TenancyCertificate() {
 										<span>Application type</span>
 										<strong>{applyType || '—'}</strong>
 									</div>
-									{draftApplicationNo ? (
-										<div className="ws-uin-pay-row">
-											<span>Draft reference</span>
-											<strong>{draftApplicationNo}</strong>
-										</div>
-									) : null}
 									<div className="ws-uin-pay-row">
 										<span>Fee</span>
 										<strong>₹{feeAmount}</strong>
@@ -1992,7 +2376,7 @@ function TenancyCertificate() {
 										</span>
 									</div>
 								) : (
-									<p className="ws-uin-pay-hint">Complete payment on the right to continue.</p>
+									<p className="ws-uin-pay-hint">Review the bill and proceed to pay.</p>
 								)}
 							</section>
 
@@ -2000,81 +2384,15 @@ function TenancyCertificate() {
 								<h2 className="ws-uin-pay-title">Pay now</h2>
 								{!paymentComplete ? (
 									<>
-										<div className="ws-uin-pay-qr-wrap">
-											<div className="ws-uin-pay-qr" aria-hidden>
-												<svg viewBox="0 0 120 120" width="132" height="132" role="img">
-													<title>Demo QR code</title>
-													<rect width="120" height="120" fill="#fff" />
-													<rect x="8" y="8" width="28" height="28" fill="#0f172a" />
-													<rect x="14" y="14" width="16" height="16" fill="#fff" />
-													<rect x="18" y="18" width="8" height="8" fill="#0f172a" />
-													<rect x="84" y="8" width="28" height="28" fill="#0f172a" />
-													<rect x="90" y="14" width="16" height="16" fill="#fff" />
-													<rect x="94" y="18" width="8" height="8" fill="#0f172a" />
-													<rect x="8" y="84" width="28" height="28" fill="#0f172a" />
-													<rect x="14" y="90" width="16" height="16" fill="#fff" />
-													<rect x="18" y="94" width="8" height="8" fill="#0f172a" />
-													<rect x="44" y="12" width="8" height="8" fill="#0f172a" />
-													<rect x="56" y="12" width="8" height="8" fill="#0f172a" />
-													<rect x="68" y="20" width="8" height="8" fill="#0f172a" />
-													<rect x="44" y="32" width="8" height="8" fill="#0f172a" />
-													<rect x="60" y="32" width="8" height="8" fill="#0f172a" />
-													<rect x="44" y="48" width="8" height="8" fill="#0f172a" />
-													<rect x="56" y="48" width="8" height="8" fill="#0f172a" />
-													<rect x="68" y="48" width="8" height="8" fill="#0f172a" />
-													<rect x="80" y="48" width="8" height="8" fill="#0f172a" />
-													<rect x="92" y="48" width="8" height="8" fill="#0f172a" />
-													<rect x="104" y="48" width="8" height="8" fill="#0f172a" />
-													<rect x="44" y="60" width="8" height="8" fill="#0f172a" />
-													<rect x="68" y="60" width="8" height="8" fill="#0f172a" />
-													<rect x="92" y="60" width="8" height="8" fill="#0f172a" />
-													<rect x="44" y="72" width="8" height="8" fill="#0f172a" />
-													<rect x="56" y="72" width="8" height="8" fill="#0f172a" />
-													<rect x="80" y="72" width="8" height="8" fill="#0f172a" />
-													<rect x="104" y="72" width="8" height="8" fill="#0f172a" />
-													<rect x="56" y="84" width="8" height="8" fill="#0f172a" />
-													<rect x="68" y="84" width="8" height="8" fill="#0f172a" />
-													<rect x="92" y="84" width="8" height="8" fill="#0f172a" />
-													<rect x="56" y="96" width="8" height="8" fill="#0f172a" />
-													<rect x="80" y="96" width="8" height="8" fill="#0f172a" />
-													<rect x="104" y="96" width="8" height="8" fill="#0f172a" />
-													<rect x="68" y="108" width="8" height="8" fill="#0f172a" />
-													<rect x="92" y="108" width="8" height="8" fill="#0f172a" />
-												</svg>
-											</div>
-											<p className="ws-uin-pay-qr-caption">Scan UPI QR to pay ₹{feeAmount}</p>
-										</div>
-
-										<div className="ws-uin-pay-or">or</div>
-
-										<div className="ws-uin-pay-bank">
-											<div className="ws-uin-pay-bank-row">
-												<span>Account name</span>
-												<strong>Govt. of Assam — eGRAS</strong>
-											</div>
-											<div className="ws-uin-pay-bank-row">
-												<span>Account no.</span>
-												<strong>5010023487612</strong>
-											</div>
-											<div className="ws-uin-pay-bank-row">
-												<span>IFSC</span>
-												<strong>SBIN0001234</strong>
-											</div>
-											<div className="ws-uin-pay-bank-row">
-												<span>UPI ID</span>
-												<strong>uinfee@assam</strong>
-											</div>
-										</div>
-
 										<button
 											type="button"
 											className="ws-btn ws-btn--primary ws-uin-pay-btn"
 											onClick={handleMockPayment}
 											disabled={paymentSimulating || draftSaving}
 										>
-											{paymentSimulating ? 'Confirming…' : `I have paid ₹${feeAmount}`}
+											{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount}`}
 										</button>
-										<p className="ws-uin-pay-note">Demo only — no real bank transfer.</p>
+										<p className="ws-uin-pay-note">Demo payment — no real bank transfer.</p>
 									</>
 								) : (
 									<div className="ws-uin-pay-done">
@@ -2090,11 +2408,6 @@ function TenancyCertificate() {
 					{tenancyStep > 1 ? (
 						<button type="button" className="ws-btn ws-btn--secondary" onClick={() => goToStep(tenancyStep - 1)}>
 							Back
-						</button>
-					) : null}
-					{tenancyStep === 1 ? (
-						<button type="button" className="ws-btn ws-btn--secondary" onClick={resetTenancyForm}>
-							Start over
 						</button>
 					) : null}
 					{tenancyStep < 4 ? (
@@ -2143,6 +2456,104 @@ function TenancyCertificate() {
 					</div>
 				</div>
 			) : null}
+
+			<WorkflowConfirmModal
+				open={draftsModalOpen}
+				onClose={() => {
+					if (!draftsDiscardBusy) {
+						setDraftsModalOpen(false)
+						setDraftsModalMessage('')
+					}
+				}}
+				title="Saved drafts"
+				description={
+					draftsModalMessage ||
+					'Open any draft to continue later. Saving a stage always updates the draft you are working on — it never asks you to switch.'
+				}
+				hidePrimary
+				secondaryLabel="Close"
+			>
+				<div className="ws-uin-drafts-modal">
+					{draftsLoading ? (
+						<p className="ws-uin-drafts-modal__loading">Loading drafts…</p>
+					) : serverDrafts.length > 0 ? (
+						<ul className="ws-uin-drafts-list">
+							{serverDrafts.map((draft) => {
+								const isActive = draft.application_no === (draftApplicationNo || draftParam)
+								return (
+									<li key={draft.application_no}>
+										<article className={`ws-uin-draft-card${isActive ? ' is-active' : ''}`}>
+											<div className="ws-uin-draft-card__main">
+												<span className="ws-uin-draft-card__no">{draft.application_no}</span>
+												{isActive ? (
+													<span className="ws-uin-draft-card__active">Current</span>
+												) : null}
+												<ul className="ws-uin-draft-card__meta">
+													<li>
+														Stage {Math.min(5, (Number(draft.wizard_step) || 1) + 1)} of 5
+													</li>
+													{draft.initiator_role ? (
+														<li>
+															{draft.initiator_role === 'LANDLORD'
+																? 'Landlord'
+																: draft.initiator_role === 'TENANT'
+																	? 'Tenant'
+																	: draft.initiator_role}
+														</li>
+													) : null}
+													{draft.updated_at ? (
+														<li>Updated {formatDateTime(draft.updated_at)}</li>
+													) : null}
+												</ul>
+											</div>
+											<div className="ws-uin-draft-card__actions">
+												<button
+													type="button"
+													className="workflow-confirm-btn workflow-confirm-btn--primary"
+													disabled={isActive}
+													onClick={() => resumeFromDraft(draft.application_no)}
+												>
+													{isActive ? 'Open' : 'Resume'}
+												</button>
+												<button
+													type="button"
+													className="workflow-confirm-btn workflow-confirm-btn--danger"
+													disabled={draftsDiscardBusy}
+													onClick={() => discardSavedDraft(draft.application_no)}
+												>
+													{draftsDiscardBusy ? 'Discarding…' : 'Discard'}
+												</button>
+											</div>
+										</article>
+									</li>
+								)
+							})}
+						</ul>
+					) : (
+						<p className="ws-uin-drafts-modal__empty">
+							No saved drafts yet. Fill the form and use Save &amp; continue — each new apply can create its own draft.
+						</p>
+					)}
+				</div>
+			</WorkflowConfirmModal>
+
+			<WorkflowConfirmModal
+				open={startOverOpen}
+				onClose={() => {
+					if (!startOverBusy) setStartOverOpen(false)
+				}}
+				title="Start over?"
+				description={
+					draftApplicationNo
+						? `This will delete draft ${draftApplicationNo} and clear all fields. To continue later, save and use Drafts to resume.`
+						: 'This will delete your saved application progress and clear all fields.'
+				}
+				primaryLabel={startOverBusy ? 'Starting over…' : 'Yes, start over'}
+				secondaryLabel="Cancel"
+				primaryVariant="danger"
+				primaryDisabled={startOverBusy}
+				onPrimary={resetTenancyForm}
+			/>
 				</>
 			)}
 		</div>

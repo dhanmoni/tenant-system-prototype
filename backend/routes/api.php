@@ -54,8 +54,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     Route::post('/tenancy-applications/check-ref-code', [TenancyApplicationController::class, 'checkRefCode']);
     Route::get('/tenancy-applications/my', [TenancyApplicationController::class, 'myApplications']);
     Route::get('/tenancy-applications/draft/current', [TenancyApplicationController::class, 'currentDraft']);
+    Route::get('/tenancy-applications/drafts', [TenancyApplicationController::class, 'listDrafts']);
     Route::post('/tenancy-applications/draft', [TenancyApplicationController::class, 'createDraft']);
     Route::match(['put', 'post'], '/tenancy-applications/{tenancyApplication}/draft', [TenancyApplicationController::class, 'updateDraft']);
+    Route::delete('/tenancy-applications/{tenancyApplication}/draft', [TenancyApplicationController::class, 'discardDraft']);
     Route::post('/tenancy-applications/{tenancyApplication}/submit', [TenancyApplicationController::class, 'submitDraft']);
     Route::post('/tenancy-applications', [TenancyApplicationController::class, 'store']);
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);

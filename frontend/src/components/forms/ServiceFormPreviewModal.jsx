@@ -1,10 +1,29 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
-function PreviewField({ label, value }) {
+function PreviewField({ label, value, rawValue }) {
+	const [imageUrl, setImageUrl] = useState('')
+
+	useEffect(() => {
+		if (!(rawValue instanceof File) || !rawValue.type?.startsWith('image/')) {
+			setImageUrl('')
+			return undefined
+		}
+		const url = URL.createObjectURL(rawValue)
+		setImageUrl(url)
+		return () => URL.revokeObjectURL(url)
+	}, [rawValue])
+
 	return (
-		<div className="service-form-preview__field">
+		<div className={`service-form-preview__field${imageUrl ? ' service-form-preview__field--media' : ''}`}>
 			<span className="service-form-preview__label">{label}</span>
-			<span className="service-form-preview__value">{value}</span>
+			{imageUrl ? (
+				<div className="service-form-preview__media">
+					<img src={imageUrl} alt={label} className="service-form-preview__image" />
+					<span className="service-form-preview__filename">{value}</span>
+				</div>
+			) : (
+				<span className="service-form-preview__value">{value}</span>
+			)}
 		</div>
 	)
 }

@@ -121,22 +121,36 @@ class TenancyApplicationController extends Controller
             $salt
         );
 
-        // Check for existing application with same ref code
-        $existing = TenancyApplication::where('ref_code', $refCode)->first();
-        if ($existing && !$request->boolean('force_new')) {
-            return response()->json([
-                'conflict' => true,
-                'message' => 'An application with the same details already exists.',
-                'ref_code' => $refCode,
-                'existing_application' => [
-                    'id' => $existing->id,
-                    'application_no' => $existing->application_no,
-                    'status' => $existing->status,
-                    'initiator_role' => $existing->initiator_role,
-                    'initiator_completed' => $existing->initiator_completed,
-                    'second_party_completed' => $existing->second_party_completed,
-                ],
-            ], 409);
+        // Same user re-filing demo/test data: issue a unique ref instead of blocking.
+        if (!$request->boolean('force_new')) {
+            $existing = $this->findBlockingApplicationByRefCode($refCode);
+            if ($existing && (int) $existing->user_id === (int) $user->id) {
+                $salt = (string) Carbon::now()->timestamp . '-' . $user->id;
+                $refCode = TenancyApplication::generateRefCode(
+                    $data['landlord_phone'],
+                    $data['tenant_phone'],
+                    $data['registration_date'],
+                    $data['village_ward_id'],
+                    $data['village_name'] ?? null,
+                    $salt
+                );
+                $existing = null;
+            }
+            if ($existing) {
+                return response()->json([
+                    'conflict' => true,
+                    'message' => 'An application with the same details already exists.',
+                    'ref_code' => $refCode,
+                    'existing_application' => [
+                        'id' => $existing->id,
+                        'application_no' => $existing->application_no,
+                        'status' => $existing->status,
+                        'initiator_role' => $existing->initiator_role,
+                        'initiator_completed' => $existing->initiator_completed,
+                        'second_party_completed' => $existing->second_party_completed,
+                    ],
+                ], 409);
+            }
         }
 
         $initiatorRole = $data['initiator_role'];
@@ -304,7 +318,11 @@ class TenancyApplicationController extends Controller
                 'second_party_role' => $secondPartyRole,
                 'registration_date' => $application->registration_date,
                 'office' => $application->office,
+                'district' => $application->district,
                 'village_ward' => $application->villageWard,
+                'area_type' => $application->area_type,
+                'local_body' => $application->local_body,
+                'village_name' => $application->village_name,
                 'landlord_name' => $application->landlord_name,
                 'landlord_phone' => $application->landlord_phone,
                 'landlord_email' => $application->landlord_email,
@@ -338,7 +356,6 @@ class TenancyApplicationController extends Controller
                 'property_tenancy_duration' => $application->property_tenancy_duration,
                 'property_possession_date' => $application->property_possession_date,
                 'property_tenancy_end_date' => $application->property_tenancy_end_date,
-                'district' => $application->district,
                 'apply_type' => $application->apply_type,
                 'initiator_completed' => $application->initiator_completed,
                 'second_party_completed' => $application->second_party_completed,
@@ -361,7 +378,7 @@ class TenancyApplicationController extends Controller
             // Second party details (role-specific)
             'name' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string'],
-            'email' => ['required', 'email'],
+            'email' => ['nullable', 'email'],
             'phone' => ['required', 'string', 'max:30'],
             'pan' => ['required', 'string', 'max:30'],
             'aadhar' => ['nullable', 'string', 'max:20'],
@@ -839,12 +856,36 @@ class TenancyApplicationController extends Controller
             ->first();
 
         if (!$draft) {
-            return response()->json(['draft' => null]);
+            return response()->json(['draft' => null, 'drafts' => []]);
         }
 
         $draft->load('office', 'villageWard');
 
-        return response()->json(['draft' => $this->formatDraftApplication($draft)]);
+        return response()->json([
+            'draft' => $this->formatDraftApplication($draft),
+            'drafts' => [$this->formatDraftApplication($draft)],
+        ]);
+    }
+
+    public function listDrafts(Request $request)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $drafts = TenancyApplication::where('user_id', $user->id)
+            ->where('status', Status::DRAFT)
+            ->orderByDesc('updated_at')
+            ->with(['office', 'villageWard'])
+            ->get()
+            ->map(fn (TenancyApplication $draft) => $this->formatDraftApplication($draft))
+            ->values();
+
+        return response()->json([
+            'drafts' => $drafts,
+            'draft' => $drafts->first(),
+        ]);
     }
 
     public function createDraft(Request $request)
@@ -854,11 +895,16 @@ class TenancyApplicationController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $existing = TenancyApplication::where('user_id', $user->id)
-            ->where('status', Status::DRAFT)
-            ->first();
-        if ($existing) {
-            return $this->updateDraft($request, $existing);
+        // If the client already has a draft application_no, update that draft.
+        $resumeNo = $request->input('application_no');
+        if ($resumeNo) {
+            $existing = TenancyApplication::where('user_id', $user->id)
+                ->where('status', Status::DRAFT)
+                ->where('application_no', $resumeNo)
+                ->first();
+            if ($existing) {
+                return $this->updateDraft($request, $existing);
+            }
         }
 
         $data = $this->validateDraftStep($request, 1, null);
@@ -890,7 +936,7 @@ class TenancyApplicationController extends Controller
 
         return response()->json([
             'message' => 'Draft saved.',
-            'draft' => $this->formatDraftApplication($application->fresh()),
+            'draft' => $this->formatDraftApplication($application->fresh()->load('office', 'villageWard')),
         ], 201);
     }
 
@@ -924,15 +970,45 @@ class TenancyApplicationController extends Controller
             $districtId = Office::where('id', $data['office_id'])->value('district_id');
         }
 
-        $tenancyApplication->update(array_merge($data, $paths, [
+        $initiatorRole = $data['initiator_role'] ?? $tenancyApplication->initiator_role;
+        $userLinkUpdates = [];
+        if (!empty($data['initiator_role'])) {
+            $userLinkUpdates = [
+                'landlord_user_id' => $initiatorRole === 'LANDLORD' ? $user->id : null,
+                'tenant_user_id' => $initiatorRole === 'TENANT' ? $user->id : null,
+            ];
+        }
+
+        $tenancyApplication->update(array_merge($data, $paths, $userLinkUpdates, [
             'wizard_step' => $nextStep,
             'district_id' => $districtId ?? $tenancyApplication->district_id,
         ]));
 
         return response()->json([
             'message' => 'Draft saved.',
-            'draft' => $this->formatDraftApplication($tenancyApplication->fresh()),
+            'draft' => $this->formatDraftApplication($tenancyApplication->fresh()->load('office', 'villageWard')),
         ]);
+    }
+
+    public function discardDraft(Request $request, TenancyApplication $tenancyApplication)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if ((int) $tenancyApplication->user_id !== (int) $user->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($tenancyApplication->status !== Status::DRAFT) {
+            return response()->json(['message' => 'Only draft applications can be discarded.'], 403);
+        }
+
+        // Permanently remove so application_no can be reused safely by generateApplicationNo().
+        $tenancyApplication->forceDelete();
+
+        return response()->json(['message' => 'Draft discarded.']);
     }
 
     public function submitDraft(Request $request, TenancyApplication $tenancyApplication)
@@ -1003,7 +1079,8 @@ class TenancyApplicationController extends Controller
 
         $this->assertRegistrationEligible($data['registration_date']);
 
-        $salt = $request->boolean('force_new') ? (string) Carbon::now()->timestamp : null;
+        $forceNew = $request->boolean('force_new');
+        $salt = $forceNew ? (string) Carbon::now()->timestamp : null;
         $refCode = TenancyApplication::generateRefCode(
             $data['landlord_phone'],
             $data['tenant_phone'],
@@ -1013,23 +1090,36 @@ class TenancyApplicationController extends Controller
             $salt
         );
 
-        $existing = TenancyApplication::where('ref_code', $refCode)
-            ->where('id', '!=', $tenancyApplication->id)
-            ->first();
-        if ($existing && !$request->boolean('force_new')) {
-            return response()->json([
-                'conflict' => true,
-                'message' => 'An application with the same details already exists.',
-                'ref_code' => $refCode,
-                'existing_application' => [
-                    'id' => $existing->id,
-                    'application_no' => $existing->application_no,
-                    'status' => $existing->status,
-                    'initiator_role' => $existing->initiator_role,
-                    'initiator_completed' => $existing->initiator_completed,
-                    'second_party_completed' => $existing->second_party_completed,
-                ],
-            ], 409);
+        if (!$forceNew) {
+            $existing = $this->findBlockingApplicationByRefCode($refCode, (int) $tenancyApplication->id);
+            // Same user already has a live filing with these details — mint a unique ref and continue.
+            if ($existing && (int) $existing->user_id === (int) $user->id) {
+                $salt = (string) Carbon::now()->timestamp . '-' . $tenancyApplication->id;
+                $refCode = TenancyApplication::generateRefCode(
+                    $data['landlord_phone'],
+                    $data['tenant_phone'],
+                    $data['registration_date'],
+                    $data['village_ward_id'],
+                    $data['village_name'] ?? null,
+                    $salt
+                );
+                $existing = null;
+            }
+            if ($existing) {
+                return response()->json([
+                    'conflict' => true,
+                    'message' => 'An application with the same details already exists.',
+                    'ref_code' => $refCode,
+                    'existing_application' => [
+                        'id' => $existing->id,
+                        'application_no' => $existing->application_no,
+                        'status' => $existing->status,
+                        'initiator_role' => $existing->initiator_role,
+                        'initiator_completed' => $existing->initiator_completed,
+                        'second_party_completed' => $existing->second_party_completed,
+                    ],
+                ], 409);
+            }
         }
 
         $initiatorRole = $data['initiator_role'];
@@ -1094,10 +1184,23 @@ class TenancyApplicationController extends Controller
                 'registration_date' => ['required', 'date', 'before_or_equal:today'],
                 'office_id' => ['required', 'integer', 'exists:offices,id'],
                 'village_ward_id' => ['nullable', 'integer', 'exists:village_wards,id'],
-            'village_name' => ['nullable', 'string'],
-            'area_type' => ['nullable', 'string', 'in:Urban,Rural'],
-            'local_body' => ['nullable', 'string'],
+                'village_name' => ['nullable', 'string'],
+                'area_type' => ['required', 'string', 'in:Urban,Rural'],
+                'local_body' => ['required', 'string', 'max:255'],
                 'apply_type' => ['required', 'string', 'max:32'],
+                // Optional initiator autofill persisted early so resume keeps profile details
+                'landlord_name' => ['nullable', 'string', 'max:255'],
+                'landlord_address' => ['nullable', 'string'],
+                'landlord_email' => ['nullable', 'email'],
+                'landlord_phone' => ['nullable', 'string', 'max:30'],
+                'landlord_pan' => ['nullable', 'string', 'max:30'],
+                'landlord_aadhar' => ['nullable', 'string', 'max:20'],
+                'tenant_name' => ['nullable', 'string', 'max:255'],
+                'tenant_address' => ['nullable', 'string'],
+                'tenant_email' => ['nullable', 'email'],
+                'tenant_phone' => ['nullable', 'string', 'max:30'],
+                'tenant_pan' => ['nullable', 'string', 'max:30'],
+                'tenant_aadhar' => ['nullable', 'string', 'max:20'],
             ]);
         }
 
@@ -1144,6 +1247,8 @@ class TenancyApplicationController extends Controller
                 'landlord_signature' => ['nullable', 'image'],
                 'tenant_photo' => ['nullable', 'image'],
                 'tenant_signature' => ['nullable', 'image'],
+                'landlord_photo_path' => ['nullable', 'string', 'max:255'],
+                'tenant_photo_path' => ['nullable', 'string', 'max:255'],
                 'landlord_pan_file' => ['nullable', 'file'],
                 'tenant_pan_file' => ['nullable', 'file'],
                 'manager_pan_file' => ['nullable', 'file'],
@@ -1167,11 +1272,34 @@ class TenancyApplicationController extends Controller
             'office_id',
             'village_ward_id',
             'village_name',
+            'area_type',
+            'local_body',
             'apply_type',
         ];
 
         foreach ($stepOneFields as $field) {
             if (!$request->has($field) && $existing->{$field} !== null && $existing->{$field} !== '') {
+                $merge[$field] = $existing->{$field};
+            }
+        }
+
+        // Preserve early-saved initiator autofill when later step-1 edits omit them
+        $earlyPartyFields = [
+            'landlord_name',
+            'landlord_address',
+            'landlord_email',
+            'landlord_phone',
+            'landlord_pan',
+            'landlord_aadhar',
+            'tenant_name',
+            'tenant_address',
+            'tenant_email',
+            'tenant_phone',
+            'tenant_pan',
+            'tenant_aadhar',
+        ];
+        foreach ($earlyPartyFields as $field) {
+            if (!$request->filled($field) && $existing->{$field} !== null && $existing->{$field} !== '') {
                 $merge[$field] = $existing->{$field};
             }
         }
@@ -1223,17 +1351,31 @@ class TenancyApplicationController extends Controller
 
     private function collectDraftUploads(Request $request, TenancyApplication $application, bool $requireAgreement = false): array
     {
+        $user = $request->user();
+        $profilePhotoPath = $user?->passport_photo_path ?: null;
+
+        $requestedLandlordPhoto = $request->input('landlord_photo_path');
+        $requestedTenantPhoto = $request->input('tenant_photo_path');
+
+        // Only allow reusing the signed-in user's own profile passport photo path
+        if ($requestedLandlordPhoto && $requestedLandlordPhoto !== $profilePhotoPath) {
+            $requestedLandlordPhoto = null;
+        }
+        if ($requestedTenantPhoto && $requestedTenantPhoto !== $profilePhotoPath) {
+            $requestedTenantPhoto = null;
+        }
+
         $paths = [
             'agreement_pdf_path' => $this->storeUpload($request, 'agreement_pdf', 'tenancy/agreements')
                 ?: $application->agreement_pdf_path,
             'landlord_photo_path' => $this->storeUpload($request, 'landlord_photo', 'tenancy/photos')
-                ?: $application->landlord_photo_path,
+                ?: ($requestedLandlordPhoto ?: $application->landlord_photo_path),
             'landlord_signature_path' => $this->storeUpload($request, 'landlord_signature', 'tenancy/signatures')
                 ?: $application->landlord_signature_path,
             'landlord_pan_path' => $this->storeUpload($request, 'landlord_pan_file', 'tenancy/documents')
                 ?: $application->landlord_pan_path,
             'tenant_photo_path' => $this->storeUpload($request, 'tenant_photo', 'tenancy/photos')
-                ?: $application->tenant_photo_path,
+                ?: ($requestedTenantPhoto ?: $application->tenant_photo_path),
             'tenant_signature_path' => $this->storeUpload($request, 'tenant_signature', 'tenancy/signatures')
                 ?: $application->tenant_signature_path,
             'tenant_pan_path' => $this->storeUpload($request, 'tenant_pan_file', 'tenancy/documents')
@@ -1281,12 +1423,30 @@ class TenancyApplicationController extends Controller
         }
     }
 
+    /**
+     * Find a non-draft application that already owns this agreement fingerprint.
+     * Drafts and rejected filings must not block a new submission.
+     */
+    private function findBlockingApplicationByRefCode(string $refCode, ?int $exceptId = null): ?TenancyApplication
+    {
+        $query = TenancyApplication::where('ref_code', $refCode)
+            ->whereNotIn('status', [Status::DRAFT, Status::REJECTED]);
+
+        if ($exceptId) {
+            $query->where('id', '!=', $exceptId);
+        }
+
+        return $query->orderByDesc('updated_at')->first();
+    }
+
     private function generateApplicationNo(): string
     {
         $now = Carbon::now();
         $prefix = 'APP-' . $now->format('Ym');
 
-        $latest = TenancyApplication::where('application_no', 'like', $prefix . '-%')
+        // Include soft-deleted rows — unique constraint still applies to them.
+        $latest = TenancyApplication::withTrashed()
+            ->where('application_no', 'like', $prefix . '-%')
             ->whereRaw("application_no ~ '^[A-Z]+-[0-9]{6}-[0-9]+$'")
             ->orderByDesc('application_no')
             ->lockForUpdate()
@@ -1319,6 +1479,8 @@ class TenancyApplicationController extends Controller
             'office_id' => $application->office_id,
             'village_ward_id' => $application->village_ward_id,
             'village_name' => $application->village_name,
+            'area_type' => $application->area_type,
+            'local_body' => $application->local_body,
             'apply_type' => $application->apply_type,
             'landlord_name' => $application->landlord_name,
             'landlord_address' => $application->landlord_address,

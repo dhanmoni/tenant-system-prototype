@@ -40,7 +40,7 @@ function TenantServices() {
 										to={f.to}
 										title={`${f.formName}: ${f.matter} (${f.rule})`}
 										className={({ isActive }) =>
-											`tenant-service-form-link${isActive ? ' tenant-service-form-link--active' : ''}`
+											`tenant-service-form-link tenant-service-form-link--${group.id}${isActive ? ' tenant-service-form-link--active' : ''}`
 										}
 									>
 										<span className="tenant-service-form-link-main">

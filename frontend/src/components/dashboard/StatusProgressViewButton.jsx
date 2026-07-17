@@ -11,6 +11,7 @@ function StatusProgressViewButton({
 	title = 'View status progress',
 	variant = 'admin',
 	viewerRole,
+	wrapperClassName = '',
 }) {
 	const [open, setOpen] = useState(false)
 
@@ -21,7 +22,7 @@ function StatusProgressViewButton({
 		? `ws-status-action-btn ws-status-action-btn--progress ${className}`.trim()
 		: `table-icon-btn table-icon-btn--progress ${className}`.trim()
 
-	return (
+	const buttonAndModal = (
 		<>
 			<button
 				type="button"
@@ -44,6 +45,12 @@ function StatusProgressViewButton({
 			/>
 		</>
 	)
+
+	if (wrapperClassName) {
+		return <div className={wrapperClassName}>{buttonAndModal}</div>
+	}
+
+	return buttonAndModal
 }
 
 export default StatusProgressViewButton
