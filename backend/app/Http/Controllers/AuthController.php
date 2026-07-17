@@ -22,12 +22,12 @@ class AuthController extends Controller
             'date_of_birth' => ['required', 'date', 'after:1900-01-01', 'before_or_equal:today'],
             'email' => [
                 'required', 'string', 'email', 'max:255',
-                Rule::unique('users')->where(fn ($query) => $query->where('role', 'user'))
+                Rule::unique('users')
             ],
             'password' => ['nullable', 'string', 'min:8'],
             'phone' => [
                 'required', 'string', 'regex:/^[0-9]{10}$/',
-                Rule::unique('users')->where(fn ($query) => $query->where('role', 'user'))
+                Rule::unique('users')
             ],
             'district_id' => ['required', 'integer', 'exists:districts,id'],
         ]);
