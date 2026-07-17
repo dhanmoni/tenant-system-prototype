@@ -11748,6 +11748,36 @@ main.main-fluid {
 	word-break: break-word;
 }
 
+.service-form-preview__field--media {
+	grid-column: 1 / -1;
+}
+
+.service-form-preview__media {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.45rem;
+}
+
+.service-form-preview__image {
+	display: block;
+	max-width: 220px;
+	max-height: 110px;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #fff;
+	padding: 6px;
+}
+
+.service-form-preview__filename {
+	font-size: 0.8rem;
+	color: #64748b;
+	word-break: break-all;
+}
+
 .service-form-preview-modal__footer {
 	display: flex;
 	flex-wrap: wrap;
@@ -12770,25 +12800,25 @@ main.main-fluid {
 		inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Rent Court — royal blue */
-.tenant-service-tile--rent-court {
-	--tenant-tile-accent: #2563eb;
-	--tenant-tile-accent-strong: #1d4ed8;
-	--tenant-tile-tint: rgba(219, 234, 254, 0.55);
-}
-
-/* Rent Authority — violet */
+/* Rent Authority — purple */
 .tenant-service-tile--rent-authority {
 	--tenant-tile-accent: #7c3aed;
-	--tenant-tile-accent-strong: #6d28d9;
-	--tenant-tile-tint: rgba(237, 233, 254, 0.55);
+	--tenant-tile-accent-strong: #5b21b6;
+	--tenant-tile-tint: rgba(237, 233, 254, 0.65);
 }
 
-/* Rent Tribunal — amber / appeals */
+/* Rent Court — blue */
+.tenant-service-tile--rent-court {
+	--tenant-tile-accent: #2563eb;
+	--tenant-tile-accent-strong: #1e40af;
+	--tenant-tile-tint: rgba(219, 234, 254, 0.65);
+}
+
+/* Rent Tribunal — amber */
 .tenant-service-tile--rent-tribunal {
 	--tenant-tile-accent: #d97706;
-	--tenant-tile-accent-strong: #b45309;
-	--tenant-tile-tint: rgba(254, 243, 199, 0.45);
+	--tenant-tile-accent-strong: #92400e;
+	--tenant-tile-tint: rgba(254, 243, 199, 0.55);
 }
 
 .tenant-service-tile-title {
@@ -12841,15 +12871,15 @@ main.main-fluid {
 }
 
 .tenant-service-form-link:hover {
-	background: var(--gov-blue-light, #e3f2fd);
-	border-color: var(--gov-blue, #90caf9);
-	color: var(--gov-blue-dark, #0d47a1);
+	background: var(--tenant-tile-tint, #f8fafc);
+	border-color: color-mix(in srgb, var(--tenant-tile-accent, #94a3b8) 45%, #fff);
+	color: var(--tenant-tile-accent-strong, #1e293b);
 }
 
 .tenant-service-form-link--active {
-	background: var(--gov-blue-light, #e3f2fd);
-	border-color: var(--gov-blue, #0d47a1);
-	color: var(--gov-blue-dark, #0d47a1);
+	background: var(--tenant-tile-tint, #f8fafc);
+	border-color: var(--tenant-tile-accent, #64748b);
+	color: var(--tenant-tile-accent-strong, #1e293b);
 }
 
 .tenant-service-form-link-main {
@@ -12865,7 +12895,7 @@ main.main-fluid {
 	font-weight: 800;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	color: var(--gov-blue, #0d47a1);
+	color: var(--tenant-tile-accent, #0d47a1);
 }
 
 .tenant-service-form-link-label {
@@ -14728,6 +14758,23 @@ main.main-fluid {
 	line-height: 1.45;
 }
 
+.tenancy-docs-step__disclaimer {
+	margin: 0 0 14px;
+	padding: 10px 12px;
+	border: 1px solid #c7d2fe;
+	border-left: 4px solid #0d47a1;
+	border-radius: 8px;
+	background: #eff6ff;
+	font-size: 0.84rem;
+	line-height: 1.45;
+	color: #1e3a5f;
+}
+
+.tenancy-docs-step__disclaimer strong {
+	font-weight: 700;
+	color: #0d47a1;
+}
+
 .tenancy-docs-step__checklist {
 	display: flex;
 	flex-wrap: wrap;
@@ -16397,6 +16444,137 @@ fieldset.profile-type-row label {
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
+}
+
+.join-review {
+	gap: 1.1rem;
+	padding: 1.25rem 1.35rem 1.4rem;
+	background: #fff;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.join-review__intro .tenancy-step-heading {
+	margin: 0 0 0.35rem;
+	border: none;
+	padding: 0;
+	font-size: 1.2rem;
+	color: #0f172a;
+}
+
+.join-review__intro .ws-uin-apply-lead {
+	margin: 0;
+}
+
+.join-review__card {
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #f8fafc;
+	overflow: hidden;
+}
+
+.join-review__card-head {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.85rem;
+	padding: 0.95rem 1.05rem 0.75rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #fff;
+}
+
+.join-review__card-num {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.7rem;
+	height: 1.7rem;
+	border-radius: 999px;
+	background: #0d47a1;
+	color: #fff;
+	font-size: 0.8rem;
+	font-weight: 700;
+	flex-shrink: 0;
+}
+
+.join-review__card-title {
+	margin: 0 0 0.15rem;
+	font-size: 0.98rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.join-review__card-lead {
+	margin: 0;
+	font-size: 0.82rem;
+	line-height: 1.4;
+	color: #64748b;
+}
+
+.join-review__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.95rem 1.1rem;
+	padding: 1.05rem 1.1rem 1.2rem;
+}
+
+.join-review__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	min-width: 0;
+}
+
+.join-review__field--wide {
+	grid-column: 1 / -1;
+}
+
+.join-review__label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.join-review__value {
+	display: block;
+	width: 100%;
+	min-height: 2.75rem;
+	padding: 0.7rem 0.85rem;
+	border: 1px solid #dbe3ee;
+	border-radius: 8px;
+	background: #fff;
+	font-size: 1rem;
+	font-weight: 500;
+	line-height: 1.5;
+	color: #0f172a;
+	word-break: break-word;
+	box-sizing: border-box;
+}
+
+.join-review__field--wide .join-review__value {
+	min-height: 3.5rem;
+}
+
+.join-review__total {
+	margin-top: 0.15rem;
+	padding-top: 0.75rem;
+	border-top: 1px dashed #cbd5e1;
+}
+
+.join-review__total .join-review__value {
+	min-height: 3rem;
+	font-size: 1.1rem;
+	font-weight: 700;
+	background: #eff6ff;
+	border-color: #bfdbfe;
+	color: #0d47a1;
+}
+
+@media (max-width: 640px) {
+	.join-review__grid {
+		grid-template-columns: 1fr;
+	}
 }
 
 .summary-section h3 {

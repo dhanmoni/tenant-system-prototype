@@ -14,10 +14,52 @@ export function cleanOptionalValue(value) {
 	return v
 }
 
+function hasDraftPartyValue(value) {
+	return Boolean(cleanOptionalValue(value))
+}
+
+/** Fill initiator landlord/tenant fields from profile when the draft has no saved values. */
+export function applyInitiatorProfileAutofill(role, profile = {}, setters = {}) {
+	if (!role || !profile?.name) return
+
+	const {
+		setLandlordName,
+		setLandlordAddress,
+		setLandlordEmail,
+		setLandlordPhone,
+		setLandlordPan,
+		setTenantName,
+		setTenantAddress,
+		setTenantEmail,
+		setTenantPhone,
+		setTenantPan,
+	} = setters
+
+	const addressLine = [profile.address, profile.pin_code].filter(Boolean).join(', ')
+	const address = addressLine || profile.address || ''
+	const email = cleanOptionalValue(profile.email)
+	const phone = profile.phone || ''
+	const pan = profile.pan_card || ''
+
+	if (role === 'LANDLORD') {
+		setLandlordName?.(profile.name)
+		setLandlordAddress?.(address)
+		setLandlordEmail?.(email)
+		setLandlordPhone?.(phone)
+		setLandlordPan?.(pan)
+	} else if (role === 'TENANT') {
+		setTenantName?.(profile.name)
+		setTenantAddress?.(address)
+		setTenantEmail?.(email)
+		setTenantPhone?.(phone)
+		setTenantPan?.(pan)
+	}
+}
+
 /** Build multipart FormData for draft save / final submit */
 export function buildTenancyFormData(
 	state,
-	{ wizardStep, includeThroughStep, includeAll = false } = {}
+	{ wizardStep, includeThroughStep, includeAll = false, profile } = {}
 ) {
 	const {
 		tenancyRegistrationDate,
@@ -63,6 +105,8 @@ export function buildTenancyFormData(
 		landlordPanFile,
 		tenantPanFile,
 		managerPanFile,
+		landlordPhotoPath,
+		tenantPhotoPath,
 	} = state
 
 	const formData = new FormData()
@@ -87,6 +131,28 @@ export function buildTenancyFormData(
 		formData.append('area_type', tenancyAreaType || '')
 		formData.append('local_body', tenancyLocalBody || '')
 		formData.append('apply_type', applyType || 'Individual')
+
+		const profileAddressLine = profile
+			? [profile.address, profile.pin_code].filter(Boolean).join(', ')
+			: ''
+		const profileAddress = profileAddressLine || profile?.address || ''
+
+		// Keep initiator profile autofill on step-1 saves so resume still has them
+		if (initiatorRole === 'LANDLORD') {
+			formData.append('landlord_name', landlordName || profile?.name || '')
+			formData.append('landlord_address', landlordAddress || profileAddress)
+			formData.append('landlord_email', landlordEmail || cleanOptionalValue(profile?.email) || '')
+			formData.append('landlord_phone', landlordPhone || profile?.phone || '')
+			formData.append('landlord_pan', landlordPan || profile?.pan_card || '')
+			if (landlordAadhar) formData.append('landlord_aadhar', landlordAadhar)
+		} else if (initiatorRole === 'TENANT') {
+			formData.append('tenant_name', tenantName || profile?.name || '')
+			formData.append('tenant_address', tenantAddress || profileAddress)
+			formData.append('tenant_email', tenantEmail || cleanOptionalValue(profile?.email) || '')
+			formData.append('tenant_phone', tenantPhone || profile?.phone || '')
+			formData.append('tenant_pan', tenantPan || profile?.pan_card || '')
+			if (tenantAadhar) formData.append('tenant_aadhar', tenantAadhar)
+		}
 	}
 
 	if (appendStep2) {
@@ -124,8 +190,10 @@ export function buildTenancyFormData(
 	if (appendStep3) {
 		if (agreementFile) formData.append('agreement_pdf', agreementFile)
 		if (landlordPhotoFile) formData.append('landlord_photo', landlordPhotoFile)
+		else if (landlordPhotoPath) formData.append('landlord_photo_path', landlordPhotoPath)
 		if (landlordSignatureFile) formData.append('landlord_signature', landlordSignatureFile)
 		if (tenantPhotoFile) formData.append('tenant_photo', tenantPhotoFile)
+		else if (tenantPhotoPath) formData.append('tenant_photo_path', tenantPhotoPath)
 		if (tenantSignatureFile) formData.append('tenant_signature', tenantSignatureFile)
 		if (landlordPanFile) formData.append('landlord_pan_file', landlordPanFile)
 		if (tenantPanFile) formData.append('tenant_pan_file', tenantPanFile)
@@ -135,7 +203,7 @@ export function buildTenancyFormData(
 	return formData
 }
 
-export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
+export function applyDraftToForm(draft, setters, { loadVillageWards, profile } = {}) {
 	if (!draft) return
 
 	const {
@@ -185,11 +253,13 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 	} = setters
 
 	setDraftApplicationNo?.(draft.application_no)
-	const step = Math.max(1, Math.min(4, Number(draft.wizard_step) || 1))
-	setSavedWizardStep?.(step)
-	setTenancyStep?.(step)
+	// wizard_step = last completed stage (1–4). Resume on the next stage (up to payment = 5).
+	const savedStep = Math.max(1, Math.min(4, Number(draft.wizard_step) || 1))
+	const resumeStep = Math.min(5, savedStep + 1)
+	setSavedWizardStep?.(savedStep)
+	setTenancyStep?.(resumeStep)
 
-	if (draft.initiator_role) setInitiatorRole(draft.initiator_role)
+	setInitiatorRole?.(draft.initiator_role || '')
 	if (draft.registration_date) setTenancyRegistrationDate(String(draft.registration_date).slice(0, 10))
 	if (draft.office_id) setTenancyOfficeId(String(draft.office_id))
 	if (draft.area_type) setTenancyAreaType?.(draft.area_type)
@@ -198,10 +268,14 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 	const districtId =
 		draft.office?.district_id ||
 		draft.village_ward?.district_id ||
+		draft.district_id ||
 		null
 	if (districtId) {
 		setTenancyDistrictId(String(districtId))
 		loadVillageWards?.(String(districtId))
+	} else if (draft.office_id && draft.office?.district?.id) {
+		setTenancyDistrictId(String(draft.office.district.id))
+		loadVillageWards?.(String(draft.office.district.id))
 	}
 
 	if (draft.area_type === 'Rural') {
@@ -255,4 +329,16 @@ export function applyDraftToForm(draft, setters, { loadVillageWards } = {}) {
 	if (draft.landlord_signature_url) setLandlordSignaturePreview(draft.landlord_signature_url)
 	if (draft.tenant_photo_url) setTenantPhotoPreview(draft.tenant_photo_url)
 	if (draft.tenant_signature_url) setTenantSignaturePreview(draft.tenant_signature_url)
+
+	const initiatorRole = draft.initiator_role
+	const initiatorDraftMissing =
+		initiatorRole === 'LANDLORD'
+			? !hasDraftPartyValue(draft.landlord_name)
+			: initiatorRole === 'TENANT'
+				? !hasDraftPartyValue(draft.tenant_name)
+				: false
+
+	if (initiatorDraftMissing && profile?.name) {
+		applyInitiatorProfileAutofill(initiatorRole, profile, setters)
+	}
 }

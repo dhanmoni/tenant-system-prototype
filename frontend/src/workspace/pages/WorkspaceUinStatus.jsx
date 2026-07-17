@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
@@ -8,12 +8,34 @@ import { STATUS, STATUS_LABELS } from '../../constants/status'
 import { APPLICATION_TYPES } from '../../constants/application'
 import { getAllServiceForms, tenantServiceGroups } from '../../data/tenantServices'
 
-const GROUP_ACCENTS = {
-	tenancy: 'uin',
-	'rent-authority': 'rent-authority',
-	'rent-court': 'rent-court',
-	'rent-tribunal': 'rent-tribunal',
-}
+const TAB_TENANCY = 'tenancy'
+const TAB_SERVICE = 'service'
+
+const TENANCY_STATUS_FILTERS = [
+	{ key: 'all', label: 'All' },
+	{ key: 'draft', label: 'Draft' },
+	{ key: 'partial', label: 'Awaiting party' },
+	{ key: 'submitted', label: 'Submitted' },
+	{ key: 'in_review', label: 'In review' },
+	{ key: 'approved', label: 'Approved' },
+	{ key: 'rejected', label: 'Rejected' },
+]
+
+const SERVICE_STATUS_FILTERS = [
+	{ key: 'all', label: 'All' },
+	{ key: 'pending', label: 'Pending' },
+	{ key: 'submitted', label: 'Submitted' },
+	{ key: 'in_review', label: 'In review' },
+	{ key: 'approved', label: 'Approved' },
+	{ key: 'rejected', label: 'Rejected' },
+]
+
+const SERVICE_GROUPS = [
+	{ key: 'all', label: 'All services' },
+	{ key: 'rent-authority', label: 'Rent Authority' },
+	{ key: 'rent-court', label: 'Rent Court' },
+	{ key: 'rent-tribunal', label: 'Rent Tribunal' },
+]
 
 function formatStatusText(status, applicationType = '') {
 	const normalizedType = String(applicationType || '').toLowerCase()
@@ -69,70 +91,13 @@ function appMatchesFormKey(app, formKey) {
 }
 
 function appInServiceGroup(app, groupId) {
+	if (groupId === 'all') return true
 	if (groupId === 'tenancy') return isTenancyApp(app)
 	const keys = getAllServiceForms()
 		.filter((f) => f.groupId === groupId)
 		.map((f) => f.formKey)
 	if (app.form_key && keys.includes(app.form_key)) return true
 	return keys.some((key) => appMatchesFormKey(app, key))
-}
-
-function buildCategories(applications) {
-	const categories = []
-
-	const tenancyItems = applications.filter(isTenancyApp)
-	if (tenancyItems.length > 0) {
-		categories.push({
-			id: 'tenancy',
-			title: 'Tenancy Certificate',
-			groupId: 'tenancy',
-			isTenancy: true,
-			items: tenancyItems,
-			formFilters: null,
-		})
-	}
-
-	const serviceGroups = [
-		{
-			id: 'rent-authority',
-			title: 'Rent Authority (Form I / I-A / I-B / IV)',
-		},
-		{
-			id: 'rent-court',
-			title: 'Rent Court (Form II / III / V)',
-		},
-		{
-			id: 'rent-tribunal',
-			title: 'Rent Tribunal (Form VI)',
-		},
-	]
-
-	for (const sg of serviceGroups) {
-		const items = applications.filter(
-			(app) => !isTenancyApp(app) && appInServiceGroup(app, sg.id)
-		)
-		if (items.length === 0) continue
-
-		const groupDef = tenantServiceGroups.find((g) => g.id === sg.id)
-		const formFilters = [
-			{ key: 'all', label: 'All forms' },
-			...(groupDef?.forms.map((f) => ({
-				key: f.formKey,
-				label: f.formName,
-			})) || []),
-		]
-
-		categories.push({
-			id: sg.id,
-			title: sg.title,
-			groupId: sg.id,
-			isTenancy: false,
-			items,
-			formFilters,
-		})
-	}
-
-	return categories
 }
 
 function sortItems(items, sortBy, sortOrder) {
@@ -160,36 +125,37 @@ function sortItems(items, sortBy, sortOrder) {
 	})
 }
 
-function StatusCategorySection({
-	category,
+function getServiceFormFilters(groupId) {
+	if (groupId === 'all') {
+		return [{ key: 'all', label: 'All forms' }]
+	}
+	const groupDef = tenantServiceGroups.find((g) => g.id === groupId)
+	if (!groupDef) return [{ key: 'all', label: 'All forms' }]
+	return [
+		{ key: 'all', label: 'All forms' },
+		...groupDef.forms.map((f) => ({ key: f.formKey, label: f.formName })),
+	]
+}
+
+function ApplicationsTable({
+	items,
+	isTenancy,
 	copiedRefCode,
 	onCopyRef,
 	onOpenDetails,
 	onDownloadAck,
 	onJoin,
+	onResumeDraft,
 	canJoinApp,
+	emptyMessage,
 }) {
-	const [formFilter, setFormFilter] = useState('all')
 	const [sortBy, setSortBy] = useState('created_at')
 	const [sortOrder, setSortOrder] = useState('desc')
-	const [localSearch, setLocalSearch] = useState('')
 
-	const filteredItems = useMemo(() => {
-		let rows = category.items
-		if (category.formFilters && formFilter !== 'all') {
-			rows = rows.filter((app) => appMatchesFormKey(app, formFilter))
-		}
-		const q = localSearch.trim().toLowerCase()
-		if (q) {
-			rows = rows.filter(
-				(app) =>
-					String(app.application_no || '').toLowerCase().includes(q) ||
-					String(app.uid || '').toLowerCase().includes(q) ||
-					String(app.application_type || '').toLowerCase().includes(q)
-			)
-		}
-		return sortItems(rows, sortBy, sortOrder)
-	}, [category.items, category.formFilters, formFilter, localSearch, sortBy, sortOrder])
+	const sortedItems = useMemo(
+		() => sortItems(items, sortBy, sortOrder),
+		[items, sortBy, sortOrder]
+	)
 
 	const handleSortColumn = (column) => {
 		if (sortBy === column) {
@@ -211,282 +177,198 @@ function StatusCategorySection({
 		</span>
 	)
 
+	if (sortedItems.length === 0) {
+		return <div className="ws-empty ws-empty--compact">{emptyMessage}</div>
+	}
+
 	return (
-		<section
-			className={`ws-card ws-status-category ws-status-category--${
-				GROUP_ACCENTS[category.groupId] || 'default'
-			}`}
-		>
-			<div className="ws-card-header ws-status-category-header">
-				<h2 className="ws-card-title">{category.title}</h2>
-				<span className="ws-status-category-count">
-					{filteredItems.length} of {category.items.length} shown
-				</span>
-			</div>
-
-			<div className="ws-status-section-toolbar">
-				{category.formFilters ? (
-					<div
-						className="ws-status-form-filters"
-						role="tablist"
-						aria-label={`Filter forms in ${category.title}`}
-					>
-						{category.formFilters.map((ff) => (
+		<div className="ws-status-table-wrap">
+			<table className="ws-table ws-status-table">
+				<thead>
+					<tr>
+						<th>
 							<button
-								key={ff.key}
 								type="button"
-								role="tab"
-								className={`ws-status-form-filter${
-									formFilter === ff.key ? ' is-active' : ''
-								}`}
-								aria-selected={formFilter === ff.key}
-								onClick={() => setFormFilter(ff.key)}
+								className="ws-status-th-sort"
+								onClick={() => handleSortColumn('application_no')}
 							>
-								{ff.label}
+								Application no. <SortIndicator column="application_no" />
 							</button>
-						))}
-					</div>
-				) : null}
-
-				<div className="ws-status-section-controls">
-					<label className="ws-status-section-search">
-						<span className="ws-status-search-label">Filter rows</span>
-						<input
-							type="search"
-							value={localSearch}
-							onChange={(e) => setLocalSearch(e.target.value)}
-							placeholder="App no., UIN, or type…"
-						/>
-					</label>
-					<label className="ws-status-section-sort">
-						<span className="ws-status-search-label">Sort by</span>
-						<select
-							value={`${sortBy}:${sortOrder}`}
-							onChange={(e) => {
-								const [col, ord] = e.target.value.split(':')
-								setSortBy(col)
-								setSortOrder(ord)
-							}}
-						>
-							<option value="created_at:desc">Date (newest)</option>
-							<option value="created_at:asc">Date (oldest)</option>
-							<option value="application_no:asc">Application no. (A–Z)</option>
-							<option value="application_no:desc">Application no. (Z–A)</option>
-							<option value="status:asc">Status (A–Z)</option>
-							{!category.isTenancy ? (
-								<option value="form:asc">Form type (A–Z)</option>
-							) : null}
-						</select>
-					</label>
-				</div>
-			</div>
-
-			<div className="ws-card-body ws-status-table-wrap">
-				{filteredItems.length === 0 ? (
-					<div className="ws-empty ws-empty--compact">No matching records in this section.</div>
-				) : (
-					<table className="ws-table ws-status-table">
-						<thead>
-							<tr>
-								<th>
-									<button
-										type="button"
-										className="ws-status-th-sort"
-										onClick={() => handleSortColumn('application_no')}
-									>
-										Application no. <SortIndicator column="application_no" />
-									</button>
-								</th>
-								<th>
-									<button
-										type="button"
-										className="ws-status-th-sort"
-										onClick={() => handleSortColumn('uid')}
-									>
-										Tenancy UIN <SortIndicator column="uid" />
-									</button>
-								</th>
-								{!category.isTenancy ? <th>Form</th> : null}
-								<th>
-									<button
-										type="button"
-										className="ws-status-th-sort"
-										onClick={() => handleSortColumn('created_at')}
-									>
-										Date <SortIndicator column="created_at" />
-									</button>
-								</th>
-								<th>
-									<button
-										type="button"
-										className="ws-status-th-sort"
-										onClick={() => handleSortColumn('status')}
-									>
-										Status <SortIndicator column="status" />
-									</button>
-								</th>
-								{category.isTenancy ? <th>Completion</th> : null}
-								<th className="ws-status-th-actions">Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{filteredItems.map((app) => (
-								<tr
-									key={app.row_key || app.id}
-									className="ws-status-row"
-									onClick={() => onOpenDetails(app)}
-								>
-									<td className="ws-status-cell-mono">{app.application_no}</td>
-									<td
-										className="ws-status-cell-uin"
-										onClick={(e) => e.stopPropagation()}
-									>
-										{app.uid && app.uid !== '-' ? (
-											<span className="ws-copyable-value">
-												<span className="ws-copyable-value-text ws-status-cell-mono">
-													{app.uid}
-												</span>
-												<button
-													type="button"
-													className="ws-copy-btn"
-													title={
-														copiedRefCode === `uid:${app.uid}`
-															? 'Copied!'
-															: 'Copy UIN'
-													}
-													aria-label={
-														copiedRefCode === `uid:${app.uid}`
-															? 'UIN copied to clipboard'
-															: `Copy UIN ${app.uid}`
-													}
-													onClick={() => onCopyRef(app.uid, `uid:${app.uid}`)}
-												>
-													<Icon
-														name={
-															copiedRefCode === `uid:${app.uid}` ? 'check' : 'copy'
-														}
-													/>
-												</button>
+						</th>
+						<th>
+							<button
+								type="button"
+								className="ws-status-th-sort"
+								onClick={() => handleSortColumn('uid')}
+							>
+								Tenancy UIN <SortIndicator column="uid" />
+							</button>
+						</th>
+						{!isTenancy ? <th>Form</th> : null}
+						<th>
+							<button
+								type="button"
+								className="ws-status-th-sort"
+								onClick={() => handleSortColumn('created_at')}
+							>
+								Date <SortIndicator column="created_at" />
+							</button>
+						</th>
+						<th>
+							<button
+								type="button"
+								className="ws-status-th-sort"
+								onClick={() => handleSortColumn('status')}
+							>
+								Status <SortIndicator column="status" />
+							</button>
+						</th>
+						{isTenancy ? <th>Completion</th> : null}
+						<th className="ws-status-th-actions">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{sortedItems.map((app) => {
+						const isDraft =
+							String(app.status || '').toUpperCase() === STATUS.DRAFT && isTenancy
+						return (
+							<tr
+								key={app.row_key || app.id}
+								className="ws-status-row"
+								onClick={() => (isDraft ? onResumeDraft?.(app) : onOpenDetails(app))}
+							>
+								<td className="ws-status-cell-mono">{app.application_no}</td>
+								<td className="ws-status-cell-uin" onClick={(e) => e.stopPropagation()}>
+									{app.uid && app.uid !== '-' ? (
+										<span className="ws-copyable-value">
+											<span className="ws-copyable-value-text ws-status-cell-mono">
+												{app.uid}
 											</span>
-										) : (
-											'—'
-										)}
-									</td>
-									{!category.isTenancy ? (
-										<td className="ws-status-cell-form">
-											{app.application_type || '—'}
-										</td>
-									) : null}
-									<td>{formatDate(app.created_at)}</td>
-									<td>
-										<span className={statusBadgeClass(app.status)}>
-											{formatStatusText(app.status, app.application_type)}
-										</span>
-									</td>
-									{category.isTenancy ? (
-										<td>
-											{app.initiator_completed && app.second_party_completed ? (
-												<span className="ws-badge ws-badge--success">
-													Both completed
-												</span>
-											) : (
-												<span className="ws-badge ws-badge--warning">
-													Awaiting {getAwaitingPartyLabel(app.initiator_role)}
-												</span>
-											)}
-										</td>
-									) : null}
-									<td
-										className="ws-status-actions"
-										onClick={(e) => e.stopPropagation()}
-									>
-										{app.status === STATUS.DRAFT && category.isTenancy ? (
 											<button
 												type="button"
-												className="ws-status-action-btn ws-status-action-btn--resume"
-												title="Resume draft application"
+												className="ws-copy-btn"
+												title={
+													copiedRefCode === `uid:${app.uid}` ? 'Copied!' : 'Copy UIN'
+												}
+												aria-label={
+													copiedRefCode === `uid:${app.uid}`
+														? 'UIN copied to clipboard'
+														: `Copy UIN ${app.uid}`
+												}
+												onClick={() => onCopyRef(app.uid, `uid:${app.uid}`)}
+											>
+												<Icon
+													name={copiedRefCode === `uid:${app.uid}` ? 'check' : 'copy'}
+												/>
+											</button>
+										</span>
+									) : (
+										'—'
+									)}
+								</td>
+								{!isTenancy ? (
+									<td className="ws-status-cell-form">{app.application_type || '—'}</td>
+								) : null}
+								<td>{formatDate(app.created_at)}</td>
+								<td>
+									<span className={statusBadgeClass(app.status)}>
+										{formatStatusText(app.status, app.application_type)}
+									</span>
+								</td>
+								{isTenancy ? (
+									<td>
+										{app.initiator_completed && app.second_party_completed ? (
+											<span className="ws-badge ws-badge--success">Both completed</span>
+										) : (
+											<span className="ws-badge ws-badge--warning">
+												Awaiting {getAwaitingPartyLabel(app.initiator_role)}
+											</span>
+										)}
+									</td>
+								) : null}
+								<td className="ws-status-actions" onClick={(e) => e.stopPropagation()}>
+									{isDraft ? (
+										<button
+											type="button"
+											className="ws-status-action-btn ws-status-action-btn--resume"
+											title="Resume draft application"
+											onClick={(e) => {
+												e.preventDefault()
+												e.stopPropagation()
+												onResumeDraft?.(app)
+											}}
+										>
+											<Icon name="documentPlus" />
+											<span>Resume</span>
+										</button>
+									) : (
+										<>
+											{!isTenancy ? (
+												<StatusProgressViewButton
+													application={app}
+													variant="workspace"
+													title="View status progress"
+												/>
+											) : null}
+											<button
+												type="button"
+												className="ws-status-action-btn ws-status-action-btn--view"
+												title="View details"
+												onClick={() => onOpenDetails(app)}
+											>
+												<Icon name="eye" />
+												<span>View</span>
+											</button>
+										</>
+									)}
+									{isTenancy && !isDraft ? (
+										<button
+											type="button"
+											className="ws-status-action-btn ws-status-action-btn--receipt"
+											title="Download acknowledgement"
+											onClick={() => onDownloadAck(app.application_no)}
+										>
+											<Icon name="download" />
+											<span>Receipt</span>
+										</button>
+									) : null}
+									{app.status === 'PARTIAL' && app.ref_code ? (
+										canJoinApp(app) ? (
+											<button
+												type="button"
+												className="ws-status-action-btn ws-status-action-btn--join"
+												title="Join application"
+												onClick={() => onJoin(app.ref_code)}
+											>
+												<Icon name="check" />
+												<span>Join</span>
+											</button>
+										) : (
+											<button
+												type="button"
+												className="ws-status-action-btn ws-status-action-btn--invite"
+												title={
+													copiedRefCode === app.ref_code ? 'Copied!' : 'Copy invite link'
+												}
 												onClick={() =>
-													navigate(
-														`/dashboard/tenancy-certificate?draft=${app.application_no}`
+													onCopyRef(
+														`${window.location.origin}/join?ref=${app.ref_code}`,
+														app.ref_code
 													)
 												}
 											>
-												<Icon name="documentPlus" />
-												<span>Resume</span>
+												<Icon name="logout" />
+												<span>{copiedRefCode === app.ref_code ? 'Copied' : 'Invite'}</span>
 											</button>
-										) : (
-											<>
-												{!category.isTenancy ? (
-													<StatusProgressViewButton
-														application={app}
-														variant="workspace"
-														title="View status progress"
-													/>
-												) : null}
-												<button
-													type="button"
-													className="ws-status-action-btn ws-status-action-btn--view"
-													title="View details"
-													onClick={() => onOpenDetails(app)}
-												>
-													<Icon name="eye" />
-													<span>View</span>
-												</button>
-											</>
-										)}
-										{category.isTenancy ? (
-											<button
-												type="button"
-												className="ws-status-action-btn ws-status-action-btn--receipt"
-												title="Download acknowledgement"
-												onClick={() => onDownloadAck(app.application_no)}
-											>
-												<Icon name="download" />
-												<span>Receipt</span>
-											</button>
-										) : null}
-										{app.status === 'PARTIAL' && app.ref_code ? (
-											canJoinApp(app) ? (
-												<button
-													type="button"
-													className="ws-status-action-btn ws-status-action-btn--join"
-													title="Join application"
-													onClick={() => onJoin(app.ref_code)}
-												>
-													<Icon name="check" />
-													<span>Join</span>
-												</button>
-											) : (
-												<button
-													type="button"
-													className="ws-status-action-btn ws-status-action-btn--invite"
-													title={
-														copiedRefCode === app.ref_code
-															? 'Copied!'
-															: 'Copy invite link'
-													}
-													onClick={() =>
-														onCopyRef(
-															`${window.location.origin}/join?ref=${app.ref_code}`,
-															app.ref_code
-														)
-													}
-												>
-													<Icon name="logout" />
-													<span>
-														{copiedRefCode === app.ref_code ? 'Copied' : 'Invite'}
-													</span>
-												</button>
-											)
-										) : null}
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				)}
-			</div>
-		</section>
+										)
+									) : null}
+								</td>
+							</tr>
+						)
+					})}
+				</tbody>
+			</table>
+		</div>
 	)
 }
 
@@ -496,51 +378,100 @@ function WorkspaceUinStatus() {
 	const [searchParams] = useSearchParams()
 
 	const [applications, setApplications] = useState([])
+	const [tabCounts, setTabCounts] = useState({ tenancy: 0, service: 0, all: 0 })
 	const [loading, setLoading] = useState(false)
 	const [page, setPage] = useState(1)
 	const [totalPages, setTotalPages] = useState(1)
+	const [totalResults, setTotalResults] = useState(0)
 	const [error, setError] = useState('')
 	const [copiedRefCode, setCopiedRefCode] = useState('')
 
+	const [activeTab, setActiveTab] = useState(TAB_TENANCY)
+	const [statusFilter, setStatusFilter] = useState('all')
+	const [serviceGroup, setServiceGroup] = useState('all')
+	const [formFilter, setFormFilter] = useState('all')
+
 	const [searchAppNo, setSearchAppNo] = useState(searchParams.get('app_no') || '')
 	const [searchUid, setSearchUid] = useState('')
+	const [searchKeyword, setSearchKeyword] = useState('')
 	const [sortBy, setSortBy] = useState('created_at')
 	const [sortOrder, setSortOrder] = useState('desc')
 
+	const loadApplications = useCallback(
+		async (pageNum = 1, overrides = {}) => {
+			setLoading(true)
+			setError('')
+			try {
+				const tab = overrides.tab ?? activeTab
+				const params = {
+					page: pageNum,
+					application_no:
+						overrides.application_no !== undefined
+							? overrides.application_no
+							: searchAppNo || undefined,
+					uid: overrides.uid !== undefined ? overrides.uid : searchUid || undefined,
+					sort_by: overrides.sort_by || sortBy,
+					sort_order: overrides.sort_order || sortOrder,
+					type: tab,
+					status_filter:
+						overrides.status_filter !== undefined
+							? overrides.status_filter
+							: statusFilter,
+				}
+				const endpoint =
+					user?.role === 'user' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
+				const { data } = await api.get(endpoint, { params })
+				const list = Array.isArray(data) ? data : data?.data ?? []
+				setApplications(list)
+				setPage(Number(data?.current_page) || 1)
+				setTotalPages(Number(data?.last_page) || 1)
+				setTotalResults(Number(data?.total) || list.length)
+				if (data?.counts) {
+					setTabCounts({
+						tenancy: Number(data.counts.tenancy) || 0,
+						service: Number(data.counts.service) || 0,
+						all: Number(data.counts.all) || 0,
+					})
+				}
+			} catch (err) {
+				setError(err?.response?.data?.message || 'Failed to load applications')
+				setApplications([])
+			} finally {
+				setLoading(false)
+			}
+		},
+		[activeTab, searchAppNo, searchUid, sortBy, sortOrder, statusFilter, user?.role]
+	)
+
 	useEffect(() => {
 		loadApplications(1)
-	}, [sortBy, sortOrder])
+	}, [activeTab, statusFilter, sortBy, sortOrder])
 
-	const loadApplications = async (pageNum = 1, overrides = {}) => {
-		setLoading(true)
-		setError('')
-		try {
-			const params = {
-				page: pageNum,
-				application_no:
-					overrides.application_no !== undefined
-						? overrides.application_no
-						: searchAppNo || undefined,
-				uid: overrides.uid !== undefined ? overrides.uid : searchUid || undefined,
-				sort_by: overrides.sort_by || sortBy,
-				sort_order: overrides.sort_order || sortOrder,
+	const serviceFormFilters = useMemo(
+		() => getServiceFormFilters(serviceGroup),
+		[serviceGroup]
+	)
+
+	const displayedItems = useMemo(() => {
+		let rows = applications
+		if (activeTab === TAB_SERVICE) {
+			rows = rows.filter((app) => appInServiceGroup(app, serviceGroup))
+			if (formFilter !== 'all') {
+				rows = rows.filter((app) => appMatchesFormKey(app, formFilter))
 			}
-			const endpoint =
-				user?.role === 'user' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
-			const { data } = await api.get(endpoint, { params })
-			const list = Array.isArray(data) ? data : data?.data ?? []
-			setApplications(list)
-			setPage(Number(data?.current_page) || 1)
-			setTotalPages(Number(data?.last_page) || 1)
-		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to load applications')
-			setApplications([])
-		} finally {
-			setLoading(false)
 		}
-	}
-
-	const categories = useMemo(() => buildCategories(applications), [applications])
+		const q = searchKeyword.trim().toLowerCase()
+		if (q) {
+			rows = rows.filter(
+				(app) =>
+					String(app.application_no || '').toLowerCase().includes(q) ||
+					String(app.uid || '').toLowerCase().includes(q) ||
+					String(app.application_type || '').toLowerCase().includes(q) ||
+					formatStatusText(app.status, app.application_type).toLowerCase().includes(q)
+			)
+		}
+		return rows
+	}, [applications, activeTab, serviceGroup, formFilter, searchKeyword])
 
 	const handleSearch = (e) => {
 		e.preventDefault()
@@ -550,7 +481,38 @@ function WorkspaceUinStatus() {
 	const handleClearSearch = () => {
 		setSearchAppNo('')
 		setSearchUid('')
-		loadApplications(1, { application_no: '', uid: '' })
+		setSearchKeyword('')
+		setStatusFilter('all')
+		setServiceGroup('all')
+		setFormFilter('all')
+		loadApplications(1, {
+			application_no: '',
+			uid: '',
+			status_filter: 'all',
+		})
+	}
+
+	const handleTabChange = (tab) => {
+		setActiveTab(tab)
+		setStatusFilter('all')
+		setServiceGroup('all')
+		setFormFilter('all')
+		setSearchKeyword('')
+		if (tab === TAB_TENANCY && sortBy === 'form') {
+			setSortBy('created_at')
+			setSortOrder('desc')
+		}
+		setPage(1)
+	}
+
+	const handleStatusFilter = (key) => {
+		setStatusFilter(key)
+		setPage(1)
+	}
+
+	const handleServiceGroupChange = (key) => {
+		setServiceGroup(key)
+		setFormFilter('all')
 	}
 
 	const copyToClipboard = (text, identifier) => {
@@ -578,6 +540,13 @@ function WorkspaceUinStatus() {
 		navigate(`/dashboard/status/${type}/${app.application_no}`)
 	}
 
+	const resumeDraft = (app) => {
+		if (!app?.application_no) return
+		navigate(
+			`/dashboard/tenancy-certificate?draft=${encodeURIComponent(app.application_no)}`
+		)
+	}
+
 	const downloadAcknowledgement = async (applicationNo) => {
 		try {
 			const response = await api.get(
@@ -591,6 +560,9 @@ function WorkspaceUinStatus() {
 		}
 	}
 
+	const isTenancyTab = activeTab === TAB_TENANCY
+	const statusFilters = isTenancyTab ? TENANCY_STATUS_FILTERS : SERVICE_STATUS_FILTERS
+
 	return (
 		<div className="ws-page ws-status-page">
 			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
@@ -599,26 +571,12 @@ function WorkspaceUinStatus() {
 				<span>UIN status</span>
 			</nav>
 
-			<div className="ws-status-intro">
-				<div className="ws-status-intro-icon" aria-hidden>
-					<Icon name="status" />
-				</div>
-				<div className="ws-status-intro-body">
-					<h1 className="ws-status-title">UIN &amp; application status</h1>
-					<p className="ws-status-lead">
-						Applications are grouped by service. Use the filters on each table to
-						show a specific form, search rows, or change sort order.
-					</p>
-					<div className="ws-status-meta">
-						<span className="ws-status-meta-pill">
-							{loading ? '…' : applications.length} on this page
-						</span>
-						<span className="ws-status-meta-pill">
-							Page {page} of {totalPages}
-						</span>
-					</div>
-				</div>
-			</div>
+			<header className="ws-status-page-head">
+				<h1 className="ws-status-title">UIN &amp; application status</h1>
+				<p className="ws-status-lead">
+					Track tenancy and service applications — filter by status, search, and resume drafts.
+				</p>
+			</header>
 
 			{error ? (
 				<div className="ws-profile-alert ws-profile-alert--error" role="alert">
@@ -626,75 +584,223 @@ function WorkspaceUinStatus() {
 				</div>
 			) : null}
 
-			<form className="ws-status-toolbar" onSubmit={handleSearch}>
-				<label className="ws-status-search">
-					<span className="ws-status-search-label">Application no.</span>
-					<input
-						type="search"
-						value={searchAppNo}
-						onChange={(e) => setSearchAppNo(e.target.value)}
-						placeholder="e.g. APP-TC-202603-000001"
-					/>
-				</label>
-				<label className="ws-status-search">
-					<span className="ws-status-search-label">Tenancy UIN</span>
-					<input
-						type="search"
-						value={searchUid}
-						onChange={(e) => setSearchUid(e.target.value)}
-						placeholder="Search UIN"
-					/>
-				</label>
-				<label className="ws-status-section-sort">
-					<span className="ws-status-search-label">Page sort</span>
-					<select
-						value={`${sortBy}:${sortOrder}`}
-						onChange={(e) => {
-							const [col, ord] = e.target.value.split(':')
-							setSortBy(col)
-							setSortOrder(ord)
-						}}
+			<div
+				className={`ws-status-control-panel ws-status-control-panel--${
+					isTenancyTab ? 'tenancy' : 'service'
+				}`}
+			>
+				<div className="ws-status-tabs" role="tablist" aria-label="Application type">
+					<button
+						type="button"
+						role="tab"
+						className={`ws-status-tab ws-status-tab--tenancy${
+							activeTab === TAB_TENANCY ? ' is-active' : ''
+						}`}
+						aria-selected={activeTab === TAB_TENANCY}
+						onClick={() => handleTabChange(TAB_TENANCY)}
 					>
-						<option value="created_at:desc">Date (newest)</option>
-						<option value="created_at:asc">Date (oldest)</option>
-						<option value="application_no:asc">Application no. (A–Z)</option>
-					</select>
-				</label>
-				<div className="ws-status-toolbar-actions">
-					<button type="submit" className="ws-btn ws-btn--primary" disabled={loading}>
-						Search
+						<span>Tenancy applications</span>
+						<span className="ws-status-tab-count">{tabCounts.tenancy}</span>
 					</button>
 					<button
 						type="button"
-						className="ws-btn ws-btn--outline"
-						onClick={handleClearSearch}
-						disabled={loading}
+						role="tab"
+						className={`ws-status-tab ws-status-tab--service${
+							activeTab === TAB_SERVICE ? ' is-active' : ''
+						}`}
+						aria-selected={activeTab === TAB_SERVICE}
+						onClick={() => handleTabChange(TAB_SERVICE)}
 					>
-						Clear
+						<span>Service applications</span>
+						<span className="ws-status-tab-count">{tabCounts.service}</span>
 					</button>
 				</div>
-			</form>
 
-			{loading ? (
-				<div className="ws-empty">Loading applications…</div>
-			) : applications.length === 0 ? (
-				<div className="ws-card">
-					<div className="ws-empty">No applications found.</div>
+				<div className="ws-status-control-body">
+					<div className="ws-status-filter-group">
+						<span className="ws-status-filter-label">Status</span>
+						<div
+							className="ws-status-filter-chips"
+							role="group"
+							aria-label="Filter by status"
+						>
+							{statusFilters.map((sf) => (
+								<button
+									key={sf.key}
+									type="button"
+									className={`ws-status-filter-chip${statusFilter === sf.key ? ' is-active' : ''}`}
+									aria-pressed={statusFilter === sf.key}
+									onClick={() => handleStatusFilter(sf.key)}
+								>
+									{sf.label}
+								</button>
+							))}
+						</div>
+					</div>
+
+					{!isTenancyTab ? (
+						<>
+							<div className="ws-status-filter-group">
+								<span className="ws-status-filter-label">Service</span>
+								<div
+									className="ws-status-filter-chips"
+									role="group"
+									aria-label="Filter by service group"
+								>
+									{SERVICE_GROUPS.map((sg) => (
+										<button
+											key={sg.key}
+											type="button"
+											className={`ws-status-filter-chip ws-status-filter-chip--service${
+												serviceGroup === sg.key ? ' is-active' : ''
+											}`}
+											aria-pressed={serviceGroup === sg.key}
+											onClick={() => handleServiceGroupChange(sg.key)}
+										>
+											{sg.label}
+										</button>
+									))}
+								</div>
+							</div>
+
+							{serviceFormFilters.length > 1 ? (
+								<div className="ws-status-filter-group">
+									<span className="ws-status-filter-label">Form</span>
+									<div
+										className="ws-status-filter-chips"
+										role="group"
+										aria-label="Filter by form type"
+									>
+										{serviceFormFilters.map((ff) => (
+											<button
+												key={ff.key}
+												type="button"
+												className={`ws-status-filter-chip ws-status-filter-chip--form${
+													formFilter === ff.key ? ' is-active' : ''
+												}`}
+												aria-pressed={formFilter === ff.key}
+												onClick={() => setFormFilter(ff.key)}
+											>
+												{ff.label}
+											</button>
+										))}
+									</div>
+								</div>
+							) : null}
+						</>
+					) : null}
+
+					<form className="ws-status-toolbar ws-status-toolbar--inline" onSubmit={handleSearch}>
+						<label className="ws-status-search">
+							<span className="ws-status-search-label">Application no.</span>
+							<input
+								type="search"
+								value={searchAppNo}
+								onChange={(e) => setSearchAppNo(e.target.value)}
+								placeholder="e.g. APP-202607-000001"
+							/>
+						</label>
+						<label className="ws-status-search">
+							<span className="ws-status-search-label">Tenancy UIN</span>
+							<input
+								type="search"
+								value={searchUid}
+								onChange={(e) => setSearchUid(e.target.value)}
+								placeholder="Search UIN"
+							/>
+						</label>
+						<label className="ws-status-search">
+							<span className="ws-status-search-label">
+								{isTenancyTab ? 'Find in list' : 'Form or keyword'}
+							</span>
+							<input
+								type="search"
+								value={searchKeyword}
+								onChange={(e) => setSearchKeyword(e.target.value)}
+								placeholder={
+									isTenancyTab
+										? 'Status or keyword…'
+										: 'Form name, status…'
+								}
+							/>
+						</label>
+						<label className="ws-status-section-sort">
+							<span className="ws-status-search-label">Sort by</span>
+							<select
+								value={`${sortBy}:${sortOrder}`}
+								onChange={(e) => {
+									const [col, ord] = e.target.value.split(':')
+									setSortBy(col)
+									setSortOrder(ord)
+								}}
+							>
+								{isTenancyTab ? (
+									<>
+										<option value="created_at:desc">Date (newest)</option>
+										<option value="created_at:asc">Date (oldest)</option>
+										<option value="application_no:asc">Application no. (A–Z)</option>
+										<option value="application_no:desc">Application no. (Z–A)</option>
+										<option value="uid:asc">UIN (A–Z)</option>
+										<option value="status:asc">Status (A–Z)</option>
+									</>
+								) : (
+									<>
+										<option value="created_at:desc">Date (newest)</option>
+										<option value="created_at:asc">Date (oldest)</option>
+										<option value="application_no:asc">Application no. (A–Z)</option>
+										<option value="form:asc">Form type (A–Z)</option>
+										<option value="status:asc">Status (A–Z)</option>
+									</>
+								)}
+							</select>
+						</label>
+						<div className="ws-status-toolbar-actions">
+							<button type="submit" className="ws-btn ws-btn--primary" disabled={loading}>
+								Search
+							</button>
+							<button
+								type="button"
+								className="ws-btn ws-btn--outline"
+								onClick={handleClearSearch}
+								disabled={loading}
+							>
+								Clear all
+							</button>
+						</div>
+					</form>
+
+					<div className="ws-status-results">
+						<div className="ws-status-results-head">
+							<span className="ws-status-results-label">
+								{isTenancyTab ? 'Results' : 'Service results'}
+							</span>
+							<span className="ws-status-panel-count">
+								{loading ? '…' : `${displayedItems.length} of ${totalResults} matching`}
+							</span>
+						</div>
+						{loading ? (
+							<div className="ws-empty ws-empty--compact">Loading applications…</div>
+						) : (
+							<ApplicationsTable
+								items={displayedItems}
+								isTenancy={isTenancyTab}
+								copiedRefCode={copiedRefCode}
+								onCopyRef={copyToClipboard}
+								onOpenDetails={openDetails}
+								onDownloadAck={downloadAcknowledgement}
+								onJoin={(ref) => navigate(`/join?ref=${ref}`)}
+								onResumeDraft={resumeDraft}
+								canJoinApp={canJoin}
+								emptyMessage={
+									applications.length === 0
+										? 'No applications found. Try adjusting your search or filters.'
+										: 'No records match the current filters on this page.'
+								}
+							/>
+						)}
+					</div>
 				</div>
-			) : (
-				categories.map((cat) => (
-					<StatusCategorySection
-						key={cat.id}
-						category={cat}
-						copiedRefCode={copiedRefCode}
-						onCopyRef={copyToClipboard}
-						onOpenDetails={openDetails}
-						onDownloadAck={downloadAcknowledgement}
-						onJoin={(ref) => navigate(`/join?ref=${ref}`)}
-						canJoinApp={canJoin}
-					/>
-				))
-			)}
+			</div>
 
 			{!loading && applications.length > 0 ? (
 				<nav className="ws-status-pagination" aria-label="Application list pagination">

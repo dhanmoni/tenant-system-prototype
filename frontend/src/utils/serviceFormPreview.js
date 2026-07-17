@@ -8,7 +8,11 @@ export function formatPreviewValue(value) {
 }
 
 export function previewItem(label, value) {
-	return { label, value: formatPreviewValue(value) }
+	return {
+		label,
+		value: formatPreviewValue(value),
+		rawValue: value instanceof File ? value : null,
+	}
 }
 
 export function previewSection(title, items = []) {

@@ -36,6 +36,8 @@ class TenantFormsStatusController extends Controller
 
         $applicationNo = $request->input('application_no');
         $uid = $request->input('uid');
+        $typeFilter = strtolower((string) $request->input('type', 'all'));
+        $statusFilter = strtolower((string) $request->input('status_filter', 'all'));
 
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = strtolower((string) $request->input('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -78,13 +80,17 @@ class TenantFormsStatusController extends Controller
                 'application_no',
                 'ref_code',
                 'application_type',
+                'apply_type',
                 'created_at',
+                'updated_at',
                 'status',
                 'current_with',
                 'initiator_role',
                 'initiator_completed',
                 'second_party_completed',
                 'uid',
+                'wizard_step',
+                'movement_history',
                 'landlord_phone',
                 'tenant_phone',
             ]);
@@ -98,12 +104,16 @@ class TenantFormsStatusController extends Controller
                 'application_no' => $app->application_no,
                 'uid' => $app->uid ?? '-',
                 'created_at' => optional($app->created_at)->toDateTimeString(),
+                'updated_at' => optional($app->updated_at)->toDateTimeString(),
                 'status' => $app->status,
                 'application_type' => $app->application_type ?: 'Tenancy Certificate',
+                'apply_type' => $app->apply_type ?? null,
                 'current_with' => $app->current_with ?? '-',
                 'initiator_role' => $app->initiator_role ?? null,
                 'initiator_completed' => (bool) $app->initiator_completed,
                 'second_party_completed' => (bool) $app->second_party_completed,
+                'wizard_step' => $app->wizard_step ?? null,
+                'movement_history' => $app->movement_history ?? [],
                 'ref_code' => $app->ref_code ?? null,
                 'landlord_phone' => $app->landlord_phone ?? null,
                 'tenant_phone' => $app->tenant_phone ?? null,
@@ -160,26 +170,63 @@ class TenantFormsStatusController extends Controller
             $records = $query
                 ->orderByDesc('created_at')
                 ->limit($formsMax)
-                ->get(['id', 'application_no', 'created_at', 'status', 'tenancy_uin']);
+                ->get([
+                    'id',
+                    'application_no',
+                    'created_at',
+                    'updated_at',
+                    'status',
+                    'tenancy_uin',
+                    'assigned_to_role',
+                    'forwarded_at',
+                    'approved_at',
+                    'rejected_at',
+                    'rejection_message',
+                    'approval_message',
+                ]);
 
             foreach ($records as $record) {
                 $items[] = [
                     'id' => $record->id,
                     'source_type' => 'form',
                     'form_key' => $key,
+                    'form_type' => $key,
                     'row_key' => 'form-' . $key . '-' . $record->id,
                     'application_no' => $record->application_no,
                     'uid' => $record->tenancy_uin ?? '-',
                     'created_at' => optional($record->created_at)->toDateTimeString(),
+                    'updated_at' => optional($record->updated_at)->toDateTimeString(),
                     'status' => $record->status,
                     'application_type' => $meta['label'],
-                    'current_with' => '-',
+                    'current_with' => $record->assigned_to_role ?? '-',
+                    'assigned_to_role' => $record->assigned_to_role ?? null,
+                    'forwarded_at' => optional($record->forwarded_at)->toDateTimeString(),
+                    'approved_at' => optional($record->approved_at)->toDateTimeString(),
+                    'rejected_at' => optional($record->rejected_at)->toDateTimeString(),
+                    'rejection_message' => $record->rejection_message ?? null,
+                    'approval_message' => $record->approval_message ?? null,
                     'initiator_role' => null,
                     // Frontend uses tenancy completion logic; these are just safe defaults.
                     'initiator_completed' => true,
                     'second_party_completed' => true,
                 ];
             }
+        }
+
+        $tenancyTotal = count(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'tenancy'));
+        $serviceTotal = count(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'form'));
+
+        if ($typeFilter === 'tenancy') {
+            $items = array_values(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'tenancy'));
+        } elseif ($typeFilter === 'service') {
+            $items = array_values(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'form'));
+        }
+
+        if ($statusFilter !== '' && $statusFilter !== 'all') {
+            $items = array_values(array_filter(
+                $items,
+                fn ($i) => $this->matchesStatusFilter($i['status'] ?? null, $statusFilter)
+            ));
         }
 
         // Apply unified sorting across the merged list.
@@ -208,13 +255,34 @@ class TenantFormsStatusController extends Controller
 
         $pageItems = array_slice($items, $offset, $perPage);
 
-        \Log::info('TenantFormsStatusController response data: ' . json_encode($pageItems));
         return response()->json([
             'data' => $pageItems,
             'current_page' => $page,
             'last_page' => $lastPage,
             'total' => $total,
+            'counts' => [
+                'tenancy' => $tenancyTotal,
+                'service' => $serviceTotal,
+                'all' => $tenancyTotal + $serviceTotal,
+            ],
         ]);
+    }
+
+    private function matchesStatusFilter(?string $status, string $filter): bool
+    {
+        $normalized = strtoupper(trim((string) $status));
+        $filter = strtolower(trim($filter));
+
+        return match ($filter) {
+            'draft' => $normalized === 'DRAFT',
+            'partial' => $normalized === 'PARTIAL',
+            'submitted' => in_array($normalized, ['SUBMITTED', 'UNDER_PROCESS'], true),
+            'in_review' => $normalized === 'IN_REVIEW',
+            'approved' => in_array($normalized, ['APPROVED', 'COMPLETED'], true),
+            'rejected' => $normalized === 'REJECTED',
+            'pending' => in_array($normalized, ['PENDING', 'DRAFT', 'PARTIAL'], true),
+            default => true,
+        };
     }
 }
 

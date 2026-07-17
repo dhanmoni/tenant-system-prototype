@@ -58,7 +58,7 @@ function JoinApplication() {
 		saveToastTimerRef.current = setTimeout(() => {
 			setSaveToast('')
 			saveToastTimerRef.current = null
-		}, 2800)
+		}, 3500)
 	}, [])
 
 	useEffect(() => () => {
@@ -215,7 +215,7 @@ function JoinApplication() {
 	}, [docPreview])
 
 	const validateDetailsStep = () => {
-		if (!name.trim() || !address.trim() || !email.trim() || !phone.trim() || !pan.trim()) {
+		if (!name.trim() || !address.trim() || !phone.trim() || !pan.trim()) {
 			setError('Please fill in all required fields before continuing.')
 			return false
 		}
@@ -368,13 +368,32 @@ function JoinApplication() {
 	}
 
 	if (error && !application) {
+		const alreadyCompleted = /already been completed/i.test(error)
 		return (
-			<div className="dashboard-card">
-				<h1>Join Application</h1>
-				<div className="ws-alert ws-alert--error">{error}</div>
-				<button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate('/dashboard')}>
-					Go to dashboard
-				</button>
+			<div className="ws-page ws-uin-apply tenancy-certificate-page">
+				<div className="uin-confirm">
+					<div className="uin-confirm-card">
+						<div
+							className={`uin-confirm-icon${alreadyCompleted ? ' uin-confirm-icon--info' : ' uin-confirm-icon--error'}`}
+							aria-hidden
+						>
+							{alreadyCompleted ? '✓' : '!'}
+						</div>
+						<h1 className="uin-confirm-title">
+							{alreadyCompleted ? 'Application already completed' : 'Unable to join application'}
+						</h1>
+						<p className="uin-confirm-lead">{error}</p>
+						<div className="uin-confirm-actions">
+							<button
+								type="button"
+								className="ws-btn ws-btn--primary"
+								onClick={() => navigate('/dashboard')}
+							>
+								Back to dashboard
+							</button>
+						</div>
+					</div>
+				</div>
 			</div>
 		)
 	}
@@ -459,6 +478,40 @@ function JoinApplication() {
 	const secondRole = application.second_party_role
 	const isLandlord = secondRole === 'LANDLORD'
 	const roleLabel = isLandlord ? 'Landlord' : 'Tenant'
+	const initiatorLabel =
+		application.initiator_role === 'LANDLORD'
+			? 'Landlord'
+			: application.initiator_role === 'TENANT'
+				? 'Tenant'
+				: application.initiator_role || 'Initiator'
+
+	const displayValue = (value) => {
+		const cleaned = cleanOptionalValue(value)
+		return cleaned || '—'
+	}
+
+	const locationParts = [
+		application.district?.name,
+		application.area_type,
+		application.local_body,
+		application.village_ward?.name,
+		application.village_name,
+	].filter(Boolean)
+	const locationLabel = locationParts.length ? locationParts.join(' · ') : '—'
+
+	const parseCharge = (value) => {
+		if (value === '' || value == null) return 0
+		const n = Number(value)
+		return Number.isFinite(n) && n > 0 ? n : 0
+	}
+	const reviewRentTotal =
+		parseCharge(application.property_rent_payable) +
+		parseCharge(application.property_charge_electricity) +
+		parseCharge(application.property_charge_water) +
+		parseCharge(application.property_charge_furnishing) +
+		parseCharge(application.property_charge_other_services)
+
+	const hasManager = Boolean(cleanOptionalValue(application.manager_name))
 
 	const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 	const storageUrl = (path) => (path ? `${apiBase}/storage/${path}` : '')
@@ -487,7 +540,6 @@ function JoinApplication() {
 		? storageUrl(application.tenant_signature_path)
 		: signaturePreview
 
-	const hasManager = Boolean(cleanOptionalValue(application.manager_name))
 	const managerPan = cleanOptionalValue(application.manager_pan)
 	const managerAadhar = cleanOptionalValue(application.manager_aadhar)
 	const managerPhone = cleanOptionalValue(application.manager_phone)
@@ -499,7 +551,8 @@ function JoinApplication() {
 	return (
 		<div className="ws-page ws-uin-apply tenancy-certificate-page">
 			{saveToast ? (
-				<div className="ws-uin-save-toast" role="status" aria-live="polite">
+				<div className="ws-uin-progress-toast" role="status" aria-live="polite">
+					<span className="ws-uin-progress-toast__icon" aria-hidden>✓</span>
 					{saveToast}
 				</div>
 			) : null}
@@ -511,8 +564,16 @@ function JoinApplication() {
 				</p>
 			</header>
 
-			<nav className="ws-uin-h-stepper" aria-label="Join application stages">
-				<div className="ws-uin-h-stepper__track" aria-hidden />
+			<nav
+				className="ws-uin-h-stepper"
+				aria-label="Join application stages"
+				style={{
+					'--ws-uin-progress': `${JOIN_STEPS.length <= 1 ? 0 : ((joinStep - 1) / (JOIN_STEPS.length - 1)) * 100}%`,
+				}}
+			>
+				<div className="ws-uin-h-stepper__track" aria-hidden>
+					<span className="ws-uin-h-stepper__progress" />
+				</div>
 				<ol className="ws-uin-h-stepper__list">
 					{JOIN_STEPS.map((step) => {
 						const done = joinStep > step.id || maxReachedStep >= step.id
@@ -548,114 +609,234 @@ function JoinApplication() {
 					>
 						{/* Step 1: Review initiator application */}
 						{joinStep === 1 && (
-							<div className="join-app-summary">
-								<h2 className="tenancy-step-heading">Review application</h2>
-								<p className="ws-uin-apply-lead" style={{ marginBottom: '1.25rem' }}>
-									Review the details submitted by the other party before entering your
-									information.
-								</p>
+							<div className="join-app-summary join-review">
+								<header className="join-review__intro">
+									<h2 className="tenancy-step-heading">Review application</h2>
+									<p className="ws-uin-apply-lead">
+										Review the details submitted by the <strong>{initiatorLabel}</strong> before
+										entering your information as <strong>{roleLabel}</strong>.
+									</p>
+								</header>
 
-								<div className="summary-section">
-									<h3>Application details</h3>
-									<div className="tenancy-preview-grid">
+								<section className="join-review__card">
+									<header className="join-review__card-head">
+										<span className="join-review__card-num">1</span>
 										<div>
-											<span className="label-text">Application no.</span>
-											<span>{application.application_no}</span>
+											<h3 className="join-review__card-title">Application overview</h3>
+											<p className="join-review__card-lead">Registration and office details for this joint application.</p>
 										</div>
-										<div>
-											<span className="label-text">Registration date</span>
-											<span>{formatDate(application.registration_date)}</span>
+									</header>
+									<div className="join-review__grid">
+										<div className="join-review__field">
+											<span className="join-review__label">Application no.</span>
+											<span className="join-review__value">{displayValue(application.application_no)}</span>
 										</div>
-										<div>
-											<span className="label-text">Apply type</span>
-											<span>{application.apply_type}</span>
+										<div className="join-review__field">
+											<span className="join-review__label">Application type</span>
+											<span className="join-review__value">{displayValue(application.apply_type)}</span>
 										</div>
-										<div>
-											<span className="label-text">Office</span>
-											<span>{application.office?.name || '—'}</span>
+										<div className="join-review__field">
+											<span className="join-review__label">Agreement date</span>
+											<span className="join-review__value">{formatDate(application.registration_date) || '—'}</span>
 										</div>
-										<div>
-											<span className="label-text">Village / Ward</span>
-											<span>
-												{application.area_type ? application.area_type + ', ' : ''}
-												{application.local_body ? application.local_body + ', ' : ''}
-												{application.village_ward?.name || ''} 
-												{application.village_name ? (application.village_ward?.name ? ', ' : '') + application.village_name : ''}
-												{!application.village_ward && !application.village_name && '—'}
-											</span>
+										<div className="join-review__field">
+											<span className="join-review__label">Initiated by</span>
+											<span className="join-review__value">{initiatorLabel}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Your role</span>
+											<span className="join-review__value">{roleLabel}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Circle office</span>
+											<span className="join-review__value">{displayValue(application.office?.name)}</span>
+										</div>
+										<div className="join-review__field join-review__field--wide">
+											<span className="join-review__label">Location</span>
+											<span className="join-review__value">{locationLabel}</span>
 										</div>
 									</div>
-								</div>
+								</section>
 
-								<div className="summary-section">
-									<h3>Participant details</h3>
-									<div className="tenancy-preview-grid">
+								<section className="join-review__card">
+									<header className="join-review__card-head">
+										<span className="join-review__card-num">2</span>
 										<div>
-											<span className="label-text">Initiator</span>
-											<span>{application.initiator_role}</span>
+											<h3 className="join-review__card-title">Landlord details</h3>
+											<p className="join-review__card-lead">
+												{application.initiator_role === 'LANDLORD'
+													? 'Submitted by the initiator.'
+													: 'Details provided for the landlord party.'}
+											</p>
 										</div>
-										{application.initiator_role === 'LANDLORD' ? (
-											<>
-												<div>
-													<span className="label-text">Landlord name</span>
-													<span>{application.landlord_name}</span>
-												</div>
-												<div>
-													<span className="label-text">Landlord phone</span>
-													<span>{application.landlord_phone}</span>
-												</div>
-											</>
-										) : (
-											<>
-												<div>
-													<span className="label-text">Tenant name</span>
-													<span>{application.tenant_name}</span>
-												</div>
-												<div>
-													<span className="label-text">Tenant phone</span>
-													<span>{application.tenant_phone}</span>
-												</div>
-											</>
-										)}
+									</header>
+									<div className="join-review__grid">
+										<div className="join-review__field">
+											<span className="join-review__label">Name</span>
+											<span className="join-review__value">{displayValue(application.landlord_name)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">PAN</span>
+											<span className="join-review__value">{displayValue(application.landlord_pan)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Mobile</span>
+											<span className="join-review__value">{displayValue(application.landlord_phone)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Email</span>
+											<span className="join-review__value">{displayValue(application.landlord_email)}</span>
+										</div>
+										<div className="join-review__field join-review__field--wide">
+											<span className="join-review__label">Address</span>
+											<span className="join-review__value">{displayValue(application.landlord_address)}</span>
+										</div>
 									</div>
-								</div>
+								</section>
 
-								<div className="summary-section">
-									<h3>Property &amp; rent</h3>
-									<div className="tenancy-preview-grid">
-										<div className="full-row">
-											<span className="label-text">Description</span>
-											<span>{application.property_premises_description || '—'}</span>
-										</div>
+								<section className="join-review__card">
+									<header className="join-review__card-head">
+										<span className="join-review__card-num">3</span>
 										<div>
-											<span className="label-text">Monthly rent</span>
-											<span className="rent-amount">₹{application.property_rent_payable}</span>
+											<h3 className="join-review__card-title">Tenant details</h3>
+											<p className="join-review__card-lead">
+												{application.initiator_role === 'TENANT'
+													? 'Submitted by the initiator.'
+													: 'Details provided for the tenant party.'}
+											</p>
 										</div>
-										<div>
-											<span className="label-text">Duration</span>
-											<span>
-												{application.property_tenancy_duration || '—'}
-												{application.property_tenancy_end_date
-													? ` (Till ${formatDate(application.property_tenancy_end_date)})`
-													: ''}
-											</span>
+									</header>
+									<div className="join-review__grid">
+										<div className="join-review__field">
+											<span className="join-review__label">Name</span>
+											<span className="join-review__value">{displayValue(application.tenant_name)}</span>
 										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">PAN</span>
+											<span className="join-review__value">{displayValue(application.tenant_pan)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Mobile</span>
+											<span className="join-review__value">{displayValue(application.tenant_phone)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Email</span>
+											<span className="join-review__value">{displayValue(application.tenant_email)}</span>
+										</div>
+										<div className="join-review__field join-review__field--wide">
+											<span className="join-review__label">Address</span>
+											<span className="join-review__value">{displayValue(application.tenant_address)}</span>
+										</div>
+										{cleanOptionalValue(application.tenant_previous_tenancy) ? (
+											<div className="join-review__field join-review__field--wide">
+												<span className="join-review__label">Previous tenancy</span>
+												<span className="join-review__value">{application.tenant_previous_tenancy}</span>
+											</div>
+										) : null}
+									</div>
+								</section>
+
+								{hasManager ? (
+									<section className="join-review__card">
+										<header className="join-review__card-head">
+											<span className="join-review__card-num">4</span>
+											<div>
+												<h3 className="join-review__card-title">Property manager details</h3>
+												<p className="join-review__card-lead">Manager details recorded on this application.</p>
+											</div>
+										</header>
+										<div className="join-review__grid">
+											<div className="join-review__field">
+												<span className="join-review__label">Name</span>
+												<span className="join-review__value">{displayValue(application.manager_name)}</span>
+											</div>
+											<div className="join-review__field">
+												<span className="join-review__label">PAN</span>
+												<span className="join-review__value">{displayValue(application.manager_pan)}</span>
+											</div>
+											<div className="join-review__field">
+												<span className="join-review__label">Mobile</span>
+												<span className="join-review__value">{displayValue(application.manager_phone)}</span>
+											</div>
+											<div className="join-review__field">
+												<span className="join-review__label">Email</span>
+												<span className="join-review__value">{displayValue(application.manager_email)}</span>
+											</div>
+											<div className="join-review__field join-review__field--wide">
+												<span className="join-review__label">Address</span>
+												<span className="join-review__value">{displayValue(application.manager_address)}</span>
+											</div>
+										</div>
+									</section>
+								) : null}
+
+								<section className="join-review__card">
+									<header className="join-review__card-head">
+										<span className="join-review__card-num">{hasManager ? '5' : '4'}</span>
 										<div>
-											<span className="label-text">Possession date</span>
-											<span>
+											<h3 className="join-review__card-title">Premises &amp; rent details</h3>
+											<p className="join-review__card-lead">Property description, tenancy period, rent and charges.</p>
+										</div>
+									</header>
+									<div className="join-review__grid">
+										<div className="join-review__field join-review__field--wide">
+											<span className="join-review__label">Description of premises</span>
+											<span className="join-review__value">{displayValue(application.property_premises_description)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Possession date</span>
+											<span className="join-review__value">
 												{application.property_possession_date
 													? formatDate(application.property_possession_date)
 													: '—'}
 											</span>
 										</div>
-										{application.property_tenancy_end_date ? (
-											<div>
-												<span className="label-text">End date</span>
-												<span>{formatDate(application.property_tenancy_end_date)}</span>
-											</div>
-										) : null}
+										<div className="join-review__field">
+											<span className="join-review__label">End date</span>
+											<span className="join-review__value">
+												{application.property_tenancy_end_date
+													? formatDate(application.property_tenancy_end_date)
+													: '—'}
+											</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Duration</span>
+											<span className="join-review__value">{displayValue(application.property_tenancy_duration)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Monthly rent</span>
+											<span className="join-review__value rent-amount">
+												₹{Number(application.property_rent_payable || 0).toLocaleString('en-IN')}
+											</span>
+										</div>
+										<div className="join-review__field join-review__field--wide">
+											<span className="join-review__label">Furniture / equipment</span>
+											<span className="join-review__value">{displayValue(application.property_furniture_description)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Electricity</span>
+											<span className="join-review__value">{displayValue(application.property_charge_electricity)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Water</span>
+											<span className="join-review__value">{displayValue(application.property_charge_water)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Furnishing / fittings</span>
+											<span className="join-review__value">{displayValue(application.property_charge_furnishing)}</span>
+										</div>
+										<div className="join-review__field">
+											<span className="join-review__label">Other services</span>
+											<span className="join-review__value">{displayValue(application.property_charge_other_services)}</span>
+										</div>
+										<div className="join-review__field join-review__field--wide join-review__total">
+											<span className="join-review__label">Total monthly amount</span>
+											<span className="join-review__value rent-amount">
+												₹{reviewRentTotal.toLocaleString('en-IN')}
+											</span>
+										</div>
 									</div>
-								</div>
+								</section>
 							</div>
 						)}
 
@@ -718,12 +899,11 @@ function JoinApplication() {
 												) : null}
 											</label>
 											<label>
-												<span className="label-text required">Email</span>
+												<span className="label-text">Email (optional)</span>
 												<input
 													type="email"
 													value={email}
 													onChange={(e) => setEmail(e.target.value)}
-													required
 													aria-invalid={Boolean(fieldErrors.email)}
 												/>
 												{fieldErrors.email ? (
@@ -780,10 +960,14 @@ function JoinApplication() {
 										<p className="tenancy-docs-step__lead">
 											All items below are mandatory. Use the preview icon after each upload to verify the file.
 										</p>
+										<p className="tenancy-docs-step__disclaimer" role="note">
+											<strong>File upload guidelines:</strong> Accepted formats — PDF, JPG, JPEG, PNG.
+											Maximum size — <strong>2 MB</strong> per file. Scanned copies must be clear and readable.
+										</p>
 										<ul className="tenancy-docs-step__checklist" aria-label="Required documents">
-											<li>Passport-size photograph</li>
-											<li>Signature</li>
-											<li>PAN Card</li>
+											<li>Passport-size photograph (JPG / JPEG / PNG, max 2 MB)</li>
+											<li>Signature (JPG / JPEG / PNG, max 2 MB)</li>
+											<li>PAN Card (PDF / JPG / JPEG / PNG, max 2 MB)</li>
 										</ul>
 									</header>
 
@@ -792,14 +976,17 @@ function JoinApplication() {
 											<span className="tenancy-doc-card__num">1</span>
 											<div>
 												<h3 className="tenancy-doc-card__title">Your personal documents</h3>
-												<p className="tenancy-doc-card__meta">Photograph, signature, and PAN card for the joining party</p>
+												<p className="tenancy-doc-card__meta">
+													Photograph, signature, and PAN card — JPG / JPEG / PNG / PDF (where allowed) · max 2 MB each
+												</p>
 											</div>
 										</div>
 										<div className="tenancy-doc-card__grid">
 											<DocumentUploadSlot
 												id="join-photo"
 												label="Passport-size photograph"
-												accept="image/png, image/jpeg"
+												accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+												hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
 												required
 												onChange={(e) => {
 													const file = e.target.files?.[0] || null
@@ -821,7 +1008,8 @@ function JoinApplication() {
 											<DocumentUploadSlot
 												id="join-signature"
 												label="Signature"
-												accept="image/png, image/jpeg"
+												accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+												hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
 												required
 												onChange={(e) => {
 													const file = e.target.files?.[0] || null
@@ -843,7 +1031,8 @@ function JoinApplication() {
 											<DocumentUploadSlot
 												id="join-pan"
 												label="PAN card document"
-												accept=".pdf, image/png, image/jpeg"
+												accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+												hint="Accepted: PDF, JPG, JPEG, PNG · Max size: 2 MB"
 												required
 												onChange={(e) => setPanDocumentFile(e.target.files?.[0] || null)}
 												file={panDocumentFile}
@@ -1320,10 +1509,9 @@ function JoinApplication() {
 							</div>
 						)}
 
-						{/* Step 5: Payment */}
 						{joinStep === 5 && (
 							<fieldset className="tenancy-fieldset ws-uin-payment-step">
-								<div className={`ws-uin-pay${paymentComplete ? ' is-paid' : ''}`}>
+								<div className={`ws-uin-pay ws-uin-pay--simple${paymentComplete ? ' is-paid' : ''}`}>
 									<section className="ws-uin-pay-bill">
 										<h2 className="ws-uin-pay-title">Bill summary</h2>
 										<div className="ws-uin-pay-bill-rows">
@@ -1361,7 +1549,7 @@ function JoinApplication() {
 												</span>
 											</div>
 										) : (
-											<p className="ws-uin-pay-hint">Complete payment on the right to continue.</p>
+											<p className="ws-uin-pay-hint">Review the bill and proceed to pay.</p>
 										)}
 									</section>
 
@@ -1369,81 +1557,15 @@ function JoinApplication() {
 										<h2 className="ws-uin-pay-title">Pay now</h2>
 										{!paymentComplete ? (
 											<>
-												<div className="ws-uin-pay-qr-wrap">
-													<div className="ws-uin-pay-qr" aria-hidden>
-														<svg viewBox="0 0 120 120" width="132" height="132" role="img">
-															<title>Demo QR code</title>
-															<rect width="120" height="120" fill="#fff" />
-															<rect x="8" y="8" width="28" height="28" fill="#0f172a" />
-															<rect x="14" y="14" width="16" height="16" fill="#fff" />
-															<rect x="18" y="18" width="8" height="8" fill="#0f172a" />
-															<rect x="84" y="8" width="28" height="28" fill="#0f172a" />
-															<rect x="90" y="14" width="16" height="16" fill="#fff" />
-															<rect x="94" y="18" width="8" height="8" fill="#0f172a" />
-															<rect x="8" y="84" width="28" height="28" fill="#0f172a" />
-															<rect x="14" y="90" width="16" height="16" fill="#fff" />
-															<rect x="18" y="94" width="8" height="8" fill="#0f172a" />
-															<rect x="44" y="12" width="8" height="8" fill="#0f172a" />
-															<rect x="56" y="12" width="8" height="8" fill="#0f172a" />
-															<rect x="68" y="20" width="8" height="8" fill="#0f172a" />
-															<rect x="44" y="32" width="8" height="8" fill="#0f172a" />
-															<rect x="60" y="32" width="8" height="8" fill="#0f172a" />
-															<rect x="44" y="48" width="8" height="8" fill="#0f172a" />
-															<rect x="56" y="48" width="8" height="8" fill="#0f172a" />
-															<rect x="68" y="48" width="8" height="8" fill="#0f172a" />
-															<rect x="80" y="48" width="8" height="8" fill="#0f172a" />
-															<rect x="92" y="48" width="8" height="8" fill="#0f172a" />
-															<rect x="104" y="48" width="8" height="8" fill="#0f172a" />
-															<rect x="44" y="60" width="8" height="8" fill="#0f172a" />
-															<rect x="68" y="60" width="8" height="8" fill="#0f172a" />
-															<rect x="92" y="60" width="8" height="8" fill="#0f172a" />
-															<rect x="44" y="72" width="8" height="8" fill="#0f172a" />
-															<rect x="56" y="72" width="8" height="8" fill="#0f172a" />
-															<rect x="80" y="72" width="8" height="8" fill="#0f172a" />
-															<rect x="104" y="72" width="8" height="8" fill="#0f172a" />
-															<rect x="56" y="84" width="8" height="8" fill="#0f172a" />
-															<rect x="68" y="84" width="8" height="8" fill="#0f172a" />
-															<rect x="92" y="84" width="8" height="8" fill="#0f172a" />
-															<rect x="56" y="96" width="8" height="8" fill="#0f172a" />
-															<rect x="80" y="96" width="8" height="8" fill="#0f172a" />
-															<rect x="104" y="96" width="8" height="8" fill="#0f172a" />
-															<rect x="68" y="108" width="8" height="8" fill="#0f172a" />
-															<rect x="92" y="108" width="8" height="8" fill="#0f172a" />
-														</svg>
-													</div>
-													<p className="ws-uin-pay-qr-caption">Scan UPI QR to pay ₹{feeAmount}</p>
-												</div>
-
-												<div className="ws-uin-pay-or">or</div>
-
-												<div className="ws-uin-pay-bank">
-													<div className="ws-uin-pay-bank-row">
-														<span>Account name</span>
-														<strong>Govt. of Assam — eGRAS</strong>
-													</div>
-													<div className="ws-uin-pay-bank-row">
-														<span>Account no.</span>
-														<strong>5010023487612</strong>
-													</div>
-													<div className="ws-uin-pay-bank-row">
-														<span>IFSC</span>
-														<strong>SBIN0001234</strong>
-													</div>
-													<div className="ws-uin-pay-bank-row">
-														<span>UPI ID</span>
-														<strong>uinfee@assam</strong>
-													</div>
-												</div>
-
 												<button
 													type="button"
 													className="ws-btn ws-btn--primary ws-uin-pay-btn"
 													onClick={handleMockPayment}
 													disabled={paymentSimulating || submitting}
 												>
-													{paymentSimulating ? 'Confirming…' : `I have paid ₹${feeAmount}`}
+													{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount}`}
 												</button>
-												<p className="ws-uin-pay-note">Demo only — no real bank transfer.</p>
+												<p className="ws-uin-pay-note">Demo payment — no real bank transfer.</p>
 											</>
 										) : (
 											<div className="ws-uin-pay-done">
