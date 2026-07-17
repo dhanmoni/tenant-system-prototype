@@ -161,7 +161,7 @@ const publicPagesEn = {
 		'Matters under Rule 11 — sections 10 (rent dispute), 14 (deposit money dispute), 15 (property repair dispute) and 20 (withholding dispute)',
 	'services.form.ii.matter': 'For recovery of possession of premises from tenant',
 	'services.form.iii.matter':
-		'Eviction and recovery of possession of premises by landlord or in the case of landlord',
+		'Eviction and recovery of possession of premises by landlord or his legal heirs.',
 	'services.form.v.matter':
 		'Appeals by any person aggrieved by the order of the Rent Authority',
 	'services.form.vi.matter':

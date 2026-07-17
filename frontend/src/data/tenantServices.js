@@ -85,7 +85,7 @@ export const tenantServiceGroups = [
 				label: 'Form III — Eviction and recovery of possession',
 				formName: 'Form III',
 				matter:
-					'Eviction and recovery of possession of premises by landlord or in the case of landlord',
+					'Eviction and recovery of possession of premises by landlord or his legal heirs.',
 				rule: 'Rule 10',
 			},
 			{
