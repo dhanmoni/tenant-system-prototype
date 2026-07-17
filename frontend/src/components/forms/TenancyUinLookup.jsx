@@ -55,7 +55,7 @@ function TenancyUinLookup({
 							if (status) setStatus(null)
 						}}
 						required={required}
-						placeholder="e.g. TC-AS-2603-000001"
+						placeholder="e.g. ATRMS-01012026-0303"
 					/>
 					<button
 						type="button"

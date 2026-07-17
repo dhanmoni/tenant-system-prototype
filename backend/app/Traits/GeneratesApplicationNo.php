@@ -19,23 +19,36 @@ trait GeneratesApplicationNo
         $year = date('Y');
         $prefix = "APP-{$districtCode}{$year}";
 
-        // We need to find the latest number for THIS specific district and year across ALL application types?
-        // Or per type? The user said "standardized applicationNo structure fixed, dont want different format for each type".
-        // If it's across all types, we need a shared table or a global sequence.
-        // However, usually it's per table but with same format.
-        // Let's assume it's per table for now, but following the format.
-        
-        $latest = self::where('application_no', 'like', $prefix . '-%')
-            ->orderByDesc('application_no')
-            ->lockForUpdate()
-            ->first();
+        // We need to find the latest number for THIS specific district and year across ALL service application types.
+        $tables = [
+            'rent_authority_form_i_applications',
+            'rent_authority_form_ia_applications',
+            'rent_authority_form_ib_applications',
+            'rent_court_form_4_applications',
+            'rent_court_form_5_applications',
+            'rent_authority_form_6_applications',
+            'rent_court_form_7_applications',
+            'rent_tribunal_form_8_applications'
+        ];
 
-        $next = 1;
-        if ($latest) {
-            $parts = explode('-', $latest->application_no);
-            $seq = (int) end($parts);
-            $next = $seq + 1;
+        $maxSeq = 0;
+
+        foreach ($tables as $table) {
+            $latest = DB::table($table)
+                ->where('application_no', 'like', $prefix . '-%')
+                ->orderByDesc('application_no')
+                ->first(['application_no']);
+
+            if ($latest && $latest->application_no) {
+                $parts = explode('-', $latest->application_no);
+                $seq = (int) end($parts);
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
         }
+
+        $next = $maxSeq + 1;
 
         return $prefix . '-' . str_pad((string) $next, 6, '0', STR_PAD_LEFT);
     }

@@ -3,25 +3,35 @@ use App\Models\District;
 use Illuminate\Support\Facades\DB;
 
 $tables = [
-    'rent_revision_applications',
-    'other_charges_revision_applications',
-    'valuer_appointment_applications',
-    'rent_court_possession_applications',
-    'rent_court_filing_applications',
-    'rent_authority_filing_applications',
-    'rent_court_appeal_applications',
-    'rent_tribunal_appeal_applications'
+    'rent_authority_form_i_applications',
+    'rent_authority_form_ia_applications',
+    'rent_authority_form_ib_applications',
+    'rent_court_form_4_applications',
+    'rent_court_form_5_applications',
+    'rent_authority_form_6_applications',
+    'rent_court_form_7_applications',
+    'rent_tribunal_form_8_applications'
 ];
 
+$counters = [];
+
 foreach ($tables as $table) {
-    $records = DB::table($table)->get();
-    foreach ($records as $index => $record) {
-        $district = District::find($record->district_id ?? 1);
+    $records = DB::table($table)->orderBy('created_at')->get();
+    foreach ($records as $record) {
+        $districtId = $record->district_id ?? 1;
+        $district = District::find($districtId);
         $districtCode = $district ? $district->code : '00';
         $year = date('Y', strtotime($record->created_at));
-        $newNo = "APP-{$districtCode}{$year}-" . str_pad((string)($index + 1), 6, '0', STR_PAD_LEFT);
+        
+        $key = "{$districtCode}{$year}";
+        if (!isset($counters[$key])) {
+            $counters[$key] = 0;
+        }
+        $counters[$key]++;
+        
+        $newNo = "APP-{$key}-" . str_pad((string)$counters[$key], 6, '0', STR_PAD_LEFT);
         
         DB::table($table)->where('id', $record->id)->update(['application_no' => $newNo]);
     }
 }
-echo "Done updating all service application numbers with numeric district codes\n";
+echo "Done updating all service application numbers with unique cross-table sequence\n";

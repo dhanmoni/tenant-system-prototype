@@ -6572,31 +6572,31 @@
 	box-shadow: var(--ws-shadow);
 }
 
-.ws-district-tile.is-low {
+.page.page-dashboard .ws-root button.ws-district-tile.is-low {
 	background: #eff6ff;
 	border-color: #bfdbfe;
 }
 
-.ws-district-tile.is-mid {
+.page.page-dashboard .ws-root button.ws-district-tile.is-mid {
 	background: #dbeafe;
 	border-color: #60a5fa;
 }
 
-.ws-district-tile.is-high {
+.page.page-dashboard .ws-root button.ws-district-tile.is-high {
 	background: #1d4ed8;
 	border-color: #1e3a8a;
 	color: #fff;
 }
 
-.ws-district-tile.is-high .ws-district-tile-count {
+.page.page-dashboard .ws-root button.ws-district-tile.is-high .ws-district-tile-count {
 	color: #e0e7ff;
 }
 
-.ws-district-tile.is-selected {
+.page.page-dashboard .ws-root button.ws-district-tile.is-selected {
 	box-shadow: 0 0 0 2px var(--ws-accent);
 }
 
-.ws-district-tile.is-none {
+.page.page-dashboard .ws-root button.ws-district-tile.is-none {
 	opacity: 0.65;
 }
 
