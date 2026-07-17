@@ -298,14 +298,15 @@ function ApplicationStatus() {
 												</td>
 												{isTenancyType && (
 													<td>
-														{app.initiator_completed && app.second_party_completed ? (
+														{String(app.status).toUpperCase() === 'DRAFT' ? (
+															<span className="text-muted">—</span>
+														) : app.initiator_completed && app.second_party_completed ? (
 															<span className="completion-badge completion-badge--done">Both Completed</span>
 														) : (
 															<span className="completion-badge completion-badge--partial">
 																Awaiting {getAwaitingPartyLabel(app.initiator_role)}
 															</span>
-														)
-														}
+														)}
 													</td>
 												)}
 												<td className="table-actions">

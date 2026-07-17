@@ -20,6 +20,10 @@ class LogUserActivity
         $path = $request->path();
         $method = strtoupper($request->method());
 
+        if ($method === 'GET') {
+            return $response;
+        }
+
         $skipPaths = [
             'api/login',
             'api/logout',

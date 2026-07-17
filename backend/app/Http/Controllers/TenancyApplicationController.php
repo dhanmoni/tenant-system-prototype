@@ -462,7 +462,7 @@ class TenancyApplicationController extends Controller
             $status = Status::PARTIAL;
             if ($application->initiator_completed) {
                 // Pass the villageWard to get the correct state code for the UID
-                $uid = TenancyApplication::generateUid($application->villageWard, $application->office_id);
+                $uid = TenancyApplication::generateUid($application->district_id, $application->office_id);
                 $status = Status::COMPLETED;
                 $updateData['uid'] = $uid;
                 $updateData['status'] = $status;
@@ -802,7 +802,7 @@ class TenancyApplicationController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $query = TenancyApplication::with('district');
+        $query = TenancyApplication::with('district')->where('status', '!=', Status::DRAFT);
 
         if ($user->role === Roles::DISTRICT_ADMIN) {
             $query->where('district_id', $user->district_id);

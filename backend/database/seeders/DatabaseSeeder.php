@@ -20,16 +20,7 @@ class DatabaseSeeder extends Seeder
             OfficeSeeder::class,
             DesignationSeeder::class,
             UserSeeder::class,
-            TenancyApplicationSeeder::class,
-            RentRevisionApplicationSeeder::class,
-            OtherChargesRevisionApplicationSeeder::class,
-            ValuerAppointmentApplicationSeeder::class,
-            RentCourtPossessionApplicationSeeder::class,
-            RentCourtFilingApplicationSeeder::class,
-            RentAuthorityFilingApplicationSeeder::class,
-            RentCourtAppealApplicationSeeder::class,
-            RentTribunalAppealApplicationSeeder::class,
-            DemoTestDataSeeder::class,
+            // Application and Demo Data Seeders removed to keep DB clean
         ]);
     }
 }

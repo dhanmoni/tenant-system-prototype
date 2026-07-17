@@ -354,7 +354,23 @@ function TenancyCertificate() {
 	useEffect(() => {
 		if (draftParam || !draftLoaded || initiatorRole) return
 		setInitiatorRole('LANDLORD')
-	}, [draftParam, draftLoaded, initiatorRole])
+
+		if (user?.district_id) {
+			const dId = String(user.district_id)
+			setTenancyDistrictId(dId)
+			loadTenancyVillageWards(dId)
+
+			if (user.office_id) {
+				setTenancyOfficeId(String(user.office_id))
+			} else if (tenancyOffices.length > 0) {
+				const officesInDistrict = tenancyOffices.filter(o => String(o.district_id) === dId)
+				if (officesInDistrict.length === 1) {
+					setTenancyOfficeId(String(officesInDistrict[0].id))
+				}
+			}
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [draftParam, draftLoaded, initiatorRole, user, tenancyOffices])
 
 	// Fill initiator section from profile when fields are empty (after draft load or fresh default)
 	useEffect(() => {
@@ -1124,6 +1140,25 @@ function TenancyCertificate() {
 
 		if (tenancyStep === 1 && registrationTooOld) return
 
+		if (tenancyStep === 1) {
+			if (typeof form?.checkValidity === 'function' && !form.checkValidity()) {
+				showErrorToast('Please fill in the required fields highlighted below.')
+				const firstInvalid = form.querySelector(':invalid')
+				if (firstInvalid) {
+					firstInvalid.setAttribute('aria-invalid', 'true')
+					firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' })
+					try {
+						firstInvalid.focus({ preventScroll: true })
+					} catch {
+						firstInvalid.focus()
+					}
+				} else {
+					requestAnimationFrame(() => scrollToFirstError(form))
+				}
+				return
+			}
+		}
+
 		if (tenancyStep === 2) {
 			if (hasStep2FieldErrors) {
 				showErrorToast('Please correct the highlighted fields before continuing.')
@@ -1384,16 +1419,9 @@ function TenancyCertificate() {
 								<strong>Save &amp; continue</strong>, a refresh will reopen the same draft.
 							</p>
 						) : null}
-						{draftApplicationNo ? (
-							<p className="ws-uin-draft-line" role="status">
-								<span className="ws-uin-draft-line__dot" aria-hidden />
-								Saved draft <strong>{draftApplicationNo}</strong>
-								{draftParam ? ' — safe to refresh' : null}
-							</p>
-						) : null}
 					</div>
 					<div className="ws-uin-apply-head__actions">
-						<button
+						{/*<button
 							type="button"
 							className="ws-btn ws-btn--secondary ws-uin-drafts-btn"
 							onClick={() => openDraftsModal()}
@@ -1405,7 +1433,7 @@ function TenancyCertificate() {
 									{serverDrafts.length}
 								</span>
 							) : null}
-						</button>
+						</button>*/}
 						{isResumedSession ? (
 							<button
 								type="button"
@@ -1506,17 +1534,6 @@ function TenancyCertificate() {
 				onSubmit={handleContinue}
 				noValidate
 			>
-				<header className="ws-uin-apply-form-head">
-					<div className="ws-uin-apply-type-note" role="note">
-						<p>
-							<strong>Joint</strong> (within 2 months) — both parties complete the form.
-						</p>
-						<p>
-							<strong>Individual</strong> (2–3 months) — you apply alone. Agreements older than 3
-							months are not eligible.
-						</p>
-					</div>
-				</header>
 
 				{tenancyStep === 1 && (
 					<fieldset className="tenancy-fieldset">
@@ -1596,7 +1613,20 @@ function TenancyCertificate() {
 							</div>
 							<label>
 								<span className="label-text required">District</span>
-								<select value={tenancyDistrictId} onChange={e => { setTenancyDistrictId(e.target.value); setTenancyVillageWardId(''); setTenancyVillageWards([]); setTenancyVillageName(''); loadTenancyVillageWards(e.target.value); }} required>
+								<select value={tenancyDistrictId} onChange={e => {
+									const dId = e.target.value;
+									setTenancyDistrictId(dId);
+									setTenancyVillageWardId('');
+									setTenancyVillageWards([]);
+									setTenancyVillageName('');
+									loadTenancyVillageWards(dId);
+									const officesInDistrict = tenancyOffices.filter(o => String(o.district_id) === dId);
+									if (officesInDistrict.length === 1) {
+										setTenancyOfficeId(String(officesInDistrict[0].id));
+									} else {
+										setTenancyOfficeId('');
+									}
+								}} required>
 									<option value="">Select District</option>
 									{tenancyDistricts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
 								</select>
@@ -1667,7 +1697,6 @@ function TenancyCertificate() {
 									<div>
 										<h3 className="ws-uin-party-block__title">
 											Landlord details
-											{initiatorRole === 'LANDLORD' && <span className="ws-uin-party-block__badge">From your profile</span>}
 										</h3>
 										<p className="ws-uin-party-block__lead">Enter the landlord’s name, address, PAN and contact information.</p>
 									</div>
@@ -1736,7 +1765,6 @@ function TenancyCertificate() {
 									<div>
 										<h3 className="ws-uin-party-block__title">
 											Tenant details
-											{initiatorRole === 'TENANT' && <span className="ws-uin-party-block__badge">From your profile</span>}
 										</h3>
 										<p className="ws-uin-party-block__lead">Enter the tenant’s name, address, PAN, contact details and previous tenancy if any.</p>
 									</div>
@@ -1971,7 +1999,6 @@ function TenancyCertificate() {
 										<span>Total monthly amount</span>
 										<strong>₹{totalMonthlyRent.toLocaleString('en-IN')}</strong>
 									</div>
-									<p className="ws-uin-rent-total-hint">Empty charge fields are not counted. Total = rent + entered charges.</p>
 								</div>
 							</div>
 						</section>

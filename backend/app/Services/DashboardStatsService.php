@@ -96,7 +96,7 @@ class DashboardStatsService
     {
         $total = 0;
         foreach ($modelClasses ?? $this->allServiceModels() as $modelClass) {
-            $query = $modelClass::query();
+            $query = $modelClass::query()->where('status', '!=', Status::DRAFT);
             if ($districtId) {
                 $query->where('district_id', $districtId);
             }
@@ -108,7 +108,7 @@ class DashboardStatsService
 
     public function countTenancyApplications(?int $districtId = null): int
     {
-        $query = TenancyApplication::query();
+        $query = TenancyApplication::query()->where('status', '!=', Status::DRAFT);
         if ($districtId) {
             $query->where('district_id', $districtId);
         }
@@ -141,7 +141,7 @@ class DashboardStatsService
             }
 
             $breakdown['OTHER'] += (clone $base)
-                ->whereNotIn('status', [Status::SUBMITTED, Status::IN_REVIEW, Status::REJECTED, Status::COMPLETED])
+                ->whereNotIn('status', [Status::SUBMITTED, Status::IN_REVIEW, Status::REJECTED, Status::COMPLETED, Status::DRAFT])
                 ->count();
         }
 
@@ -174,7 +174,7 @@ class DashboardStatsService
         $items = collect();
 
         foreach ($modelClasses as $modelClass) {
-            $query = $modelClass::query()->with('user')->latest();
+            $query = $modelClass::query()->with('user')->where('status', '!=', Status::DRAFT)->latest();
             if ($districtId) {
                 $query->where('district_id', $districtId);
             }
@@ -202,7 +202,7 @@ class DashboardStatsService
      */
     public function recentTenancyApplications(?int $districtId, int $limit = 6): array
     {
-        $query = TenancyApplication::query()->latest();
+        $query = TenancyApplication::query()->where('status', '!=', Status::DRAFT)->latest();
         if ($districtId) {
             $query->where('district_id', $districtId);
         }
@@ -256,10 +256,10 @@ class DashboardStatsService
             ->get()
             ->map(function (State $state) {
                 $districtIds = District::where('state_id', $state->id)->pluck('id');
-                $tenancy = TenancyApplication::whereIn('district_id', $districtIds)->count();
+                $tenancy = TenancyApplication::whereIn('district_id', $districtIds)->where('status', '!=', Status::DRAFT)->count();
                 $service = 0;
                 foreach ($this->allServiceModels() as $modelClass) {
-                    $service += $modelClass::query()->whereIn('district_id', $districtIds)->count();
+                    $service += $modelClass::query()->whereIn('district_id', $districtIds)->where('status', '!=', Status::DRAFT)->count();
                 }
 
                 return [
@@ -284,7 +284,7 @@ class DashboardStatsService
     {
         $items = [];
         foreach ($modelClasses as $modelClass) {
-            $query = $modelClass::query();
+            $query = $modelClass::query()->where('status', '!=', Status::DRAFT);
             if ($districtId) {
                 $query->where('district_id', $districtId);
             }

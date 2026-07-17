@@ -277,7 +277,9 @@ function ApplicationsTable({
 								</td>
 								{isTenancy ? (
 									<td>
-										{app.initiator_completed && app.second_party_completed ? (
+										{String(app.status).toUpperCase() === 'DRAFT' ? (
+											<span className="ws-text-muted">—</span>
+										) : app.initiator_completed && app.second_party_completed ? (
 											<span className="ws-badge ws-badge--success">Both completed</span>
 										) : (
 											<span className="ws-badge ws-badge--warning">
@@ -599,7 +601,7 @@ function WorkspaceUinStatus() {
 						aria-selected={activeTab === TAB_TENANCY}
 						onClick={() => handleTabChange(TAB_TENANCY)}
 					>
-						<span>Tenancy applications</span>
+						<span>Tenancy certificates</span>
 						<span className="ws-status-tab-count">{tabCounts.tenancy}</span>
 					</button>
 					<button

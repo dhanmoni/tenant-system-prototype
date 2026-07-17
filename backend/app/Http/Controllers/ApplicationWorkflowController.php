@@ -388,7 +388,7 @@ class ApplicationWorkflowController extends Controller
                 if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
                     $relations = ['user', 'forwardedBy', 'district'];
                 }
-                $query = $modelClass::with($relations);
+                $query = $modelClass::with($relations)->where('status', '!=', Status::DRAFT);
                 if ($user->role === Roles::DISTRICT_ADMIN) {
                     $query->where('district_id', $districtId);
                 } elseif ($districtFilter) {

@@ -13,10 +13,10 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
-        $districts = District::whereIn('name', ['Kamrup', 'Kamrup Rural', 'Nagaon', 'Sonitpur'])->get();
+        $districts = District::whereIn('name', ['Nagaon', 'Jorhat'])->get();
         // Fallback for district if not exists (should not happen with migrations)
         if ($districts->isEmpty()) {
-            $districts = collect([District::create(['name' => 'Kamrup'])]);
+            $districts = collect([District::create(['name' => 'Nagaon'])]);
         }
 
         $users = [
@@ -122,134 +122,7 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        // Keep the original hardcoded ones for backward compatibility of tests
-        $firstDistrict = $districts->first();
-        $users = array_merge($users, [
-            [
-                'name' => 'Legacy District Admin',
-                'email' => 'district.admin@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_DISTRICT_ADMIN,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9888888888',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Legacy Rent Authority',
-                'email' => 'rent.authority@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_RENT_AUTHORITY,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9777777777',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Legacy Rent Court',
-                'email' => 'rent.court@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_RENT_COURT,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9666666666',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Legacy Rent Tribunal',
-                'email' => 'rent.tribunal@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_RENT_TRIBUNAL,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9555555555',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Legacy Valuer',
-                'email' => 'valuer@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_VALUER,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9555555550',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Legacy Valuer Alt',
-                'email' => 'valuer.alt@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_VALUER,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9333333333',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Demo Tenant',
-                'email' => 'tenant@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_USER,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9444444444',
-                'approved_at' => now(),
-            ],
-
-            // ── Multi-role demos (same phone → role switcher in top bar) ──
-            // Pair 1: Citizen + RA Assistant
-            [
-                'name' => 'Dual Role Citizen',
-                'email' => 'dual.citizen@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_USER,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9000000001',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Dual Role RA Assistant',
-                'email' => 'dual.ra.assistant@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_RA_ASSISTANT,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9000000001',
-                'approved_at' => now(),
-            ],
-
-            // Pair 2: Citizen + Rent Authority
-            [
-                'name' => 'Dual Role Citizen RA',
-                'email' => 'dual2.citizen@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_USER,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9000000002',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Dual Role Rent Authority',
-                'email' => 'dual2.rent.authority@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_RENT_AUTHORITY,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9000000002',
-                'approved_at' => now(),
-            ],
-
-            // Pair 3: Citizen + District Admin
-            [
-                'name' => 'Dual Role Citizen DA',
-                'email' => 'dual3.citizen@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_USER,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9000000003',
-                'approved_at' => now(),
-            ],
-            [
-                'name' => 'Dual Role District Admin',
-                'email' => 'dual3.district.admin@nic.in',
-                'password' => 'password',
-                'role' => User::ROLE_DISTRICT_ADMIN,
-                'district_id' => $firstDistrict->id,
-                'phone' => '9000000003',
-                'approved_at' => now(),
-            ],
-        ]);
+        // Legacy users and multi-role demos removed as per request
 
         foreach ($users as $data) {
             $password = $data['password'];

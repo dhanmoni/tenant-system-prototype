@@ -80,7 +80,9 @@ function JoinApplication() {
 		if (phone && !MOBILE_RE.test(String(phone).replace(/\D/g, ''))) {
 			errors.phone = 'Must be exactly 10 digits'
 		}
-		if (email && !EMAIL_RE.test(email.trim())) {
+		if (!email || !email.trim()) {
+			errors.email = 'Email is required'
+		} else if (!EMAIL_RE.test(email.trim())) {
 			errors.email = 'Enter a valid email address'
 		}
 		if (pan && !PAN_RE.test(pan.trim().toUpperCase())) {
@@ -899,12 +901,13 @@ function JoinApplication() {
 												) : null}
 											</label>
 											<label>
-												<span className="label-text">Email (optional)</span>
+												<span className="label-text required">Email</span>
 												<input
 													type="email"
 													value={email}
 													onChange={(e) => setEmail(e.target.value)}
 													aria-invalid={Boolean(fieldErrors.email)}
+													required
 												/>
 												{fieldErrors.email ? (
 													<span className="ws-uin-field-error">{fieldErrors.email}</span>

@@ -82,7 +82,6 @@
 
 ## Role-based access summary
 
-
 | Role               | Dashboard (user) | Dashboard (official) | Admin panel | Application Management |
 | ------------------ | ---------------- | -------------------- | ----------- | ---------------------- |
 | **user**           | ✅                | ❌                    | ❌           | ❌ (View Own)           |
@@ -95,7 +94,6 @@
 | **rent_tribunal**  | ❌                | ✅                    | ❌           | ✅ (Approve/Reject)     |
 | **district_admin** | ❌                | ✅                    | ✅           | ✅ (District Level)     |
 | **super_admin**    | ❌                | ✅                    | ✅           | ✅ (Global Access)      |
-
 
 ---
 
@@ -110,79 +108,34 @@ Note: this prototype also keeps a **password fallback** (`password`) for backwar
 
 To use the **official dashboard**, log in with:
 
-
 | District       | Role                  | Phone (to log in) | Email (reference only)          | OTP      |
 | -------------- | --------------------- | ----------------- | ------------------------------- | -------- |
 | **All / N/A**  | **Super Admin**       | `9999999999`      | `admin@nic.in`                  | `123456` |
-| **Kamrup**     | **District Admin**    | `9888888888`      | `district.admin@nic.in`         | `123456` |
-| **Kamrup**     | **Rent Authority**    | `9777777777`      | `rent.authority@nic.in`         | `123456` |
-| **Kamrup**     | **Rent Court**        | `9666666666`      | `rent.court@nic.in`             | `123456` |
-| **Kamrup**     | **Rent Tribunal**     | `9555555555`      | `rent.tribunal@nic.in`          | `123456` |
-| **Kamrup**     | **Valuer**            | `9555555550`      | `valuer@nic.in`                 | `123456` |
-| **Kamrup**     | **RA Assistant**      | `9111111110`      | `ra.assistant@nic.in`           | `123456` |
-| **Kamrup**     | **RC Assistant**      | `9111111111`      | `rc.assistant@nic.in`           | `123456` |
-| **Kamrup**     | **RT Assistant**      | `9111111112`      | `rt.assistant@nic.in`           | `123456` |
-| **Kamrup**     | **District Admin**    | `9888880001`      | `kamrup.admin@nic.in`           | `123456` |
-| **Kamrup**     | **Rent Authority**    | `9888880002`      | `kamrup.ra@nic.in`              | `123456` |
-| **Kamrup**     | **Rent Court**        | `9888880003`      | `kamrup.rc@nic.in`              | `123456` |
-| **Kamrup**     | **Rent Tribunal**     | `9888880004`      | `kamrup.rt@nic.in`              | `123456` |
-| **Kamrup**     | **RA Assistant**      | `9888880005`      | `kamrup.ra.ast@nic.in`          | `123456` |
-| **Kamrup**     | **RC Assistant**      | `9888880006`      | `kamrup.rc.ast@nic.in`          | `123456` |
-| **Kamrup**     | **RT Assistant**      | `9888880007`      | `kamrup.rt.ast@nic.in`          | `123456` |
-| **Kamrup**     | **Valuer**            | `9888880008`      | `kamrup.valuer@nic.in`          | `123456` |
-| **Kamrup Rural**| **District Admin**   | `9888880101`      | `kamruprural.admin@nic.in`      | `123456` |
-| **Kamrup Rural**| **Rent Authority**   | `9888880102`      | `kamruprural.ra@nic.in`         | `123456` |
-| **Kamrup Rural**| **Rent Court**       | `9888880103`      | `kamruprural.rc@nic.in`         | `123456` |
-| **Kamrup Rural**| **Rent Tribunal**    | `9888880104`      | `kamruprural.rt@nic.in`         | `123456` |
-| **Kamrup Rural**| **RA Assistant**     | `9888880105`      | `kamruprural.ra.ast@nic.in`     | `123456` |
-| **Kamrup Rural**| **RC Assistant**     | `9888880106`      | `kamruprural.rc.ast@nic.in`     | `123456` |
-| **Kamrup Rural**| **RT Assistant**     | `9888880107`      | `kamruprural.rt.ast@nic.in`     | `123456` |
-| **Kamrup Rural**| **Valuer**           | `9888880108`      | `kamruprural.valuer@nic.in`     | `123456` |
-| **Nagaon**     | **District Admin**    | `9888880201`      | `nagaon.admin@nic.in`           | `123456` |
-| **Nagaon**     | **Rent Authority**    | `9888880202`      | `nagaon.ra@nic.in`              | `123456` |
-| **Nagaon**     | **Rent Court**        | `9888880203`      | `nagaon.rc@nic.in`              | `123456` |
-| **Nagaon**     | **Rent Tribunal**     | `9888880204`      | `nagaon.rt@nic.in`              | `123456` |
-| **Nagaon**     | **RA Assistant**      | `9888880205`      | `nagaon.ra.ast@nic.in`          | `123456` |
-| **Nagaon**     | **RC Assistant**      | `9888880206`      | `nagaon.rc.ast@nic.in`          | `123456` |
-| **Nagaon**     | **RT Assistant**      | `9888880207`      | `nagaon.rt.ast@nic.in`          | `123456` |
-| **Nagaon**     | **Valuer**            | `9888880208`      | `nagaon.valuer@nic.in`          | `123456` |
-| **Sonitpur**   | **District Admin**    | `9888880301`      | `sonitpur.admin@nic.in`         | `123456` |
-| **Sonitpur**   | **Rent Authority**    | `9888880302`      | `sonitpur.ra@nic.in`            | `123456` |
-| **Sonitpur**   | **Rent Court**        | `9888880303`      | `sonitpur.rc@nic.in`            | `123456` |
-| **Sonitpur**   | **Rent Tribunal**     | `9888880304`      | `sonitpur.rt@nic.in`            | `123456` |
-| **Sonitpur**   | **RA Assistant**      | `9888880305`      | `sonitpur.ra.ast@nic.in`        | `123456` |
-| **Sonitpur**   | **RC Assistant**      | `9888880306`      | `sonitpur.rc.ast@nic.in`        | `123456` |
-| **Sonitpur**   | **RT Assistant**      | `9888880307`      | `sonitpur.rt.ast@nic.in`        | `123456` |
-| **Sonitpur**   | **Valuer**            | `9888880308`      | `sonitpur.valuer@nic.in`        | `123456` |
-
+| **Nagaon**     | **District Admin**    | `9888880101`      | `nagaon.admin@nic.in`           | `123456` |
+| **Nagaon**     | **Rent Authority**    | `9888880102`      | `nagaon.ra@nic.in`              | `123456` |
+| **Nagaon**     | **Rent Court**        | `9888880103`      | `nagaon.rc@nic.in`              | `123456` |
+| **Nagaon**     | **Rent Tribunal**     | `9888880104`      | `nagaon.rt@nic.in`              | `123456` |
+| **Nagaon**     | **RA Assistant**      | `9888880105`      | `nagaon.ra.ast@nic.in`          | `123456` |
+| **Nagaon**     | **RC Assistant**      | `9888880106`      | `nagaon.rc.ast@nic.in`          | `123456` |
+| **Nagaon**     | **RT Assistant**      | `9888880107`      | `nagaon.rt.ast@nic.in`          | `123456` |
+| **Nagaon**     | **Valuer**            | `9888880108`      | `nagaon.valuer@nic.in`          | `123456` |
+| **Jorhat**     | **District Admin**    | `9888880001`      | `jorhat.admin@nic.in`           | `123456` |
+| **Jorhat**     | **Rent Authority**    | `9888880002`      | `jorhat.ra@nic.in`              | `123456` |
+| **Jorhat**     | **Rent Court**        | `9888880003`      | `jorhat.rc@nic.in`              | `123456` |
+| **Jorhat**     | **Rent Tribunal**     | `9888880004`      | `jorhat.rt@nic.in`              | `123456` |
+| **Jorhat**     | **RA Assistant**      | `9888880005`      | `jorhat.ra.ast@nic.in`          | `123456` |
+| **Jorhat**     | **RC Assistant**      | `9888880006`      | `jorhat.rc.ast@nic.in`          | `123456` |
+| **Jorhat**     | **RT Assistant**      | `9888880007`      | `jorhat.rt.ast@nic.in`          | `123456` |
+| **Jorhat**     | **Valuer**            | `9888880008`      | `jorhat.valuer@nic.in`          | `123456` |
 
 The official dashboard shows your **official email** and role, **stat cards and charts** (applications by status, etc.), and **Application Inbox** (Forward/Reject/Approve actions).
 
 ### User role
 
-
 | District       | Role                  | Phone (to log in) | Email (reference only)          | OTP      |
 | -------------- | --------------------- | ----------------- | ------------------------------- | -------- |
-| **Kamrup**     | **General User**      | `9444444444`      | `tenant@nic.in`                 | `123456` |
-| **Kamrup**     | **General User**      | `9888880009`      | `kamrup.tenant@nic.in`          | `123456` |
-| **Kamrup Rural**| **General User**     | `9888880109`      | `kamruprural.tenant@nic.in`     | `123456` |
-| **Nagaon**     | **General User**      | `9888880209`      | `nagaon.tenant@nic.in`          | `123456` |
-| **Sonitpur**   | **General User**      | `9888880309`      | `sonitpur.tenant@nic.in`        | `123456` |
-
-
-### Multi-role demos (same phone → role switcher)
-
-These accounts share one phone across **two user profiles**. After login, use the **role switcher** in the top bar to flip between Citizen and official dashboards.
-
-| Shared phone | Roles (switch between) | Profile emails | OTP |
-| ------------ | ---------------------- | -------------- | --- |
-| `9000000001` | **Citizen** + **RA Assistant** | `dual.citizen@nic.in` · `dual.ra.assistant@nic.in` | `123456` |
-| `9000000002` | **Citizen** + **Rent Authority** | `dual2.citizen@nic.in` · `dual2.rent.authority@nic.in` | `123456` |
-| `9000000003` | **Citizen** + **District Admin** | `dual3.citizen@nic.in` · `dual3.district.admin@nic.in` | `123456` |
-
-**How to try:** Login with phone `9000000001` + OTP `123456` → open the role dropdown in the top bar → switch Citizen ↔ RA Assistant.
-
-District for all multi-role demos: **Kamrup**.
+| **Nagaon**     | **General User**      | `9888880109`      | `nagaon.tenant@nic.in`          | `123456` |
+| **Jorhat**     | **General User**      | `9888880009`      | `jorhat.tenant@nic.in`          | `123456` |
 
 ---
 
@@ -195,14 +148,14 @@ cd backend
 php artisan migrate:fresh --seed
 ```
 
-Seeder order includes **states → districts → village/wards → offices → designations → users → application data**.  
+Seeder order includes **states → districts → village/wards → offices → designations → users**.  
 **Users:** each demo user must have a **unique phone** (required by DB).  
-**Applications:** Seeded data includes examples for Tenancy Certificates and various Rule forms (Form I to VI) distributed across different statuses.
 
 ---
 
-## Technical Updates (May 2026)
+## Technical Updates (Phase 2 Preview)
 
+- **Data Cleanup:** Database is cleaned of all testing/mock applications for presentation readiness.
 - **Role Migration:** Roles have been standardized to `super_admin`, `district_admin`, `rent_authority`, `rent_court`, `rent_tribunal`, `ra_assistant`, `rc_assistant`, `rt_assistant`, `valuer`, and `user`.
-- **Workflow Integration:** Service applications now support a workflow where Assistants can forward applications to their respective Heads, and Heads can Approve/Reject. Form I-B supports Rent Authority assigning a **valuer** and the valuer submitting a report.
+- **Workflow Integration:** Service applications now support a workflow where Assistants can forward applications to their respective Heads, and Heads can Approve/Reject.
 - **District Scoping:** Official dashboards are now strictly scoped to the district assigned to the user. Super Admin remains global.

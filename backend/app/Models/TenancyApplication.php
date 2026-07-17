@@ -166,9 +166,9 @@ class TenancyApplication extends Model
     /**
      * Generate a unique incremental tenancy UID when both parties have completed.
      */
-    public static function generateUid($villageWard = null, $officeId = null): string
+    public static function generateUid($districtId = null, $officeId = null): string
     {
-        $districtCode = str_pad((string)($villageWard?->district_id ?? 0), 2, '0', STR_PAD_LEFT);
+        $districtCode = str_pad((string)($districtId ?? 0), 2, '0', STR_PAD_LEFT);
         $circleCode = str_pad((string)($officeId ?? 0), 2, '0', STR_PAD_LEFT);
         $year = date('Y');
         

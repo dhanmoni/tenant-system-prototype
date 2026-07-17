@@ -165,7 +165,11 @@ function Register({ onLogin }) {
 							name="date_of_birth"
 							value={form.date_of_birth}
 							onChange={handleChange}
-							max={new Date().toISOString().split('T')[0]}
+							max={(() => {
+								const d = new Date();
+								d.setFullYear(d.getFullYear() - 18);
+								return d.toISOString().split('T')[0];
+							})()}
 							required
 						/>
 					</label>

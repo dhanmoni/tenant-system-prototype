@@ -219,6 +219,10 @@ function Login({ onLogin }) {
 		if (!regForm.district_id) return t('auth.selectDistrictError')
 		if (!regForm.gender) return t('auth.selectGenderError')
 		if (!regForm.date_of_birth) return t('auth.enterDob')
+		const dob = new Date(regForm.date_of_birth)
+		const minAgeDate = new Date()
+		minAgeDate.setFullYear(minAgeDate.getFullYear() - 18)
+		if (dob > minAgeDate) return 'You must be at least 18 years old to register.'
 		return null
 	}
 

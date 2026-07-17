@@ -1,0 +1,530 @@
+erDiagram
+    districts {
+        bigint id
+        charactervarying name
+        bigint assistant_director_id
+        bigint district_head_id
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint state_id
+        bigint rent_tribunal_id
+        bigint district_admin_id
+        charactervarying code
+        timestampwithouttimezone deleted_at
+        boolean is_active
+        charactervarying deactivation_reason
+    }
+
+    states {
+        bigint id
+        charactervarying name
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+    }
+
+    roles {
+        bigint id
+        charactervarying name
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+    }
+
+    designations {
+        bigint id
+        charactervarying name
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+    }
+
+    users {
+        bigint id
+        charactervarying name
+        charactervarying email
+        timestampwithouttimezone email_verified_at
+        charactervarying password
+        charactervarying remember_token
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        charactervarying role
+        bigint district_id
+        bigint reports_to_user_id
+        bigint office_id
+        bigint designation_id
+        charactervarying phone
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        boolean is_blocked
+        charactervarying profile_type
+        text address
+        charactervarying pin_code
+        charactervarying pan_card
+        charactervarying passport_photo_path
+        charactervarying gender
+        date date_of_birth
+        timestampwithouttimezone deleted_at
+        charactervarying block_reason
+    }
+
+    village_wards {
+        bigint id
+        charactervarying name
+        charactervarying type
+        bigint district_id
+        json villages
+        charactervarying area_type
+        charactervarying local_body
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+    }
+
+    rent_authority_form_i_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying tenancy_uin
+        charactervarying tenancy_agreement_document_no
+        charactervarying landlord_name
+        text landlord_address
+        charactervarying tenant_name
+        text tenant_address
+        charactervarying manager_name
+        text manager_address
+        text rented_premises_description
+        numeric present_monthly_rent
+        numeric proposed_monthly_rent
+        text reason_for_rent_revision
+        charactervarying signed_by
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        text approval_message
+    }
+
+    rent_authority_form_ia_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying tenancy_uin
+        charactervarying tenancy_agreement_document_no
+        charactervarying landlord_name
+        text landlord_address
+        charactervarying tenant_name
+        text tenant_address
+        charactervarying manager_name
+        text manager_address
+        text rented_premises_description
+        text existing_other_charges_details
+        text proposed_other_charges_details
+        text reason_for_other_charges_revision
+        charactervarying signed_by
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        text approval_message
+    }
+
+    rent_authority_form_ib_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying tenancy_uin
+        charactervarying applicant_name
+        charactervarying applicant_relation_type
+        charactervarying applicant_relation_target_name
+        charactervarying applicant_resident_place
+        charactervarying applicant_landlord_or_tenant
+        text premises_situated_address
+        charactervarying district
+        charactervarying signed_by
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        bigint assigned_valuer_id
+        timestampwithouttimezone valuer_assigned_at
+        text valuer_report
+        text approval_message
+    }
+
+    rent_court_form_4_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying before_rent_court
+        charactervarying applicant_name
+        text applicant_residential_address
+        charactervarying tenancy_uin
+        charactervarying tenant_name
+        text jurisdiction_statement
+        text facts_of_case
+        text grounds_for_relief
+        text matters_not_previously_filed
+        text relief_sought
+        text interim_order_sought
+        text enclosures_list
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        text approval_message
+    }
+
+    rent_court_form_5_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying rent_court_at
+        charactervarying tenancy_uin
+        charactervarying applicant_name
+        text applicant_residential_address
+        charactervarying respondent_name
+        text respondent_residential_address
+        text particulars_of_application
+        text jurisdiction_of_rent_court
+        text facts_of_case
+        text grounds_for_relief
+        text matters_not_previously_filed_or_pending
+        text relief_sought
+        text interim_order_sought
+        text list_of_enclosures
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        text approval_message
+    }
+
+    rent_authority_form_6_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying tenancy_uin
+        charactervarying applicant_name
+        text applicant_residential_address
+        charactervarying opposite_party_name
+        text opposite_party_residential_address
+        text particulars_of_violation
+        text jurisdiction_of_rent_authority
+        text facts_of_case
+        text grounds_for_relief
+        text matters_not_previously_filed_or_pending
+        text relief_sought
+        text interim_order_sought
+        text list_of_enclosures
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        text approval_message
+    }
+
+    rent_court_form_7_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying rent_court_at
+        charactervarying tenancy_uin
+        charactervarying appellant_name
+        text appellant_residential_address
+        charactervarying respondent_name
+        text respondent_residential_address
+        text order_particulars_against_which_appeal_made
+        text jurisdiction_of_rent_court
+        text limitation
+        text memorandum_of_appeal
+        text matters_not_previously_filed_or_pending
+        text relief_sought
+        text interim_order_sought
+        text list_of_enclosures
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        text approval_message
+    }
+
+    rent_tribunal_form_8_applications {
+        bigint id
+        charactervarying application_no
+        bigint user_id
+        charactervarying rent_tribunal_at
+        charactervarying tenancy_uin
+        charactervarying appellant_name
+        text appellant_residential_address
+        charactervarying respondent_name
+        text respondent_residential_address
+        text order_particulars_against_which_appeal_made
+        text jurisdiction_of_rent_tribunal
+        text limitation
+        text memorandum_of_appeal
+        text matters_not_previously_filed_or_pending
+        text relief_sought
+        text interim_order_sought
+        text list_of_enclosures
+        charactervarying signature_name
+        charactervarying signature_image_path
+        charactervarying status
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        bigint district_id
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        text forward_remarks
+        timestampwithouttimezone deleted_at
+        text approval_message
+    }
+
+    tenancy_applications {
+        bigint id
+        bigint user_id
+        charactervarying application_type
+        charactervarying application_no
+        charactervarying uid
+        charactervarying ref_code
+        date registration_date
+        bigint office_id
+        bigint district_id
+        charactervarying apply_type
+        charactervarying status
+        smallint wizard_step
+        charactervarying current_with
+        charactervarying initiator_role
+        boolean initiator_completed
+        boolean second_party_completed
+        bigint landlord_user_id
+        charactervarying landlord_name
+        text landlord_address
+        charactervarying landlord_email
+        charactervarying landlord_phone
+        charactervarying landlord_pan
+        charactervarying landlord_aadhar
+        charactervarying manager_name
+        text manager_address
+        charactervarying manager_email
+        charactervarying manager_phone
+        charactervarying manager_pan
+        charactervarying manager_aadhar
+        bigint tenant_user_id
+        charactervarying tenant_name
+        text tenant_address
+        charactervarying tenant_email
+        charactervarying tenant_phone
+        charactervarying tenant_pan
+        charactervarying tenant_aadhar
+        text tenant_previous_tenancy
+        charactervarying area_type
+        charactervarying local_body
+        bigint village_ward_id
+        charactervarying village_name
+        date property_possession_date
+        numeric property_rent_payable
+        text property_premises_description
+        text property_furniture_description
+        charactervarying property_charge_electricity
+        charactervarying property_charge_water
+        charactervarying property_charge_furnishing
+        charactervarying property_charge_other_services
+        charactervarying property_tenancy_duration
+        charactervarying agreement_pdf_path
+        charactervarying landlord_photo_path
+        charactervarying landlord_signature_path
+        charactervarying tenant_photo_path
+        charactervarying tenant_signature_path
+        charactervarying landlord_pan_path
+        charactervarying tenant_pan_path
+        charactervarying manager_pan_path
+        json movement_history
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+        timestampwithouttimezone forwarded_at
+        bigint forwarded_by_user_id
+        timestampwithouttimezone rejected_at
+        bigint rejected_by_user_id
+        text rejection_message
+        charactervarying assigned_to_role
+        timestampwithouttimezone approved_at
+        bigint approved_by_user_id
+        timestampwithouttimezone deleted_at
+        date property_tenancy_end_date
+    }
+
+    offices {
+        bigint id
+        bigint state_id
+        bigint district_id
+        charactervarying name
+        charactervarying address
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+    }
+
+    user_activity_logs {
+        bigint id
+        bigint user_id
+        charactervarying session_id
+        charactervarying action
+        charactervarying ip_address
+        charactervarying ip_location
+        charactervarying user_agent
+        json meta
+        timestampwithouttimezone logged_at
+        timestampwithouttimezone created_at
+        timestampwithouttimezone updated_at
+    }
+
+    districts }o--o| users : "assistant_director_id"
+    districts }o--o| users : "district_head_id"
+    users }o--o| districts : "district_id"
+    users }o--o| users : "reports_to_user_id"
+    districts }o--o| states : "state_id"
+    offices }o--o| states : "state_id"
+    offices }o--o| districts : "district_id"
+    users }o--o| offices : "office_id"
+    users }o--o| designations : "designation_id"
+    users }o--o| users : "approved_by_user_id"
+    user_activity_logs }o--o| users : "user_id"
+    village_wards }o--o| districts : "district_id"
+    tenancy_applications }o--o| users : "user_id"
+    tenancy_applications }o--o| offices : "office_id"
+    tenancy_applications }o--o| districts : "district_id"
+    tenancy_applications }o--o| users : "landlord_user_id"
+    tenancy_applications }o--o| users : "tenant_user_id"
+    tenancy_applications }o--o| village_wards : "village_ward_id"
+    rent_authority_form_i_applications }o--o| users : "user_id"
+    rent_authority_form_ia_applications }o--o| users : "user_id"
+    rent_authority_form_ib_applications }o--o| users : "user_id"
+    rent_court_form_4_applications }o--o| users : "user_id"
+    rent_court_form_5_applications }o--o| users : "user_id"
+    rent_authority_form_6_applications }o--o| users : "user_id"
+    rent_court_form_7_applications }o--o| users : "user_id"
+    rent_tribunal_form_8_applications }o--o| users : "user_id"
+    rent_authority_form_i_applications }o--o| districts : "district_id"
+    rent_authority_form_i_applications }o--o| users : "forwarded_by_user_id"
+    rent_authority_form_i_applications }o--o| users : "rejected_by_user_id"
+    rent_authority_form_ia_applications }o--o| districts : "district_id"
+    rent_authority_form_ia_applications }o--o| users : "forwarded_by_user_id"
+    rent_authority_form_ia_applications }o--o| users : "rejected_by_user_id"
+    rent_authority_form_ib_applications }o--o| districts : "district_id"
+    rent_authority_form_ib_applications }o--o| users : "forwarded_by_user_id"
+    rent_authority_form_ib_applications }o--o| users : "rejected_by_user_id"
+    rent_court_form_4_applications }o--o| districts : "district_id"
+    rent_court_form_4_applications }o--o| users : "forwarded_by_user_id"
+    rent_court_form_4_applications }o--o| users : "rejected_by_user_id"
+    rent_court_form_5_applications }o--o| districts : "district_id"
+    rent_court_form_5_applications }o--o| users : "forwarded_by_user_id"
+    rent_court_form_5_applications }o--o| users : "rejected_by_user_id"
+    rent_authority_form_6_applications }o--o| districts : "district_id"
+    rent_authority_form_6_applications }o--o| users : "forwarded_by_user_id"
+    rent_authority_form_6_applications }o--o| users : "rejected_by_user_id"
+    rent_court_form_7_applications }o--o| districts : "district_id"
+    rent_court_form_7_applications }o--o| users : "forwarded_by_user_id"
+    rent_court_form_7_applications }o--o| users : "rejected_by_user_id"
+    rent_tribunal_form_8_applications }o--o| districts : "district_id"
+    rent_tribunal_form_8_applications }o--o| users : "forwarded_by_user_id"
+    rent_tribunal_form_8_applications }o--o| users : "rejected_by_user_id"
+    tenancy_applications }o--o| users : "forwarded_by_user_id"
+    tenancy_applications }o--o| users : "rejected_by_user_id"
+    districts }o--o| users : "rent_tribunal_id"
+    districts }o--o| users : "district_admin_id"
+    rent_authority_form_i_applications }o--o| users : "approved_by_user_id"
+    rent_authority_form_ia_applications }o--o| users : "approved_by_user_id"
+    rent_authority_form_ib_applications }o--o| users : "approved_by_user_id"
+    rent_court_form_4_applications }o--o| users : "approved_by_user_id"
+    rent_court_form_5_applications }o--o| users : "approved_by_user_id"
+    rent_authority_form_6_applications }o--o| users : "approved_by_user_id"
+    rent_court_form_7_applications }o--o| users : "approved_by_user_id"
+    rent_tribunal_form_8_applications }o--o| users : "approved_by_user_id"
+    tenancy_applications }o--o| users : "approved_by_user_id"
+    rent_authority_form_ib_applications }o--o| users : "assigned_valuer_id"

@@ -10,6 +10,7 @@ class UserActivityLogController extends Controller
     public function index(Request $request)
     {
         $query = UserActivityLog::with('user')
+            ->where('action', 'not like', 'GET %')
             ->orderByDesc('logged_at');
 
         if ($request->filled('user_id')) {

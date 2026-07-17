@@ -349,7 +349,11 @@ function AuthPanel({
 										className="auth-panel-input"
 										value={regForm.date_of_birth}
 										onChange={onRegChange}
-										max={new Date().toISOString().split('T')[0]}
+										max={(() => {
+											const d = new Date();
+											d.setFullYear(d.getFullYear() - 18);
+											return d.toISOString().split('T')[0];
+										})()}
 										required
 									/>
 								</AuthField>
