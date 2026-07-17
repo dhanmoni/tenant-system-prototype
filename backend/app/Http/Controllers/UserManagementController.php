@@ -54,15 +54,7 @@ class UserManagementController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required', 
-                'string', 
-                'email', 
-                'max:255',
-                Rule::unique('users')->where(function ($query) use ($request) {
-                    return $query->whereIn('role', [Roles::USER, $request->role]);
-                })
-            ],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'role' => ['required', 'string', 'max:255', 'exists:roles,name'],
             'district_id' => ['nullable', 'integer', 'exists:districts,id'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
@@ -73,7 +65,7 @@ class UserManagementController extends Controller
                 'size:10', 
                 'regex:/^[0-9]{10}$/',
                 Rule::unique('users')->where(function ($query) use ($request) {
-                    return $query->whereIn('role', [Roles::USER, $request->role]);
+                    return $query->where('role', $request->role);
                 })
             ],
             'reports_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
@@ -171,16 +163,7 @@ class UserManagementController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required', 
-                'string', 
-                'email', 
-                'max:255',
-                Rule::unique('users')->where(function ($query) use ($request, $user) {
-                    $role = $request->input('role') ?? $user->role;
-                    return $query->whereIn('role', [Roles::USER, $role]);
-                })->ignore($user->id)
-            ],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'role' => ['required', 'string', 'max:255', 'exists:roles,name'],
             'district_id' => ['nullable', 'integer', 'exists:districts,id'],
             'office_id' => ['nullable', 'integer', 'exists:offices,id'],
@@ -192,7 +175,7 @@ class UserManagementController extends Controller
                 'regex:/^[0-9]{10}$/',
                 Rule::unique('users')->where(function ($query) use ($request, $user) {
                     $role = $request->input('role') ?? $user->role;
-                    return $query->whereIn('role', [Roles::USER, $role]);
+                    return $query->where('role', $role);
                 })->ignore($user->id)
             ],
             'reports_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
