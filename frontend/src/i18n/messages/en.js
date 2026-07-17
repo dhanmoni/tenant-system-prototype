@@ -117,7 +117,7 @@ const en = {
 	'auth.resendOtp': 'Resend OTP',
 	'auth.signingIn': 'Signing in…',
 	'auth.createAccount': 'Create account',
-	'auth.registerLead': 'Fill in your details — we will send an OTP to verify your mobile.',
+	'auth.registerLead': 'Fill in your details',
 	'auth.fullName': 'Full name',
 	'auth.email': 'Email',
 	'auth.emailPlaceholder': 'Email address',
@@ -199,7 +199,7 @@ const en = {
 
 	'home.services.title': 'Portal services',
 	'home.services.lead':
-		'This portal provides registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
+		'This portal provides tenancy certificate registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
 	'home.services.explore': 'Explore all services',
 	'home.services.uin.title': 'UIN & tenancy certificate',
 	'home.services.uin.short': 'UIN',

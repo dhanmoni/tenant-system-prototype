@@ -111,7 +111,7 @@ const publicPagesEn = {
 	'services.uin.when':
 		'When you enter into a tenancy agreement in Assam, or need an official record of rent, parties, and property details for banks, employers, or government processes.',
 	'services.uin.why':
-		'A registered tenancy and UIN create a verifiable record before the Rent Authority. It helps both parties prove terms, track status online, and download acknowledgement when approved.',
+		'A registered tenancy and UIN create a verifiable record before the Rent Authority. It helps both parties prove terms, handle disputes effortlessly.',
 	'services.uin.how1': 'Create a citizen account with mobile OTP verification.',
 	'services.uin.how2':
 		'Open Apply for UIN from your dashboard and complete the tenancy information form.',
@@ -120,7 +120,7 @@ const publicPagesEn = {
 	'services.uin.how4':
 		'Submit and note your application number — track status under UIN Status.',
 	'services.uin.how5':
-		'Download your UIN acknowledgement once the Rent Authority approves the application.',
+		'Download your auto-generated UIN acknowledgement once the other party joins and submits their details. The UIN is valid for the tenancy term and can be used for future filings.',
 	'services.uin.cta': 'Apply after sign-in',
 	'services.rt.title': 'Rent Tribunal services',
 	'services.rt.when':

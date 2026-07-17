@@ -37,7 +37,7 @@ export const portalServicesIntro = {
 	// eyebrow: 'Portal services',
 	title: 'Portal services',
 	lead:
-		'This portal provides registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
+		'This portal provides tenancy certificate registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
 }
 
 /** Dedicated /services page — readable citizen guide (not homepage showcase). */
@@ -56,7 +56,7 @@ export const portalServiceSections = [
 		when:
 			'When you enter into a tenancy agreement in Assam, or need an official record of rent, parties, and property details for banks, employers, or government processes.',
 		why:
-			'A registered tenancy and UIN create a verifiable record before the Rent Authority. It helps both parties prove terms, track status online, and download acknowledgement when approved.',
+			'A registered tenancy and UIN create a verifiable record before the Rent Authority. It helps both parties prove terms, handle disputes effortlessly.',
 		how: [
 			'Create a citizen account with mobile OTP verification.',
 			'Open Apply for UIN from your dashboard and complete the tenancy information form.',
