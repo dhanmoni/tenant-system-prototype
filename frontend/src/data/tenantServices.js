@@ -21,7 +21,7 @@ export const tenantServiceGroups = [
 		id: 'rent-authority',
 		title: 'Rent Authority',
 		description: 'Applications and filings before the Rent Authority.',
-		authority: '(Rent Authority) Circle Officer or equivalent — Sec 30',
+		authority: '(Rent Authority)',
 		forms: [
 			{
 				formKey: APPLICATION_TYPES.RENT_REVISION,
@@ -67,7 +67,7 @@ export const tenantServiceGroups = [
 		id: 'rent-court',
 		title: 'Rent Court',
 		description: 'Applications and filings before the Rent Court.',
-		authority: '(Rent Court) ADC or equivalent — Sec 33',
+		authority: '(Rent Court)',
 		forms: [
 			{
 				formKey: APPLICATION_TYPES.RENT_COURT_POSSESSION,
@@ -105,7 +105,7 @@ export const tenantServiceGroups = [
 		title: 'Rent Tribunal',
 		description: 'Appeals before the Rent Tribunal.',
 		authority:
-			'(Rent Tribunal) District Judge or Additional District Judge — Sec 34',
+			'(Rent Tribunal)',
 		forms: [
 			{
 				formKey: APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL,
