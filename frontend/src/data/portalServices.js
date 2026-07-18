@@ -124,7 +124,7 @@ export const serviceEscalationGuide = {
 		{
 			step: '1',
 			title: 'Register the tenancy',
-			text: 'Apply for a UIN unless you only need a specific dispute form and already have a registered record.',
+			text: 'Apply for a UIN unless you only need a specific dispute form and already have a registered UIN.',
 		},
 		{
 			step: '2',

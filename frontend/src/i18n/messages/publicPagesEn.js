@@ -97,7 +97,7 @@ const publicPagesEn = {
 		'Most matters follow a clear path. Start with registration, then the Rent Authority; only move to Court or Tribunal when the Act and your situation require it.',
 	'services.escalation.s1.title': 'Register the tenancy',
 	'services.escalation.s1.text':
-		'Apply for a UIN unless you only need a specific dispute form and already have a registered record.',
+		'Apply for a UIN unless you only need a specific dispute form and already have a registered UIN.',
 	'services.escalation.s2.title': 'Rent Authority',
 	'services.escalation.s2.text':
 		'Rent revision, other charges, valuer appointment, and Rule 11 disputes (rent, deposit, repair, withholding).',
