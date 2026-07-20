@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useOutletContext } from 'react-router-dom'
+import { useOutletContext } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
 import { getRoleLabel } from '../../constants/roleLabels'
@@ -178,12 +178,6 @@ function WorkspaceProfile() {
 					{saveToast}
 				</div>
 			) : null}
-
-			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
-				<Link to="/dashboard">Dashboard</Link>
-				<span className="ws-breadcrumb-sep">/</span>
-				<span>My profile</span>
-			</nav>
 
 			{!profileEditing ? (
 				<section className="ws-profile-minimal">

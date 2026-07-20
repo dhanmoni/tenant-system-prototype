@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../components/dashboard/StatusProgressViewButton'
@@ -567,12 +567,6 @@ function WorkspaceUinStatus() {
 
 	return (
 		<div className="ws-page ws-status-page">
-			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
-				<Link to="/dashboard">Dashboard</Link>
-				<span className="ws-breadcrumb-sep">/</span>
-				<span>UIN status</span>
-			</nav>
-
 			<header className="ws-status-page-head">
 				<h1 className="ws-status-title">UIN &amp; application status</h1>
 				<p className="ws-status-lead">

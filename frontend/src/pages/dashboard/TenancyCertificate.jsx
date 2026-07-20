@@ -1399,12 +1399,6 @@ function TenancyCertificate() {
 				</div>
 			) : (
 				<>
-			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
-				<Link to="/dashboard">Dashboard</Link>
-				<span className="ws-breadcrumb-sep">/</span>
-				<span>Apply for UIN</span>
-			</nav>
-
 			<header className="ws-uin-apply-head">
 				<div className="ws-uin-apply-head__row">
 					<div className="ws-uin-apply-head__copy">

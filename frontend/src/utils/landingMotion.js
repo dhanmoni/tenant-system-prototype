@@ -218,7 +218,7 @@ export const heroAccentLineVariants = {
 	},
 }
 
-/** Portal benefits — whole-section entrance, then intro + body */
+/** Portal benefits — whole-section entrance on scroll (spring language like Portal Services) */
 export const benefitsSectionVariants = {
 	hidden: { opacity: 0, y: 28 },
 	visible: {
@@ -226,26 +226,26 @@ export const benefitsSectionVariants = {
 		y: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 420,
-			damping: 28,
-			mass: 0.8,
+			stiffness: 320,
+			damping: 26,
+			mass: 0.9,
 			when: 'beforeChildren',
-			staggerChildren: 0.1,
-			delayChildren: 0.02,
+			staggerChildren: 0.14,
+			delayChildren: 0.04,
 		},
 	},
 }
 
 export const benefitsIntroWrapVariants = {
-	hidden: { opacity: 0, y: 16, scale: 0.98 },
+	hidden: { opacity: 0, y: 18 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		scale: 1,
 		transition: {
 			type: 'spring',
-			stiffness: 440,
-			damping: 26,
+			stiffness: 340,
+			damping: 24,
+			mass: 0.88,
 		},
 	},
 }
@@ -259,11 +259,12 @@ export const benefitsListVariants = {
 		opacity: 1,
 		x: 0,
 		transition: {
-			duration: 0.3,
-			ease: benefitsListEase,
-			delay: 0.22,
-			staggerChildren: 0.055,
-			delayChildren: 0.05,
+			type: 'spring',
+			stiffness: 360,
+			damping: 26,
+			mass: 0.9,
+			staggerChildren: 0.1,
+			delayChildren: 0.06,
 		},
 	},
 }
@@ -273,20 +274,24 @@ export const benefitsListRuleVariants = {
 	visible: {
 		opacity: 1,
 		scaleX: 1,
-		transition: { duration: 0.28, ease: benefitsListEase },
+		transition: { duration: 0.32, ease: benefitsListEase },
 	},
 }
 
 export const benefitsItemVariants = {
-	hidden: { opacity: 0, x: -32 },
+	hidden: { opacity: 0, x: -32, y: 16, scale: 0.96 },
 	visible: (i = 0) => ({
 		opacity: 1,
 		x: 0,
+		y: 0,
+		scale: 1,
 		transition: {
-			duration: 0.28,
-			ease: benefitsListEase,
-			delay: i * 0.04,
-			staggerChildren: 0.045,
+			type: 'spring',
+			stiffness: 380,
+			damping: 24,
+			mass: 0.88,
+			delay: i * 0.08,
+			staggerChildren: 0.05,
 			delayChildren: 0.02,
 		},
 	}),
@@ -297,47 +302,47 @@ export const benefitsItemDividerVariants = {
 	visible: {
 		opacity: 1,
 		scaleX: 1,
-		transition: { duration: 0.22, ease: benefitsListEase },
+		transition: { duration: 0.28, ease: benefitsListEase },
 	},
 }
 
 export const benefitsItemRowVariants = {
 	hidden: {},
 	visible: {
-		transition: { staggerChildren: 0.04, delayChildren: 0.01 },
+		transition: { staggerChildren: 0.05, delayChildren: 0.01 },
 	},
 }
 
 export const benefitsItemIconVariants = {
-	hidden: { opacity: 0, x: -14, scale: 0.9 },
+	hidden: { opacity: 0, scale: 0.72, rotate: -8 },
 	visible: {
 		opacity: 1,
-		x: 0,
 		scale: 1,
+		rotate: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 520,
-			damping: 28,
-			mass: 0.7,
+			stiffness: 420,
+			damping: 18,
+			mass: 0.85,
 		},
 	},
 }
 
 export const benefitsItemContentVariants = {
-	hidden: { opacity: 0, x: -16 },
+	hidden: { opacity: 0, x: -12 },
 	visible: {
 		opacity: 1,
 		x: 0,
 		transition: {
-			duration: 0.26,
-			ease: benefitsListEase,
+			type: 'spring',
+			stiffness: 380,
+			damping: 24,
 		},
 	},
 }
 
 export const benefitsItemHover = {
-	y: -6,
-	scale: 1.015,
+	y: -4,
 	transition: { type: 'spring', stiffness: 420, damping: 22 },
 }
 
@@ -349,14 +354,12 @@ export const benefitsItemIconHover = {
 
 /** Portal benefits — cards + media split layout (right media first, then left list) */
 export const benefitsBodyVariants = {
-	hidden: { opacity: 0, y: 18 },
+	hidden: {},
 	visible: {
-		opacity: 1,
-		y: 0,
 		transition: {
-			type: 'spring',
-			stiffness: 420,
-			damping: 28,
+			when: 'beforeChildren',
+			staggerChildren: 0.16,
+			delayChildren: 0.04,
 		},
 	},
 }
@@ -392,83 +395,86 @@ export const benefitsCardVariants = {
 	}),
 }
 
+/** Diagram pop — same spring language as Portal Services showcase tiles */
 export const benefitsMediaVariants = {
-	hidden: { opacity: 0, x: 36, y: 16, scale: 0.9, rotate: 4 },
+	hidden: { opacity: 0, scale: 0.82, y: 28, rotate: 3 },
 	visible: {
 		opacity: 1,
-		x: 0,
-		y: 0,
 		scale: 1,
+		y: 0,
 		rotate: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 520,
-			damping: 28,
-			mass: 0.7,
-			delay: 0.04,
+			stiffness: 380,
+			damping: 22,
+			mass: 0.88,
 			when: 'beforeChildren',
-			staggerChildren: 0.03,
-			delayChildren: 0.02,
+			staggerChildren: 0.08,
+			delayChildren: 0.1,
 		},
 	},
 }
 
-/** Rings fade softly; icons pop in separately */
+/** Rings expand in softly after the diagram frame pops */
 export const benefitsSymbolsRingVariants = {
-	hidden: { opacity: 0 },
+	hidden: { opacity: 0, scale: 0.78 },
 	visible: {
 		opacity: 1,
+		scale: 1,
 		transition: {
-			duration: 0.22,
-			ease: [0.22, 1, 0.36, 1],
+			type: 'spring',
+			stiffness: 300,
+			damping: 20,
+			mass: 0.9,
 		},
 	},
 }
 
-/** Vector icons — spring pop from center (not a plain fade) */
+/** Orbit icons — lively staggered spring pop (like showcase cards) */
 export const benefitsSymbolVariants = {
-	hidden: { opacity: 0, scale: 0.25, rotate: -12 },
+	hidden: { opacity: 0, scale: 0.55, y: 18 },
 	visible: (i = 0) => ({
 		opacity: 1,
 		scale: 1,
-		rotate: 0,
+		y: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 620,
+			stiffness: 420,
 			damping: 18,
-			mass: 0.55,
-			delay: 0.04 + i * 0.035,
+			mass: 0.82,
+			delay: 0.06 + i * 0.07,
 		},
 	}),
 }
 
 export const benefitsOrbitVariants = {
-	hidden: {},
+	hidden: { opacity: 0 },
 	visible: {
+		opacity: 1,
 		transition: {
-			staggerChildren: 0.035,
-			delayChildren: 0.05,
+			duration: 0.2,
+			staggerChildren: 0.07,
+			delayChildren: 0.08,
 		},
 	},
 }
 
 export const benefitsSymbolHover = {
 	scale: 1.1,
-	rotate: 6,
 	transition: { type: 'spring', stiffness: 480, damping: 14 },
 }
 
 export const benefitsMediaFrameVariants = {
-	hidden: { opacity: 0, scale: 1.06, y: 12 },
+	hidden: { opacity: 0, scale: 0.92, y: 16 },
 	visible: {
 		opacity: 1,
 		scale: 1,
 		y: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 320,
-			damping: 28,
-			delay: 0.28,
+			stiffness: 360,
+			damping: 22,
+			delay: 0.08,
 		},
 	},
 }

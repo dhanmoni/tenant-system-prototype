@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import { Icon } from '../../components/dashboard/Icons'
 import { getAllServiceForms, tenantServiceGroups } from '../../data/tenantServices'
 import { ROLES } from '../../constants/roles'
@@ -44,12 +44,9 @@ function ServiceFormRow({ form, groupId }) {
 					{form.label}
 				</span>
 			</td>
-			<td className="ws-services-cell-rule">
-				<span className="ws-services-rule-tag">{form.rule}</span>
-			</td>
 			<td className="ws-services-cell-action">
 				<span className="ws-services-row-cta">
-					<span className="ws-services-row-cta-label">Apply</span>
+					<span className="ws-services-row-cta-label">Apply form</span>
 					<Icon name="chevron" />
 				</span>
 			</td>
@@ -73,7 +70,6 @@ function ServiceFormCard({ form, groupId }) {
 				<span className={`ws-services-form-badge ws-services-form-badge--${groupId}`}>
 					{form.formName}
 				</span>
-				<span className="ws-services-rule-tag">{form.rule}</span>
 			</div>
 			<span className="ws-services-card__title">{form.matter}</span>
 			{form.label ? (
@@ -82,7 +78,7 @@ function ServiceFormCard({ form, groupId }) {
 				</span>
 			) : null}
 			<span className="ws-services-card__cta">
-				Apply
+				Apply form
 				<Icon name="chevron" />
 			</span>
 		</button>
@@ -130,12 +126,6 @@ function WorkspaceServices() {
 
 	return (
 		<div className="ws-page ws-services-page">
-			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
-				<Link to="/dashboard">Dashboard</Link>
-				<span className="ws-breadcrumb-sep">/</span>
-				<span>All services</span>
-			</nav>
-
 			<header className="ws-services-head">
 				<div className="ws-services-head-text">
 					<h1 className="ws-services-title">Services under the Assam Tenancy Act 2021</h1>
@@ -217,7 +207,6 @@ function WorkspaceServices() {
 								<colgroup>
 									<col className="ws-services-col-form" />
 									<col className="ws-services-col-desc" />
-									<col className="ws-services-col-rule" />
 									<col className="ws-services-col-action" />
 								</colgroup>
 								<thead>
@@ -226,9 +215,6 @@ function WorkspaceServices() {
 											Form
 										</th>
 										<th scope="col">Application</th>
-										<th scope="col" className="ws-services-th-rule">
-											Rule
-										</th>
 										<th scope="col" className="ws-services-th-action">
 											<span className="ws-sr-only">Action</span>
 										</th>

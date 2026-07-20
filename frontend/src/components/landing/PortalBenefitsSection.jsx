@@ -4,6 +4,7 @@ import {
 	Building2,
 	ClipboardList,
 	FileCheck2,
+	IdCard,
 	Landmark,
 	ShieldCheck,
 } from 'lucide-react'
@@ -23,6 +24,7 @@ import {
 	benefitsMediaVariants,
 	benefitsOrbitVariants,
 	benefitsSectionVariants,
+	benefitsSymbolHover,
 	benefitsSymbolVariants,
 	benefitsSymbolsRingVariants,
 } from '../../utils/landingMotion'
@@ -56,13 +58,17 @@ const orbitSymbols = [
 	{ id: 'tracking', className: 'portal-benefits__symbol--tracking', Icon: ClipboardList, strokeWidth: 1.6 },
 	{ id: 'records', className: 'portal-benefits__symbol--records', Icon: ShieldCheck, strokeWidth: 1.6 },
 	{ id: 'docs', className: 'portal-benefits__symbol--docs', Icon: FileCheck2, strokeWidth: 1.6 },
+	{ id: 'uin', className: 'portal-benefits__symbol--uin', Icon: IdCard, strokeWidth: 1.6 },
 ]
 
 function PortalBenefitsSection({ className = '' }) {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const sectionInView = useInView(sectionRef, { once: true, margin: '-12% 0px -10% 0px' })
+	const sectionInView = useInView(sectionRef, {
+		once: true,
+		margin: '-14% 0px -10% 0px',
+	})
 	const reveal = reduceMotion || sectionInView
 
 	const items = useMemo(
@@ -109,6 +115,105 @@ function PortalBenefitsSection({ className = '' }) {
 						className="portal-benefits__body"
 						variants={reduceMotion ? undefined : benefitsBodyVariants}
 					>
+						<motion.div
+							className="portal-benefits__media"
+							variants={reduceMotion ? undefined : benefitsMediaVariants}
+							aria-hidden
+						>
+							<motion.div
+								className="portal-benefits__media-float"
+								animate={
+									reveal && !reduceMotion
+										? { y: [0, 10, 0] }
+										: undefined
+								}
+								transition={
+									reduceMotion
+										? undefined
+										: {
+												y: {
+													duration: 7,
+													repeat: Infinity,
+													ease: 'easeInOut',
+													delay: 1.15,
+												},
+											}
+								}
+							>
+								<div className="portal-benefits__symbols">
+									<motion.span
+										className="portal-benefits__symbols-ring-host"
+										variants={reduceMotion ? undefined : benefitsSymbolsRingVariants}
+									>
+										<span className="portal-benefits__symbols-ring" />
+									</motion.span>
+									<motion.span
+										className="portal-benefits__symbols-ring-host portal-benefits__symbols-ring-host--inner"
+										variants={reduceMotion ? undefined : benefitsSymbolsRingVariants}
+									>
+										<span className="portal-benefits__symbols-ring portal-benefits__symbols-ring--inner" />
+									</motion.span>
+
+									{orbitSymbols
+										.filter((symbol) => symbol.id === 'center')
+										.map((symbol) => {
+											const SymbolIcon = symbol.Icon
+											return (
+												<motion.span
+													key={symbol.id}
+													className={`portal-benefits__symbol ${symbol.className}`}
+													custom={0}
+													variants={reduceMotion ? undefined : benefitsSymbolVariants}
+													whileHover={reduceMotion ? undefined : benefitsSymbolHover}
+												>
+													<SymbolIcon strokeWidth={symbol.strokeWidth} />
+												</motion.span>
+											)
+										})}
+
+									<motion.div
+										className="portal-benefits__orbit"
+										variants={reduceMotion ? undefined : benefitsOrbitVariants}
+									>
+										<div className="portal-benefits__orbit-spin">
+											{orbitSymbols
+												.filter((symbol) => symbol.id !== 'center')
+												.map((symbol, index) => {
+													const SymbolIcon = symbol.Icon
+													return (
+														<span
+															key={symbol.id}
+															className={`portal-benefits__orbit-node portal-benefits__orbit-node--${symbol.id}`}
+														>
+															<span className="portal-benefits__orbit-counter">
+																<motion.span
+																	className={`portal-benefits__symbol ${symbol.className}`}
+																	custom={index + 1}
+																	variants={
+																		reduceMotion
+																			? undefined
+																			: benefitsSymbolVariants
+																	}
+																	whileHover={
+																		reduceMotion
+																			? undefined
+																			: benefitsSymbolHover
+																	}
+																>
+																	<SymbolIcon
+																		strokeWidth={symbol.strokeWidth}
+																	/>
+																</motion.span>
+															</span>
+														</span>
+													)
+												})}
+										</div>
+									</motion.div>
+								</div>
+							</motion.div>
+						</motion.div>
+
 						<motion.div
 							className="portal-benefits__list-wrap"
 							variants={reduceMotion ? undefined : benefitsListVariants}
@@ -162,76 +267,6 @@ function PortalBenefitsSection({ className = '' }) {
 									)
 								})}
 							</ul>
-						</motion.div>
-
-						<motion.div
-							className="portal-benefits__media"
-							variants={reduceMotion ? undefined : benefitsMediaVariants}
-							aria-hidden
-						>
-							<div className="portal-benefits__symbols">
-								<motion.span
-									className="portal-benefits__symbols-ring-host"
-									variants={reduceMotion ? undefined : benefitsSymbolsRingVariants}
-								>
-									<span className="portal-benefits__symbols-ring" />
-								</motion.span>
-								<motion.span
-									className="portal-benefits__symbols-ring-host portal-benefits__symbols-ring-host--inner"
-									variants={reduceMotion ? undefined : benefitsSymbolsRingVariants}
-								>
-									<span className="portal-benefits__symbols-ring portal-benefits__symbols-ring--inner" />
-								</motion.span>
-
-								{orbitSymbols
-									.filter((symbol) => symbol.id === 'center')
-									.map((symbol) => {
-										const SymbolIcon = symbol.Icon
-										return (
-											<motion.span
-												key={symbol.id}
-												className={`portal-benefits__symbol ${symbol.className}`}
-												custom={0}
-												variants={reduceMotion ? undefined : benefitsSymbolVariants}
-											>
-												<SymbolIcon strokeWidth={symbol.strokeWidth} />
-											</motion.span>
-										)
-									})}
-
-								<motion.div
-									className="portal-benefits__orbit"
-									variants={reduceMotion ? undefined : benefitsOrbitVariants}
-								>
-									{orbitSymbols
-										.filter((symbol) => symbol.id !== 'center')
-										.map((symbol, index) => {
-											const SymbolIcon = symbol.Icon
-											return (
-												<span
-													key={symbol.id}
-													className={`portal-benefits__orbit-slot portal-benefits__orbit-slot--${symbol.id}`}
-												>
-													<span className="portal-benefits__orbit-push">
-														<span className="portal-benefits__orbit-face">
-															<span className="portal-benefits__orbit-hold">
-																<motion.span
-																	className={`portal-benefits__symbol ${symbol.className}`}
-																	custom={index + 1}
-																	variants={
-																		reduceMotion ? undefined : benefitsSymbolVariants
-																	}
-																>
-																	<SymbolIcon strokeWidth={symbol.strokeWidth} />
-																</motion.span>
-															</span>
-														</span>
-													</span>
-												</span>
-											)
-										})}
-								</motion.div>
-							</div>
 						</motion.div>
 					</motion.div>
 				</motion.div>

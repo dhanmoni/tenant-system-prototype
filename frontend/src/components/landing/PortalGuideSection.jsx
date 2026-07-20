@@ -110,8 +110,6 @@ function PortalGuideSection() {
 				description: t('home.guide.svc.uin.desc'),
 				authMode: 'login',
 				icon: FileText,
-				badge: t('home.guide.svc.uin.badge'),
-				featured: true,
 			},
 			{
 				title: t('home.guide.svc.contact.title'),

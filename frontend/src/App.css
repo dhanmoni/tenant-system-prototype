@@ -1884,15 +1884,24 @@ html.landing-nav-menu-open .daily-update-ticker {
 	}
 }
 
-/* Landing hero — compact height (above-the-fold + daily ticker) */
+/* Landing hero — stable media frame (same skeleton across screens) */
 .landing-hero {
-	min-height: min(68vh, 36rem);
+	--landing-hero-frame-h: clamp(28rem, 38vw, 36rem);
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+	height: var(--landing-hero-frame-h);
+	min-height: var(--landing-hero-frame-h);
+	max-height: var(--landing-hero-frame-h);
 }
 
 .landing-hero-media {
 	position: absolute;
 	inset: 0;
 	z-index: 0;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
 	overflow: hidden;
 }
 
@@ -1902,10 +1911,12 @@ html.landing-nav-menu-open .daily-update-ticker {
 	align-items: flex-start;
 	justify-content: flex-end;
 	width: 100%;
+	height: 100%;
 	min-height: 0;
 	padding-top: 7.25rem;
 	padding-bottom: 3.5rem;
 	text-align: left;
+	box-sizing: border-box;
 }
 
 @media (min-width: 1024px) {
@@ -1920,9 +1931,12 @@ html.landing-nav-menu-open .daily-update-ticker {
 /* Phone, tablet & small laptop: nav stacks above image (no overlap) */
 @media (max-width: 1279px) {
 	.landing-hero {
+		--landing-hero-frame-h: clamp(20rem, 56vw, 30rem);
 		display: flex;
 		flex-direction: column;
+		height: auto;
 		min-height: 0;
+		max-height: none;
 		overflow: visible;
 	}
 
@@ -1937,18 +1951,16 @@ html.landing-nav-menu-open .daily-update-ticker {
 
 	.landing-hero-media {
 		position: relative;
-		flex: 1 1 auto;
-		min-height: min(58vh, 28rem);
+		flex: 0 0 auto;
+		width: 100%;
+		height: var(--landing-hero-frame-h);
+		min-height: var(--landing-hero-frame-h);
+		max-height: var(--landing-hero-frame-h);
 		overflow: hidden;
 		isolation: isolate;
 	}
-}
 
-@media (min-width: 768px) and (max-width: 1279px) {
-	.landing-hero-media {
-		min-height: min(50vh, 32rem);
-	}
-
+	/* Keep copy inside the fixed media frame so text wrap never grows the hero */
 	.landing-hero-inner {
 		position: absolute;
 		inset: 0;
@@ -1956,13 +1968,41 @@ html.landing-nav-menu-open .daily-update-ticker {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-end;
 		width: 100%;
-		padding-top: 0.75rem;
-		padding-bottom: 4.75rem;
+		height: 100%;
+		padding-top: 1rem;
+		padding-bottom: 3.75rem;
 		padding-left: max(1rem, env(safe-area-inset-left));
 		padding-right: max(1rem, env(safe-area-inset-right));
 		text-align: center;
+	}
+
+	.landing-hero-controls {
+		position: absolute;
+		inset: 0;
+	}
+}
+
+@media (max-width: 479px) {
+	.landing-hero {
+		--landing-hero-frame-h: clamp(18.5rem, 78vw, 23rem);
+	}
+
+	.landing-hero-inner {
+		padding-bottom: 3.25rem;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1279px) {
+	.landing-hero {
+		--landing-hero-frame-h: clamp(24rem, 48vw, 34rem);
+	}
+
+	.landing-hero-inner {
+		justify-content: center;
+		padding-top: 0.75rem;
+		padding-bottom: 4.75rem;
 	}
 
 	.landing-hero-overlay--lr {
@@ -1972,11 +2012,6 @@ html.landing-nav-menu-open .daily-update-ticker {
 			color-mix(in srgb, var(--landing-ink) 35%, transparent) 45%,
 			transparent 72%
 		);
-	}
-
-	.landing-hero-controls {
-		position: absolute;
-		inset: 0;
 	}
 
 	.landing-hero-carousel-nav {
@@ -2181,7 +2216,13 @@ html.landing-nav-menu-open .daily-update-ticker {
 }
 
 .landing-hero-lead--rotating {
-	min-height: 3.1em;
+	min-height: 3.25em;
+}
+
+@media (max-width: 767px) {
+	.landing-hero-lead--rotating {
+		min-height: 4.4em;
+	}
 }
 
 .landing-hero-lead__text {
@@ -4784,7 +4825,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	width: 100%;
 	padding: 1rem 1.15rem;
 	text-align: left;
-	text-decoration: none;
+	text-decoration: none !important;
 	color: inherit;
 	background: #fff;
 	transition:
@@ -4796,6 +4837,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 .portal-guide-access-action:focus-visible {
 	background: color-mix(in srgb, var(--landing-accent) 5%, #fff);
 	outline: none;
+	text-decoration: none !important;
 }
 
 .portal-guide-access-action:focus-visible {
@@ -5730,28 +5772,42 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	align-items: start;
 }
 
-@media (min-width: 1024px) {
-	.portal-benefits__body {
-		grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
-		gap: 2.5rem 2.75rem;
-		align-items: center;
-	}
-}
-
-@media (min-width: 1280px) {
-	.portal-benefits__body {
-		grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-		gap: 3rem 3.25rem;
-	}
+/* DOM order is media → list (for entrance stagger); visual order keeps list first on small screens */
+.portal-benefits__media {
+	order: 2;
 }
 
 .portal-benefits__list-wrap {
+	order: 1;
 	overflow: visible;
 	width: 100%;
 	max-width: none;
 	margin: 0;
 	text-align: left;
 	will-change: transform, opacity;
+}
+
+@media (min-width: 1024px) {
+	.portal-benefits__body {
+		grid-template-columns: minmax(0, 1fr) minmax(300px, 0.95fr);
+		gap: 2.5rem 2.5rem;
+		align-items: center;
+	}
+
+	.portal-benefits__list-wrap {
+		order: 1;
+	}
+
+	.portal-benefits__media {
+		order: 2;
+	}
+}
+
+@media (min-width: 1280px) {
+	.portal-benefits__body {
+		grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.9fr);
+		gap: 3rem 2.75rem;
+	}
 }
 
 @media (max-width: 1023px) {
@@ -5923,6 +5979,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	}
 }
 
+/* Portal benefits diagram — icons sit on the outer ring at every size */
 .portal-benefits__media {
 	position: relative;
 	margin: 0;
@@ -5933,12 +5990,28 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	overflow: visible;
+	transform-origin: center center;
+}
+
+.portal-benefits__media-float {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .portal-benefits__symbols {
+	/* Outer ring inset 8% → radius 42cqi of the symbols container */
+	--orbit-r: 42cqi;
+	--orbit-node: 16.5cqi;
+	container-type: inline-size;
+	container-name: benefits-orbit;
 	position: relative;
 	width: min(100%, 21rem);
 	aspect-ratio: 1;
+	overflow: visible;
 }
 
 .portal-benefits__symbols-ring-host {
@@ -5949,7 +6022,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 }
 
 .portal-benefits__symbols-ring-host--inner {
-	inset: 24%;
+	inset: 26%;
 }
 
 .portal-benefits__symbols-ring {
@@ -5965,7 +6038,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 			transparent 68%
 		);
 	transform-origin: center center;
-	will-change: transform;
+	backface-visibility: hidden;
 }
 
 .portal-benefits__symbols-ring--inner {
@@ -5983,84 +6056,84 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	}
 }
 
-@keyframes portal-benefits-spin-reverse {
-	from {
-		transform: rotate(0deg);
-	}
-	to {
-		transform: rotate(-360deg);
-	}
-}
-
 @media (prefers-reduced-motion: no-preference) {
 	.portal-benefits.is-animated .portal-benefits__symbols-ring:not(.portal-benefits__symbols-ring--inner) {
-		animation: portal-benefits-spin 40s linear infinite;
+		animation: portal-benefits-spin 48s linear infinite;
 	}
 
 	.portal-benefits.is-animated .portal-benefits__symbols-ring--inner {
-		animation: portal-benefits-spin 28s linear infinite;
+		animation: portal-benefits-spin 34s linear infinite reverse;
 	}
 
-	.portal-benefits.is-animated .portal-benefits__orbit {
-		animation: portal-benefits-spin 36s linear infinite;
+	/* GPU transform orbit — same keyframes + reverse keeps icons upright & smooth */
+	.portal-benefits.is-animated .portal-benefits__orbit-spin {
+		animation: portal-benefits-spin 40s linear infinite;
 	}
 
-	.portal-benefits.is-animated .portal-benefits__orbit-hold {
-		animation: portal-benefits-spin-reverse 36s linear infinite;
+	.portal-benefits.is-animated .portal-benefits__orbit-counter {
+		animation: portal-benefits-spin 40s linear infinite reverse;
 	}
 }
 
 .portal-benefits__orbit {
-	--orbit-radius: 7.1rem;
 	position: absolute;
 	inset: 0;
 	z-index: 2;
-	transform-origin: 50% 50%;
-	will-change: transform;
+	pointer-events: none;
 }
 
-.portal-benefits__orbit-slot {
+.portal-benefits__orbit-spin {
+	position: absolute;
+	inset: 0;
+	transform-origin: 50% 50%;
+	backface-visibility: hidden;
+}
+
+.portal-benefits__orbit-node {
 	--orbit-angle: 0deg;
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	width: 0;
-	height: 0;
-	transform: rotate(var(--orbit-angle));
+	width: var(--orbit-node);
+	height: var(--orbit-node);
+	/* Place on ring + cancel placement tilt; counter cancels orbit spin */
+	transform:
+		translate3d(-50%, -50%, 0)
+		rotate(var(--orbit-angle))
+		translate3d(0, calc(var(--orbit-r) * -1), 0)
+		rotate(calc(0deg - var(--orbit-angle)));
+	pointer-events: auto;
+	backface-visibility: hidden;
 }
 
-.portal-benefits__orbit-slot--services {
+.portal-benefits__orbit-node--services {
 	--orbit-angle: 0deg;
 }
 
-.portal-benefits__orbit-slot--tracking {
-	--orbit-angle: 90deg;
+.portal-benefits__orbit-node--tracking {
+	--orbit-angle: 72deg;
 }
 
-.portal-benefits__orbit-slot--records {
-	--orbit-angle: 180deg;
+.portal-benefits__orbit-node--records {
+	--orbit-angle: 144deg;
 }
 
-.portal-benefits__orbit-slot--docs {
-	--orbit-angle: 270deg;
+.portal-benefits__orbit-node--docs {
+	--orbit-angle: 216deg;
 }
 
-.portal-benefits__orbit-push {
-	position: absolute;
-	top: 0;
-	left: 0;
-	transform: translate(-50%, -50%) translateY(calc(var(--orbit-radius) * -1));
+.portal-benefits__orbit-node--uin {
+	--orbit-angle: 288deg;
 }
 
-.portal-benefits__orbit-face {
-	display: block;
-	transform: rotate(calc(var(--orbit-angle) * -1));
-}
-
-.portal-benefits__orbit-hold {
-	display: block;
+.portal-benefits__orbit-counter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
 	transform-origin: center center;
-	will-change: transform;
+	backface-visibility: hidden;
 }
 
 .portal-benefits__symbol {
@@ -6068,6 +6141,8 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	width: 100%;
+	height: 100%;
 	border-radius: 50%;
 	border: 1px solid color-mix(in srgb, var(--landing-accent) 16%, #e8dfd6);
 	background: #fff;
@@ -6076,9 +6151,9 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	z-index: 2;
 }
 
-.portal-benefits__symbol svg {
-	width: 50%;
-	height: 50%;
+.portal-benefits__orbit .portal-benefits__symbol svg {
+	width: 48%;
+	height: 48%;
 }
 
 @media (hover: hover) {
@@ -6090,13 +6165,18 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	.portal-benefits__orbit .portal-benefits__symbol:hover {
 		border-color: color-mix(in srgb, var(--landing-accent) 36%, #e8dfd6);
 		box-shadow: 0 14px 28px -14px color-mix(in srgb, var(--landing-ink) 32%, transparent);
-		transform: scale(1.08);
+		transform: scale(1.06);
+	}
+
+	.portal-benefits__orbit-node:hover {
+		z-index: 4;
 	}
 }
 
 .portal-benefits__symbol--center {
 	position: absolute;
-	inset: 30%;
+	/* Sized with inset so Framer scale never fights left/top centering */
+	inset: 31%;
 	width: auto;
 	height: auto;
 	z-index: 3;
@@ -6107,35 +6187,34 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	);
 	color: var(--landing-accent-dark, var(--landing-accent));
 	border-color: color-mix(in srgb, var(--landing-accent) 28%, #e8dfd6);
+	box-shadow:
+		0 12px 28px -14px color-mix(in srgb, var(--landing-ink) 26%, transparent),
+		0 0 0 6px color-mix(in srgb, var(--color-light-caramel-100) 65%, transparent);
 }
 
 .portal-benefits__symbol--center svg {
-	width: 46%;
-	height: 46%;
+	width: 44%;
+	height: 44%;
 }
 
 .portal-benefits__symbol--services {
-	width: 5rem;
-	height: 5rem;
 	color: var(--landing-accent);
 }
 
 .portal-benefits__symbol--tracking {
-	width: 4.7rem;
-	height: 4.7rem;
 	color: var(--color-light-caramel-600);
 }
 
 .portal-benefits__symbol--records {
-	width: 5rem;
-	height: 5rem;
 	color: var(--color-light-caramel-800);
 }
 
 .portal-benefits__symbol--docs {
-	width: 4.4rem;
-	height: 4.4rem;
 	color: var(--landing-accent);
+}
+
+.portal-benefits__symbol--uin {
+	color: var(--color-light-caramel-700);
 }
 
 @media (min-width: 640px) {
@@ -6144,27 +6223,8 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	}
 
 	.portal-benefits__symbols {
-		width: min(100%, 24rem);
-	}
-
-	.portal-benefits__orbit {
-		--orbit-radius: 8.1rem;
-	}
-
-	.portal-benefits__symbol--services,
-	.portal-benefits__symbol--records {
-		width: 5.5rem;
-		height: 5.5rem;
-	}
-
-	.portal-benefits__symbol--tracking {
-		width: 5.2rem;
-		height: 5.2rem;
-	}
-
-	.portal-benefits__symbol--docs {
-		width: 4.8rem;
-		height: 4.8rem;
+		--orbit-node: 16cqi;
+		width: min(100%, 25rem);
 	}
 }
 
@@ -6172,45 +6232,23 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	.portal-benefits__media {
 		max-width: none;
 		margin-inline: 0;
-		min-height: 22rem;
+		justify-self: end;
+		width: min(100%, 28rem);
 	}
 
 	.portal-benefits__symbols {
-		width: min(100%, 26rem);
-	}
-
-	.portal-benefits__orbit {
-		--orbit-radius: 8.75rem;
-	}
-
-	.portal-benefits__symbol--services,
-	.portal-benefits__symbol--records {
-		width: 5.75rem;
-		height: 5.75rem;
-	}
-
-	.portal-benefits__symbol--tracking {
-		width: 5.5rem;
-		height: 5.5rem;
-	}
-
-	.portal-benefits__symbol--docs {
-		width: 5rem;
-		height: 5rem;
+		--orbit-node: 15.5cqi;
+		width: 100%;
 	}
 }
 
 @media (min-width: 1280px) {
-	.portal-benefits__symbols {
-		width: min(100%, 28rem);
-	}
-
-	.portal-benefits__orbit {
-		--orbit-radius: 9.4rem;
-	}
-
 	.portal-benefits__media {
-		min-height: 24rem;
+		width: min(100%, 30rem);
+	}
+
+	.portal-benefits__symbols {
+		--orbit-node: 15cqi;
 	}
 }
 
@@ -11556,12 +11594,64 @@ main.main-fluid {
 }
 
 .profile-completion-modal {
+	position: relative;
 	width: min(100%, 28rem);
 	padding: 1.5rem 1.35rem 1.25rem;
 	border-radius: 12px;
 	background: #fff;
 	box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
 	border: 1px solid #e2e8f0;
+}
+
+.profile-completion-modal__close {
+	position: absolute;
+	top: 0.75rem;
+	right: 0.75rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	border-radius: 9999px;
+	background: transparent;
+	color: #64748b;
+	cursor: pointer;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
+}
+
+.profile-completion-modal__close:hover {
+	background: #f1f5f9;
+	color: #334155;
+}
+
+.profile-completion-modal__close-icon {
+	width: 1.1rem;
+	height: 1.1rem;
+}
+
+.profile-completion-modal__dont-show {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.55rem;
+	margin: 0 0 1rem;
+	font-size: 0.875rem;
+	line-height: 1.4;
+	color: #64748b;
+	cursor: pointer;
+	user-select: none;
+}
+
+.profile-completion-modal__dont-show input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--gov-blue, #0d47a1);
+	cursor: pointer;
 }
 
 .profile-completion-modal__icon {
