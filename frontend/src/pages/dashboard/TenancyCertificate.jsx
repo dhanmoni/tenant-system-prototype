@@ -6,9 +6,11 @@ import { formatDate, formatDateTime } from '../../utils/formatters'
 import { Icon } from '../../components/dashboard/Icons'
 import DocumentUploadSlot from '../../components/forms/DocumentUploadSlot'
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
+import { useLanguage } from '../../i18n'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
+	const { t } = useLanguage()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -42,11 +44,6 @@ function TenancyCertificate() {
 	const visitInitKeyRef = useRef(null)
 	const allowLeaveRef = useRef(false)
 	const [serverDrafts, setServerDrafts] = useState([])
-
-	// Payment State
-	const [paymentComplete, setPaymentComplete] = useState(false)
-	const [paymentSimulating, setPaymentSimulating] = useState(false)
-	const [paymentGrn, setPaymentGrn] = useState('')
 
 	// Step 1: Office/Registration
 	const [tenancyRegistrationDate, setTenancyRegistrationDate] = useState('')
@@ -283,10 +280,10 @@ function TenancyCertificate() {
 				void fetchServerDrafts()
 				return
 			}
-			setError('This application can no longer be continued from here.')
+			setError(t('ws.uin.error.cannotContinue'))
 		} catch (err) {
 			console.error('Failed to load draft', err)
-			setError(err?.response?.data?.message || 'Failed to load saved application.')
+			setError(err?.response?.data?.message || t('ws.uin.error.loadFailed'))
 		} finally {
 			setDraftLoaded(true)
 		}
@@ -525,9 +522,6 @@ function TenancyCertificate() {
 		setTenancyDistrictId('')
 		setTenancyAreaType('')
 		setTenancyLocalBody('')
-		setPaymentComplete(false)
-		setPaymentSimulating(false)
-		setPaymentGrn('')
 		setDeclarationChecked(false)
 		setInitiatorRole('')
 	}, [])
@@ -710,23 +704,6 @@ function TenancyCertificate() {
 		propertyChargeOtherServices,
 	])
 
-	const feeAmount = (() => {
-		if (!applyType) return 0
-		const type = applyType.toLowerCase()
-		return type === 'joint' ? 50 : type === 'individual' ? 75 : 0
-	})()
-
-	const handleMockPayment = () => {
-		setPaymentSimulating(true)
-		// TODO: Replace this mock with actual eGRAS payment gateway redirect & callback logic
-		setTimeout(() => {
-			setPaymentSimulating(false)
-			setPaymentComplete(true)
-			setPaymentGrn(String(Math.floor(Math.random() * 1000000000)))
-			showSaveToast('Payment completed.')
-		}, 1500)
-	}
-
 	const registrationTooOld = (() => {
 		if (!tenancyRegistrationDate) return false
 		const regDate = new Date(tenancyRegistrationDate)
@@ -891,7 +868,7 @@ function TenancyCertificate() {
 		if (tenancyRegistrationDate || tenancyOfficeId || initiatorRole) return true
 		if (landlordName.trim() || tenantName.trim() || managerName.trim()) return true
 		if (agreementFile || landlordPhotoFile || tenantPhotoFile) return true
-		if (paymentComplete || declarationChecked) return true
+		if (declarationChecked) return true
 		return false
 	}, [
 		tenancyStep,
@@ -905,15 +882,13 @@ function TenancyCertificate() {
 		agreementFile,
 		landlordPhotoFile,
 		tenantPhotoFile,
-		paymentComplete,
 		declarationChecked,
 	])
 
 	const showRefreshWarning =
 		pageReady && draftLoaded && !submittedApp && !draftParam && !draftApplicationNo
 
-	const leaveWarningMessage =
-		'Refreshing before you save will clear this form. Click Save & continue first — then a refresh will reopen the same draft.'
+	const leaveWarningMessage = t('ws.uin.leaveWarning')
 
 	useEffect(() => {
 		if (!showRefreshWarning || !hasApplyProgress) return undefined
@@ -929,14 +904,14 @@ function TenancyCertificate() {
 		return () => window.removeEventListener('beforeunload', onBeforeUnload)
 	}, [showRefreshWarning, hasApplyProgress, leaveWarningMessage])
 
-	const showSaveToast = useCallback((message = 'Progress saved.') => {
+	const showSaveToast = useCallback((message) => {
 		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
-		setSaveToast(message)
+		setSaveToast(message || t('ws.uin.toast.saved'))
 		saveToastTimerRef.current = setTimeout(() => {
 			setSaveToast('')
 			saveToastTimerRef.current = null
 		}, 2800)
-	}, [])
+	}, [t])
 
 	const showErrorToast = useCallback((message) => {
 		if (!message) return
@@ -994,13 +969,13 @@ function TenancyCertificate() {
 					setSearchParams({ draft: draft.application_no }, { replace: true })
 				}
 			}
-			setSuccess('Progress saved.')
+			setSuccess(t('ws.uin.toast.saved'))
 			if (window.toastTimer) clearTimeout(window.toastTimer)
 			window.toastTimer = setTimeout(() => setSuccess(''), 3500)
 			return true
 		} catch (err) {
 			const errors = err?.response?.data?.errors
-			let msg = err?.response?.data?.message || 'Failed to save progress'
+			let msg = err?.response?.data?.message || t('ws.uin.error.saveFailed')
 			if (errors && typeof errors === 'object') {
 				const list = Object.entries(errors).flatMap(([field, messages]) =>
 					(Array.isArray(messages) ? messages : [messages]).map((m) => `${field}: ${m}`)
@@ -1047,20 +1022,18 @@ function TenancyCertificate() {
 					: data.join_link,
 				message: data.message,
 				apply_type: data.application?.apply_type || applyType,
-				fee_amount: feeAmount,
-				payment_grn: paymentGrn,
 			})
 			scrollFormToTop()
 		} catch (err) {
 			const data = err?.response?.data
 			if (err?.response?.status === 409 && data?.conflict) {
 				setConflictData(data)
-				showErrorToast(data.message || 'An application with these details already exists.')
+				showErrorToast(data.message || t('ws.uin.error.alreadyExists'))
 				return
 			}
 
 			const errors = data?.errors
-			let msg = data?.message || 'Failed to submit application'
+			let msg = data?.message || t('ws.uin.error.submitFailed')
 			if (errors && typeof errors === 'object') {
 				const list = Object.entries(errors).flatMap(([field, messages]) => (Array.isArray(messages) ? messages : [messages]).map(m => `${field}: ${m}`))
 				if (list.length) msg = list.join('. ')
@@ -1070,11 +1043,10 @@ function TenancyCertificate() {
 	}
 
 	const tenancySteps = [
-		{ id: 1, label: 'Registration & Office' },
-		{ id: 2, label: 'Tenancy Details' },
-		{ id: 3, label: 'Uploads' },
-		{ id: 4, label: 'Preview' },
-		{ id: 5, label: 'Submit' },
+		{ id: 1, label: t('ws.uin.step.1') },
+		{ id: 2, label: t('ws.uin.step.2') },
+		{ id: 3, label: t('ws.uin.step.3') },
+		{ id: 4, label: t('ws.uin.step.4') },
 	]
 
 	const TOTAL_STEPS = tenancySteps.length
@@ -1142,7 +1114,7 @@ function TenancyCertificate() {
 
 		if (tenancyStep === 1) {
 			if (typeof form?.checkValidity === 'function' && !form.checkValidity()) {
-				showErrorToast('Please fill in the required fields highlighted below.')
+				showErrorToast(t('ws.uin.error.fillRequired'))
 				const firstInvalid = form.querySelector(':invalid')
 				if (firstInvalid) {
 					firstInvalid.setAttribute('aria-invalid', 'true')
@@ -1161,27 +1133,27 @@ function TenancyCertificate() {
 
 		if (tenancyStep === 2) {
 			if (hasStep2FieldErrors) {
-				showErrorToast('Please correct the highlighted fields before continuing.')
+				showErrorToast(t('ws.uin.error.correctFields'))
 				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			if (initiatorRole === 'LANDLORD' && !landlordEmail.trim()) {
-				showErrorToast('Please enter your email address.')
+				showErrorToast(t('ws.uin.error.enterEmail'))
 				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			if (initiatorRole === 'TENANT' && !tenantEmail.trim()) {
-				showErrorToast('Please enter your email address.')
+				showErrorToast(t('ws.uin.error.enterEmail'))
 				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			if (!landlordPhone || !tenantPhone || !landlordPan || !tenantPan) {
-				showErrorToast('Please complete all required party details before continuing.')
+				showErrorToast(t('ws.uin.error.partyDetails'))
 				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			if (typeof form?.checkValidity === 'function' && !form.checkValidity()) {
-				showErrorToast('Please fill in the required fields highlighted below.')
+				showErrorToast(t('ws.uin.error.fillRequired'))
 				const firstInvalid = form.querySelector(':invalid')
 				if (firstInvalid) {
 					firstInvalid.setAttribute('aria-invalid', 'true')
@@ -1200,26 +1172,12 @@ function TenancyCertificate() {
 
 		if (tenancyStep === 4) {
 			if (!declarationChecked) {
-				showErrorToast('You must accept the declaration to proceed to payment.')
+				showErrorToast(t('ws.uin.error.acceptToSubmit'))
 				requestAnimationFrame(() => scrollToFirstError(form))
 				return
 			}
 			const ok = await saveDraftStep(4)
-			if (ok) setTenancyStep(5)
-			return
-		}
-		if (tenancyStep === 5) {
-			if (!paymentComplete) {
-				showErrorToast('You must complete the fee payment before submitting.')
-				requestAnimationFrame(() => scrollToFirstError(form))
-				return
-			}
-			if (!declarationChecked) {
-				showErrorToast('You must accept the declaration to submit.')
-				requestAnimationFrame(() => scrollToFirstError(form))
-				return
-			}
-			submitTenancyApplication()
+			if (ok) submitTenancyApplication()
 			return
 		}
 		const ok = await saveDraftStep(tenancyStep)
@@ -1277,11 +1235,11 @@ function TenancyCertificate() {
 		let pendingPartyPhone = ''
 
 		if (initiatorRole === 'LANDLORD') {
-			pendingPartyRole = 'Tenant'
+			pendingPartyRole = t('ws.uin.drafts.tenant')
 			pendingPartyName = tenantName
 			pendingPartyPhone = tenantPhone
 		} else if (initiatorRole === 'TENANT') {
-			pendingPartyRole = 'Landlord'
+			pendingPartyRole = t('ws.uin.drafts.landlord')
 			pendingPartyName = landlordName
 			pendingPartyPhone = landlordPhone
 		}
@@ -1294,39 +1252,30 @@ function TenancyCertificate() {
 				<div className="uin-confirm">
 					<div className="uin-confirm-card">
 						<div className="uin-confirm-icon" aria-hidden>✓</div>
-						<h1 className="uin-confirm-title">Application submitted successfully</h1>
+						<h1 className="uin-confirm-title">{t('ws.uin.success.title')}</h1>
 						<p className="uin-confirm-lead">
 							{isJoint
-								? `Application submitted. ${pendingPartyText} must complete their details using the join link.`
-								: (submittedApp.message || 'Your tenancy certificate application has been lodged.')}
+								? t('ws.uin.success.jointLead', { party: pendingPartyText })
+								: (submittedApp.message || t('ws.uin.success.lodged'))}
 						</p>
 
 						<dl className="uin-confirm-meta">
 							<div className="uin-confirm-meta-row">
-								<dt>Application number</dt>
+								<dt>{t('ws.uin.success.appNo')}</dt>
 								<dd>{submittedApp.application_no || '—'}</dd>
 							</div>
 							{submittedApp.ref_code ? (
 								<div className="uin-confirm-meta-row">
-									<dt>Reference code</dt>
+									<dt>{t('ws.uin.success.refCode')}</dt>
 									<dd>{submittedApp.ref_code}</dd>
 								</div>
 							) : null}
-							<div className="uin-confirm-meta-row">
-								<dt>Fee paid</dt>
-								<dd>
-									₹{submittedApp.fee_amount}
-									{submittedApp.payment_grn ? ` · GRN ${submittedApp.payment_grn}` : ''}
-								</dd>
-							</div>
 						</dl>
 
 						{isJoint && submittedApp.join_link ? (
 							<div className="uin-confirm-invite">
 								<p className="uin-confirm-joint-note">
-									This is a joint application. It is awaiting {pendingPartyText}'s
-									verification and payment. Share the invite link below so they can
-									complete their details.
+									{t('ws.uin.success.jointNote', { party: pendingPartyText })}
 								</p>
 								<div className="uin-confirm-invite-row">
 									<input
@@ -1341,7 +1290,7 @@ function TenancyCertificate() {
 										className="ws-btn ws-btn--secondary uin-confirm-invite-copy"
 										onClick={handleCopyJoinLink}
 									>
-										{linkCopied ? 'Copied!' : 'Copy link'}
+										{linkCopied ? t('ws.uin.success.copied') : t('ws.uin.success.copyLink')}
 									</button>
 								</div>
 							</div>
@@ -1353,21 +1302,21 @@ function TenancyCertificate() {
 								className="ws-btn ws-btn--primary"
 								onClick={handleDownloadAcknowledgement}
 							>
-								Download acknowledgement
+								{t('ws.uin.success.downloadAck')}
 							</button>
 							<button
 								type="button"
 								className="ws-btn ws-btn--secondary"
 								onClick={handleDownloadApplication}
 							>
-								Download application
+								{t('ws.uin.success.downloadApp')}
 							</button>
 							<button
 								type="button"
 								className="ws-btn ws-btn--outline"
 								onClick={() => navigate('/dashboard')}
 							>
-								Back to dashboard
+								{t('ws.uin.success.backDashboard')}
 							</button>
 						</div>
 
@@ -1395,28 +1344,18 @@ function TenancyCertificate() {
 			) : null}
 			{!pageReady ? (
 				<div className="ws-uin-apply-loading" role="status" aria-live="polite">
-					Loading application…
+					{t('ws.uin.loading')}
 				</div>
 			) : (
 				<>
-			<nav className="ws-breadcrumb" aria-label="Breadcrumb">
-				<Link to="/dashboard">Dashboard</Link>
-				<span className="ws-breadcrumb-sep">/</span>
-				<span>Apply for UIN</span>
-			</nav>
-
 			<header className="ws-uin-apply-head">
 				<div className="ws-uin-apply-head__row">
 					<div className="ws-uin-apply-head__copy">
-						<h1 className="ws-uin-apply-title">Apply for Tenancy Certificate (UIN)</h1>
-						<p className="ws-uin-apply-lead">
-							Complete each stage in order. Click <strong>Save &amp; continue</strong> after each
-							stage to save your progress.
-						</p>
+						<h1 className="ws-uin-apply-title">{t('ws.uin.title')}</h1>
+						<p className="ws-uin-apply-lead">{t('ws.uin.lead')}</p>
 						{showRefreshWarning ? (
 							<p className="ws-uin-refresh-note" role="status">
-								Refresh clears this form until you save. After{' '}
-								<strong>Save &amp; continue</strong>, a refresh will reopen the same draft.
+								{t('ws.uin.refreshNote')}
 							</p>
 						) : null}
 					</div>
@@ -1440,7 +1379,7 @@ function TenancyCertificate() {
 								className="ws-btn ws-uin-start-over"
 								onClick={() => setStartOverOpen(true)}
 							>
-								Start over
+								{t('ws.uin.startOver')}
 							</button>
 						) : null}
 					</div>
@@ -1449,37 +1388,40 @@ function TenancyCertificate() {
 
 			<nav
 				className="ws-uin-h-stepper"
-				aria-label="Application stages"
+				aria-label={t('ws.uin.steps.aria')}
 				style={{
+					'--ws-uin-steps': TOTAL_STEPS,
 					'--ws-uin-progress': `${TOTAL_STEPS <= 1 ? 0 : ((tenancyStep - 1) / (TOTAL_STEPS - 1)) * 100}%`,
 				}}
 			>
-				<div className="ws-uin-h-stepper__track" aria-hidden>
-					<span className="ws-uin-h-stepper__progress" />
+				<div className="ws-uin-h-stepper__rail">
+					<div className="ws-uin-h-stepper__track" aria-hidden>
+						<span className="ws-uin-h-stepper__progress" />
+					</div>
+					<ol className="ws-uin-h-stepper__list">
+						{tenancySteps.map((step) => {
+							const done = tenancyStep > step.id || savedWizardStep >= step.id
+							const active = tenancyStep === step.id
+							const reachable = step.id <= maxReachableStep
+							return (
+								<li key={step.id}>
+									<button
+										type="button"
+										className={`ws-uin-h-stepper__item${active ? ' is-active' : ''}${done && !active ? ' is-done' : ''}`}
+										disabled={!reachable}
+										aria-current={active ? 'step' : undefined}
+										onClick={() => {
+											if (reachable) goToStep(step.id)
+										}}
+									>
+										<span className="ws-uin-h-stepper__num">{done && !active ? '✓' : step.id}</span>
+										<span className="ws-uin-h-stepper__label">{step.label}</span>
+									</button>
+								</li>
+							)
+						})}
+					</ol>
 				</div>
-				<ol className="ws-uin-h-stepper__list">
-					{tenancySteps.map((step) => {
-						const done = tenancyStep > step.id || savedWizardStep >= step.id
-						const active = tenancyStep === step.id
-						const reachable = step.id <= maxReachableStep
-						return (
-							<li key={step.id}>
-								<button
-									type="button"
-									className={`ws-uin-h-stepper__item${active ? ' is-active' : ''}${done && !active ? ' is-done' : ''}`}
-									disabled={!reachable}
-									aria-current={active ? 'step' : undefined}
-									onClick={() => {
-										if (reachable) goToStep(step.id)
-									}}
-								>
-									<span className="ws-uin-h-stepper__num">{done && !active ? '✓' : step.id}</span>
-									<span className="ws-uin-h-stepper__label">{step.label}</span>
-								</button>
-							</li>
-						)
-					})}
-				</ol>
 			</nav>
 
 			<div className="ws-uin-apply-body-full">
@@ -1489,9 +1431,9 @@ function TenancyCertificate() {
 					{conflictData && (
 						<div className="conflict-notice-box">
 							<p>
-								Another active application already uses the same landlord/tenant phone and agreement
-								date (Application No:{' '}
-								<strong>{conflictData.existing_application?.application_no}</strong>).
+								{t('ws.uin.conflict.lead', {
+									appNo: conflictData.existing_application?.application_no || '—',
+								})}
 							</p>
 							<div className="conflict-actions">
 								<button
@@ -1503,7 +1445,7 @@ function TenancyCertificate() {
 										)
 									}
 								>
-									View existing application
+									{t('ws.uin.conflict.viewExisting')}
 								</button>
 								<button
 									type="button"
@@ -1511,7 +1453,9 @@ function TenancyCertificate() {
 									disabled={tenancySubmitting}
 									onClick={() => submitTenancyApplication(true)}
 								>
-									{tenancySubmitting ? 'Submitting…' : 'Submit as a new application'}
+									{tenancySubmitting
+										? t('ws.uin.conflict.submitting')
+										: t('ws.uin.conflict.submitNew')}
 								</button>
 							</div>
 						</div>
@@ -1539,11 +1483,11 @@ function TenancyCertificate() {
 					<fieldset className="tenancy-fieldset">
 						<div className="form-grid">
 							<div className="ws-uin-role-toggle-field">
-								<span className="label-text required">Initiating as</span>
+								<span className="label-text required">{t('ws.uin.form.initiatingAs')}</span>
 								<div
 									className={`ws-uin-role-toggle${initiatorRole === 'TENANT' ? ' is-tenant' : ' is-landlord'}`}
 									role="radiogroup"
-									aria-label="Initiating as"
+									aria-label={t('ws.uin.form.initiatingAs')}
 								>
 									<span className="ws-uin-role-toggle__indicator" aria-hidden />
 									<label
@@ -1558,7 +1502,7 @@ function TenancyCertificate() {
 											required
 										/>
 										<Icon name="building" />
-										<span>Landlord</span>
+										<span>{t('ws.uin.drafts.landlord')}</span>
 									</label>
 									<label
 										className={`ws-uin-role-toggle__btn${initiatorRole === 'TENANT' ? ' is-active' : ''}`}
@@ -1571,21 +1515,21 @@ function TenancyCertificate() {
 											onChange={() => handleInitiatorRoleChange('TENANT')}
 										/>
 										<Icon name="user" />
-										<span>Tenant</span>
+										<span>{t('ws.uin.drafts.tenant')}</span>
 									</label>
 								</div>
-								<span className="ws-uin-field-hint">Your profile details will auto-fill the matching section in Tenancy Details.</span>
+								<span className="ws-uin-field-hint">{t('ws.uin.form.roleHint')}</span>
 							</div>
 
 							<div className="ws-uin-date-eligibility">
 								<label>
-									<span className="label-text required">Date of Agreement</span>
+									<span className="label-text required">{t('ws.uin.form.agreementDate')}</span>
 									<input type="date" value={tenancyRegistrationDate} onChange={e => setTenancyRegistrationDate(e.target.value)} onClick={(e) => e.target.showPicker && e.target.showPicker()} required max={new Date().toISOString().split('T')[0]} />
-									<span className="ws-uin-field-hint">Must be within the last 3 months.</span>
+									<span className="ws-uin-field-hint">{t('ws.uin.form.agreementDateHint')}</span>
 								</label>
 
 								<label>
-									<span className="label-text">Eligibility</span>
+									<span className="label-text">{t('ws.uin.form.eligibility')}</span>
 									<input
 										type="text"
 										className={`ws-uin-eligibility-field${tenancyRegistrationDate ? (eligibilityMet ? ' is-eligible' : ' is-ineligible') : ''}`}
@@ -1593,26 +1537,26 @@ function TenancyCertificate() {
 											!tenancyRegistrationDate
 												? ''
 												: eligibilityMet
-													? `${applyType || '—'} — Eligible to apply`
+													? t('ws.uin.form.eligible', { type: applyType || '—' })
 													: registrationTooOld
-														? 'Not eligible (Agreement > 3 months old)'
+														? t('ws.uin.form.notEligible')
 														: '—'
 										}
-										placeholder="Select agreement date"
+										placeholder={t('ws.uin.form.selectAgreementDate')}
 										readOnly
 										aria-live="polite"
 									/>
 									<span className="ws-uin-field-hint">
 										{!tenancyRegistrationDate
-											? 'Shown after you choose the agreement date.'
+											? t('ws.uin.form.eligibilityHintEmpty')
 											: eligibilityMet
-												? 'Joint ≤ 2 months · Individual 2–3 months.'
-												: 'Agreements older than 3 months cannot be registered.'}
+												? t('ws.uin.form.eligibilityHintOk')
+												: t('ws.uin.form.eligibilityHintOld')}
 									</span>
 								</label>
 							</div>
 							<label>
-								<span className="label-text required">District</span>
+								<span className="label-text required">{t('ws.uin.form.district')}</span>
 								<select value={tenancyDistrictId} onChange={e => {
 									const dId = e.target.value;
 									setTenancyDistrictId(dId);
@@ -1627,46 +1571,46 @@ function TenancyCertificate() {
 										setTenancyOfficeId('');
 									}
 								}} required>
-									<option value="">Select District</option>
+									<option value="">{t('ws.uin.form.selectDistrict')}</option>
 									{tenancyDistricts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
 								</select>
 							</label>
 
 							<label>
-								<span className="label-text required">Circle Office</span>
+								<span className="label-text required">{t('ws.uin.form.circleOffice')}</span>
 								<select value={tenancyOfficeId} onChange={e => setTenancyOfficeId(e.target.value)} required disabled={!tenancyDistrictId}>
-									<option value="">Select Office</option>
+									<option value="">{t('ws.uin.form.selectOffice')}</option>
 									{availableOffices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
 								</select>
 							</label>
 
 							<div className="radio-group-container">
-								<span className="label-text required">Area Type</span>
+								<span className="label-text required">{t('ws.uin.form.areaType')}</span>
 								<div className="radio-group" style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
 									<label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
 										<input type="radio" name="areaType" value="Urban" checked={tenancyAreaType === 'Urban'} onChange={e => { setTenancyAreaType(e.target.value); setTenancyLocalBody(''); setTenancyVillageWardId(''); setTenancyVillageName(''); }} required disabled={!tenancyDistrictId} />
-										Urban
+										{t('ws.uin.form.urban')}
 									</label>
 									<label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
 										<input type="radio" name="areaType" value="Rural" checked={tenancyAreaType === 'Rural'} onChange={e => { setTenancyAreaType(e.target.value); setTenancyLocalBody(''); setTenancyVillageWardId(''); setTenancyVillageName(''); }} required disabled={!tenancyDistrictId} />
-										Rural
+										{t('ws.uin.form.rural')}
 									</label>
 								</div>
 							</div>
 
 							<label>
-								<span className="label-text required">{tenancyAreaType === 'Urban' ? 'Town/Municipal Area' : tenancyAreaType === 'Rural' ? 'Gram Panchayat' : 'Local Body'}</span>
+								<span className="label-text required">{tenancyAreaType === 'Urban' ? t('ws.uin.form.townMunicipal') : tenancyAreaType === 'Rural' ? t('ws.uin.form.gramPanchayat') : t('ws.uin.form.localBody')}</span>
 								<select value={tenancyLocalBody} onChange={e => { setTenancyLocalBody(e.target.value); setTenancyVillageWardId(''); setTenancyVillageName(''); }} required disabled={!tenancyAreaType}>
-									<option value="">Select {tenancyAreaType === 'Urban' ? 'Town' : tenancyAreaType === 'Rural' ? 'Gram Panchayat' : 'Local Body'}</option>
+									<option value="">{tenancyAreaType === 'Urban' ? t('ws.uin.form.selectTown') : tenancyAreaType === 'Rural' ? t('ws.uin.form.selectGramPanchayat') : t('ws.uin.form.selectLocalBody')}</option>
 									{availableLocalBodies.map(b => <option key={b} value={b}>{b}</option>)}
 								</select>
 							</label>
 
 							{tenancyAreaType === 'Urban' && (
 								<label>
-									<span className="label-text required">Ward</span>
+									<span className="label-text required">{t('ws.uin.form.ward')}</span>
 									<select value={tenancyVillageWardId} onChange={e => { setTenancyVillageWardId(e.target.value); setTenancyVillageName(''); }} required disabled={!tenancyLocalBody}>
-										<option value="">Select Ward</option>
+										<option value="">{t('ws.uin.form.selectWard')}</option>
 										{availableWards.map(vw => <option key={vw.id} value={vw.id}>{vw.name}</option>)}
 									</select>
 								</label>
@@ -1674,9 +1618,9 @@ function TenancyCertificate() {
 
 							{tenancyAreaType === 'Rural' && (
 								<label>
-									<span className="label-text required">Village</span>
+									<span className="label-text required">{t('ws.uin.form.village')}</span>
 									<select value={tenancyVillageName} onChange={e => setTenancyVillageName(e.target.value)} required disabled={!tenancyLocalBody}>
-										<option value="">Select Village</option>
+										<option value="">{t('ws.uin.form.selectVillage')}</option>
 										{availableVillages.map(v => <option key={v} value={v}>{v}</option>)}
 									</select>
 								</label>
@@ -1688,7 +1632,7 @@ function TenancyCertificate() {
 					<div className="parties-container">
 						<section className="tenancy-section">
 							<div className="section-header">
-								<h2>Information of Tenancy</h2>
+								<h2>{t('ws.uin.form.infoOfTenancy')}</h2>
 							</div>
 
 							<div className={`ws-uin-party-block${initiatorRole === 'LANDLORD' ? ' is-autofilled' : ''}`}>
@@ -1696,18 +1640,18 @@ function TenancyCertificate() {
 									<span className="ws-uin-party-block__num">1</span>
 									<div>
 										<h3 className="ws-uin-party-block__title">
-											Landlord details
+											{t('ws.uin.form.landlordDetails')}
 										</h3>
-										<p className="ws-uin-party-block__lead">Enter the landlord’s name, address, PAN and contact information.</p>
+										<p className="ws-uin-party-block__lead">{t('ws.uin.form.landlordLead')}</p>
 									</div>
 								</header>
 								<div className="ws-uin-party-fields">
 									<label>
-										<span className="label-text required">Name of the landlord</span>
-										<input type="text" placeholder="Landlord Name" value={landlordName} onChange={e => setLandlordName(e.target.value)} required />
+										<span className="label-text required">{t('ws.uin.form.landlordName')}</span>
+										<input type="text" placeholder={t('ws.uin.form.landlordNamePh')} value={landlordName} onChange={e => setLandlordName(e.target.value)} required />
 									</label>
 									<label>
-										<span className="label-text required">PAN of landlord</span>
+										<span className="label-text required">{t('ws.uin.form.landlordPan')}</span>
 										<input
 											type="text"
 											value={landlordPan}
@@ -1722,11 +1666,11 @@ function TenancyCertificate() {
 										{fieldErrors.landlordPan ? <span className="ws-uin-field-error">{fieldErrors.landlordPan}</span> : null}
 									</label>
 									<label>
-										<span className="label-text required">Mobile Number</span>
+										<span className="label-text required">{t('ws.uin.form.mobile')}</span>
 										<input
 											type="tel"
 											inputMode="numeric"
-											placeholder="10-digit mobile"
+											placeholder={t('ws.uin.form.mobilePh')}
 											value={landlordPhone}
 											onChange={e => {
 												const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
@@ -1740,7 +1684,7 @@ function TenancyCertificate() {
 									</label>
 									<label>
 										<span className={`label-text${initiatorRole === 'LANDLORD' ? ' required' : ''}`}>
-											E-mail id
+											{t('ws.uin.form.email')}
 										</span>
 										<input
 											type="email"
@@ -1753,8 +1697,8 @@ function TenancyCertificate() {
 										{fieldErrors.landlordEmail ? <span className="ws-uin-field-error">{fieldErrors.landlordEmail}</span> : null}
 									</label>
 									<label className="ws-uin-party-fields__full">
-										<span className="label-text required">Address of the landlord</span>
-										<textarea placeholder="Address" value={landlordAddress} onChange={e => setLandlordAddress(e.target.value)} required rows={3} />
+										<span className="label-text required">{t('ws.uin.form.landlordAddress')}</span>
+										<textarea placeholder={t('ws.uin.form.addressPh')} value={landlordAddress} onChange={e => setLandlordAddress(e.target.value)} required rows={3} />
 									</label>
 								</div>
 							</div>
@@ -1764,18 +1708,18 @@ function TenancyCertificate() {
 									<span className="ws-uin-party-block__num">2</span>
 									<div>
 										<h3 className="ws-uin-party-block__title">
-											Tenant details
+											{t('ws.uin.form.tenantDetails')}
 										</h3>
-										<p className="ws-uin-party-block__lead">Enter the tenant’s name, address, PAN, contact details and previous tenancy if any.</p>
+										<p className="ws-uin-party-block__lead">{t('ws.uin.form.tenantLead')}</p>
 									</div>
 								</header>
 								<div className="ws-uin-party-fields">
 									<label>
-										<span className="label-text required">Name of the tenant</span>
-										<input type="text" placeholder="Tenant Name" value={tenantName} onChange={e => setTenantName(e.target.value)} required />
+										<span className="label-text required">{t('ws.uin.form.tenantName')}</span>
+										<input type="text" placeholder={t('ws.uin.form.tenantNamePh')} value={tenantName} onChange={e => setTenantName(e.target.value)} required />
 									</label>
 									<label>
-										<span className="label-text required">PAN of tenant</span>
+										<span className="label-text required">{t('ws.uin.form.tenantPan')}</span>
 										<input
 											type="text"
 											value={tenantPan}
@@ -1790,11 +1734,11 @@ function TenancyCertificate() {
 										{fieldErrors.tenantPan ? <span className="ws-uin-field-error">{fieldErrors.tenantPan}</span> : null}
 									</label>
 									<label>
-										<span className="label-text required">Mobile Number</span>
+										<span className="label-text required">{t('ws.uin.form.mobile')}</span>
 										<input
 											type="tel"
 											inputMode="numeric"
-											placeholder="10-digit mobile"
+											placeholder={t('ws.uin.form.mobilePh')}
 											value={tenantPhone}
 											onChange={e => {
 												const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
@@ -1808,7 +1752,7 @@ function TenancyCertificate() {
 									</label>
 									<label>
 										<span className={`label-text${initiatorRole === 'TENANT' ? ' required' : ''}`}>
-											E-mail id
+											{t('ws.uin.form.email')}
 										</span>
 										<input
 											type="email"
@@ -1821,11 +1765,11 @@ function TenancyCertificate() {
 										{fieldErrors.tenantEmail ? <span className="ws-uin-field-error">{fieldErrors.tenantEmail}</span> : null}
 									</label>
 									<label className="ws-uin-party-fields__full">
-										<span className="label-text required">Address of the tenant</span>
-										<textarea placeholder="Address" value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required rows={3} />
+										<span className="label-text required">{t('ws.uin.form.tenantAddress')}</span>
+										<textarea placeholder={t('ws.uin.form.addressPh')} value={tenantAddress} onChange={e => setTenantAddress(e.target.value)} required rows={3} />
 									</label>
 									<label className="ws-uin-party-fields__full">
-										<span className="label-text">Description of previous tenancy, if any</span>
+										<span className="label-text">{t('ws.uin.form.previousTenancy')}</span>
 										<textarea value={tenantPreviousTenancy} onChange={e => setTenantPreviousTenancy(e.target.value)} rows={3} />
 									</label>
 								</div>
@@ -1835,17 +1779,17 @@ function TenancyCertificate() {
 								<header className="ws-uin-party-block__head">
 									<span className="ws-uin-party-block__num">3</span>
 									<div>
-										<h3 className="ws-uin-party-block__title">Property manager details</h3>
-										<p className="ws-uin-party-block__lead">Enter property manager details if applicable.</p>
+										<h3 className="ws-uin-party-block__title">{t('ws.uin.form.managerDetails')}</h3>
+										<p className="ws-uin-party-block__lead">{t('ws.uin.form.managerLead')}</p>
 									</div>
 								</header>
 								<div className="ws-uin-party-fields">
 									<label>
-										<span className="label-text">Name of the Property Manager</span>
-										<input type="text" placeholder="Property Manager Name" value={managerName} onChange={e => setManagerName(e.target.value)} />
+										<span className="label-text">{t('ws.uin.form.managerName')}</span>
+										<input type="text" placeholder={t('ws.uin.form.managerNamePh')} value={managerName} onChange={e => setManagerName(e.target.value)} />
 									</label>
 									<label>
-										<span className="label-text">PAN of Property Manager</span>
+										<span className="label-text">{t('ws.uin.form.managerPan')}</span>
 										<input
 											type="text"
 											value={managerPan}
@@ -1859,11 +1803,11 @@ function TenancyCertificate() {
 										{fieldErrors.managerPan ? <span className="ws-uin-field-error">{fieldErrors.managerPan}</span> : null}
 									</label>
 									<label>
-										<span className="label-text">Mobile Number</span>
+										<span className="label-text">{t('ws.uin.form.mobile')}</span>
 										<input
 											type="tel"
 											inputMode="numeric"
-											placeholder="10-digit mobile"
+											placeholder={t('ws.uin.form.mobilePh')}
 											value={managerPhone}
 											onChange={e => {
 												const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
@@ -1875,7 +1819,7 @@ function TenancyCertificate() {
 										{fieldErrors.managerPhone ? <span className="ws-uin-field-error">{fieldErrors.managerPhone}</span> : null}
 									</label>
 									<label>
-										<span className="label-text">E-mail id</span>
+										<span className="label-text">{t('ws.uin.form.email')}</span>
 										<input
 											type="email"
 											placeholder="name@example.com"
@@ -1886,8 +1830,8 @@ function TenancyCertificate() {
 										{fieldErrors.managerEmail ? <span className="ws-uin-field-error">{fieldErrors.managerEmail}</span> : null}
 									</label>
 									<label className="ws-uin-party-fields__full">
-										<span className="label-text">Address of the Property Manager</span>
-										<textarea placeholder="Address" value={managerAddress} onChange={e => setManagerAddress(e.target.value)} rows={3} />
+										<span className="label-text">{t('ws.uin.form.managerAddress')}</span>
+										<textarea placeholder={t('ws.uin.form.addressPh')} value={managerAddress} onChange={e => setManagerAddress(e.target.value)} rows={3} />
 									</label>
 								</div>
 							</div>
@@ -1896,21 +1840,21 @@ function TenancyCertificate() {
 								<header className="ws-uin-party-block__head">
 									<span className="ws-uin-party-block__num">4</span>
 									<div>
-										<h3 className="ws-uin-party-block__title">Premises &amp; rent details</h3>
-										<p className="ws-uin-party-block__lead">Describe the property, possession date, rent, charges and tenancy duration.</p>
+										<h3 className="ws-uin-party-block__title">{t('ws.uin.form.premisesDetails')}</h3>
+										<p className="ws-uin-party-block__lead">{t('ws.uin.form.premisesLead')}</p>
 									</div>
 								</header>
 								<div className="form-group-row">
-									<label><span className="label-text">Description of premises let to the tenant Including appurtenant land, if any</span>
+									<label><span className="label-text">{t('ws.uin.form.premisesDesc')}</span>
 										<textarea value={propertyPremisesDescription} onChange={e => setPropertyPremisesDescription(e.target.value)} />
 									</label>
 								</div>
 
 								<div className="form-group-row">
-									<label><span className="label-text required">Tenancy period</span></label>
+									<label><span className="label-text required">{t('ws.uin.form.tenancyPeriod')}</span></label>
 									<div className="form-grid ws-uin-date-grid">
 										<label>
-											<span className="label-text required">Possession date</span>
+											<span className="label-text required">{t('ws.uin.form.possessionDate')}</span>
 											<input
 												type="date"
 												name="property_possession_date"
@@ -1922,7 +1866,7 @@ function TenancyCertificate() {
 											/>
 										</label>
 										<label>
-											<span className="label-text required">End date</span>
+											<span className="label-text required">{t('ws.uin.form.endDate')}</span>
 											<input
 												type="date"
 												name="property_tenancy_end_date"
@@ -1935,7 +1879,7 @@ function TenancyCertificate() {
 											/>
 										</label>
 										<label>
-											<span className="label-text">Duration</span>
+											<span className="label-text">{t('ws.uin.form.duration')}</span>
 											<input
 												type="text"
 												name="property_tenancy_duration"
@@ -1950,7 +1894,7 @@ function TenancyCertificate() {
 								</div>
 
 								<div className="form-group-row">
-									<label><span className="label-text required">Rent payable as in section 8 (Monthly Rent ₹)</span>
+									<label><span className="label-text required">{t('ws.uin.form.rentPayable')}</span>
 										<input
 											type="number"
 											name="property_rent_payable"
@@ -1965,7 +1909,7 @@ function TenancyCertificate() {
 								</div>
 
 								<div className="form-group-row">
-									<label><span className="label-text">Furniture and other equipment provided to the tenant</span>
+									<label><span className="label-text">{t('ws.uin.form.furnitureDesc')}</span>
 										<textarea
 											name="property_furniture_description"
 											autoComplete="off"
@@ -1976,27 +1920,27 @@ function TenancyCertificate() {
 								</div>
 
 								<div className="form-group-row">
-									<label><span className="label-text">Other charges payable</span></label>
+									<label><span className="label-text">{t('ws.uin.form.otherCharges')}</span></label>
 									<div className="ws-uin-charges-grid">
 										<label>
-											<span className="label-text">(a) Electricity</span>
+											<span className="label-text">{t('ws.uin.form.chargeElectricity')}</span>
 											<input type="number" name="property_charge_electricity" autoComplete="off" value={propertyChargeElectricity} onChange={e => setPropertyChargeElectricity(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 										<label>
-											<span className="label-text">(b) Water</span>
+											<span className="label-text">{t('ws.uin.form.chargeWater')}</span>
 											<input type="number" name="property_charge_water" autoComplete="off" value={propertyChargeWater} onChange={e => setPropertyChargeWater(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 										<label>
-											<span className="label-text">(c) Extra furnishing, fittings and fixtures</span>
+											<span className="label-text">{t('ws.uin.form.chargeFurnishing')}</span>
 											<input type="number" name="property_charge_furnishing" autoComplete="off" value={propertyChargeFurnishing} onChange={e => setPropertyChargeFurnishing(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 										<label>
-											<span className="label-text">(d) Other services</span>
+											<span className="label-text">{t('ws.uin.form.chargeOther')}</span>
 											<input type="number" name="property_charge_other_services" autoComplete="off" value={propertyChargeOtherServices} onChange={e => setPropertyChargeOtherServices(e.target.value)} onWheel={e => e.target.blur()} min="0" placeholder="0" />
 										</label>
 									</div>
 									<div className="ws-uin-rent-total">
-										<span>Total monthly amount</span>
+										<span>{t('ws.uin.form.totalMonthly')}</span>
 										<strong>₹{totalMonthlyRent.toLocaleString('en-IN')}</strong>
 									</div>
 								</div>
@@ -2009,19 +1953,18 @@ function TenancyCertificate() {
 					<fieldset className="tenancy-fieldset tenancy-docs-fieldset">
 						<div className="tenancy-docs-step">
 							<header className="tenancy-docs-step__header">
-								<h2 className="tenancy-docs-step__title">Upload required documents</h2>
+								<h2 className="tenancy-docs-step__title">{t('ws.uin.form.uploadsTitle')}</h2>
 								<p className="tenancy-docs-step__lead">
-									All items below are mandatory. Use the preview icon after each upload to verify the file.
+									{t('ws.uin.form.uploadsLead')}
 								</p>
 								<p className="tenancy-docs-step__disclaimer" role="note">
-									<strong>File upload guidelines:</strong> Accepted formats — PDF, JPG, JPEG, PNG.
-									Maximum size — <strong>2 MB</strong> per file. Scanned copies must be clear and readable.
+									<strong>{t('ws.uin.form.uploadsGuidelines')}</strong> {t('ws.uin.form.uploadsGuidelinesBody')}
 								</p>
-								<ul className="tenancy-docs-step__checklist" aria-label="Required documents">
-									<li>Registered tenancy agreement (PDF, max 2 MB)</li>
-									<li>Passport-size photograph (JPG / JPEG / PNG, max 2 MB)</li>
-									<li>PAN Card (PDF / JPG / JPEG / PNG, max 2 MB)</li>
-									<li>Signature (JPG / JPEG / PNG, max 2 MB)</li>
+								<ul className="tenancy-docs-step__checklist" aria-label={t('ws.uin.form.checklistAria')}>
+									<li>{t('ws.uin.form.checkAgreement')}</li>
+									<li>{t('ws.uin.form.checkPhoto')}</li>
+									<li>{t('ws.uin.form.checkPan')}</li>
+									<li>{t('ws.uin.form.checkSign')}</li>
 								</ul>
 							</header>
 
@@ -2030,14 +1973,14 @@ function TenancyCertificate() {
 									<div className="tenancy-doc-card__head">
 										<span className="tenancy-doc-card__num">1</span>
 										<div>
-											<h3 className="tenancy-doc-card__title">Registered tenancy agreement</h3>
-											<p className="tenancy-doc-card__meta">PDF only · max 2 MB · scanned copy of the registered agreement</p>
+											<h3 className="tenancy-doc-card__title">{t('ws.uin.form.agreementCardTitle')}</h3>
+											<p className="tenancy-doc-card__meta">{t('ws.uin.form.agreementCardMeta')}</p>
 										</div>
 									</div>
 									<div className={`tenancy-doc-slot tenancy-doc-slot--wide${agreementFile ? ' is-uploaded' : ''}`}>
 										<div className="tenancy-doc-slot__head">
-											<span className="tenancy-doc-slot__title is-required">Registered tenancy agreement (PDF)</span>
-											<span className="tenancy-doc-slot__hint">Accepted: PDF · Max size: 2 MB</span>
+											<span className="tenancy-doc-slot__title is-required">{t('ws.uin.form.agreementSlot')}</span>
+											<span className="tenancy-doc-slot__hint">{t('ws.uin.form.agreementHint')}</span>
 										</div>
 										<div className="tenancy-doc-slot__row">
 											<input
@@ -2054,7 +1997,7 @@ function TenancyCertificate() {
 												}}
 											/>
 											<label htmlFor="uin-agreement-file" className="tenancy-doc-slot__pick-btn">
-												{agreementFile ? 'Change file' : 'Choose file'}
+												{agreementFile ? t('ws.uin.upload.changeFile') : t('ws.uin.upload.chooseFile')}
 											</label>
 											{agreementFile ? (
 												<div className="tenancy-doc-slot__uploaded">
@@ -2065,15 +2008,15 @@ function TenancyCertificate() {
 													<button
 														type="button"
 														className="tenancy-doc-preview-btn"
-														title="Preview agreement"
-														aria-label="Preview agreement"
+														title={t('ws.uin.form.previewAgreement')}
+														aria-label={t('ws.uin.form.previewAgreement')}
 														onClick={() => openDocPreview('Registered Tenancy Agreement', agreementPreviewUrl, true)}
 													>
 														<Icon name="eye" />
 													</button>
 												</div>
 											) : (
-												<span className="tenancy-doc-slot__pending">No file chosen</span>
+												<span className="tenancy-doc-slot__pending">{t('ws.uin.upload.noFile')}</span>
 											)}
 										</div>
 									</div>
@@ -2083,9 +2026,9 @@ function TenancyCertificate() {
 									<div className="tenancy-doc-card__head">
 										<span className="tenancy-doc-card__num">2</span>
 										<div>
-											<h3 className="tenancy-doc-card__title">Personal documents</h3>
+											<h3 className="tenancy-doc-card__title">{t('ws.uin.form.personalDocsTitle')}</h3>
 											<p className="tenancy-doc-card__meta">
-												{initiatorRole === 'TENANT' ? 'Tenant' : 'Landlord'} photograph, signature, and PAN card — JPG / JPEG / PNG / PDF (where allowed) · max 2 MB each
+												{t('ws.uin.form.personalDocsMeta', { role: initiatorRole === 'TENANT' ? t('ws.uin.drafts.tenant') : t('ws.uin.drafts.landlord') })}
 											</p>
 										</div>
 									</div>
@@ -2094,24 +2037,24 @@ function TenancyCertificate() {
 											<>
 												<DocumentUploadSlot
 													id="uin-tenant-photo"
-													label="Passport-size photograph"
+													label={t('ws.uin.form.photoLabel')}
 													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB · Auto-cropped to passport ratio."
+													hint={t('ws.uin.form.photoHint')}
 													required
 													onChange={async (e) => {
 														const f = e.target.files[0]
 														await handlePassportPhotoUpload(f, setTenantPhotoFile, setTenantPhotoPreview, 'tenant')
 													}}
 													imagePreview={tenantPhotoPreview}
-													previewTitle="Passport-size photograph"
+													previewTitle={t('ws.uin.form.photoLabel')}
 													onPreview={openDocPreview}
 													onFilePreview={openFilePreview}
 												/>
 												<DocumentUploadSlot
 													id="uin-tenant-signature"
-													label="Signature"
+													label={t('ws.uin.form.signatureLabel')}
 													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
+													hint={t('ws.uin.form.signatureHint')}
 													required
 													onChange={e => {
 														const f = e.target.files[0]
@@ -2119,19 +2062,19 @@ function TenancyCertificate() {
 														if (f) setTenantSignaturePreview(URL.createObjectURL(f))
 													}}
 													imagePreview={tenantSignaturePreview}
-													previewTitle="Signature"
+													previewTitle={t('ws.uin.form.signatureLabel')}
 													onPreview={openDocPreview}
 													onFilePreview={openFilePreview}
 												/>
 												<DocumentUploadSlot
 													id="uin-tenant-pan"
-													label="PAN card document"
+													label={t('ws.uin.form.panDocLabel')}
 													accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-													hint="Accepted: PDF, JPG, JPEG, PNG · Max size: 2 MB"
+													hint={t('ws.uin.form.panDocHint')}
 													required
 													onChange={e => setTenantPanFile(e.target.files[0])}
 													file={tenantPanFile}
-													previewTitle="PAN Card"
+													previewTitle={t('ws.uin.form.panDocLabel')}
 													onPreview={openDocPreview}
 													onFilePreview={openFilePreview}
 												/>
@@ -2140,24 +2083,24 @@ function TenancyCertificate() {
 											<>
 												<DocumentUploadSlot
 													id="uin-landlord-photo"
-													label="Passport-size photograph"
+													label={t('ws.uin.form.photoLabel')}
 													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB · Auto-cropped to passport ratio."
+													hint={t('ws.uin.form.photoHint')}
 													required
 													onChange={async (e) => {
 														const f = e.target.files[0]
 														await handlePassportPhotoUpload(f, setLandlordPhotoFile, setLandlordPhotoPreview, 'landlord')
 													}}
 													imagePreview={landlordPhotoPreview}
-													previewTitle="Passport-size photograph"
+													previewTitle={t('ws.uin.form.photoLabel')}
 													onPreview={openDocPreview}
 													onFilePreview={openFilePreview}
 												/>
 												<DocumentUploadSlot
 													id="uin-landlord-signature"
-													label="Signature"
+													label={t('ws.uin.form.signatureLabel')}
 													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-													hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
+													hint={t('ws.uin.form.signatureHint')}
 													required
 													onChange={e => {
 														const f = e.target.files[0]
@@ -2165,19 +2108,19 @@ function TenancyCertificate() {
 														if (f) setLandlordSignaturePreview(URL.createObjectURL(f))
 													}}
 													imagePreview={landlordSignaturePreview}
-													previewTitle="Signature"
+													previewTitle={t('ws.uin.form.signatureLabel')}
 													onPreview={openDocPreview}
 													onFilePreview={openFilePreview}
 												/>
 												<DocumentUploadSlot
 													id="uin-landlord-pan"
-													label="PAN card document"
+													label={t('ws.uin.form.panDocLabel')}
 													accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-													hint="Accepted: PDF, JPG, JPEG, PNG · Max size: 2 MB"
+													hint={t('ws.uin.form.panDocHint')}
 													required
 													onChange={e => setLandlordPanFile(e.target.files[0])}
 													file={landlordPanFile}
-													previewTitle="PAN Card"
+													previewTitle={t('ws.uin.form.panDocLabel')}
 													onPreview={openDocPreview}
 													onFilePreview={openFilePreview}
 												/>
@@ -2353,7 +2296,7 @@ function TenancyCertificate() {
 							</div>
 						</div>
 						<div className="preview-actions-hint">
-							Please review all details carefully before continuing to payment.
+							{t('ws.uin.preview.reviewHint')}
 						</div>
 
 						<div className="ws-uin-declaration">
@@ -2364,92 +2307,27 @@ function TenancyCertificate() {
 									onChange={(e) => setDeclarationChecked(e.target.checked)}
 								/>
 								<span>
-									I/we hereby declare that the particulars given above are true and correct to the best of my/our knowledge and belief and no material fact has been concealed.
+									{t('ws.uin.declaration.text')}
 								</span>
 							</label>
 						</div>
 					</div>
 				)}
 
-				{tenancyStep === 5 && (
-					<fieldset className="tenancy-fieldset ws-uin-payment-step">
-						<div className={`ws-uin-pay ws-uin-pay--simple${paymentComplete ? ' is-paid' : ''}`}>
-							<section className="ws-uin-pay-bill">
-								<h2 className="ws-uin-pay-title">Bill summary</h2>
-								<div className="ws-uin-pay-bill-rows">
-									<div className="ws-uin-pay-row">
-										<span>Service</span>
-										<strong>Tenancy Certificate (UIN)</strong>
-									</div>
-									<div className="ws-uin-pay-row">
-										<span>Application type</span>
-										<strong>{applyType || '—'}</strong>
-									</div>
-									<div className="ws-uin-pay-row">
-										<span>Fee</span>
-										<strong>₹{feeAmount}</strong>
-									</div>
-									<div className="ws-uin-pay-row ws-uin-pay-row--total">
-										<span>Total payable</span>
-										<strong>₹{feeAmount}</strong>
-									</div>
-								</div>
-								{paymentComplete ? (
-									<div className="ws-uin-pay-paid" role="status">
-										<strong>Payment successful</strong>
-										<span>
-											₹{feeAmount} paid
-											{paymentGrn ? ` · GRN ${paymentGrn}` : ''}
-										</span>
-									</div>
-								) : (
-									<p className="ws-uin-pay-hint">Review the bill and proceed to pay.</p>
-								)}
-							</section>
-
-							<section className="ws-uin-pay-method">
-								<h2 className="ws-uin-pay-title">Pay now</h2>
-								{!paymentComplete ? (
-									<>
-										<button
-											type="button"
-											className="ws-btn ws-btn--primary ws-uin-pay-btn"
-											onClick={handleMockPayment}
-											disabled={paymentSimulating || draftSaving}
-										>
-											{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount}`}
-										</button>
-										<p className="ws-uin-pay-note">Demo payment — no real bank transfer.</p>
-									</>
-								) : (
-									<div className="ws-uin-pay-done">
-										<p>Payment confirmed. You can submit the application.</p>
-									</div>
-								)}
-							</section>
-						</div>
-					</fieldset>
-				)}
-
 				<div className="form-actions ws-uin-apply-actions">
 					{tenancyStep > 1 ? (
 						<button type="button" className="ws-btn ws-btn--secondary" onClick={() => goToStep(tenancyStep - 1)}>
-							Back
+							{t('ws.uin.actions.back')}
 						</button>
 					) : null}
 					{tenancyStep < 4 ? (
 						<button type="submit" className="ws-btn ws-btn--primary" disabled={draftSaving || (tenancyStep === 1 && registrationTooOld)}>
-							{draftSaving ? 'Saving…' : 'Save & continue'}
+							{draftSaving ? t('ws.uin.actions.saving') : t('ws.uin.actions.saveContinue')}
 						</button>
 					) : null}
 					{tenancyStep === 4 ? (
-						<button type="submit" className="ws-btn ws-btn--primary" disabled={draftSaving || !declarationChecked}>
-							{draftSaving ? 'Saving…' : 'Proceed to payment'}
-						</button>
-					) : null}
-					{tenancyStep === 5 ? (
-						<button type="submit" className="ws-btn ws-btn--primary" disabled={tenancySubmitting || draftSaving || !declarationChecked || !paymentComplete}>
-							{tenancySubmitting ? 'Submitting…' : 'Confirm & submit'}
+						<button type="submit" className="ws-btn ws-btn--primary" disabled={tenancySubmitting || draftSaving || !declarationChecked}>
+							{tenancySubmitting ? t('ws.uin.actions.submitting') : t('ws.uin.actions.confirmSubmit')}
 						</button>
 					) : null}
 				</div>
@@ -2492,17 +2370,16 @@ function TenancyCertificate() {
 						setDraftsModalMessage('')
 					}
 				}}
-				title="Saved drafts"
+				title={t('ws.uin.drafts.title')}
 				description={
-					draftsModalMessage ||
-					'Open any draft to continue later. Saving a stage always updates the draft you are working on — it never asks you to switch.'
+					draftsModalMessage || t('ws.uin.drafts.description')
 				}
 				hidePrimary
-				secondaryLabel="Close"
+				secondaryLabel={t('ws.uin.drafts.close')}
 			>
 				<div className="ws-uin-drafts-modal">
 					{draftsLoading ? (
-						<p className="ws-uin-drafts-modal__loading">Loading drafts…</p>
+						<p className="ws-uin-drafts-modal__loading">{t('ws.uin.drafts.loading')}</p>
 					) : serverDrafts.length > 0 ? (
 						<ul className="ws-uin-drafts-list">
 							{serverDrafts.map((draft) => {
@@ -2513,23 +2390,26 @@ function TenancyCertificate() {
 											<div className="ws-uin-draft-card__main">
 												<span className="ws-uin-draft-card__no">{draft.application_no}</span>
 												{isActive ? (
-													<span className="ws-uin-draft-card__active">Current</span>
+													<span className="ws-uin-draft-card__active">{t('ws.uin.drafts.current')}</span>
 												) : null}
 												<ul className="ws-uin-draft-card__meta">
 													<li>
-														Stage {Math.min(5, (Number(draft.wizard_step) || 1) + 1)} of 5
+														{t('ws.uin.drafts.stageOf', {
+															current: Math.min(4, (Number(draft.wizard_step) || 1) + 1),
+															total: 4,
+														})}
 													</li>
 													{draft.initiator_role ? (
 														<li>
 															{draft.initiator_role === 'LANDLORD'
-																? 'Landlord'
+																? t('ws.uin.drafts.landlord')
 																: draft.initiator_role === 'TENANT'
-																	? 'Tenant'
+																	? t('ws.uin.drafts.tenant')
 																	: draft.initiator_role}
 														</li>
 													) : null}
 													{draft.updated_at ? (
-														<li>Updated {formatDateTime(draft.updated_at)}</li>
+														<li>{t('ws.uin.drafts.updated', { date: formatDateTime(draft.updated_at) })}</li>
 													) : null}
 												</ul>
 											</div>
@@ -2540,7 +2420,7 @@ function TenancyCertificate() {
 													disabled={isActive}
 													onClick={() => resumeFromDraft(draft.application_no)}
 												>
-													{isActive ? 'Open' : 'Resume'}
+													{isActive ? t('ws.uin.drafts.open') : t('ws.uin.drafts.resume')}
 												</button>
 												<button
 													type="button"
@@ -2548,7 +2428,7 @@ function TenancyCertificate() {
 													disabled={draftsDiscardBusy}
 													onClick={() => discardSavedDraft(draft.application_no)}
 												>
-													{draftsDiscardBusy ? 'Discarding…' : 'Discard'}
+													{draftsDiscardBusy ? t('ws.uin.drafts.discarding') : t('ws.uin.drafts.discard')}
 												</button>
 											</div>
 										</article>
@@ -2558,7 +2438,7 @@ function TenancyCertificate() {
 						</ul>
 					) : (
 						<p className="ws-uin-drafts-modal__empty">
-							No saved drafts yet. Fill the form and use Save &amp; continue — each new apply can create its own draft.
+							{t('ws.uin.drafts.empty')}
 						</p>
 					)}
 				</div>
@@ -2569,14 +2449,14 @@ function TenancyCertificate() {
 				onClose={() => {
 					if (!startOverBusy) setStartOverOpen(false)
 				}}
-				title="Start over?"
+				title={t('ws.uin.startOverModal.title')}
 				description={
 					draftApplicationNo
-						? `This will delete draft ${draftApplicationNo} and clear all fields. To continue later, save and use Drafts to resume.`
-						: 'This will delete your saved application progress and clear all fields.'
+						? t('ws.uin.startOverModal.withDraft', { appNo: draftApplicationNo })
+						: t('ws.uin.startOverModal.withoutDraft')
 				}
-				primaryLabel={startOverBusy ? 'Starting over…' : 'Yes, start over'}
-				secondaryLabel="Cancel"
+				primaryLabel={startOverBusy ? t('ws.uin.startOverModal.starting') : t('ws.uin.startOverModal.confirm')}
+				secondaryLabel={t('ws.uin.startOverModal.cancel')}
 				primaryVariant="danger"
 				primaryDisabled={startOverBusy}
 				onPrimary={resetTenancyForm}

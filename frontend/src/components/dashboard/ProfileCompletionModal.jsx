@@ -1,12 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
 import { Icon } from './Icons'
 
 function ProfileCompletionModal({ open, onComplete, onDismiss }) {
+	const [dontShowAgain, setDontShowAgain] = useState(false)
+
+	useEffect(() => {
+		if (open) setDontShowAgain(false)
+	}, [open])
+
 	useEffect(() => {
 		if (!open) return undefined
 		const onKeyDown = (event) => {
-			if (event.key === 'Escape') onDismiss?.()
+			if (event.key === 'Escape') onDismiss?.({ suppressPermanent: dontShowAgain })
 		}
 		document.addEventListener('keydown', onKeyDown)
 		const prevOverflow = document.body.style.overflow
@@ -15,15 +22,17 @@ function ProfileCompletionModal({ open, onComplete, onDismiss }) {
 			document.removeEventListener('keydown', onKeyDown)
 			document.body.style.overflow = prevOverflow
 		}
-	}, [open, onDismiss])
+	}, [open, onDismiss, dontShowAgain])
 
 	if (!open) return null
+
+	const handleDismiss = () => onDismiss?.({ suppressPermanent: dontShowAgain })
 
 	return createPortal(
 		<div
 			className="profile-completion-overlay"
 			role="presentation"
-			onClick={onDismiss}
+			onClick={handleDismiss}
 		>
 			<div
 				className="profile-completion-modal"
@@ -32,6 +41,15 @@ function ProfileCompletionModal({ open, onComplete, onDismiss }) {
 				aria-labelledby="profile-completion-title"
 				onClick={(event) => event.stopPropagation()}
 			>
+				<button
+					type="button"
+					className="profile-completion-modal__close"
+					onClick={handleDismiss}
+					aria-label="Close"
+				>
+					<X className="profile-completion-modal__close-icon" aria-hidden strokeWidth={2.25} />
+				</button>
+
 				<div className="profile-completion-modal__icon" aria-hidden>
 					<Icon name="user" />
 				</div>
@@ -47,11 +65,21 @@ function ProfileCompletionModal({ open, onComplete, onDismiss }) {
 					<li>PAN card number</li>
 					<li>Passport-size photograph</li>
 				</ul>
+
+				<label className="profile-completion-modal__dont-show">
+					<input
+						type="checkbox"
+						checked={dontShowAgain}
+						onChange={(event) => setDontShowAgain(event.target.checked)}
+					/>
+					<span>Don&apos;t show again</span>
+				</label>
+
 				<footer className="profile-completion-modal__actions">
 					<button
 						type="button"
 						className="workflow-confirm-btn workflow-confirm-btn--secondary"
-						onClick={onDismiss}
+						onClick={handleDismiss}
 					>
 						Remind me later
 					</button>

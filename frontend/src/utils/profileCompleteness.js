@@ -21,3 +21,4 @@ export function isProfileComplete(profileUser = {}) {
 }
 
 export const PROFILE_REMINDER_DISMISSED_KEY = 'profileReminderDismissed'
+export const PROFILE_REMINDER_SUPPRESSED_KEY = 'profileReminderSuppressed'

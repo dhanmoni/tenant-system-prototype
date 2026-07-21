@@ -20,6 +20,7 @@ use App\Models\State;
 use App\Models\TenancyApplication;
 use App\Models\User;
 use App\Models\ValuerAppointmentApplication;
+use Illuminate\Support\Facades\DB;
 
 class DashboardStatsService
 {
@@ -88,6 +89,7 @@ class DashboardStatsService
             Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => $this->modelsForRentAuthority(),
             Roles::RC_ASSISTANT, Roles::RENT_COURT => $this->modelsForRentCourt(),
             Roles::RT_ASSISTANT, Roles::RENT_TRIBUNAL => $this->modelsForRentTribunal(),
+            Roles::VALUER => [ValuerAppointmentApplication::class],
             default => $this->allServiceModels(),
         };
     }
@@ -195,6 +197,144 @@ class DashboardStatsService
             ->take($limit)
             ->values()
             ->all();
+    }
+
+    /**
+     * District oversight — recent UIN + service applications for dashboard table.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function districtApplicationsFeed(?int $districtId, int $limit = 120): array
+    {
+        $items = collect();
+
+        $tenancyQuery = TenancyApplication::query()
+            ->where('status', '!=', Status::DRAFT)
+            ->latest();
+        if ($districtId) {
+            $tenancyQuery->where('district_id', $districtId);
+        }
+        foreach ($tenancyQuery->limit($limit)->get() as $app) {
+            $items->push([
+                'application_no' => $app->application_no,
+                'status' => $app->status,
+                'application_type' => ApplicationTypes::TENANCY_CERTIFICATE,
+                'category' => 'uin',
+                'applicant_name' => $app->landlord_name ?: $app->tenant_name ?: $app->manager_name,
+                'created_at' => $app->created_at?->toIso8601String(),
+            ]);
+        }
+
+        foreach ($this->allServiceModels() as $modelClass) {
+            $query = $modelClass::query()
+                ->with('user')
+                ->where('status', '!=', Status::DRAFT)
+                ->latest();
+            if ($districtId) {
+                $query->where('district_id', $districtId);
+            }
+            foreach ($query->limit($limit)->get() as $app) {
+                $items->push([
+                    'application_no' => $app->application_no,
+                    'status' => $app->status,
+                    'application_type' => $this->applicationTypeForModel($modelClass),
+                    'category' => 'form',
+                    'applicant_name' => $app->user?->name,
+                    'created_at' => $app->created_at?->toIso8601String(),
+                ]);
+            }
+        }
+
+        return $items
+            ->sortByDesc('created_at')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Daily submission counts for calendar (last N days, inclusive of today).
+     *
+     * @return array<int, array{date: string, total: int, uin: int, forms: int}>
+     */
+    public function dailyApplicationActivity(?int $districtId, int $days = 42): array
+    {
+        $days = max(7, min($days, 90));
+        $start = now()->startOfDay()->subDays($days - 1);
+        $end = now()->endOfDay();
+
+        $buckets = [];
+        for ($i = 0; $i < $days; $i++) {
+            $key = $start->copy()->addDays($i)->format('Y-m-d');
+            $buckets[$key] = ['date' => $key, 'total' => 0, 'uin' => 0, 'forms' => 0];
+        }
+
+        $dateExpr = DB::connection()->getDriverName() === 'pgsql'
+            ? 'created_at::date'
+            : 'DATE(created_at)';
+
+        $tenancyQuery = TenancyApplication::query()
+            ->selectRaw("{$dateExpr} as day, COUNT(*) as cnt")
+            ->where('status', '!=', Status::DRAFT)
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('day');
+        if ($districtId) {
+            $tenancyQuery->where('district_id', $districtId);
+        }
+        foreach ($tenancyQuery->get() as $row) {
+            $key = (string) $row->day;
+            if (isset($buckets[$key])) {
+                $buckets[$key]['uin'] = (int) $row->cnt;
+                $buckets[$key]['total'] += (int) $row->cnt;
+            }
+        }
+
+        foreach ($this->allServiceModels() as $modelClass) {
+            $query = $modelClass::query()
+                ->selectRaw("{$dateExpr} as day, COUNT(*) as cnt")
+                ->where('status', '!=', Status::DRAFT)
+                ->whereBetween('created_at', [$start, $end])
+                ->groupBy('day');
+            if ($districtId) {
+                $query->where('district_id', $districtId);
+            }
+            foreach ($query->get() as $row) {
+                $key = (string) $row->day;
+                if (isset($buckets[$key])) {
+                    $buckets[$key]['forms'] += (int) $row->cnt;
+                    $buckets[$key]['total'] += (int) $row->cnt;
+                }
+            }
+        }
+
+        return array_values($buckets);
+    }
+
+    public function countApplicationsSubmittedOnDate(?int $districtId, string $date): int
+    {
+        $start = \Carbon\Carbon::parse($date)->startOfDay();
+        $end = \Carbon\Carbon::parse($date)->endOfDay();
+        $total = 0;
+
+        $tenancyQuery = TenancyApplication::query()
+            ->where('status', '!=', Status::DRAFT)
+            ->whereBetween('created_at', [$start, $end]);
+        if ($districtId) {
+            $tenancyQuery->where('district_id', $districtId);
+        }
+        $total += $tenancyQuery->count();
+
+        foreach ($this->allServiceModels() as $modelClass) {
+            $query = $modelClass::query()
+                ->where('status', '!=', Status::DRAFT)
+                ->whereBetween('created_at', [$start, $end]);
+            if ($districtId) {
+                $query->where('district_id', $districtId);
+            }
+            $total += $query->count();
+        }
+
+        return $total;
     }
 
     /**
@@ -353,6 +493,12 @@ class DashboardStatsService
                 ->take(6)
                 ->values()
                 ->all(),
+            'daily_activity' => $this->dailyApplicationActivity(null, 42),
+            'applications_feed' => $this->districtApplicationsFeed(null, 120),
+            'submitted_today' => $this->countApplicationsSubmittedOnDate(
+                null,
+                now()->format('Y-m-d')
+            ),
         ];
     }
 
@@ -392,6 +538,55 @@ class DashboardStatsService
                 $scopedModels
             );
             $stats['recent_applications'] = $this->recentServiceApplications($scopedModels, $districtId, 6);
+        } elseif ($user->role === Roles::VALUER) {
+            $assignedQuery = ValuerAppointmentApplication::query()
+                ->where('assigned_valuer_id', $user->id);
+            if ($districtId) {
+                $assignedQuery->where('district_id', $districtId);
+            }
+
+            $stats['pending_review'] = (clone $assignedQuery)
+                ->where('status', Status::VALUER_ASSIGNED)
+                ->count();
+            $stats['reports_submitted'] = (clone $assignedQuery)
+                ->where('status', Status::VALUER_REPORT_SUBMITTED)
+                ->count();
+            $stats['in_review'] = $stats['reports_submitted'];
+            $stats['valuer_completed'] = (clone $assignedQuery)
+                ->whereIn('status', [Status::COMPLETED, Status::APPROVED])
+                ->count();
+            $stats['service_applications'] = (clone $assignedQuery)
+                ->where('status', '!=', Status::DRAFT)
+                ->count();
+            $stats['applications_count'] = $stats['service_applications'];
+            $stats['applications_by_status'] = [
+                Status::VALUER_ASSIGNED => $stats['pending_review'],
+                Status::VALUER_REPORT_SUBMITTED => $stats['reports_submitted'],
+                Status::COMPLETED => $stats['valuer_completed'],
+                Status::REJECTED => (clone $assignedQuery)->where('status', Status::REJECTED)->count(),
+                'OTHER' => 0,
+            ];
+            $stats['recent_applications'] = ValuerAppointmentApplication::query()
+                ->with('user')
+                ->where('assigned_valuer_id', $user->id)
+                ->when($districtId, fn ($q) => $q->where('district_id', $districtId))
+                ->where('status', '!=', Status::DRAFT)
+                ->latest()
+                ->limit(8)
+                ->get()
+                ->map(fn ($app) => [
+                    'application_no' => $app->application_no,
+                    'status' => $app->status,
+                    'application_type' => ApplicationTypes::VALUER_APPOINTMENT,
+                    'applicant_name' => $app->applicant_name ?: $app->user?->name,
+                    'created_at' => $app->created_at?->toIso8601String(),
+                ])
+                ->all();
+            $stats['form_type_breakdown'] = [[
+                'form_key' => ApplicationTypes::VALUER_APPOINTMENT,
+                'label' => 'Form I-B — Valuer appointment',
+                'count' => $stats['service_applications'],
+            ]];
         } elseif (in_array($user->role, Roles::principals(), true)) {
             $stats['in_review'] = $this->countServiceByStatus(
                 Status::IN_REVIEW,
@@ -408,12 +603,20 @@ class DashboardStatsService
                 ->take(6)
                 ->values()
                 ->all();
+            $stats['daily_activity'] = $this->dailyApplicationActivity($districtId, 42);
+            $stats['applications_feed'] = $this->districtApplicationsFeed($districtId, 120);
+            $stats['submitted_today'] = $this->countApplicationsSubmittedOnDate(
+                $districtId,
+                now()->format('Y-m-d')
+            );
         }
 
-        $stats['form_type_breakdown'] = $this->formTypeBreakdown(
-            $districtId,
-            $scopedModels
-        );
+        if ($user->role !== Roles::VALUER) {
+            $stats['form_type_breakdown'] = $this->formTypeBreakdown(
+                $districtId,
+                $scopedModels
+            );
+        }
         $stats['district_breakdown'] = $this->districtBreakdown(
             $districtId,
             $user->role === Roles::DISTRICT_ADMIN ? null : $scopedModels

@@ -5,23 +5,16 @@ import WorkspacePageHeader from '../components/WorkspacePageHeader'
 function WorkspaceLegacyFrame({
 	title,
 	subtitle,
-	breadcrumb = [],
 	compact = false,
 	children,
 }) {
 	useOutletContext()
-	const crumbs = [
-		{ label: 'Dashboard', to: '/dashboard' },
-		...breadcrumb,
-		...(title ? [{ label: title }] : []),
-	]
 
 	return (
 		<div className="ws-page ws-legacy-page ws-admin-page">
 			<WorkspacePageHeader
 				title={compact ? null : title}
 				subtitle={compact ? null : subtitle}
-				breadcrumb={crumbs}
 			/>
 			{children}
 		</div>

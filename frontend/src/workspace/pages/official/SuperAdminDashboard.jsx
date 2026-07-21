@@ -1,284 +1,205 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
-import { getRoleLabel } from '../../../constants/roleLabels'
-import DashboardSection from '../../components/dashboard/DashboardSection'
-import InsightHighlights from '../../components/dashboard/InsightHighlights'
+import NexusStatCard from '../../components/dashboard/NexusStatCard'
 import PipelineSummary from '../../components/dashboard/PipelineSummary'
-import StatGroup from '../../components/dashboard/StatGroup'
 import SuperAdminQuickActions from '../../components/dashboard/SuperAdminQuickActions'
-import StatusBarChart from '../../components/dashboard/StatusBarChart'
-import CategoryDoughnutChart from '../../components/dashboard/CategoryDoughnutChart'
+import SuperAdminAttentionPanel from '../../components/dashboard/SuperAdminAttentionPanel'
+import SuperAdminPlatformHealth from '../../components/dashboard/SuperAdminPlatformHealth'
 import DistrictCoverageMap from '../../components/dashboard/DistrictCoverageMap'
-import StatesOverviewTable from '../../components/dashboard/StatesOverviewTable'
+import DailyApplicationsPanel from '../../components/dashboard/DailyApplicationsPanel'
 import FormTypeTable from '../../components/dashboard/FormTypeTable'
-import RecentApplicationsTable from '../../components/dashboard/RecentApplicationsTable'
 import ActivityFeed from '../../components/dashboard/ActivityFeed'
 
 function SuperAdminDashboard({ user, stats, loading, error }) {
 	const navigate = useNavigate()
 	const s = stats || {}
+	const [selectedDate, setSelectedDate] = useState(null)
 	const displayName = formatDisplayName(user?.name)
 	const displayEmail = formatDisplayEmail(user?.email)
-	const roleLabel = getRoleLabel(user?.role)
-
-	const statGroups = useMemo(
-		() => [
-			{
-				title: 'Geography',
-				stats: [
-					{ label: 'States / UTs', value: s.states_count, hint: 'Registered', icon: 'map' },
-					{ label: 'Districts', value: s.districts_count, hint: 'Across Assam', icon: 'building' },
-					{ label: 'Offices', value: s.offices_count, hint: 'Circle offices', icon: 'building' },
-				],
-			},
-			{
-				title: 'Organization',
-				stats: [
-					{ label: 'Roles', value: s.roles_count, hint: 'System roles', icon: 'lock' },
-					{
-						label: 'Designations',
-						value: s.designations_count,
-						hint: 'Staff titles',
-						icon: 'user',
-					},
-				],
-			},
-			{
-				title: 'Accounts & applications',
-				stats: [
-					{ label: 'Users', value: s.users_count, hint: 'All portal accounts', icon: 'users' },
-					{
-						label: 'UIN applications',
-						value: s.tenancy_applications,
-						hint: 'Tenancy records',
-						icon: 'documentPlus',
-					},
-					{
-						label: 'Form applications',
-						value: s.service_applications,
-						hint: 'Assam Tenancy Act',
-						icon: 'file',
-					},
-					{
-						label: 'Pending review',
-						value: s.pending_review,
-						hint: 'Awaiting verification',
-						icon: 'clock',
-						highlight: (s.pending_review ?? 0) > 0,
-					},
-					{
-						label: 'In review',
-						value: s.in_review,
-						hint: 'With principals',
-						icon: 'timeline',
-						highlight: (s.in_review ?? 0) > 0,
-					},
-				],
-			},
-		],
-		[s]
-	)
-
+	const queueTotal = (s.pending_review ?? 0) + (s.in_review ?? 0)
 	const showDistrictMap = (s.district_breakdown?.length ?? 0) > 0
 	const showFormBreakdown = (s.form_type_breakdown?.length ?? 0) > 0
-	const queueTotal = (s.pending_review ?? 0) + (s.in_review ?? 0)
+
+	const kpiCards = useMemo(() => {
+		const totalApps =
+			(s.applications_count ?? 0) ||
+			(s.tenancy_applications ?? 0) + (s.service_applications ?? 0)
+		const breakdown = s.applications_by_status || {}
+		const completed = breakdown.COMPLETED ?? 0
+		const serviceTotal = s.service_applications ?? 0
+		const completionRate =
+			serviceTotal > 0 ? Math.round((completed / serviceTotal) * 100) : null
+
+		return [
+			{
+				label: 'Submitted today',
+				value: s.submitted_today ?? 0,
+				hint: 'Statewide UIN and forms',
+				icon: 'timeline',
+				tone: (s.submitted_today ?? 0) > 0 ? 'accent' : 'default',
+			},
+			{
+				label: 'Districts',
+				value: s.districts_count,
+				hint: 'Across Assam',
+				icon: 'map',
+				tone: 'default',
+			},
+			{
+				label: 'Total applications',
+				value: totalApps,
+				hint: `${s.tenancy_applications ?? 0} UIN · ${s.service_applications ?? 0} forms`,
+				icon: 'list',
+				tone: 'accent',
+			},
+			{
+				label: 'In processing queue',
+				value: queueTotal,
+				hint: `${s.pending_review ?? 0} submitted · ${s.in_review ?? 0} in review`,
+				icon: 'clock',
+				tone: queueTotal > 0 ? 'warning' : 'success',
+			},
+			{
+				label: 'Form completion',
+				value: completionRate != null ? `${completionRate}%` : '—',
+				hint:
+					completionRate != null
+						? `${completed} of ${serviceTotal} forms completed`
+						: 'No form data yet',
+				icon: 'check',
+				tone: completionRate != null && completionRate >= 50 ? 'success' : 'default',
+			},
+		]
+	}, [s, queueTotal])
 
 	return (
 		<div className="ws-page ws-official-dashboard ws-super-admin-dashboard">
 			{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
 
-			<section className="ws-profile-strip ws-dashboard-welcome ws-sa-welcome">
-				<div className="ws-profile-strip-main">
-					<span className="ws-profile-strip-avatar-fallback" aria-hidden>
-						<Icon name="dashboard" />
-					</span>
-					<div className="ws-profile-strip-info">
-						<h2 className="ws-profile-strip-name">System overview</h2>
-						<p className="ws-profile-strip-email">
-							{displayName} · {displayEmail}
-						</p>
-						<div className="ws-profile-strip-meta">
-							<div className="ws-profile-meta-item">
-								<span className="ws-profile-meta-label">Role</span>
-								<span className="ws-profile-meta-value">{roleLabel}</span>
-							</div>
-							<div className="ws-profile-meta-item">
-								<span className="ws-profile-meta-label">Scope</span>
-								<span className="ws-profile-meta-value">Statewide (Assam)</span>
-							</div>
-						</div>
-						<p className="ws-dashboard-welcome-desc">
-							Monitor platform health, application pipelines, and district-level activity
-							across the tenancy portal.
-						</p>
-					</div>
+			<header className="ws-sa-command">
+				<div className="ws-sa-command-main">
+					<span className="ws-sa-command-badge">Platform administrator</span>
+					<h1 className="ws-sa-command-title">Statewide control panel</h1>
+					<p className="ws-sa-command-meta">
+						{displayName} · {displayEmail} · <strong>Statewide (Assam)</strong>
+					</p>
 				</div>
-				{queueTotal > 0 ? (
-					<div className="ws-sa-queue-banner" role="status">
-						<strong>{queueTotal}</strong>
-						<span>
-							application{queueTotal === 1 ? '' : 's'} in the processing queue
-						</span>
-						<button
-							type="button"
-							className="ws-btn ws-btn--sm ws-btn--primary"
-							onClick={() => navigate('/dashboard/admin/applications')}
-						>
-							Review queue
-						</button>
-					</div>
-				) : null}
-			</section>
+				<div className="ws-sa-command-actions">
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-sa-command-btn"
+						onClick={() => navigate('/dashboard/admin/users')}
+					>
+						<Icon name="users" />
+						Manage users
+					</button>
+					<button
+						type="button"
+						className="ws-btn ws-btn--primary ws-sa-command-btn"
+						onClick={() => navigate('/dashboard/admin/applications')}
+					>
+						<Icon name="file" />
+						View applications
+					</button>
+				</div>
+			</header>
 
 			{loading ? (
 				<div className="ws-dashboard-loading">Loading dashboard…</div>
 			) : (
 				<>
-					{/* 1. KPIs */}
-					<DashboardSection
-						title="At a glance"
-						description="High-level signals derived from live portal data."
-						className="ws-sa-section--insights"
-					>
-						<InsightHighlights stats={stats} />
-					</DashboardSection>
-
-					{/* 2. Actions */}
-					<DashboardSection
-						title="Management shortcuts"
-						description="Jump to common super administrator tasks."
-					>
-						<SuperAdminQuickActions stats={stats} />
-					</DashboardSection>
-
-					{/* 3. Pipeline + charts */}
-					<DashboardSection
-						title="Application pipeline"
-						description="Statewide status distribution for Assam Tenancy Act form submissions."
-					>
-						<PipelineSummary
-							breakdown={s.applications_by_status}
-							totalLabel="form applications"
-						/>
-					</DashboardSection>
-
-					<div className="ws-dashboard-charts ws-sa-charts">
-						<section className="ws-card ws-chart-card">
-							<div className="ws-card-header">
-								<h3 className="ws-card-title">Applications by status</h3>
-							</div>
-							<div className="ws-card-body">
-								<p className="ws-dashboard-hint">
-									Bar chart of submitted, in-review, completed, and rejected forms.
-								</p>
-								<StatusBarChart breakdown={s.applications_by_status} />
-							</div>
-						</section>
-
-						<section className="ws-card ws-chart-card">
-							<div className="ws-card-header">
-								<h3 className="ws-card-title">Application mix</h3>
-							</div>
-							<div className="ws-card-body">
-								<p className="ws-dashboard-hint">UIN / Tenancy vs Assam Tenancy Act forms.</p>
-								<CategoryDoughnutChart categories={s.applications_by_category} />
-							</div>
-						</section>
+					<div className="ws-sa-kpi-row" aria-label="Key metrics">
+						{kpiCards.map((card) => (
+							<NexusStatCard key={card.label} {...card} compact />
+						))}
 					</div>
 
-					{/* 4. Ops */}
-					<div className="ws-dashboard-split ws-sa-split ws-sa-split--ops">
-						<DashboardSection
-							title="Recent applications"
-							description="Latest UIN and form submissions across the state."
-							action={
-								<button
-									type="button"
-									className="ws-btn ws-btn--sm ws-btn--outline"
-									onClick={() => navigate('/dashboard/admin/applications')}
-								>
-									View all
-								</button>
-							}
-							className="ws-sa-split-section"
-						>
-							<section className="ws-card">
-								<div className="ws-card-body ws-card-body--pad ws-card-body--table">
-									<RecentApplicationsTable applications={s.recent_applications} />
+					<div className="ws-sa-layout">
+						<div className="ws-sa-main">
+							<section className="ws-sa-block" aria-labelledby="ws-sa-nav-heading">
+								<div className="ws-sa-block-head">
+									<h2 id="ws-sa-nav-heading" className="ws-sa-block-title">
+										Go to
+									</h2>
+									<p className="ws-sa-block-desc">Common super admin tasks</p>
 								</div>
+								<SuperAdminQuickActions stats={stats} />
 							</section>
-						</DashboardSection>
 
-						<DashboardSection
-							title="Recent activity"
-							description="Audit trail of sign-ins and administrative actions."
-							className="ws-sa-split-section"
-						>
-							<section className="ws-card">
-								<div className="ws-card-body ws-card-body--pad">
-									<ActivityFeed />
-								</div>
-							</section>
-						</DashboardSection>
-					</div>
-
-					{/* 5. Platform config */}
-					<DashboardSection
-						title="Platform configuration"
-						description="Master data and account counts for the statewide deployment."
-					>
-						<div className="ws-sa-stat-groups">
-							{statGroups.map((group) => (
-								<StatGroup key={group.title} title={group.title} stats={group.stats} />
-							))}
-						</div>
-					</DashboardSection>
-
-					{/* 6. Reference geography */}
-					{showDistrictMap ? (
-						<DashboardSection
-							title="District coverage"
-							description="Application volume and user counts by district. Select a tile for details."
-						>
-							<section className="ws-card">
-								<div className="ws-card-body ws-card-body--pad">
+							{showDistrictMap ? (
+								<section className="ws-sa-block ws-sa-block--map" aria-labelledby="ws-sa-district-heading">
+									<div className="ws-sa-block-head">
+										<h2 id="ws-sa-district-heading" className="ws-sa-block-title">
+											Assam map
+										</h2>
+										<p className="ws-sa-block-desc">
+											Statewide coverage — pick a district to zoom in and view its stats
+										</p>
+									</div>
 									<DistrictCoverageMap
 										districts={s.district_breakdown}
-										hint="Colour intensity reflects total applications. Click a district for UIN, form, and user counts."
+										fillContainer
 									/>
-								</div>
-							</section>
-						</DashboardSection>
-					) : null}
+								</section>
+							) : null}
 
-					<div className="ws-dashboard-split ws-sa-split">
-						<DashboardSection
-							title="States overview"
-							description="Registered states and union territories with aggregated counts."
-							className="ws-sa-split-section"
-						>
-							<section className="ws-card">
-								<div className="ws-card-body ws-card-body--pad">
-									<StatesOverviewTable states={s.states_overview} />
-								</div>
+							<section className="ws-sa-block ws-sa-block--daily" aria-labelledby="ws-sa-daily-heading">
+								<span id="ws-sa-daily-heading" className="sr-only">
+									Daily activity and applications
+								</span>
+								<DailyApplicationsPanel
+									dailyActivity={s.daily_activity}
+									applications={s.applications_feed || s.recent_applications || []}
+									selectedDate={selectedDate}
+									onSelectDate={setSelectedDate}
+									scopeLabel="statewide"
+								/>
 							</section>
-						</DashboardSection>
 
-						{showFormBreakdown ? (
-							<DashboardSection
-								title="Forms breakdown"
-								description="Volume by Assam Tenancy Act form type (statewide)."
-								className="ws-sa-split-section"
+							<section
+								className="ws-sa-block ws-sa-block--pipeline"
+								aria-labelledby="ws-sa-pipeline-heading"
 							>
-								<section className="ws-card">
-									<div className="ws-card-body ws-card-body--pad">
+								<div className="ws-sa-block-head">
+									<h2 id="ws-sa-pipeline-heading" className="ws-sa-block-title">
+										Application pipeline
+									</h2>
+									<p className="ws-sa-block-desc">
+										Statewide status for Assam Tenancy Act form submissions
+									</p>
+								</div>
+								<PipelineSummary
+									breakdown={s.applications_by_status}
+									totalLabel="form applications statewide"
+								/>
+							</section>
+
+							{showFormBreakdown ? (
+								<section className="ws-sa-block" aria-labelledby="ws-sa-forms-heading">
+									<div className="ws-sa-block-head">
+										<h2 id="ws-sa-forms-heading" className="ws-sa-block-title">
+											Forms breakdown
+										</h2>
+										<p className="ws-sa-block-desc">Volume by form type (statewide)</p>
+									</div>
+									<div className="ws-sa-table-panel">
 										<FormTypeTable forms={s.form_type_breakdown} />
 									</div>
 								</section>
-							</DashboardSection>
-						) : null}
+							) : null}
+						</div>
+
+						<aside className="ws-sa-aside" aria-label="Monitoring sidebar">
+							<SuperAdminAttentionPanel stats={stats} />
+							<SuperAdminPlatformHealth stats={stats} />
+							<div className="ws-sa-panel">
+								<h3 className="ws-sa-panel-title">Recent activity</h3>
+								<p className="ws-sa-panel-desc">Sign-ins and administrative actions</p>
+								<ActivityFeed />
+							</div>
+						</aside>
 					</div>
 				</>
 			)}

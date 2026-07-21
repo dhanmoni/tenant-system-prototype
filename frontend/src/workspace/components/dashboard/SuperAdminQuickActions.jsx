@@ -1,35 +1,37 @@
 import { useNavigate } from 'react-router-dom'
+import { Icon } from '../../../components/dashboard/Icons'
 
 const ACTIONS = [
 	{
 		key: 'users',
 		title: 'User management',
-		desc: 'Staff, district assignments, and registered citizens.',
+		desc: 'Staff accounts and citizens',
 		to: '/dashboard/admin/users',
-		kicker: 'Accounts',
+		icon: 'users',
 	},
 	{
 		key: 'applications',
 		title: 'Service applications',
-		desc: 'Rent Authority, Court, and Tribunal form submissions.',
+		desc: 'All Assam Tenancy Act forms',
 		to: '/dashboard/admin/applications',
-		kicker: 'Applications',
+		icon: 'file',
 		badgeKey: 'service_applications',
 	},
 	{
 		key: 'tenancy',
 		title: 'UIN / Tenancy',
-		desc: 'Tenancy applications and UIN issuance records.',
+		desc: 'Registration records',
 		to: '/dashboard/admin/tenancy',
-		kicker: 'Records',
+		icon: 'documentPlus',
 		badgeKey: 'tenancy_applications',
 	},
 	{
 		key: 'districts',
-		title: 'Districts & states',
-		desc: 'Geography, offices, roles, and designations.',
+		title: 'Districts',
+		desc: 'Add and manage districts',
 		to: '/dashboard/admin/districts',
-		kicker: 'Master data',
+		icon: 'map',
+		badgeKey: 'districts_count',
 	},
 ]
 
@@ -38,22 +40,29 @@ function SuperAdminQuickActions({ stats }) {
 	const s = stats || {}
 
 	return (
-		<div className="ws-sa-quick-actions">
+		<div className="ws-sa-nav-grid">
 			{ACTIONS.map((action) => {
 				const count = action.badgeKey ? s[action.badgeKey] : null
 				return (
 					<button
 						key={action.key}
 						type="button"
-						className="ws-sa-quick-action"
+						className="ws-sa-nav-card"
 						onClick={() => navigate(action.to)}
 					>
-						<span className="ws-action-card-kicker">{action.kicker}</span>
-						<span className="ws-sa-quick-action-title">{action.title}</span>
-						<span className="ws-sa-quick-action-desc">{action.desc}</span>
-						{count != null && count > 0 ? (
-							<span className="ws-sa-quick-action-count">{count} total</span>
+						<span className="ws-sa-nav-card-icon" aria-hidden>
+							<Icon name={action.icon} />
+						</span>
+						<span className="ws-sa-nav-card-body">
+							<span className="ws-sa-nav-card-title">{action.title}</span>
+							<span className="ws-sa-nav-card-desc">{action.desc}</span>
+						</span>
+						{count != null ? (
+							<span className="ws-sa-nav-card-count">{count.toLocaleString('en-IN')}</span>
 						) : null}
+						<span className="ws-sa-nav-card-arrow" aria-hidden>
+							→
+						</span>
 					</button>
 				)
 			})}

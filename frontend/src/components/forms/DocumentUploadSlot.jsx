@@ -1,4 +1,5 @@
 import { Icon } from '../dashboard/Icons'
+import { useLanguage } from '../../i18n'
 
 function DocumentUploadSlot({
 	id,
@@ -13,8 +14,9 @@ function DocumentUploadSlot({
 	onPreview,
 	onFilePreview,
 }) {
+	const { t } = useLanguage()
 	const hasFile = Boolean(imagePreview || file)
-	const fileName = file?.name || (imagePreview ? 'Image selected' : '')
+	const fileName = file?.name || (imagePreview ? t('ws.uin.upload.imageSelected') : '')
 
 	return (
 		<div className={`tenancy-doc-slot${hasFile ? ' is-uploaded' : ''}`}>
@@ -33,7 +35,7 @@ function DocumentUploadSlot({
 					required={required && !hasFile}
 				/>
 				<label htmlFor={id} className="tenancy-doc-slot__pick-btn">
-					{hasFile ? 'Change file' : 'Choose file'}
+					{hasFile ? t('ws.uin.upload.changeFile') : t('ws.uin.upload.chooseFile')}
 				</label>
 
 				{imagePreview ? (
@@ -45,8 +47,8 @@ function DocumentUploadSlot({
 						<button
 							type="button"
 							className="tenancy-doc-preview-btn"
-							title={`Preview ${previewTitle}`}
-							aria-label={`Preview ${previewTitle}`}
+							title={t('ws.uin.upload.preview', { title: previewTitle })}
+							aria-label={t('ws.uin.upload.preview', { title: previewTitle })}
 							onClick={() => onPreview(previewTitle, imagePreview)}
 						>
 							<Icon name="eye" />
@@ -63,15 +65,15 @@ function DocumentUploadSlot({
 						<button
 							type="button"
 							className="tenancy-doc-preview-btn"
-							title={`Preview ${previewTitle}`}
-							aria-label={`Preview ${previewTitle}`}
+							title={t('ws.uin.upload.preview', { title: previewTitle })}
+							aria-label={t('ws.uin.upload.preview', { title: previewTitle })}
 							onClick={() => onFilePreview(previewTitle, file)}
 						>
 							<Icon name="eye" />
 						</button>
 					</div>
 				) : (
-					<span className="tenancy-doc-slot__pending">No file chosen</span>
+					<span className="tenancy-doc-slot__pending">{t('ws.uin.upload.noFile')}</span>
 				)}
 			</div>
 		</div>

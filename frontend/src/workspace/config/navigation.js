@@ -55,7 +55,8 @@ export function getWorkspaceNavigation(user) {
 	if ([...ASSISTANT_ROLES, ROLES.VALUER].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/inbox',
-			labelKey: 'ws.nav.applicationInbox',
+			labelKey:
+				user.role === ROLES.VALUER ? 'ws.nav.valuationInbox' : 'ws.nav.applicationInbox',
 			icon: 'list',
 		})
 	}
@@ -94,4 +95,15 @@ export function getWorkspaceNavigation(user) {
 			items: [{ to: '/dashboard/profile', labelKey: 'ws.nav.myProfile', icon: 'user' }],
 		},
 	]
+}
+
+/** Citizen sidebar — helpdesk contact shown below main nav */
+export const WORKSPACE_SUPPORT_CONTACT = {
+	phoneDisplay: '1800-000-0000',
+	phoneHref: 'tel:18000000000',
+	email: 'helpdesk.tcms@nic.in',
+}
+
+export function showWorkspaceSupport(user) {
+	return user?.role === ROLES.USER
 }

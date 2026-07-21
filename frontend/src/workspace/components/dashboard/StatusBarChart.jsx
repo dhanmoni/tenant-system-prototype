@@ -4,11 +4,17 @@ import {
 	STATUS_CHART_COLORS,
 	STATUS_CHART_LABELS,
 	barChartOptions,
+	staticBarChartOptions,
 } from './chartConfig'
 
 const DEFAULT_KEYS = ['SUBMITTED', 'IN_REVIEW', 'REJECTED', 'COMPLETED', 'OTHER']
 
-function StatusBarChart({ breakdown = {}, keys = DEFAULT_KEYS, emptyLabel = 'No application data yet.' }) {
+function StatusBarChart({
+	breakdown = {},
+	keys = DEFAULT_KEYS,
+	emptyLabel = 'No application data yet.',
+	staticChart = false,
+}) {
 	const chart = useMemo(() => {
 		const values = keys.map((k) => breakdown[k] ?? 0)
 		const hasData = values.some((v) => v > 0)
@@ -29,10 +35,12 @@ function StatusBarChart({ breakdown = {}, keys = DEFAULT_KEYS, emptyLabel = 'No 
 		}
 	}, [breakdown, keys])
 
+	const options = staticChart ? staticBarChartOptions : barChartOptions
+
 	return (
-		<div className="ws-chart-wrap">
+		<div className={`ws-chart-wrap${staticChart ? ' ws-chart-wrap--static' : ''}`}>
 			{chart.hasData ? (
-				<Bar data={chart.data} options={barChartOptions} />
+				<Bar data={chart.data} options={options} />
 			) : (
 				<div className="ws-chart-empty">{emptyLabel}</div>
 			)}

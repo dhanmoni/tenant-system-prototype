@@ -44,6 +44,18 @@ export const barChartOptions = {
 	},
 }
 
+/** Static bar chart — no grow/resize animation */
+export const staticBarChartOptions = {
+	...barChartOptions,
+	animation: false,
+	transitions: {
+		active: { animation: { duration: 0 } },
+		resize: { animation: { duration: 0 } },
+		show: { animation: { duration: 0 } },
+		hide: { animation: { duration: 0 } },
+	},
+}
+
 export const doughnutChartOptions = {
 	responsive: true,
 	maintainAspectRatio: false,

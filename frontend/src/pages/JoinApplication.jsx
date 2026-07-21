@@ -4,17 +4,11 @@ import api, { csrf } from '../api'
 import DocumentUploadSlot from '../components/forms/DocumentUploadSlot'
 import { cleanOptionalValue } from '../utils/tenancyDraft'
 import { formatDate } from '../utils/formatters'
-
-const JOIN_STEPS = [
-	{ id: 1, label: 'Review application' },
-	{ id: 2, label: 'Your details' },
-	{ id: 3, label: 'Documents' },
-	{ id: 4, label: 'Preview' },
-	{ id: 5, label: 'Payment' },
-]
+import { useLanguage } from '../i18n'
 
 function JoinApplication() {
 	const { user } = useOutletContext()
+	const { t } = useLanguage()
 	const [searchParams] = useSearchParams()
 	const navigate = useNavigate()
 	const refCode = searchParams.get('ref') || ''
@@ -27,6 +21,13 @@ function JoinApplication() {
 	const [joinStep, setJoinStep] = useState(1)
 	const [maxReachedStep, setMaxReachedStep] = useState(1)
 	const saveToastTimerRef = useRef(null)
+
+	const JOIN_STEPS = [
+		{ id: 1, label: t('ws.join.step.1') },
+		{ id: 2, label: t('ws.join.step.2') },
+		{ id: 3, label: t('ws.join.step.3') },
+		{ id: 4, label: t('ws.join.step.4') },
+	]
 
 	// Second party form fields
 	const [name, setName] = useState('')
@@ -44,32 +45,21 @@ function JoinApplication() {
 	const [declarationChecked, setDeclarationChecked] = useState(false)
 	const [docPreview, setDocPreview] = useState(null)
 
-	// Payment
-	const [paymentComplete, setPaymentComplete] = useState(false)
-	const [paymentSimulating, setPaymentSimulating] = useState(false)
-	const [paymentGrn, setPaymentGrn] = useState('')
-
 	const TOTAL_STEPS = JOIN_STEPS.length
 	const maxReachableStep = Math.max(joinStep, maxReachedStep)
 
-	const showSaveToast = useCallback((message = 'Progress saved.') => {
+	const showSaveToast = useCallback((message) => {
 		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
-		setSaveToast(message)
+		setSaveToast(message || t('ws.join.toast.saved'))
 		saveToastTimerRef.current = setTimeout(() => {
 			setSaveToast('')
 			saveToastTimerRef.current = null
 		}, 3500)
-	}, [])
+	}, [t])
 
 	useEffect(() => () => {
 		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
 	}, [])
-
-	const feeAmount = (() => {
-		if (!application?.apply_type) return 0
-		const type = application.apply_type.toLowerCase()
-		return type === 'joint' ? 50 : type === 'individual' ? 75 : 0
-	})()
 
 	const MOBILE_RE = /^\d{10}$/
 	const PAN_RE = /^[A-Z]{5}\d{4}[A-Z]$/
@@ -78,18 +68,18 @@ function JoinApplication() {
 	const fieldErrors = useMemo(() => {
 		const errors = {}
 		if (phone && !MOBILE_RE.test(String(phone).replace(/\D/g, ''))) {
-			errors.phone = 'Must be exactly 10 digits'
+			errors.phone = t('ws.join.error.phoneDigits')
 		}
 		if (!email || !email.trim()) {
-			errors.email = 'Email is required'
+			errors.email = t('ws.join.error.emailRequired')
 		} else if (!EMAIL_RE.test(email.trim())) {
-			errors.email = 'Enter a valid email address'
+			errors.email = t('ws.join.error.emailInvalid')
 		}
 		if (pan && !PAN_RE.test(pan.trim().toUpperCase())) {
-			errors.pan = 'Enter a valid PAN (e.g. ABCDE1234F)'
+			errors.pan = t('ws.join.error.panInvalid')
 		}
 		if (aadhar && aadhar.length > 0 && aadhar.length !== 12) {
-			errors.aadhar = 'Aadhaar must be 12 digits'
+			errors.aadhar = t('ws.join.error.aadhaarDigits')
 		}
 
 		if (application) {
@@ -111,32 +101,22 @@ function JoinApplication() {
 			const myPhone = String(phone || '').replace(/\D/g, '')
 			const theirPhone = String(otherPhone || '').replace(/\D/g, '')
 			if (myPhone && theirPhone && myPhone === theirPhone) {
-				errors.phone = 'Cannot match the other party’s mobile'
+				errors.phone = t('ws.join.error.phoneMatch')
 			}
 			if (pan && otherPan && pan.trim().toUpperCase() === otherPan.toUpperCase()) {
-				errors.pan = 'Cannot match the other party’s PAN'
+				errors.pan = t('ws.join.error.panMatch')
 			}
 			if (email && otherEmail && email.trim().toLowerCase() === otherEmail.toLowerCase()) {
-				errors.email = 'Cannot match the other party’s email'
+				errors.email = t('ws.join.error.emailMatch')
 			}
 		}
 
 		return errors
-	}, [phone, email, pan, aadhar, application])
+	}, [phone, email, pan, aadhar, application, t])
 
 	const hasDetailsFieldErrors = Boolean(
 		fieldErrors.phone || fieldErrors.email || fieldErrors.pan || fieldErrors.aadhar
 	)
-
-	const handleMockPayment = () => {
-		setPaymentSimulating(true)
-		setTimeout(() => {
-			setPaymentSimulating(false)
-			setPaymentComplete(true)
-			setPaymentGrn(String(Math.floor(Math.random() * 1000000000)))
-			showSaveToast('Payment completed.')
-		}, 1500)
-	}
 
 	const scrollFormToTop = useCallback(() => {
 		const main = document.getElementById('dashboard-primary-content')
@@ -153,7 +133,7 @@ function JoinApplication() {
 
 	useEffect(() => {
 		if (!refCode) {
-			setError('No reference code provided.')
+			setError(t('ws.join.error.noRef'))
 			setLoading(false)
 			return
 		}
@@ -173,13 +153,13 @@ function JoinApplication() {
 				setPan(appData[`${rolePrefix}_pan`] || '')
 				setAadhar(appData[`${rolePrefix}_aadhar`] || '')
 			} catch (err) {
-				setError(err?.response?.data?.message || 'Failed to load application.')
+				setError(err?.response?.data?.message || t('ws.join.error.loadFailed'))
 			} finally {
 				setLoading(false)
 			}
 		}
 		lookup()
-	}, [refCode, user])
+	}, [refCode, user, t])
 
 	const goToStep = (stepId) => {
 		if (stepId < 1 || stepId > TOTAL_STEPS) return
@@ -218,7 +198,7 @@ function JoinApplication() {
 
 	const validateDetailsStep = () => {
 		if (!name.trim() || !address.trim() || !phone.trim() || !pan.trim()) {
-			setError('Please fill in all required fields before continuing.')
+			setError(t('ws.join.error.fillRequired'))
 			return false
 		}
 		if (hasDetailsFieldErrors) {
@@ -230,7 +210,7 @@ function JoinApplication() {
 
 	const validateDocumentsStep = () => {
 		if (!panDocumentFile) {
-			setError('Please upload your PAN card document before continuing.')
+			setError(t('ws.join.error.fillRequired'))
 			return false
 		}
 		return true
@@ -265,14 +245,12 @@ function JoinApplication() {
 				uid: data.uid,
 				status: data.status,
 				message: data.message,
-				fee_amount: feeAmount,
-				payment_grn: paymentGrn,
 			})
 			scrollFormToTop()
 		} catch (err) {
 			const data = err?.response?.data
 			const errors = data?.errors
-			let msg = data?.message || 'Failed to submit'
+			let msg = data?.message || t('ws.join.error.submitFailed')
 			if (errors && typeof errors === 'object') {
 				const list = Object.entries(errors).flatMap(([field, messages]) =>
 					(Array.isArray(messages) ? messages : [messages]).map((m) => `${field}: ${m}`)
@@ -292,40 +270,26 @@ function JoinApplication() {
 		if (joinStep === 1) {
 			setJoinStep(2)
 			setMaxReachedStep((prev) => Math.max(prev, 2))
-			showSaveToast('Review completed.')
+			showSaveToast(t('ws.join.toast.reviewDone'))
 			return
 		}
 		if (joinStep === 2) {
 			if (!validateDetailsStep()) return
 			setJoinStep(3)
 			setMaxReachedStep((prev) => Math.max(prev, 3))
-			showSaveToast('Progress saved.')
+			showSaveToast(t('ws.join.toast.saved'))
 			return
 		}
 		if (joinStep === 3) {
 			if (!validateDocumentsStep()) return
 			setJoinStep(4)
 			setMaxReachedStep((prev) => Math.max(prev, 4))
-			showSaveToast('Progress saved.')
+			showSaveToast(t('ws.join.toast.saved'))
 			return
 		}
 		if (joinStep === 4) {
 			if (!declarationChecked) {
-				setError('You must accept the declaration to proceed to payment.')
-				return
-			}
-			setJoinStep(5)
-			setMaxReachedStep((prev) => Math.max(prev, 5))
-			showSaveToast('Preview completed.')
-			return
-		}
-		if (joinStep === 5) {
-			if (!paymentComplete) {
-				setError('You must complete the fee payment before submitting.')
-				return
-			}
-			if (!declarationChecked) {
-				setError('You must accept the declaration to submit.')
+				setError(t('ws.join.error.acceptToSubmit'))
 				return
 			}
 			submitJoinApplication()
@@ -347,7 +311,7 @@ function JoinApplication() {
 			)
 			openInPrintWindow(res.data)
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to open acknowledgement')
+			setError(err?.response?.data?.message || t('ws.join.error.loadFailed'))
 		}
 	}
 
@@ -359,13 +323,13 @@ function JoinApplication() {
 			)
 			openInPrintWindow(res.data)
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to open application')
+			setError(err?.response?.data?.message || t('ws.join.error.loadFailed'))
 		}
 	}
 
 	if (loading) {
 		return (
-			<div className="ws-uin-apply-loading">Loading application…</div>
+			<div className="ws-uin-apply-loading">{t('ws.join.loading')}</div>
 		)
 	}
 
@@ -382,7 +346,9 @@ function JoinApplication() {
 							{alreadyCompleted ? '✓' : '!'}
 						</div>
 						<h1 className="uin-confirm-title">
-							{alreadyCompleted ? 'Application already completed' : 'Unable to join application'}
+							{alreadyCompleted
+								? t('ws.join.error.alreadyCompleted')
+								: t('ws.join.error.unableJoin')}
 						</h1>
 						<p className="uin-confirm-lead">{error}</p>
 						<div className="uin-confirm-actions">
@@ -391,7 +357,7 @@ function JoinApplication() {
 								className="ws-btn ws-btn--primary"
 								onClick={() => navigate('/dashboard')}
 							>
-								Back to dashboard
+								{t('ws.join.success.backDashboard')}
 							</button>
 						</div>
 					</div>
@@ -408,37 +374,30 @@ function JoinApplication() {
 					<div className="uin-confirm-card">
 						<div className="uin-confirm-icon" aria-hidden>✓</div>
 						<h1 className="uin-confirm-title">
-							{isCompleted ? 'Application completed successfully' : 'Details submitted successfully'}
+							{isCompleted
+								? t('ws.join.success.completed')
+								: t('ws.join.success.detailsSubmitted')}
 						</h1>
 						<p className="uin-confirm-lead">
-							{joinResult.message ||
-								'Your details have been submitted for this tenancy application.'}
+							{joinResult.message || t('ws.join.success.lodged')}
 						</p>
 
 						<dl className="uin-confirm-meta">
 							<div className="uin-confirm-meta-row">
-								<dt>Application number</dt>
+								<dt>{t('ws.join.success.appNo')}</dt>
 								<dd>{joinResult.application_no || '—'}</dd>
 							</div>
 							{joinResult.uid ? (
 								<div className="uin-confirm-meta-row">
-									<dt>Tenancy UID</dt>
+									<dt>{t('ws.join.success.uid')}</dt>
 									<dd>{joinResult.uid}</dd>
 								</div>
 							) : null}
-							<div className="uin-confirm-meta-row">
-								<dt>Fee paid</dt>
-								<dd>
-									₹{joinResult.fee_amount}
-									{joinResult.payment_grn ? ` · GRN ${joinResult.payment_grn}` : ''}
-								</dd>
-							</div>
 						</dl>
 
 						{!isCompleted ? (
 							<p className="uin-confirm-joint-note">
-								Your part is complete. The application will be finalised once the other
-								party has also submitted their details.
+								{t('ws.join.success.jointNote')}
 							</p>
 						) : null}
 
@@ -448,21 +407,21 @@ function JoinApplication() {
 								className="ws-btn ws-btn--primary"
 								onClick={handleDownloadAcknowledgement}
 							>
-								Download acknowledgement
+								{t('ws.join.success.downloadAck')}
 							</button>
 							<button
 								type="button"
 								className="ws-btn ws-btn--secondary"
 								onClick={handleDownloadApplication}
 							>
-								Download application
+								{t('ws.join.success.downloadApp')}
 							</button>
 							<button
 								type="button"
 								className="ws-btn ws-btn--outline"
 								onClick={() => navigate('/dashboard')}
 							>
-								Back to dashboard
+								{t('ws.join.success.backDashboard')}
 							</button>
 						</div>
 
@@ -479,13 +438,13 @@ function JoinApplication() {
 
 	const secondRole = application.second_party_role
 	const isLandlord = secondRole === 'LANDLORD'
-	const roleLabel = isLandlord ? 'Landlord' : 'Tenant'
+	const roleLabel = isLandlord ? t('ws.join.role.landlord') : t('ws.join.role.tenant')
 	const initiatorLabel =
 		application.initiator_role === 'LANDLORD'
-			? 'Landlord'
+			? t('ws.join.role.landlord')
 			: application.initiator_role === 'TENANT'
-				? 'Tenant'
-				: application.initiator_role || 'Initiator'
+				? t('ws.join.role.tenant')
+				: application.initiator_role || t('ws.join.role.initiator')
 
 	const displayValue = (value) => {
 		const cleaned = cleanOptionalValue(value)
@@ -559,46 +518,54 @@ function JoinApplication() {
 				</div>
 			) : null}
 			<header className="ws-uin-apply-head">
-				<h1 className="ws-uin-apply-title">Join Tenancy Application</h1>
+				<h1 className="ws-uin-apply-title">{t('ws.join.title')}</h1>
 				<p className="ws-uin-apply-lead">
-					Complete each stage in order as <strong>{roleLabel}</strong> for application{' '}
-					<strong>{application.application_no}</strong>.
+					{t('ws.join.lead', { role: roleLabel, appNo: application.application_no })}
 				</p>
+				{joinStep === 1 ? (
+					<div className="ws-join-view-only-banner" role="status">
+						<span className="ws-join-view-only-banner__badge">{t('ws.join.viewOnlyBadge')}</span>
+						<p className="ws-join-view-only-banner__text">{t('ws.join.viewOnlyNote')}</p>
+					</div>
+				) : null}
 			</header>
 
 			<nav
 				className="ws-uin-h-stepper"
-				aria-label="Join application stages"
+				aria-label={t('ws.join.steps.aria')}
 				style={{
+					'--ws-uin-steps': JOIN_STEPS.length,
 					'--ws-uin-progress': `${JOIN_STEPS.length <= 1 ? 0 : ((joinStep - 1) / (JOIN_STEPS.length - 1)) * 100}%`,
 				}}
 			>
-				<div className="ws-uin-h-stepper__track" aria-hidden>
-					<span className="ws-uin-h-stepper__progress" />
+				<div className="ws-uin-h-stepper__rail">
+					<div className="ws-uin-h-stepper__track" aria-hidden>
+						<span className="ws-uin-h-stepper__progress" />
+					</div>
+					<ol className="ws-uin-h-stepper__list">
+						{JOIN_STEPS.map((step) => {
+							const done = joinStep > step.id || maxReachedStep >= step.id
+							const active = joinStep === step.id
+							const reachable = step.id <= maxReachableStep
+							return (
+								<li key={step.id}>
+									<button
+										type="button"
+										className={`ws-uin-h-stepper__item${active ? ' is-active' : ''}${done && !active ? ' is-done' : ''}`}
+										disabled={!reachable}
+										aria-current={active ? 'step' : undefined}
+										onClick={() => {
+											if (reachable) goToStep(step.id)
+										}}
+									>
+										<span className="ws-uin-h-stepper__num">{done && !active ? '✓' : step.id}</span>
+										<span className="ws-uin-h-stepper__label">{step.label}</span>
+									</button>
+								</li>
+							)
+						})}
+					</ol>
 				</div>
-				<ol className="ws-uin-h-stepper__list">
-					{JOIN_STEPS.map((step) => {
-						const done = joinStep > step.id || maxReachedStep >= step.id
-						const active = joinStep === step.id
-						const reachable = step.id <= maxReachableStep
-						return (
-							<li key={step.id}>
-								<button
-									type="button"
-									className={`ws-uin-h-stepper__item${active ? ' is-active' : ''}${done && !active ? ' is-done' : ''}`}
-									disabled={!reachable}
-									aria-current={active ? 'step' : undefined}
-									onClick={() => {
-										if (reachable) goToStep(step.id)
-									}}
-								>
-									<span className="ws-uin-h-stepper__num">{done && !active ? '✓' : step.id}</span>
-									<span className="ws-uin-h-stepper__label">{step.label}</span>
-								</button>
-							</li>
-						)
-					})}
-				</ol>
 			</nav>
 
 			<div className="ws-uin-apply-body-full">
@@ -613,10 +580,9 @@ function JoinApplication() {
 						{joinStep === 1 && (
 							<div className="join-app-summary join-review">
 								<header className="join-review__intro">
-									<h2 className="tenancy-step-heading">Review application</h2>
+									<h2 className="tenancy-step-heading">{t('ws.join.review.heading')}</h2>
 									<p className="ws-uin-apply-lead">
-										Review the details submitted by the <strong>{initiatorLabel}</strong> before
-										entering your information as <strong>{roleLabel}</strong>.
+										{t('ws.join.review.lead', { initiator: initiatorLabel, role: roleLabel })}
 									</p>
 								</header>
 
@@ -624,37 +590,37 @@ function JoinApplication() {
 									<header className="join-review__card-head">
 										<span className="join-review__card-num">1</span>
 										<div>
-											<h3 className="join-review__card-title">Application overview</h3>
-											<p className="join-review__card-lead">Registration and office details for this joint application.</p>
+											<h3 className="join-review__card-title">{t('ws.join.review.overviewTitle')}</h3>
+											<p className="join-review__card-lead">{t('ws.join.review.overviewLead')}</p>
 										</div>
 									</header>
 									<div className="join-review__grid">
 										<div className="join-review__field">
-											<span className="join-review__label">Application no.</span>
+											<span className="join-review__label">{t('ws.join.review.appNo')}</span>
 											<span className="join-review__value">{displayValue(application.application_no)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Application type</span>
+											<span className="join-review__label">{t('ws.join.review.appType')}</span>
 											<span className="join-review__value">{displayValue(application.apply_type)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Agreement date</span>
+											<span className="join-review__label">{t('ws.join.review.agreementDate')}</span>
 											<span className="join-review__value">{formatDate(application.registration_date) || '—'}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Initiated by</span>
+											<span className="join-review__label">{t('ws.join.review.initiatedBy')}</span>
 											<span className="join-review__value">{initiatorLabel}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Your role</span>
+											<span className="join-review__label">{t('ws.join.review.yourRole')}</span>
 											<span className="join-review__value">{roleLabel}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Circle office</span>
+											<span className="join-review__label">{t('ws.join.review.circleOffice')}</span>
 											<span className="join-review__value">{displayValue(application.office?.name)}</span>
 										</div>
 										<div className="join-review__field join-review__field--wide">
-											<span className="join-review__label">Location</span>
+											<span className="join-review__label">{t('ws.join.review.location')}</span>
 											<span className="join-review__value">{locationLabel}</span>
 										</div>
 									</div>
@@ -664,33 +630,33 @@ function JoinApplication() {
 									<header className="join-review__card-head">
 										<span className="join-review__card-num">2</span>
 										<div>
-											<h3 className="join-review__card-title">Landlord details</h3>
+											<h3 className="join-review__card-title">{t('ws.join.review.landlordTitle')}</h3>
 											<p className="join-review__card-lead">
 												{application.initiator_role === 'LANDLORD'
-													? 'Submitted by the initiator.'
-													: 'Details provided for the landlord party.'}
+													? t('ws.join.review.submittedByInitiator')
+													: t('ws.join.review.landlordPartyLead')}
 											</p>
 										</div>
 									</header>
 									<div className="join-review__grid">
 										<div className="join-review__field">
-											<span className="join-review__label">Name</span>
+											<span className="join-review__label">{t('ws.join.review.name')}</span>
 											<span className="join-review__value">{displayValue(application.landlord_name)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">PAN</span>
+											<span className="join-review__label">{t('ws.join.review.pan')}</span>
 											<span className="join-review__value">{displayValue(application.landlord_pan)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Mobile</span>
+											<span className="join-review__label">{t('ws.join.review.mobile')}</span>
 											<span className="join-review__value">{displayValue(application.landlord_phone)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Email</span>
+											<span className="join-review__label">{t('ws.join.review.email')}</span>
 											<span className="join-review__value">{displayValue(application.landlord_email)}</span>
 										</div>
 										<div className="join-review__field join-review__field--wide">
-											<span className="join-review__label">Address</span>
+											<span className="join-review__label">{t('ws.join.review.address')}</span>
 											<span className="join-review__value">{displayValue(application.landlord_address)}</span>
 										</div>
 									</div>
@@ -700,38 +666,38 @@ function JoinApplication() {
 									<header className="join-review__card-head">
 										<span className="join-review__card-num">3</span>
 										<div>
-											<h3 className="join-review__card-title">Tenant details</h3>
+											<h3 className="join-review__card-title">{t('ws.join.review.tenantTitle')}</h3>
 											<p className="join-review__card-lead">
 												{application.initiator_role === 'TENANT'
-													? 'Submitted by the initiator.'
-													: 'Details provided for the tenant party.'}
+													? t('ws.join.review.submittedByInitiator')
+													: t('ws.join.review.tenantPartyLead')}
 											</p>
 										</div>
 									</header>
 									<div className="join-review__grid">
 										<div className="join-review__field">
-											<span className="join-review__label">Name</span>
+											<span className="join-review__label">{t('ws.join.review.name')}</span>
 											<span className="join-review__value">{displayValue(application.tenant_name)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">PAN</span>
+											<span className="join-review__label">{t('ws.join.review.pan')}</span>
 											<span className="join-review__value">{displayValue(application.tenant_pan)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Mobile</span>
+											<span className="join-review__label">{t('ws.join.review.mobile')}</span>
 											<span className="join-review__value">{displayValue(application.tenant_phone)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Email</span>
+											<span className="join-review__label">{t('ws.join.review.email')}</span>
 											<span className="join-review__value">{displayValue(application.tenant_email)}</span>
 										</div>
 										<div className="join-review__field join-review__field--wide">
-											<span className="join-review__label">Address</span>
+											<span className="join-review__label">{t('ws.join.review.address')}</span>
 											<span className="join-review__value">{displayValue(application.tenant_address)}</span>
 										</div>
 										{cleanOptionalValue(application.tenant_previous_tenancy) ? (
 											<div className="join-review__field join-review__field--wide">
-												<span className="join-review__label">Previous tenancy</span>
+												<span className="join-review__label">{t('ws.join.review.previousTenancy')}</span>
 												<span className="join-review__value">{application.tenant_previous_tenancy}</span>
 											</div>
 										) : null}
@@ -743,29 +709,29 @@ function JoinApplication() {
 										<header className="join-review__card-head">
 											<span className="join-review__card-num">4</span>
 											<div>
-												<h3 className="join-review__card-title">Property manager details</h3>
-												<p className="join-review__card-lead">Manager details recorded on this application.</p>
+												<h3 className="join-review__card-title">{t('ws.join.review.managerTitle')}</h3>
+												<p className="join-review__card-lead">{t('ws.join.review.managerLead')}</p>
 											</div>
 										</header>
 										<div className="join-review__grid">
 											<div className="join-review__field">
-												<span className="join-review__label">Name</span>
+												<span className="join-review__label">{t('ws.join.review.name')}</span>
 												<span className="join-review__value">{displayValue(application.manager_name)}</span>
 											</div>
 											<div className="join-review__field">
-												<span className="join-review__label">PAN</span>
+												<span className="join-review__label">{t('ws.join.review.pan')}</span>
 												<span className="join-review__value">{displayValue(application.manager_pan)}</span>
 											</div>
 											<div className="join-review__field">
-												<span className="join-review__label">Mobile</span>
+												<span className="join-review__label">{t('ws.join.review.mobile')}</span>
 												<span className="join-review__value">{displayValue(application.manager_phone)}</span>
 											</div>
 											<div className="join-review__field">
-												<span className="join-review__label">Email</span>
+												<span className="join-review__label">{t('ws.join.review.email')}</span>
 												<span className="join-review__value">{displayValue(application.manager_email)}</span>
 											</div>
 											<div className="join-review__field join-review__field--wide">
-												<span className="join-review__label">Address</span>
+												<span className="join-review__label">{t('ws.join.review.address')}</span>
 												<span className="join-review__value">{displayValue(application.manager_address)}</span>
 											</div>
 										</div>
@@ -776,17 +742,17 @@ function JoinApplication() {
 									<header className="join-review__card-head">
 										<span className="join-review__card-num">{hasManager ? '5' : '4'}</span>
 										<div>
-											<h3 className="join-review__card-title">Premises &amp; rent details</h3>
-											<p className="join-review__card-lead">Property description, tenancy period, rent and charges.</p>
+											<h3 className="join-review__card-title">{t('ws.join.review.premisesTitle')}</h3>
+											<p className="join-review__card-lead">{t('ws.join.review.premisesLead')}</p>
 										</div>
 									</header>
 									<div className="join-review__grid">
 										<div className="join-review__field join-review__field--wide">
-											<span className="join-review__label">Description of premises</span>
+											<span className="join-review__label">{t('ws.join.review.premisesDesc')}</span>
 											<span className="join-review__value">{displayValue(application.property_premises_description)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Possession date</span>
+											<span className="join-review__label">{t('ws.join.review.possessionDate')}</span>
 											<span className="join-review__value">
 												{application.property_possession_date
 													? formatDate(application.property_possession_date)
@@ -794,7 +760,7 @@ function JoinApplication() {
 											</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">End date</span>
+											<span className="join-review__label">{t('ws.join.review.endDate')}</span>
 											<span className="join-review__value">
 												{application.property_tenancy_end_date
 													? formatDate(application.property_tenancy_end_date)
@@ -802,37 +768,37 @@ function JoinApplication() {
 											</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Duration</span>
+											<span className="join-review__label">{t('ws.join.review.duration')}</span>
 											<span className="join-review__value">{displayValue(application.property_tenancy_duration)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Monthly rent</span>
+											<span className="join-review__label">{t('ws.join.review.monthlyRent')}</span>
 											<span className="join-review__value rent-amount">
 												₹{Number(application.property_rent_payable || 0).toLocaleString('en-IN')}
 											</span>
 										</div>
 										<div className="join-review__field join-review__field--wide">
-											<span className="join-review__label">Furniture / equipment</span>
+											<span className="join-review__label">{t('ws.join.review.furniture')}</span>
 											<span className="join-review__value">{displayValue(application.property_furniture_description)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Electricity</span>
+											<span className="join-review__label">{t('ws.join.review.electricity')}</span>
 											<span className="join-review__value">{displayValue(application.property_charge_electricity)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Water</span>
+											<span className="join-review__label">{t('ws.join.review.water')}</span>
 											<span className="join-review__value">{displayValue(application.property_charge_water)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Furnishing / fittings</span>
+											<span className="join-review__label">{t('ws.join.review.furnishing')}</span>
 											<span className="join-review__value">{displayValue(application.property_charge_furnishing)}</span>
 										</div>
 										<div className="join-review__field">
-											<span className="join-review__label">Other services</span>
+											<span className="join-review__label">{t('ws.join.review.otherServices')}</span>
 											<span className="join-review__value">{displayValue(application.property_charge_other_services)}</span>
 										</div>
 										<div className="join-review__field join-review__field--wide join-review__total">
-											<span className="join-review__label">Total monthly amount</span>
+											<span className="join-review__label">{t('ws.join.review.totalMonthly')}</span>
 											<span className="join-review__value rent-amount">
 												₹{reviewRentTotal.toLocaleString('en-IN')}
 											</span>
@@ -847,21 +813,23 @@ function JoinApplication() {
 							<div className="parties-container">
 								<section className="tenancy-section">
 									<div className="section-header">
-										<h2>Your details</h2>
+										<h2>{t('ws.join.details.heading')}</h2>
 									</div>
 									<div className="ws-uin-party-block">
 										<header className="ws-uin-party-block__head">
 											<span className="ws-uin-party-block__num">1</span>
 											<div>
-												<h3 className="ws-uin-party-block__title">{roleLabel} details</h3>
+												<h3 className="ws-uin-party-block__title">
+													{t('ws.join.details.blockTitle', { role: roleLabel })}
+												</h3>
 												<p className="ws-uin-party-block__lead">
-													Confirm or update your details for this joint application.
+													{t('ws.join.details.lead')}
 												</p>
 											</div>
 										</header>
 										<div className="ws-uin-party-fields">
 											<label>
-												<span className="label-text required">Full name</span>
+												<span className="label-text required">{t('ws.join.details.fullName')}</span>
 												<input
 													type="text"
 													value={name}
@@ -870,7 +838,7 @@ function JoinApplication() {
 												/>
 											</label>
 											<label>
-												<span className="label-text required">PAN no.</span>
+												<span className="label-text required">{t('ws.join.details.pan')}</span>
 												<input
 													type="text"
 													value={pan}
@@ -887,13 +855,13 @@ function JoinApplication() {
 												) : null}
 											</label>
 											<label>
-												<span className="label-text required">Phone</span>
+												<span className="label-text required">{t('ws.join.details.phone')}</span>
 												<input
 													type="tel"
 													value={phone}
 													readOnly
 													className="readonly-input"
-													title="Phone number cannot be changed"
+													title={t('ws.join.details.phoneReadonly')}
 													aria-invalid={Boolean(fieldErrors.phone)}
 												/>
 												{fieldErrors.phone ? (
@@ -901,7 +869,7 @@ function JoinApplication() {
 												) : null}
 											</label>
 											<label>
-												<span className="label-text required">Email</span>
+												<span className="label-text required">{t('ws.join.details.email')}</span>
 												<input
 													type="email"
 													value={email}
@@ -914,7 +882,7 @@ function JoinApplication() {
 												) : null}
 											</label>
 											<label>
-												<span className="label-text">Aadhaar no. (optional)</span>
+												<span className="label-text">{t('ws.join.details.aadhaar')}</span>
 												<input
 													type="text"
 													inputMode="numeric"
@@ -930,7 +898,7 @@ function JoinApplication() {
 												) : null}
 											</label>
 											<label className="ws-uin-party-fields__full">
-												<span className="label-text required">Address</span>
+												<span className="label-text required">{t('ws.join.details.address')}</span>
 												<textarea
 													value={address}
 													onChange={(e) => setAddress(e.target.value)}
@@ -940,7 +908,7 @@ function JoinApplication() {
 											</label>
 											{!isLandlord ? (
 												<label className="ws-uin-party-fields__full">
-													<span className="label-text">Description of previous tenancy</span>
+													<span className="label-text">{t('ws.join.details.previousTenancy')}</span>
 													<textarea
 														value={previousTenancy}
 														onChange={(e) => setPreviousTenancy(e.target.value)}
@@ -959,18 +927,18 @@ function JoinApplication() {
 							<fieldset className="tenancy-fieldset tenancy-docs-fieldset">
 								<div className="tenancy-docs-step">
 									<header className="tenancy-docs-step__header">
-										<h2 className="tenancy-docs-step__title">Upload required documents</h2>
+										<h2 className="tenancy-docs-step__title">{t('ws.join.docs.title')}</h2>
 										<p className="tenancy-docs-step__lead">
-											All items below are mandatory. Use the preview icon after each upload to verify the file.
+											{t('ws.join.docs.lead')}
 										</p>
 										<p className="tenancy-docs-step__disclaimer" role="note">
-											<strong>File upload guidelines:</strong> Accepted formats — PDF, JPG, JPEG, PNG.
-											Maximum size — <strong>2 MB</strong> per file. Scanned copies must be clear and readable.
+											<strong>{t('ws.join.docs.guidelines')}</strong>{' '}
+											{t('ws.join.docs.guidelinesBody')}
 										</p>
-										<ul className="tenancy-docs-step__checklist" aria-label="Required documents">
-											<li>Passport-size photograph (JPG / JPEG / PNG, max 2 MB)</li>
-											<li>Signature (JPG / JPEG / PNG, max 2 MB)</li>
-											<li>PAN Card (PDF / JPG / JPEG / PNG, max 2 MB)</li>
+										<ul className="tenancy-docs-step__checklist" aria-label={t('ws.join.docs.checklistAria')}>
+											<li>{t('ws.join.docs.checkPhoto')}</li>
+											<li>{t('ws.join.docs.checkSign')}</li>
+											<li>{t('ws.join.docs.checkPan')}</li>
 										</ul>
 									</header>
 
@@ -978,18 +946,18 @@ function JoinApplication() {
 										<div className="tenancy-doc-card__head">
 											<span className="tenancy-doc-card__num">1</span>
 											<div>
-												<h3 className="tenancy-doc-card__title">Your personal documents</h3>
+												<h3 className="tenancy-doc-card__title">{t('ws.join.docs.cardTitle')}</h3>
 												<p className="tenancy-doc-card__meta">
-													Photograph, signature, and PAN card — JPG / JPEG / PNG / PDF (where allowed) · max 2 MB each
+													{t('ws.join.docs.cardMeta')}
 												</p>
 											</div>
 										</div>
 										<div className="tenancy-doc-card__grid">
 											<DocumentUploadSlot
 												id="join-photo"
-												label="Passport-size photograph"
+												label={t('ws.join.docs.photoLabel')}
 												accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-												hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
+												hint={t('ws.join.docs.photoHint')}
 												required
 												onChange={(e) => {
 													const file = e.target.files?.[0] || null
@@ -1004,15 +972,15 @@ function JoinApplication() {
 													}
 												}}
 												imagePreview={photoPreview}
-												previewTitle="Passport-size photograph"
+												previewTitle={t('ws.join.docs.photoLabel')}
 												onPreview={openDocPreview}
 												onFilePreview={openFilePreview}
 											/>
 											<DocumentUploadSlot
 												id="join-signature"
-												label="Signature"
+												label={t('ws.join.docs.signatureLabel')}
 												accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-												hint="Accepted: JPG, JPEG, PNG · Max size: 2 MB"
+												hint={t('ws.join.docs.signatureHint')}
 												required
 												onChange={(e) => {
 													const file = e.target.files?.[0] || null
@@ -1027,19 +995,19 @@ function JoinApplication() {
 													}
 												}}
 												imagePreview={signaturePreview}
-												previewTitle="Signature"
+												previewTitle={t('ws.join.docs.signatureLabel')}
 												onPreview={openDocPreview}
 												onFilePreview={openFilePreview}
 											/>
 											<DocumentUploadSlot
 												id="join-pan"
-												label="PAN card document"
+												label={t('ws.join.docs.panLabel')}
 												accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-												hint="Accepted: PDF, JPG, JPEG, PNG · Max size: 2 MB"
+												hint={t('ws.join.docs.panHint')}
 												required
 												onChange={(e) => setPanDocumentFile(e.target.files?.[0] || null)}
 												file={panDocumentFile}
-												previewTitle="PAN Card"
+												previewTitle={t('ws.join.docs.panLabel')}
 												onPreview={openDocPreview}
 												onFilePreview={openFilePreview}
 											/>
@@ -1049,7 +1017,7 @@ function JoinApplication() {
 							</fieldset>
 						)}
 
-						{/* Step 4: Preview — same government form as initiator */}
+						{/* Step 4: Preview — same government form as initiator (English) */}
 						{joinStep === 4 && (
 							<div className="tenancy-preview-container">
 								<div className="govt-form-document">
@@ -1492,7 +1460,7 @@ function JoinApplication() {
 								</div>
 
 								<div className="preview-actions-hint">
-									Please review all details carefully before proceeding to payment.
+									{t('ws.join.preview.reviewHint')}
 								</div>
 
 								<div className="ws-uin-declaration">
@@ -1502,82 +1470,10 @@ function JoinApplication() {
 											checked={declarationChecked}
 											onChange={(e) => setDeclarationChecked(e.target.checked)}
 										/>
-										<span>
-											I/we hereby declare that the particulars given above are true
-											and correct to the best of my/our knowledge and belief and no
-											material fact has been concealed.
-										</span>
+										<span>{t('ws.uin.declaration.text')}</span>
 									</label>
 								</div>
 							</div>
-						)}
-
-						{joinStep === 5 && (
-							<fieldset className="tenancy-fieldset ws-uin-payment-step">
-								<div className={`ws-uin-pay ws-uin-pay--simple${paymentComplete ? ' is-paid' : ''}`}>
-									<section className="ws-uin-pay-bill">
-										<h2 className="ws-uin-pay-title">Bill summary</h2>
-										<div className="ws-uin-pay-bill-rows">
-											<div className="ws-uin-pay-row">
-												<span>Service</span>
-												<strong>Tenancy Certificate (UIN)</strong>
-											</div>
-											<div className="ws-uin-pay-row">
-												<span>Application type</span>
-												<strong>{application.apply_type || '—'}</strong>
-											</div>
-											<div className="ws-uin-pay-row">
-												<span>Application no.</span>
-												<strong>{application.application_no || '—'}</strong>
-											</div>
-											<div className="ws-uin-pay-row">
-												<span>Your role</span>
-												<strong>{roleLabel}</strong>
-											</div>
-											<div className="ws-uin-pay-row">
-												<span>Fee</span>
-												<strong>₹{feeAmount}</strong>
-											</div>
-											<div className="ws-uin-pay-row ws-uin-pay-row--total">
-												<span>Total payable</span>
-												<strong>₹{feeAmount}</strong>
-											</div>
-										</div>
-										{paymentComplete ? (
-											<div className="ws-uin-pay-paid" role="status">
-												<strong>Payment successful</strong>
-												<span>
-													₹{feeAmount} paid
-													{paymentGrn ? ` · GRN ${paymentGrn}` : ''}
-												</span>
-											</div>
-										) : (
-											<p className="ws-uin-pay-hint">Review the bill and proceed to pay.</p>
-										)}
-									</section>
-
-									<section className="ws-uin-pay-method">
-										<h2 className="ws-uin-pay-title">Pay now</h2>
-										{!paymentComplete ? (
-											<>
-												<button
-													type="button"
-													className="ws-btn ws-btn--primary ws-uin-pay-btn"
-													onClick={handleMockPayment}
-													disabled={paymentSimulating || submitting}
-												>
-													{paymentSimulating ? 'Processing…' : `Pay ₹${feeAmount}`}
-												</button>
-												<p className="ws-uin-pay-note">Demo payment — no real bank transfer.</p>
-											</>
-										) : (
-											<div className="ws-uin-pay-done">
-												<p>Payment confirmed. You can submit the application.</p>
-											</div>
-										)}
-									</section>
-								</div>
-							</fieldset>
 						)}
 
 						<div className="form-actions ws-uin-apply-actions">
@@ -1587,7 +1483,7 @@ function JoinApplication() {
 									className="ws-btn ws-btn--secondary"
 									onClick={() => goToStep(joinStep - 1)}
 								>
-									Back
+									{t('ws.join.actions.back')}
 								</button>
 							) : (
 								<button
@@ -1595,7 +1491,7 @@ function JoinApplication() {
 									className="ws-btn ws-btn--secondary"
 									onClick={() => navigate('/dashboard')}
 								>
-									Cancel
+									{t('ws.join.actions.cancel')}
 								</button>
 							)}
 							{joinStep < 4 ? (
@@ -1604,25 +1500,18 @@ function JoinApplication() {
 									className="ws-btn ws-btn--primary"
 									disabled={joinStep === 2 && hasDetailsFieldErrors}
 								>
-									Continue
+									{t('ws.join.actions.continue')}
 								</button>
 							) : null}
 							{joinStep === 4 ? (
 								<button
 									type="submit"
 									className="ws-btn ws-btn--primary"
-									disabled={!declarationChecked}
+									disabled={submitting || !declarationChecked}
 								>
-									Proceed to payment
-								</button>
-							) : null}
-							{joinStep === 5 ? (
-								<button
-									type="submit"
-									className="ws-btn ws-btn--primary"
-									disabled={submitting || !paymentComplete || !declarationChecked}
-								>
-									{submitting ? 'Submitting…' : 'Confirm & submit'}
+									{submitting
+										? t('ws.join.actions.submitting')
+										: t('ws.join.actions.confirmSubmit')}
 								</button>
 							) : null}
 						</div>

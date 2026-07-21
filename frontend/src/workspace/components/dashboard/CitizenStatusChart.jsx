@@ -1,11 +1,18 @@
 import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
-import {
-	doughnutChartOptions,
-	STATUS_CHART_COLORS,
-	STATUS_CHART_LABELS,
-} from './chartConfig'
+import { doughnutChartOptions, STATUS_CHART_COLORS } from './chartConfig'
 import { STATUS } from '../../../constants/status'
+import { useLanguage } from '../../../i18n'
+
+const CHART_LABEL_KEYS = {
+	SUBMITTED: 'ws.status.submitted',
+	IN_REVIEW: 'ws.status.inReview',
+	REJECTED: 'ws.status.rejected',
+	COMPLETED: 'ws.status.completed',
+	OTHER: 'ws.status.other',
+	DRAFT: 'ws.status.draft',
+	PARTIAL: 'ws.status.partial',
+}
 
 /** Map raw DB statuses into chart buckets (matches dashboard stat logic). */
 export function bucketCitizenStatus(status, applicationType = '') {
@@ -21,12 +28,14 @@ export function bucketCitizenStatus(status, applicationType = '') {
 	if (s === STATUS.UNDER_PROCESS) {
 		return type.includes('tenancy') ? 'SUBMITTED' : 'IN_REVIEW'
 	}
-	return s && STATUS_CHART_LABELS[s] ? s : 'OTHER'
+	return CHART_LABEL_KEYS[s] ? s : 'OTHER'
 }
 
 const CHART_KEYS = ['SUBMITTED', 'IN_REVIEW', 'COMPLETED', 'REJECTED', 'DRAFT', 'PARTIAL', 'OTHER']
 
 function CitizenStatusChart({ applications = [] }) {
+	const { t } = useLanguage()
+
 	const chart = useMemo(() => {
 		const counts = Object.fromEntries(CHART_KEYS.map((k) => [k, 0]))
 
@@ -42,7 +51,7 @@ function CitizenStatusChart({ applications = [] }) {
 		return {
 			hasData,
 			data: {
-				labels: activeKeys.map((k) => STATUS_CHART_LABELS[k] || k),
+				labels: activeKeys.map((k) => t(CHART_LABEL_KEYS[k] || 'ws.status.other')),
 				datasets: [
 					{
 						data: activeKeys.map((k) => counts[k]),
@@ -53,7 +62,7 @@ function CitizenStatusChart({ applications = [] }) {
 				],
 			},
 		}
-	}, [applications])
+	}, [applications, t])
 
 	return (
 		<div className="ws-chart-wrap ws-chart-wrap--doughnut ws-citizen-chart">
@@ -62,8 +71,8 @@ function CitizenStatusChart({ applications = [] }) {
 			) : (
 				<div className="ws-chart-empty">
 					{applications.length === 0
-						? 'Submit an application to see your status breakdown.'
-						: 'No status data for the applications on this page.'}
+						? t('ws.citizen.chart.empty')
+						: t('ws.citizen.chart.emptyNoData')}
 				</div>
 			)}
 		</div>

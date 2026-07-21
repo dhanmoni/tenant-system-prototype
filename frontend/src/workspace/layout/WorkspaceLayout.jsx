@@ -10,6 +10,7 @@ import {
 	isProfileComplete,
 	resolvePassportPhotoUrl,
 	PROFILE_REMINDER_DISMISSED_KEY,
+	PROFILE_REMINDER_SUPPRESSED_KEY,
 } from '../../utils/profileCompleteness'
 import { useLanguage } from '../../i18n'
 import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
@@ -80,6 +81,9 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	const [profileIncomplete, setProfileIncomplete] = useState(false)
 	const [reminderDismissed, setReminderDismissed] = useState(
 		() => sessionStorage.getItem(PROFILE_REMINDER_DISMISSED_KEY) === '1'
+	)
+	const [reminderSuppressed, setReminderSuppressed] = useState(
+		() => localStorage.getItem(PROFILE_REMINDER_SUPPRESSED_KEY) === '1'
 	)
 
 	const topbarName = formatDisplayName(user?.name)
@@ -188,7 +192,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 
 	// After profile is saved, stop reminding without waiting for re-login
 	useEffect(() => {
-		if (user?.role !== ROLES.USER || reminderDismissed) return undefined
+		if (user?.role !== ROLES.USER || reminderDismissed || reminderSuppressed) return undefined
 		if (location.pathname === '/dashboard/profile') return undefined
 
 		let active = true
@@ -202,15 +206,21 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		return () => {
 			active = false
 		}
-	}, [location.pathname, user?.role, reminderDismissed])
+	}, [location.pathname, user?.role, reminderDismissed, reminderSuppressed])
 
 	const showProfileModal =
 		user?.role === ROLES.USER &&
 		profileIncomplete &&
 		!reminderDismissed &&
+		!reminderSuppressed &&
 		location.pathname !== '/dashboard/profile'
 
-	const handleDismissProfileReminder = () => {
+	const handleDismissProfileReminder = ({ suppressPermanent = false } = {}) => {
+		if (suppressPermanent) {
+			localStorage.setItem(PROFILE_REMINDER_SUPPRESSED_KEY, '1')
+			setReminderSuppressed(true)
+			return
+		}
 		sessionStorage.setItem(PROFILE_REMINDER_DISMISSED_KEY, '1')
 		setReminderDismissed(true)
 	}

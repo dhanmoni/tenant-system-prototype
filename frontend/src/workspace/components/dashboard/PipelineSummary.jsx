@@ -54,7 +54,7 @@ function PipelineSummary({ breakdown = {}, totalLabel = 'form applications' }) {
 				))}
 			</ul>
 			<p className="ws-pipeline-footnote">
-				{segments.total.toLocaleString('en-IN')} {totalLabel} statewide
+				{segments.total.toLocaleString('en-IN')} {totalLabel}
 			</p>
 		</div>
 	)
