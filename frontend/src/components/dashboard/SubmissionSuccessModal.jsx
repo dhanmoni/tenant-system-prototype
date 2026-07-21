@@ -1,6 +1,9 @@
 import { useEffect } from 'react'
+import { useLanguage } from '../../i18n'
 
 function SubmissionSuccessModal({ open, message, onClose }) {
+	const { t } = useLanguage()
+
 	useEffect(() => {
 		if (!open) return undefined
 		const onKeyDown = (event) => {
@@ -29,7 +32,7 @@ function SubmissionSuccessModal({ open, message, onClose }) {
 					✓
 				</div>
 				<h2 id="submission-success-title" className="submission-success-modal__title">
-					Application submitted
+					{t('ws.citizen.modal.submittedTitle')}
 				</h2>
 				<p className="submission-success-modal__message">{message}</p>
 				<button
@@ -37,7 +40,7 @@ function SubmissionSuccessModal({ open, message, onClose }) {
 					className="workflow-confirm-btn workflow-confirm-btn--primary submission-success-modal__btn"
 					onClick={onClose}
 				>
-					OK
+					{t('ws.citizen.modal.ok')}
 				</button>
 			</div>
 		</div>

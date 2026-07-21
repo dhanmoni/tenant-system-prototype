@@ -16569,7 +16569,55 @@ fieldset.profile-type-row label {
 	gap: 0.85rem;
 	padding: 0.95rem 1.05rem 0.75rem;
 	border-bottom: 1px solid #e2e8f0;
-	background: #fff;
+	background: #f1f5f9;
+}
+
+.ws-join-view-only-banner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.65rem 0.85rem;
+	margin: 0 0 1rem;
+	padding: 0.75rem 0.95rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 10px;
+	background: #f1f5f9;
+	color: #334155;
+}
+
+.ws-join-view-only-banner__badge {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	background: #64748b;
+	color: #fff;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.ws-join-view-only-banner__text {
+	margin: 0;
+	flex: 1;
+	min-width: 12rem;
+	font-size: 0.88rem;
+	line-height: 1.45;
+	color: #475569;
+}
+
+.ws-uin-apply-head .ws-join-view-only-banner {
+	margin-top: 0.75rem;
+}
+
+/* Join step 2 — editable fields stay white; only phone (readonly) is grey */
+.ws-uin-apply .ws-uin-party-fields input:not([readonly]):not(:disabled),
+.ws-uin-apply .ws-uin-party-fields textarea:not([readonly]):not(:disabled) {
+	background-color: #fff;
+	color: #0f172a;
+	cursor: text;
 }
 
 .join-review__card-num {
@@ -16631,15 +16679,16 @@ fieldset.profile-type-row label {
 	width: 100%;
 	min-height: 2.75rem;
 	padding: 0.7rem 0.85rem;
-	border: 1px solid #dbe3ee;
+	border: 1px solid #d0d7e2;
 	border-radius: 8px;
-	background: #fff;
-	font-size: 1rem;
+	background: #eef2f6;
+	color: #475569;
+	font-size: 0.95rem;
 	font-weight: 500;
 	line-height: 1.5;
-	color: #0f172a;
 	word-break: break-word;
 	box-sizing: border-box;
+	box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .join-review__field--wide .join-review__value {

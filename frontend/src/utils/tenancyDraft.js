@@ -253,9 +253,9 @@ export function applyDraftToForm(draft, setters, { loadVillageWards, profile } =
 	} = setters
 
 	setDraftApplicationNo?.(draft.application_no)
-	// wizard_step = last completed stage (1–4). Resume on the next stage (up to payment = 5).
+	// wizard_step = last completed stage (1–4). Resume on the next stage (preview is last = 4).
 	const savedStep = Math.max(1, Math.min(4, Number(draft.wizard_step) || 1))
-	const resumeStep = Math.min(5, savedStep + 1)
+	const resumeStep = Math.min(4, savedStep + 1)
 	setSavedWizardStep?.(savedStep)
 	setTenancyStep?.(resumeStep)
 

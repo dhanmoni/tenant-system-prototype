@@ -4,9 +4,10 @@ import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDate } from '../../../utils/formatters'
 import { parseTenantFormsResponse } from '../../../utils/tenantFormsApi'
-import { STATUS, STATUS_LABELS } from '../../../constants/status'
-import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
+import { STATUS } from '../../../constants/status'
+import { APPLICATION_TYPES } from '../../../constants/application'
 import { tenantServiceGroups } from '../../../data/tenantServices'
+import { useLanguage } from '../../../i18n'
 import CitizenStatusChart from '../../components/dashboard/CitizenStatusChart'
 import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
 
@@ -16,8 +17,39 @@ const SERVICE_TILE_ICONS = {
 	'rent-tribunal': 'chart',
 }
 
+const AUTHORITY_TITLE_KEYS = {
+	'rent-authority': 'ws.citizen.authority.rentAuthority',
+	'rent-court': 'ws.citizen.authority.rentCourt',
+	'rent-tribunal': 'ws.citizen.authority.rentTribunal',
+}
+
+const APP_TYPE_KEYS = {
+	[APPLICATION_TYPES.TENANCY_CERTIFICATE]: 'ws.app.tenancy',
+	[APPLICATION_TYPES.RENT_REVISION]: 'ws.app.rentRevision',
+	[APPLICATION_TYPES.OTHER_CHARGES_REVISION]: 'ws.app.otherCharges',
+	[APPLICATION_TYPES.VALUER_APPOINTMENT]: 'ws.app.valuerAppointment',
+	[APPLICATION_TYPES.RENT_COURT_POSSESSION]: 'ws.app.rentCourtPossession',
+	[APPLICATION_TYPES.RENT_COURT_FILING]: 'ws.app.rentCourtFiling',
+	[APPLICATION_TYPES.RENT_AUTHORITY_FILING]: 'ws.app.rentAuthorityFiling',
+	[APPLICATION_TYPES.RENT_COURT_APPEAL]: 'ws.app.rentCourtAppeal',
+	[APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL]: 'ws.app.rentTribunalAppeal',
+}
+
+const STATUS_KEYS = {
+	[STATUS.SUBMITTED]: 'ws.status.submitted',
+	[STATUS.IN_REVIEW]: 'ws.status.inReview',
+	[STATUS.REJECTED]: 'ws.status.rejected',
+	[STATUS.COMPLETED]: 'ws.status.completed',
+	[STATUS.APPROVED]: 'ws.status.approved',
+	[STATUS.DRAFT]: 'ws.status.draft',
+	[STATUS.PARTIAL]: 'ws.status.partial',
+	[STATUS.UNDER_PROCESS]: 'ws.status.underProcess',
+	[STATUS.PENDING]: 'ws.status.pending',
+}
+
 function UserOverview() {
 	const { user } = useOutletContext()
+	const { t } = useLanguage()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const [flashMessage, setFlashMessage] = useState('')
@@ -50,7 +82,7 @@ function UserOverview() {
 		} catch (err) {
 			setApplications([])
 			setTotalCount(0)
-			setLoadError(err?.response?.data?.message || 'Could not load your applications.')
+			setLoadError(err?.response?.data?.message || t('ws.citizen.recent.loadError'))
 		} finally {
 			setLoading(false)
 		}
@@ -78,14 +110,20 @@ function UserOverview() {
 	const formatStatus = (status, applicationType = '') => {
 		const normalizedType = String(applicationType || '').toLowerCase()
 		const normalizedStatus = String(status || '').trim().toUpperCase()
-		if (normalizedStatus === STATUS.SUBMITTED) return STATUS_LABELS[STATUS.SUBMITTED]
+		if (normalizedStatus === STATUS.SUBMITTED) return t(STATUS_KEYS[STATUS.SUBMITTED])
 		if (
 			normalizedType.includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) &&
 			normalizedStatus === STATUS.UNDER_PROCESS
 		) {
-			return STATUS_LABELS[STATUS.SUBMITTED]
+			return t(STATUS_KEYS[STATUS.SUBMITTED])
 		}
-		return STATUS_LABELS[normalizedStatus] || status || '—'
+		const key = STATUS_KEYS[normalizedStatus]
+		return key ? t(key) : status || '—'
+	}
+
+	const formatAppType = (applicationType) => {
+		const key = APP_TYPE_KEYS[applicationType]
+		return key ? t(key) : applicationType || t('ws.citizen.recent.fallbackType')
 	}
 
 	const statusBadgeClass = (status) => {
@@ -114,13 +152,13 @@ function UserOverview() {
 			<header className="ws-citizen-welcome">
 				<div className="ws-citizen-welcome-accent" aria-hidden />
 				<div className="ws-citizen-welcome-inner">
-					<div className="ws-citizen-welcome-stats" aria-label="Application summary">
+					<div className="ws-citizen-welcome-stats" aria-label={t('ws.citizen.stats.aria')}>
 						<article className="ws-citizen-stat-card ws-citizen-stat-card--total">
 							<div className="ws-citizen-stat-card-top">
 								<span className="ws-citizen-stat-card-icon" aria-hidden>
 									<Icon name="list" />
 								</span>
-								<span className="ws-citizen-stat-card-label">Total applications</span>
+								<span className="ws-citizen-stat-card-label">{t('ws.citizen.stat.total')}</span>
 							</div>
 							<span className="ws-citizen-stat-card-value">
 								{loading ? '…' : stats.total}
@@ -131,7 +169,9 @@ function UserOverview() {
 								<span className="ws-citizen-stat-card-icon" aria-hidden>
 									<Icon name="clock" />
 								</span>
-								<span className="ws-citizen-stat-card-label">In progress</span>
+								<span className="ws-citizen-stat-card-label">
+									{t('ws.citizen.stat.inProgress')}
+								</span>
 							</div>
 							<span className="ws-citizen-stat-card-value">
 								{loading ? '…' : stats.inReview}
@@ -142,7 +182,9 @@ function UserOverview() {
 								<span className="ws-citizen-stat-card-icon" aria-hidden>
 									<Icon name="check" />
 								</span>
-								<span className="ws-citizen-stat-card-label">Completed</span>
+								<span className="ws-citizen-stat-card-label">
+									{t('ws.citizen.stat.completed')}
+								</span>
 							</div>
 							<span className="ws-citizen-stat-card-value">
 								{loading ? '…' : stats.completed}
@@ -156,18 +198,16 @@ function UserOverview() {
 				<div className="ws-card-header ws-citizen-actions-header">
 					<div>
 						<h2 id="citizen-actions-heading" className="ws-card-title">
-							Apply &amp; services
+							{t('ws.citizen.actions.title')}
 						</h2>
-						<p className="ws-citizen-actions-lead">
-							Start a new application or open Assam Tenancy Act forms by authority.
-						</p>
+						<p className="ws-citizen-actions-lead">{t('ws.citizen.actions.lead')}</p>
 					</div>
 					<button
 						type="button"
 						className="ws-btn ws-btn--outline ws-btn--sm"
 						onClick={() => navigate('/dashboard/services')}
 					>
-						Browse all forms
+						{t('ws.citizen.actions.browseAll')}
 					</button>
 				</div>
 				<div className="ws-card-body ws-citizen-actions-body">
@@ -181,18 +221,15 @@ function UserOverview() {
 								<Icon name="documentPlus" />
 							</span>
 							<div className="ws-citizen-uin-copy">
-								<span className="ws-citizen-uin-kicker">Primary application</span>
-								<span className="ws-citizen-uin-title">Apply for UIN</span>
-								<p className="ws-citizen-uin-desc">
-									Register for a Unique Identification Number (tenancy certificate) under
-									the Assam Tenancy Act.
-								</p>
+								<span className="ws-citizen-uin-kicker">{t('ws.citizen.uin.kicker')}</span>
+								<span className="ws-citizen-uin-title">{t('ws.citizen.uin.title')}</span>
+								<p className="ws-citizen-uin-desc">{t('ws.citizen.uin.desc')}</p>
 							</div>
-							<span className="ws-citizen-uin-cta">Start application →</span>
+							<span className="ws-citizen-uin-cta">{t('ws.citizen.uin.cta')}</span>
 						</button>
 
 						<div className="ws-citizen-services-panel">
-							<p className="ws-citizen-services-label">Assam Tenancy Act services</p>
+							<p className="ws-citizen-services-label">{t('ws.citizen.services.label')}</p>
 							<div className="ws-citizen-services-grid">
 								{tenantServiceGroups.map((group) => (
 									<button
@@ -207,9 +244,13 @@ function UserOverview() {
 											<Icon name={SERVICE_TILE_ICONS[group.id] || 'services'} />
 										</span>
 										<span className="ws-citizen-service-tile-body">
-											<span className="ws-citizen-service-tile-title">{group.title}</span>
+											<span className="ws-citizen-service-tile-title">
+												{t(AUTHORITY_TITLE_KEYS[group.id] || group.title)}
+											</span>
 											<span className="ws-citizen-service-tile-meta">
-												{group.forms.length} forms available
+												{t('ws.citizen.services.formsAvailable', {
+													count: group.forms.length,
+												})}
 											</span>
 										</span>
 										<span className="ws-citizen-service-tile-arrow" aria-hidden>
@@ -226,43 +267,43 @@ function UserOverview() {
 			<div className="ws-citizen-lower">
 				<section className="ws-card ws-citizen-lower-main">
 					<div className="ws-card-header">
-						<h2 className="ws-card-title">Recent applications</h2>
+						<h2 className="ws-card-title">{t('ws.citizen.recent.title')}</h2>
 						<button
 							type="button"
 							className="ws-btn ws-btn--outline ws-btn--sm"
 							onClick={() => navigate('/dashboard/status')}
 						>
-							View all
+							{t('ws.citizen.recent.viewAll')}
 						</button>
 					</div>
 					<div className="ws-card-body ws-citizen-lower-body">
 						{loading ? (
-							<div className="ws-empty">Loading applications…</div>
+							<div className="ws-empty">{t('ws.citizen.recent.loading')}</div>
 						) : loadError ? (
 							<div className="ws-citizen-empty-state">
 								<p>{loadError}</p>
 								<button type="button" className="ws-btn ws-btn--outline" onClick={loadData}>
-									Retry
+									{t('ws.citizen.recent.retry')}
 								</button>
 							</div>
 						) : applications.length === 0 ? (
 							<div className="ws-citizen-empty-state">
-								<p>No applications yet.</p>
+								<p>{t('ws.citizen.recent.empty')}</p>
 								<button
 									type="button"
 									className="ws-btn ws-btn--primary"
 									onClick={() => navigate('/dashboard/tenancy-certificate')}
 								>
-									Apply for UIN
+									{t('ws.citizen.uin.title')}
 								</button>
 							</div>
 						) : (
 							<div className="ws-citizen-recent-table">
 								<div className="ws-citizen-recent-head" aria-hidden>
-									<span>Application no.</span>
-									<span>Type</span>
-									<span>Status</span>
-									<span>Submitted</span>
+									<span>{t('ws.citizen.recent.col.appNo')}</span>
+									<span>{t('ws.citizen.recent.col.type')}</span>
+									<span>{t('ws.citizen.recent.col.status')}</span>
+									<span>{t('ws.citizen.recent.col.submitted')}</span>
 								</div>
 								<ul className="ws-citizen-recent-list">
 									{applications.map((app) => (
@@ -279,9 +320,7 @@ function UserOverview() {
 													{app.application_no || '—'}
 												</span>
 												<span className="ws-citizen-recent-type">
-													{APPLICATION_LABELS[app.application_type] ||
-														app.application_type ||
-														'Application'}
+													{formatAppType(app.application_type)}
 												</span>
 												<span
 													className={`ws-citizen-recent-status ${statusBadgeClass(app.status)}`}
@@ -302,17 +341,17 @@ function UserOverview() {
 
 				<aside className="ws-card ws-citizen-lower-aside">
 					<div className="ws-card-header">
-						<h2 className="ws-card-title">My application status</h2>
+						<h2 className="ws-card-title">{t('ws.citizen.chart.title')}</h2>
 					</div>
 					<div className="ws-card-body ws-citizen-lower-body">
-						<p className="ws-citizen-chart-hint">Breakdown of your recent submissions.</p>
+						<p className="ws-citizen-chart-hint">{t('ws.citizen.chart.hint')}</p>
 						<CitizenStatusChart applications={applications} />
 						<button
 							type="button"
 							className="ws-btn ws-btn--outline ws-citizen-status-link"
 							onClick={() => navigate('/dashboard/status')}
 						>
-							Open UIN status
+							{t('ws.citizen.chart.openStatus')}
 						</button>
 					</div>
 				</aside>

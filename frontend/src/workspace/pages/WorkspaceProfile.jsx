@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import api, { csrf } from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
-import { getRoleLabel } from '../../constants/roleLabels'
 import { formatDisplayEmail, formatDisplayName } from '../../utils/formatters'
+import { useLanguage } from '../../i18n'
 
 function WorkspaceProfile() {
 	const { user, onUserUpdate } = useOutletContext()
+	const { t } = useLanguage()
 	const [error, setError] = useState('')
 	const [profileLoading, setProfileLoading] = useState(false)
 	const [profileEditing, setProfileEditing] = useState(false)
@@ -26,16 +27,19 @@ function WorkspaceProfile() {
 	const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 	const displayName = formatDisplayName(profileName || user?.name)
 	const displayEmail = formatDisplayEmail(profileEmail || user?.email)
-	const roleLabel = getRoleLabel(user?.role)
+	const roleLabel = user?.role ? t(`role.${user.role}`) : '—'
 
-	const showSaveToast = useCallback((message = 'Profile saved.') => {
-		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
-		setSaveToast(message)
-		saveToastTimerRef.current = setTimeout(() => {
-			setSaveToast('')
-			saveToastTimerRef.current = null
-		}, 2800)
-	}, [])
+	const showSaveToast = useCallback(
+		(message) => {
+			if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
+			setSaveToast(message || t('ws.profile.saved'))
+			saveToastTimerRef.current = setTimeout(() => {
+				setSaveToast('')
+				saveToastTimerRef.current = null
+			}, 2800)
+		},
+		[t]
+	)
 
 	useEffect(() => {
 		loadProfile()
@@ -78,7 +82,7 @@ function WorkspaceProfile() {
 
 			setProfileEditing(!hasFullProfile)
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to load profile')
+			setError(err?.response?.data?.message || t('ws.profile.loadError'))
 		} finally {
 			setProfileLoading(false)
 		}
@@ -145,7 +149,7 @@ function WorkspaceProfile() {
 
 			setProfilePhoto(null)
 			setProfileEditing(false)
-			showSaveToast('Profile saved.')
+			showSaveToast(t('ws.profile.saved'))
 		} catch (err) {
 			const data = err?.response?.data
 			const errors = data?.errors || {}
@@ -154,7 +158,7 @@ function WorkspaceProfile() {
 				errors.pin_code?.[0] ||
 				errors.pan_card?.[0] ||
 				errors.passport_photo?.[0]
-			setError(firstError || data?.message || 'Failed to save profile')
+			setError(firstError || data?.message || t('ws.profile.saveError'))
 		} finally {
 			setProfileLoading(false)
 		}
@@ -166,7 +170,7 @@ function WorkspaceProfile() {
 	if (profileLoading && !profileName) {
 		return (
 			<div className="ws-page ws-profile-page">
-				<div className="ws-empty">Loading profile…</div>
+				<div className="ws-empty">{t('ws.profile.loading')}</div>
 			</div>
 		)
 	}
@@ -204,7 +208,7 @@ function WorkspaceProfile() {
 							className="ws-btn ws-btn--primary ws-profile-minimal-edit"
 							onClick={startEditing}
 						>
-							Edit
+							{t('ws.profile.edit')}
 						</button>
 					</header>
 
@@ -216,31 +220,31 @@ function WorkspaceProfile() {
 
 					<div className="ws-profile-minimal-grid ws-profile-minimal-grid--view">
 						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">Name</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.name')}</span>
 							<strong>{profileName || '—'}</strong>
 						</div>
 						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">Phone</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.phone')}</span>
 							<strong>{profilePhone || '—'}</strong>
 						</div>
 						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">Email</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.email')}</span>
 							<strong>{profileEmail || '—'}</strong>
 						</div>
 						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">District</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.district')}</span>
 							<strong>{profileDistrict || '—'}</strong>
 						</div>
 						<div className="ws-profile-view-item ws-profile-view-item--full">
-							<span className="ws-profile-field-label">Address</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.address')}</span>
 							<strong>{profileAddress || '—'}</strong>
 						</div>
 						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">PIN code</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.pin')}</span>
 							<strong>{profilePin || '—'}</strong>
 						</div>
 						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">PAN card</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.pan')}</span>
 							<strong>{profilePan || '—'}</strong>
 						</div>
 					</div>
@@ -263,7 +267,7 @@ function WorkspaceProfile() {
 									required={!profilePhotoPreview}
 									onChange={handlePhotoChange}
 								/>
-								{profilePhotoPreview ? 'Change' : 'Upload'}
+								{profilePhotoPreview ? t('ws.profile.change') : t('ws.profile.upload')}
 							</label>
 						</div>
 						<div className="ws-profile-minimal-identity">
@@ -284,23 +288,23 @@ function WorkspaceProfile() {
 
 					<div className="ws-profile-minimal-grid">
 						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">Name</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.name')}</span>
 							<input type="text" value={profileName} readOnly />
 						</label>
 						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">Phone</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.phone')}</span>
 							<input type="text" value={profilePhone} readOnly />
 						</label>
 						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">Email</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.email')}</span>
 							<input type="email" value={profileEmail} readOnly />
 						</label>
 						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">District</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.district')}</span>
 							<input type="text" value={profileDistrict} readOnly />
 						</label>
 						<label className="ws-profile-field ws-profile-field--full">
-							<span className="ws-profile-field-label">Address</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.address')}</span>
 							<textarea
 								rows={3}
 								value={profileAddress}
@@ -310,7 +314,7 @@ function WorkspaceProfile() {
 							/>
 						</label>
 						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">PIN code</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.pin')}</span>
 							<input
 								type="text"
 								inputMode="numeric"
@@ -319,13 +323,13 @@ function WorkspaceProfile() {
 									if (/^\d*$/.test(e.target.value)) setProfilePin(e.target.value)
 								}}
 								pattern="^\d{6}$"
-								title="Enter a 6 digit PIN code."
+								title={t('ws.profile.pinTitle')}
 								maxLength={6}
 								required
 							/>
 						</label>
 						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">PAN card</span>
+							<span className="ws-profile-field-label">{t('ws.profile.field.pan')}</span>
 							<input
 								type="text"
 								value={profilePan}
@@ -334,7 +338,7 @@ function WorkspaceProfile() {
 									if (/^[A-Z0-9]*$/.test(next)) setProfilePan(next)
 								}}
 								pattern="^[A-Z]{5}[0-9]{4}[A-Z]$"
-								title="Enter a valid PAN (e.g. ABCDE1234F)."
+								title={t('ws.profile.panTitle')}
 								maxLength={10}
 								required
 							/>
@@ -349,7 +353,7 @@ function WorkspaceProfile() {
 								disabled={profileLoading}
 								onClick={cancelEditing}
 							>
-								Cancel
+								{t('ws.profile.cancel')}
 							</button>
 						) : null}
 						<button
@@ -357,7 +361,7 @@ function WorkspaceProfile() {
 							className="ws-btn ws-btn--primary"
 							disabled={profileLoading}
 						>
-							{profileLoading ? 'Saving…' : 'Save'}
+							{profileLoading ? t('ws.profile.saving') : t('ws.profile.save')}
 						</button>
 					</div>
 				</form>

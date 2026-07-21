@@ -4584,17 +4584,27 @@
 	position: relative;
 	max-width: 1000px;
 	width: 100%;
+	box-sizing: border-box;
 }
 
 .ws-uin-h-stepper__current {
 	display: none;
 }
 
+/* Shared width for track + steps so the line stays between first/last circles */
+.ws-uin-h-stepper__rail {
+	position: relative;
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
 .ws-uin-h-stepper__track {
 	position: absolute;
-	top: calc(0.35rem + 25px);
-	left: 10%;
-	right: 10%;
+	top: 25px;
+	/* Span only from centre of first step to centre of last step */
+	left: calc(100% / (2 * var(--ws-uin-steps, 4)));
+	right: calc(100% / (2 * var(--ws-uin-steps, 4)));
 	height: 2px;
 	background: #e2e8f0;
 	z-index: 0;
@@ -4622,6 +4632,7 @@
 	margin: 0;
 	position: relative;
 	z-index: 1;
+	width: 100%;
 }
 
 .ws-uin-h-stepper__list > li {
@@ -4772,15 +4783,21 @@
 		scrollbar-width: thin;
 	}
 
+	.ws-uin-h-stepper__rail {
+		/* One shared width — track and steps scroll together */
+		min-width: max(100%, 36rem);
+	}
+
 	.ws-uin-h-stepper__track {
-		top: calc(0.5rem + 20px);
-		left: 8%;
-		right: 8%;
-		min-width: 36rem;
+		top: 20px;
+		left: calc(100% / (2 * var(--ws-uin-steps, 4)));
+		right: calc(100% / (2 * var(--ws-uin-steps, 4)));
+		min-width: 0;
 	}
 
 	.ws-uin-h-stepper__list {
-		min-width: 40rem;
+		min-width: 0;
+		width: 100%;
 	}
 
 	.ws-uin-h-stepper__num {
@@ -4801,15 +4818,14 @@
 		padding: 0.4rem 0.25rem 0.2rem;
 	}
 
-	.ws-uin-h-stepper__track {
-		top: calc(0.4rem + 17px);
-		left: 6%;
-		right: 6%;
-		min-width: 30rem;
+	.ws-uin-h-stepper__rail {
+		min-width: max(100%, 30rem);
 	}
 
-	.ws-uin-h-stepper__list {
-		min-width: 34rem;
+	.ws-uin-h-stepper__track {
+		top: 17px;
+		left: calc(100% / (2 * var(--ws-uin-steps, 4)));
+		right: calc(100% / (2 * var(--ws-uin-steps, 4)));
 	}
 
 	.ws-uin-h-stepper__num {
