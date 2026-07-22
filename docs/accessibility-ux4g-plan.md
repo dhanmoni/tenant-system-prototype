@@ -21,6 +21,21 @@
 
 ---
 
+## Current status (2026-07-21)
+
+**Phases 1–2 started / MVP cutover done in code:**
+
+- Official UX4G CDN CSS + JS loaded from `frontend/index.html`
+- `Ux4gAccessibility.jsx` ensures SPA reloads still have assets
+- Custom purple FAB (`AccessibilityWidget.jsx`) **removed**
+- Top utility strip is **skip + language only** (A+/contrast removed)
+- Landing mobile duplicate A+/contrast strip **removed**
+- `landingA11y.js` bridge **removed**
+
+**Still open:** CSP allowlist for DigiLocker CDN, dark-mode portal overrides if needed, GIGW content audit (Phase 4).
+
+---
+
 ## Executive summary
 
 Today the app has **three overlapping accessibility UIs** plus home-grown font/contrast logic. That causes inconsistent behaviour (especially landing vs dashboard), duplicate controls, CSS fights, and incomplete GIGW coverage (no dyslexia font, text-to-speech, spacing, etc.).

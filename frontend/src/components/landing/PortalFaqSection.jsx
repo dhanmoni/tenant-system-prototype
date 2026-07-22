@@ -81,10 +81,10 @@ function PortalFaqSection() {
 	return (
 		<section
 			id="portal-faq"
-			className="landing-faq-section landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 py-12 sm:py-14 lg:py-16"
+			className="landing-faq-section landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 py-14 sm:py-16 lg:py-20"
 			aria-labelledby="portal-faq-heading"
 		>
-			<div className="landing-faq-section__shell mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+			<div className="landing-faq-section__shell mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 				<LandingSectionIntro
 					className="landing-faq-section__intro"
 					align="center"
@@ -93,7 +93,7 @@ function PortalFaqSection() {
 					titleId="portal-faq-heading"
 				/>
 
-				<div className="landing-faq__list mt-9 sm:mt-10">
+				<div className="landing-faq__list mt-10 sm:mt-12">
 					{faqItems.map((item, index) => (
 						<motion.div
 							key={item.id}

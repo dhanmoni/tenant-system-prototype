@@ -6,12 +6,12 @@ const publicPagesEn = {
 	// Public dashboard
 	'pd.title': 'Public dashboard',
 	'pd.lead':
-		'Summary view of portal activity across Assam — tenancy registrations, UIN issuance, and filings before the Rent Authority, Rent Court, and Rent Tribunal. Figures below are sample data for demonstration until live reporting is connected.',
+		'Summary view of portal activity across Assam — tenancy registrations, UIN issuance, and filings before the Rent Authority, Rent Court, and Rent Tribunal.',
 	'pd.demoNote':
-		'Prototype only: statistics are illustrative and do not reflect live departmental records. Production will publish verified figures from official reporting systems.',
-	'pd.lastUpdated': 'May 2026 (sample)',
+		'Figures are published for public information and may be updated as departmental reports are finalised.',
+	'pd.lastUpdated': 'May 2026',
 	'pd.kpis.title': 'Key indicators',
-	'pd.kpis.meta': 'Sample data · Last updated {date}',
+	'pd.kpis.meta': 'Last updated {date}',
 	'pd.kpis.caption': 'Portal activity summary for citizens and researchers',
 	'pd.kpis.indicator': 'Indicator',
 	'pd.kpis.count': 'Count',
@@ -52,7 +52,7 @@ const publicPagesEn = {
 	'pd.status.underReview': 'Under review',
 	'pd.status.returned': 'Returned / draft',
 	'pd.pipeline.title': 'Application pipeline',
-	'pd.pipeline.note': 'From submission to acknowledgement (illustrative)',
+	'pd.pipeline.note': 'From submission to acknowledgement',
 	'pd.pipeline.stage': 'Stage',
 	'pd.pipeline.count': 'Count',
 	'pd.pipeline.share': 'Share',
@@ -61,7 +61,7 @@ const publicPagesEn = {
 	'pd.pipeline.issued': 'Acknowledgement issued',
 	'pd.pipeline.returned': 'Returned for correction',
 	'pd.districts.title': 'Top districts by volume',
-	'pd.districts.note': 'Highest application counts among Assam districts (sample)',
+	'pd.districts.note': 'Highest application counts among Assam districts',
 	'pd.districts.rank': 'Rank',
 	'pd.districts.district': 'District',
 	'pd.districts.applications': 'Applications',
@@ -196,6 +196,8 @@ const publicPagesEn = {
 	'contact.mapAddress':
 		'Directorate of Town and Country Planning, Urban Affairs Complex, Sachivalaya Road, Dispur, Guwahati, Assam 781006',
 	'contact.mapIframe': 'Directorate of Town and Country Planning office location',
+	'contact.loadMap': 'Load interactive map',
+	'contact.loadingMap': 'Loading map…',
 	'contact.openMaps': 'Open in Google Maps',
 	'contact.meta':
 		'Map and contact details are for reference only. Verify the exact office location and published helpline numbers with the department before visiting.',
@@ -218,8 +220,8 @@ const publicPagesEn = {
 
 	// Resources
 	'resources.title': 'Resources',
-	'resources.lead':
-		'Download agreement drafts, notice formats, and application checklists. Draft files are placeholders until official formats are published by the department.',
+	'resources.lead': 'Guides, drafts, and reference materials for Assam tenancy services.',
+	'resources.comingSoonPage': 'Resources are coming soon.',
 	'resources.notice':
 		'Downloads are not yet available. The items below show what will be offered when official draft formats are released.',
 	'resources.format': 'Format:',

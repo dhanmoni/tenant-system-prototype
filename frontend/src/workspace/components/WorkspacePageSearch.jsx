@@ -48,7 +48,7 @@ function filterPages(pages, query) {
 	})
 }
 
-function WorkspacePageSearch({ user }) {
+function WorkspacePageSearch({ user, onPanelOpen }) {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { t } = useLanguage()
@@ -71,9 +71,10 @@ function WorkspacePageSearch({ user }) {
 	}, [])
 
 	const openSearch = useCallback(() => {
+		onPanelOpen?.()
 		setOpen(true)
 		setHighlightIndex(0)
-	}, [])
+	}, [onPanelOpen])
 
 	const goToPage = useCallback(
 		(page) => {

@@ -58,9 +58,7 @@ function JoinEntryRedirect({ user }) {
 		/>
 	)
 }
-import AccessibilityWidget from './components/landing/AccessibilityWidget'
 import PortalLoadingScreen from './components/PortalLoadingScreen'
-import { LANDING_A11Y_EVENT } from './utils/landingA11y'
 import {
 	getMainContentTargetId,
 	handleSkipLinkClick,
@@ -79,8 +77,6 @@ function App() {
 	const [loggingOut, setLoggingOut] = useState(false)
 	const navigate = useNavigate()
 	const [fontScale, setFontScale] = useState('normal')
-	const [highContrast, setHighContrast] = useState(false)
-	const [highlightLinks, setHighlightLinks] = useState(false)
 	const slides = [
 		{
 			titleKey: 'carousel.slide1Title',
@@ -182,12 +178,8 @@ function App() {
 	useEffect(() => {
 		try {
 			const savedScale = localStorage.getItem('a11y-font-scale')
-			const savedContrast = localStorage.getItem('a11y-high-contrast')
 			if (savedScale === 'normal' || savedScale === 'large' || savedScale === 'xlarge') {
 				setFontScale(savedScale)
-			}
-			if (savedContrast === '1') {
-				setHighContrast(true)
 			}
 		} catch {
 			// Ignore localStorage access errors.
@@ -197,39 +189,20 @@ function App() {
 	useEffect(() => {
 		try {
 			localStorage.setItem('a11y-font-scale', fontScale)
-			localStorage.setItem('a11y-high-contrast', highContrast ? '1' : '0')
 		} catch {
 			// Ignore localStorage access errors.
-		}
-	}, [fontScale, highContrast])
-
-	useEffect(() => {
-		const root = document.documentElement
-		if (!root) return
-		const nextSize = fontScale === 'xlarge' ? '20px' : fontScale === 'large' ? '18px' : '16px'
-		root.style.fontSize = nextSize
-		return () => {
-			root.style.fontSize = ''
 		}
 	}, [fontScale])
 
 	useEffect(() => {
-		const body = document.body
-		if (!body) return
-		body.classList.toggle('a11y-contrast-high', highContrast)
+		const root = document.documentElement
+		if (!root) return
+		root.classList.remove('a11y-font-normal', 'a11y-font-large', 'a11y-font-xlarge')
+		root.classList.add(`a11y-font-${fontScale}`)
 		return () => {
-			body.classList.remove('a11y-contrast-high')
+			root.classList.remove('a11y-font-normal', 'a11y-font-large', 'a11y-font-xlarge')
 		}
-	}, [highContrast])
-
-	useEffect(() => {
-		const body = document.body
-		if (!body) return
-		body.classList.toggle('a11y-highlight-links', highlightLinks)
-		return () => {
-			body.classList.remove('a11y-highlight-links')
-		}
-	}, [highlightLinks])
+	}, [fontScale])
 
 	const increaseFontScale = () => {
 		setFontScale((prev) => {
@@ -246,20 +219,6 @@ function App() {
 			return 'normal'
 		})
 	}
-
-	useEffect(() => {
-		const onLandingA11y = (e) => {
-			const action = e.detail
-			if (action === 'increase') increaseFontScale()
-			else if (action === 'decrease') decreaseFontScale()
-			else if (action === 'reset') setFontScale('normal')
-			else if (action === 'contrast') setHighContrast((prev) => !prev)
-			else if (action === 'lang-en') setLanguage('en')
-			else if (action === 'lang-as') setLanguage('as')
-		}
-		window.addEventListener(LANDING_A11Y_EVENT, onLandingA11y)
-		return () => window.removeEventListener(LANDING_A11Y_EVENT, onLandingA11y)
-	}, [setLanguage])
 
 	const handleLogout = async () => {
 		setLoggingOut(true)
@@ -334,11 +293,8 @@ function App() {
 			>
 				{t('a11y.skipToContent')}
 			</a>
-			{/* Accessibility Bar — hidden on landing home mobile (see LandingNav utility bar) */}
-			<div
-				id="accessibility-bar"
-				className={`accessibility-bar${usesLandingChrome ? ' accessibility-bar--landing-mobile-hidden' : ''}`}
-			>
+			{/* Accessibility utility strip — india.gov.in style (skip, font size, language) */}
+			<div id="accessibility-bar" className="accessibility-bar">
 				<div className="accessibility-bar-inner">
 					<div className="accessibility-gov">
 						<img className="accessibility-emblem" src={tcpLogo} alt="" aria-hidden />
@@ -360,77 +316,69 @@ function App() {
 							href={`#${mainContentTargetId}`}
 							onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
 						>
-							{t('a11y.skipToContent')}
+							{t('a11y.skipToMain')}
 						</a>
 						<span className="accessibility-toolbar-divider" aria-hidden />
-						<div className="accessibility-font-tools" role="group" aria-label={t('a11y.fontSize')}>
-							<button
-								type="button"
-								className="accessibility-toolbar-btn"
-								onClick={increaseFontScale}
-								title={t('a11y.increaseText')}
-								aria-label={t('a11y.increaseText')}
-							>
-								A+
-							</button>
-							<button
-								type="button"
-								className={`accessibility-toolbar-btn${fontScale === 'normal' ? ' is-active' : ''}`}
-								onClick={() => setFontScale('normal')}
-								title={t('a11y.resetText')}
-								aria-label={t('a11y.resetText')}
-							>
-								A
-							</button>
-							<button
-								type="button"
-								className="accessibility-toolbar-btn"
-								onClick={decreaseFontScale}
-								title={t('a11y.decreaseText')}
-								aria-label={t('a11y.decreaseText')}
-							>
-								A-
-							</button>
+						<div className="accessibility-toolbar-group" role="group" aria-label={t('a11y.fontSize')}>
+							<span className="accessibility-toolbar-label">{t('a11y.fontSize')}</span>
+							<div className="accessibility-font-tools">
+								<button
+									type="button"
+									className="accessibility-toolbar-btn accessibility-toolbar-btn--font"
+									onClick={increaseFontScale}
+									disabled={fontScale === 'xlarge'}
+									title={t('a11y.increaseText')}
+									aria-label={t('a11y.increaseText')}
+								>
+									A+
+								</button>
+								<button
+									type="button"
+									className={`accessibility-toolbar-btn accessibility-toolbar-btn--font${fontScale === 'normal' ? ' is-active' : ''}`}
+									onClick={() => setFontScale('normal')}
+									title={t('a11y.resetText')}
+									aria-label={t('a11y.resetText')}
+								>
+									A
+								</button>
+								<button
+									type="button"
+									className="accessibility-toolbar-btn accessibility-toolbar-btn--font"
+									onClick={decreaseFontScale}
+									disabled={fontScale === 'normal'}
+									title={t('a11y.decreaseText')}
+									aria-label={t('a11y.decreaseText')}
+								>
+									A-
+								</button>
+							</div>
 						</div>
 						<span className="accessibility-toolbar-divider" aria-hidden />
-						<div
-							className="accessibility-lang-tools"
-							role="group"
-							aria-label={t('a11y.language')}
-						>
-							<button
-								type="button"
-								className={`accessibility-toolbar-btn${language === 'en' ? ' is-active' : ''}`}
-								onClick={() => setLanguage('en')}
-								aria-pressed={language === 'en'}
-								aria-label={t('a11y.english')}
-								title={t('a11y.english')}
-							>
-								EN
-							</button>
-							<button
-								type="button"
-								className={`accessibility-toolbar-btn${language === 'as' ? ' is-active' : ''}`}
-								onClick={() => setLanguage('as')}
-								aria-pressed={language === 'as'}
-								aria-label={t('a11y.assamese')}
-								title={t('a11y.assamese')}
-							>
-								অসমীয়া
-							</button>
+						<div className="accessibility-toolbar-group" role="group" aria-label={t('a11y.language')}>
+							<span className="accessibility-toolbar-label">{t('a11y.language')}</span>
+							<div className="accessibility-lang-tools">
+								<button
+									type="button"
+									className={`accessibility-toolbar-btn${language === 'en' ? ' is-active' : ''}`}
+									onClick={() => setLanguage('en')}
+									aria-pressed={language === 'en'}
+									aria-label={t('a11y.english')}
+									title={t('a11y.english')}
+								>
+									EN
+								</button>
+								<button
+									type="button"
+									className={`accessibility-toolbar-btn${language === 'as' ? ' is-active' : ''}`}
+									onClick={() => setLanguage('as')}
+									aria-pressed={language === 'as'}
+									aria-label={t('a11y.assamese')}
+									title={t('a11y.assamese')}
+								>
+									অসমীয়া
+								</button>
+							</div>
 						</div>
-						<span className="accessibility-toolbar-divider" aria-hidden />
-						<button
-							type="button"
-							className={`accessibility-toolbar-btn accessibility-toolbar-btn--text${highContrast ? ' is-active' : ''}`}
-							onClick={() => setHighContrast((prev) => !prev)}
-							title={t('a11y.toggleContrast')}
-							aria-pressed={highContrast}
-							aria-label={t('a11y.toggleContrast')}
-						>
-							<span className="accessibility-label-long">{t('a11y.highContrast')}</span>
-							<span className="accessibility-label-short">{t('a11y.contrast')}</span>
-						</button>
 					</div>
 				</div>
 			</div>
@@ -680,19 +628,6 @@ function App() {
 				</footer>
 			)} */}
 
-			{!user ? (
-				<AccessibilityWidget
-					fontScale={fontScale}
-					highContrast={highContrast}
-					highlightLinks={highlightLinks}
-					onIncreaseFont={increaseFontScale}
-					onDecreaseFont={decreaseFontScale}
-					onResetFont={() => setFontScale('normal')}
-					onToggleContrast={() => setHighContrast((prev) => !prev)}
-					onToggleHighlightLinks={() => setHighlightLinks((prev) => !prev)}
-					mainContentTargetId={mainContentTargetId}
-				/>
-			) : null}
 		</div>
 	)
 }

@@ -200,6 +200,7 @@ const as = {
 	'home.services.lead':
 		'এই পৰ্টেলে ভাড়া কৰ্তৃপক্ষ, ভাড়া ন্যায়ালয় আৰু ভাড়া ট্ৰাইবিউনেলৰ সৈতে পঞ্জীয়ন আৰু সেৱা প্ৰদান কৰে।',
 	'home.services.explore': 'সকলো সেৱা চাওক',
+	'home.services.learnMore': 'অধিক জানক',
 	'home.services.uin.title': 'UIN আৰু ভাড়াঘৰ প্ৰমাণপত্ৰ',
 	'home.services.uin.short': 'UIN',
 	'home.services.uin.tagline': 'ইয়াৰ পৰা আৰম্ভ কৰক',
@@ -231,15 +232,29 @@ const as = {
 	'home.stats.disputesDesc': 'ডিজিটেল কাৰ্যপ্ৰবাহৰ জৰিয়তে সমাপ্ত হোৱা বিবাদ আৰু আপীল।',
 
 	'home.benefits.title': 'পৰ্টেলৰ সুবিধাসমূহ',
-	'home.benefits.lead': 'এটা সুৰক্ষিত ডিজিটেল মঞ্চৰ পৰা আপোনাৰ সকলো ভাড়াঘৰ সেৱা পৰিচালনা কৰক।',
+	'home.benefits.lead':
+		'অসমজুৰি ভাড়াঘৰ পঞ্জীয়ন, UIN আৰু দাখিলৰ বাবে এটা সুৰক্ষিত মঞ্চ।',
 	'home.benefits.services.title': 'সেৱাসমূহ',
 	'home.benefits.services.desc':
-		'UIN-ৰ বাবে আবেদন কৰক, ভাড়া কৰ্তৃপক্ষ, ন্যায়ালয় আৰু ট্ৰাইবিউনেলৰ সেৱা লাভ কৰক।',
+		'একে একাউণ্টৰ পৰা UIN আবেদন আৰু ভাড়া কৰ্তৃপক্ষ, ন্যায়ালয় আৰু ট্ৰাইবিউনেল সেৱা ব্যৱহাৰ কৰক।',
 	'home.benefits.tracking.title': 'আবেদন অনুসৰণ',
 	'home.benefits.tracking.desc':
-		'একেঠাইৰ পৰা আবেদনৰ অগ্ৰগতি, স্থিতি আপডেট আৰু ইতিহাস চাওক।',
+		'প্ৰতিটো আবেদনৰ অগ্ৰগতি, স্থিতি আপডেট আৰু ইতিহাস একেঠাইত অনুসৰণ কৰক।',
 	'home.benefits.records.title': 'সুৰক্ষিত ডিজিটেল ৰেকৰ্ড',
-	'home.benefits.records.desc': 'যিকোনো সময়ত আবেদন আৰু নথি সুৰক্ষিতভাৱে চাওক।',
+	'home.benefits.records.desc':
+		'আবেদন আৰু নথি যিকোনো সময়ত সুৰক্ষিতভাৱে উপলব্ধ ৰাখক।',
+	'home.benefits.docs.title': 'নথি সাজু',
+	'home.benefits.docs.desc':
+		'পঞ্জীয়ন আৰু দাখিলৰ বাবে সহায়ক নথি আপলোড, সংৰক্ষণ আৰু পুনৰ ব্যৱহাৰ কৰক।',
+	'home.benefits.uin.title': 'UIN পৰিচয়',
+	'home.benefits.uin.desc':
+		'আপোনাৰ একক পৰিচয় নম্বৰ ভাড়াঘৰ ৰেকৰ্ড আৰু সম্পৰ্কীয় সেৱাৰ সৈতে সংযোগ কৰক।',
+	'home.benefits.orbit.services': 'সেৱা',
+	'home.benefits.orbit.tracking': 'অনুসৰণ',
+	'home.benefits.orbit.records': 'ৰেকৰ্ড',
+	'home.benefits.orbit.docs': 'নথি',
+	'home.benefits.orbit.uin': 'UIN',
+	'home.benefits.orbit.center': 'ATRP',
 	'home.benefits.mediaAlt': 'অনলাইন ভাড়াঘৰ পঞ্জীয়ন আৰু UIN সেৱা ব্যৱহাৰ কৰা নাগৰিক',
 
 	'home.guide.title': 'কেনেকৈ কাম কৰে',

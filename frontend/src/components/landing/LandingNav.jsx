@@ -6,14 +6,14 @@ import { Menu, X } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import NavDashboardMenu from './NavDashboardMenu'
 import tcpLogo from '../../assets/img/TCP logo.png'
+import nicLogo from '../../assets/img/NIC.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
-import { emitLandingA11y } from '../../utils/landingA11y'
 import { useLanguage } from '../../i18n'
 
 function LandingNav({ variant = 'overlay' }) {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const location = useLocation()
-	const { language, t } = useLanguage()
+	const { t } = useLanguage()
 	const isStatic = variant === 'static'
 
 	const shellLinkClass = (path, exact = true) => {
@@ -158,9 +158,14 @@ function LandingNav({ variant = 'overlay' }) {
 										</div>
 										<div className="landing-nav-drawer-footer">
 											<img
+												src={nicLogo}
+												alt="NIC"
+												className="landing-nav-drawer-partner-logo landing-nav-drawer-partner-logo--nic"
+											/>
+											<img
 												src={digitalIndiaLogo}
 												alt="Digital India"
-												className="landing-nav-drawer-di-logo"
+												className="landing-nav-drawer-partner-logo landing-nav-drawer-partner-logo--di"
 											/>
 										</div>
 									</div>
@@ -180,85 +185,6 @@ function LandingNav({ variant = 'overlay' }) {
 			aria-label={t('nav.main')}
 		>
 			<div className="landing-nav-mobile">
-				<div
-					className="landing-nav-mobile-a11y"
-					role="toolbar"
-					aria-label={t('a11y.options')}
-				>
-					<div className="landing-nav-mobile-a11y-inner">
-						<div className="landing-nav-mobile-a11y-links">
-							<a href="#portal-content" className="landing-nav-mobile-skip">
-								{t('a11y.skipToContent')}
-							</a>
-						</div>
-						<div className="landing-nav-mobile-a11y-tools">
-							<div className="landing-nav-mobile-a11y-fonts" role="group" aria-label={t('a11y.textSize')}>
-								<button
-									type="button"
-									className="landing-nav-mobile-a11y-btn"
-									onClick={() => emitLandingA11y('decrease')}
-									aria-label={t('a11y.decreaseText')}
-								>
-									A−
-								</button>
-								<button
-									type="button"
-									className="landing-nav-mobile-a11y-btn"
-									onClick={() => emitLandingA11y('reset')}
-									aria-label={t('a11y.resetText')}
-								>
-									A
-								</button>
-								<button
-									type="button"
-									className="landing-nav-mobile-a11y-btn"
-									onClick={() => emitLandingA11y('increase')}
-									aria-label={t('a11y.increaseText')}
-								>
-									A+
-								</button>
-							</div>
-							<span className="landing-nav-mobile-sep" aria-hidden>
-								|
-							</span>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn landing-nav-mobile-a11y-btn--text"
-								onClick={() => emitLandingA11y('contrast')}
-								aria-label={t('a11y.toggleContrast')}
-							>
-								{t('a11y.contrast')}
-							</button>
-							<span className="landing-nav-mobile-sep" aria-hidden>
-								|
-							</span>
-							<div className="landing-nav-mobile-a11y-lang" role="group" aria-label={t('a11y.language')}>
-								<button
-									type="button"
-									className={`landing-nav-mobile-a11y-btn${language === 'en' ? ' is-active' : ''}`}
-									onClick={() => emitLandingA11y('lang-en')}
-									aria-label={t('a11y.english')}
-									aria-pressed={language === 'en'}
-								>
-									English
-								</button>
-								<span className="landing-nav-mobile-sep" aria-hidden>
-									|
-								</span>
-								<button
-									type="button"
-									className={`landing-nav-mobile-a11y-btn${language === 'as' ? ' is-active' : ''}`}
-									onClick={() => emitLandingA11y('lang-as')}
-									aria-label={t('a11y.assamese')}
-									aria-pressed={language === 'as'}
-								>
-									অসমীয়া
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-
 				<div className="landing-nav-mobile-brand">
 					<Link to="/" onClick={closeMenu} className="landing-nav-brand">
 						<img src={tcpLogo} alt="" className="landing-nav-emblem" aria-hidden />
@@ -269,6 +195,18 @@ function LandingNav({ variant = 'overlay' }) {
 							</span>
 						</span>
 					</Link>
+					<div className="landing-nav-mobile-logos">
+						<img
+							src={nicLogo}
+							alt="NIC"
+							className="landing-nav-partner-logo landing-nav-partner-logo--nic"
+						/>
+						<img
+							src={digitalIndiaLogo}
+							alt="Digital India"
+							className="landing-nav-partner-logo landing-nav-partner-logo--di"
+						/>
+					</div>
 					<button
 						type="button"
 						className="landing-nav-mobile-menu-btn"

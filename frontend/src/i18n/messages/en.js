@@ -201,6 +201,7 @@ const en = {
 	'home.services.lead':
 		'This portal provides tenancy certificate registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
 	'home.services.explore': 'Explore all services',
+	'home.services.learnMore': 'Learn more',
 	'home.services.uin.title': 'UIN & tenancy certificate',
 	'home.services.uin.short': 'UIN',
 	'home.services.uin.tagline': 'Start here',
@@ -232,15 +233,29 @@ const en = {
 	'home.stats.disputesDesc': 'Disputes and appeals concluded through the digital workflow.',
 
 	'home.benefits.title': 'Portal Benefits',
-	'home.benefits.lead': 'Manage all your tenancy services from one secure digital platform.',
+	'home.benefits.lead':
+		'One secure platform for tenancy registration, UIN, and filings across Assam.',
 	'home.benefits.services.title': 'Services',
 	'home.benefits.services.desc':
-		'Apply for UIN, access Rent Authority, Rent Court and Tribunal services.',
+		'Apply for UIN and use Rent Authority, Rent Court, and Tribunal services from one account.',
 	'home.benefits.tracking.title': 'Application Tracking',
 	'home.benefits.tracking.desc':
-		'Monitor application progress, status updates and history from one place.',
+		'Follow progress, status updates, and history for every application in one place.',
 	'home.benefits.records.title': 'Secure Digital Records',
-	'home.benefits.records.desc': 'Access applications and documents securely anytime.',
+	'home.benefits.records.desc':
+		'Keep applications and documents available securely whenever you need them.',
+	'home.benefits.docs.title': 'Document Ready',
+	'home.benefits.docs.desc':
+		'Upload, store, and reuse supporting documents for registration and filings.',
+	'home.benefits.uin.title': 'UIN Identity',
+	'home.benefits.uin.desc':
+		'Link your Unique Identification Number to tenancy records and related services.',
+	'home.benefits.orbit.services': 'Services',
+	'home.benefits.orbit.tracking': 'Tracking',
+	'home.benefits.orbit.records': 'Records',
+	'home.benefits.orbit.docs': 'Documents',
+	'home.benefits.orbit.uin': 'UIN',
+	'home.benefits.orbit.center': 'ATRP',
 	'home.benefits.mediaAlt': 'Citizens using online tenancy registration and UIN services',
 
 	'home.guide.title': 'How it works',

@@ -14,11 +14,13 @@ function LandingSectionIntro({
 	align = 'left',
 	titleId,
 	className = '',
+	/** When set, skip internal scroll detection (parent section controls reveal). */
+	animateWhen,
 }) {
 	const ref = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const inView = useInView(ref, { once: true, margin: '-8% 0px -10% 0px' })
-	const animate = reduceMotion || inView
+	const inView = useInView(ref, { once: true, margin: '120px 0px 80px 0px' })
+	const animate = reduceMotion || (animateWhen ?? inView)
 
 	return (
 		<motion.header

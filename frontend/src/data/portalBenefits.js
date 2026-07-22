@@ -1,7 +1,7 @@
-/** Homepage — Portal Benefits (minimal list layout) */
+/** Homepage — Portal Benefits */
 export const portalBenefitsIntro = {
 	title: 'Portal Benefits',
-	lead: 'Manage all your tenancy services from one secure digital platform.',
+	lead: 'One secure platform for tenancy registration, UIN, and filings across Assam.',
 }
 
 export const portalBenefitItems = [
@@ -10,19 +10,20 @@ export const portalBenefitItems = [
 		icon: 'landmark',
 		title: 'Services',
 		description:
-			'Apply for UIN, access Rent Authority, Rent Court and Tribunal services.',
+			'Apply for UIN and use Rent Authority, Rent Court, and Tribunal services from one account.',
 	},
 	{
 		id: 'tracking',
 		icon: 'clipboardList',
 		title: 'Application Tracking',
 		description:
-			'Monitor application progress, status updates and history from one place.',
+			'Follow progress, status updates, and history for every application in one place.',
 	},
 	{
 		id: 'records',
 		icon: 'shieldCheck',
 		title: 'Secure Digital Records',
-		description: 'Access applications and documents securely anytime.',
+		description:
+			'Keep applications and documents available securely whenever you need them.',
 	},
 ]
