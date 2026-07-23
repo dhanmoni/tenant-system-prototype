@@ -575,6 +575,10 @@ function App() {
 							}
 						/>
 						<Route
+							path="admin/tenancy/:applicationNo"
+							element={<AdminApplicationDetailsPage />}
+						/>
+						<Route
 							path="admin/districts"
 							element={
 								<WorkspaceLegacyFrame title="Districts" subtitle="Manage district master data">

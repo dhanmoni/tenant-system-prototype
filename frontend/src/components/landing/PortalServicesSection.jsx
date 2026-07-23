@@ -4,11 +4,13 @@ import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ArrowRight, Building2, FileCheck, Gavel, Landmark } from 'lucide-react'
 import { portalServiceHighlights } from '../../data/portalServices'
 import {
-	scrollCardVariants,
 	scrollCtaVariants,
-	scrollGridVariants,
 	scrollHeaderVariants,
 	scrollSectionVariants,
+	servicesCardHover,
+	servicesCardTap,
+	servicesCardVariants,
+	servicesGridVariants,
 } from '../../utils/landingMotion'
 import LandingSectionIntro from './LandingSectionIntro'
 import { useLanguage } from '../../i18n'
@@ -57,7 +59,6 @@ function PortalServicesSection() {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	// Wait until a real portion of the section is on screen (not just the page load edge)
 	const inView = useInView(sectionRef, {
 		once: true,
 		amount: 0.28,
@@ -123,35 +124,38 @@ function PortalServicesSection() {
 					<motion.ul
 						className="portal-services-showcase__grid"
 						role="list"
-						variants={reduceMotion ? undefined : scrollGridVariants}
+						variants={reduceMotion ? undefined : servicesGridVariants}
 					>
 						{items.map((item) => {
 							const Icon = highlightIcons[item.id] || FileCheck
 							return (
-								<motion.li
-									key={item.id}
-									className="portal-services-showcase__grid-item"
-									variants={reduceMotion ? undefined : scrollCardVariants}
-								>
-									<Link
-										to={highlightHref(item.id)}
-										className={`portal-services-showcase-card portal-services-showcase-card--link ${item.accent}`}
-										aria-label={`${item.title}: ${item.description}`}
+								<li key={item.id} className="portal-services-showcase__grid-item">
+									<motion.div
+										className="portal-services-showcase__card-motion"
+										variants={reduceMotion ? undefined : servicesCardVariants}
+										whileHover={reduceMotion ? undefined : servicesCardHover}
+										whileTap={reduceMotion ? undefined : servicesCardTap}
 									>
-										<span className="portal-services-showcase-card__icon" aria-hidden>
-											<Icon className="portal-services-showcase-card__icon-svg" strokeWidth={1.75} />
-										</span>
-										<div className="portal-services-showcase-card__body">
-											<p className="portal-services-showcase-card__tag">{item.tagline}</p>
-											<h3 className="portal-services-showcase-card__title">{item.title}</h3>
-											<p className="portal-services-showcase-card__desc">{item.description}</p>
-											<span className="portal-services-showcase-card__more">
-												{t('home.services.learnMore')}
-												<ArrowRight className="portal-services-showcase-card__more-icon" strokeWidth={2.25} />
+										<Link
+											to={highlightHref(item.id)}
+											className={`portal-services-showcase-card portal-services-showcase-card--link ${item.accent}`}
+											aria-label={`${item.title}: ${item.description}`}
+										>
+											<span className="portal-services-showcase-card__icon" aria-hidden>
+												<Icon className="portal-services-showcase-card__icon-svg" strokeWidth={1.75} />
 											</span>
-										</div>
-									</Link>
-								</motion.li>
+											<div className="portal-services-showcase-card__body">
+												<p className="portal-services-showcase-card__tag">{item.tagline}</p>
+												<h3 className="portal-services-showcase-card__title">{item.title}</h3>
+												<p className="portal-services-showcase-card__desc">{item.description}</p>
+												<span className="portal-services-showcase-card__more">
+													{t('home.services.learnMore')}
+													<ArrowRight className="portal-services-showcase-card__more-icon" strokeWidth={2.25} />
+												</span>
+											</div>
+										</Link>
+									</motion.div>
+								</li>
 							)
 						})}
 					</motion.ul>

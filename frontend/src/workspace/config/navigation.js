@@ -35,15 +35,6 @@ export function getWorkspaceNavigation(user) {
 		{ to: '/dashboard', labelKey: 'ws.nav.dashboard', icon: 'dashboard', end: true },
 	]
 
-	if (ADMIN_ROLES.includes(user.role)) {
-		items.push({
-			to: '/dashboard/admin/users',
-			labelKey:
-				user.role === ROLES.SUPER_ADMIN ? 'ws.nav.userManagement' : 'ws.nav.staffDirectory',
-			icon: 'users',
-		})
-	}
-
 	if (PRINCIPAL_ROLES.includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/users',
@@ -61,6 +52,14 @@ export function getWorkspaceNavigation(user) {
 		})
 	}
 
+	if (ADMIN_ROLES.includes(user.role)) {
+		items.push({
+			to: '/dashboard/admin/tenancy',
+			labelKey: 'ws.nav.tenancyApplications',
+			icon: 'file',
+		})
+	}
+
 	if ([...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/applications',
@@ -69,11 +68,11 @@ export function getWorkspaceNavigation(user) {
 		})
 	}
 
-	if (ADMIN_ROLES.includes(user.role)) {
+	if (user.role === ROLES.DISTRICT_ADMIN) {
 		items.push({
-			to: '/dashboard/admin/tenancy',
-			labelKey: 'ws.nav.tenancyApplications',
-			icon: 'file',
+			to: '/dashboard/admin/users',
+			labelKey: 'ws.nav.staffDirectory',
+			icon: 'users',
 		})
 	}
 
@@ -83,6 +82,11 @@ export function getWorkspaceNavigation(user) {
 				to: '/dashboard/admin/applications',
 				labelKey: 'ws.nav.serviceApplications',
 				icon: 'services',
+			},
+			{
+				to: '/dashboard/admin/users',
+				labelKey: 'ws.nav.userManagement',
+				icon: 'users',
 			},
 			{ to: '/dashboard/admin/districts', labelKey: 'ws.nav.districts', icon: 'map' }
 		)

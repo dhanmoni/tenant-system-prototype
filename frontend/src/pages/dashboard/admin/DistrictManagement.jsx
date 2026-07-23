@@ -1,25 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
+import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { ROLES } from '../../../constants/roles'
-import './ApplicationList.css'
 import './DistrictManagement.css'
 
 const PER_PAGE = 15
+
+const STATUS_PILLS = [
+	{ value: '', label: 'All' },
+	{ value: 'active', label: 'Active' },
+	{ value: 'inactive', label: 'Inactive' },
+]
 
 function DistrictManagement({ user }) {
 	const navigate = useNavigate()
 	const [districts, setDistricts] = useState([])
 	const [districtName, setDistrictName] = useState('')
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
+	const [formError, setFormError] = useState('')
+	const [successModal, setSuccessModal] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [page, setPage] = useState(1)
 	const [searchInput, setSearchInput] = useState('')
-	const [search, setSearch] = useState('')
+	const [filters, setFilters] = useState({ search: '', status: '' })
 	const [adding, setAdding] = useState(false)
 	const [showAddModal, setShowAddModal] = useState(false)
 	const [statusModal, setStatusModal] = useState(null)
@@ -36,15 +44,36 @@ function DistrictManagement({ user }) {
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
-			setSearch((prev) => {
-				const trimmed = searchInput.trim()
-				if (prev === trimmed) return prev
+			const trimmed = searchInput.trim()
+			setFilters((prev) => {
+				if (prev.search === trimmed) return prev
 				setPage(1)
-				return trimmed
+				return { ...prev, search: trimmed }
 			})
 		}, 350)
 		return () => clearTimeout(timer)
 	}, [searchInput])
+
+	useEffect(() => {
+		if (!showAddModal) return undefined
+		const onKey = (e) => {
+			if (e.key === 'Escape') closeAddModal()
+		}
+		document.addEventListener('keydown', onKey)
+		const prev = document.body.style.overflow
+		document.body.style.overflow = 'hidden'
+		return () => {
+			document.removeEventListener('keydown', onKey)
+			document.body.style.overflow = prev
+		}
+	}, [showAddModal, adding])
+
+	const closeAddModal = () => {
+		if (adding) return
+		setShowAddModal(false)
+		setDistrictName('')
+		setFormError('')
+	}
 
 	const loadDistricts = async () => {
 		setLoading(true)
@@ -59,16 +88,42 @@ function DistrictManagement({ user }) {
 		}
 	}
 
+	const handleFilterChange = (key, value) => {
+		setFilters((prev) => ({ ...prev, [key]: value }))
+		setPage(1)
+	}
+
+	const clearFilters = () => {
+		setSearchInput('')
+		setFilters({ search: '', status: '' })
+		setPage(1)
+	}
+
+	const hasActiveFilters = Boolean(filters.search || filters.status)
+
 	const filteredDistricts = useMemo(() => {
 		let list = districts
-		if (search) {
-			const needle = search.toLowerCase()
+		if (filters.search) {
+			const needle = filters.search.toLowerCase()
 			list = list.filter((d) => d.name?.toLowerCase().includes(needle))
 		}
+		if (filters.status === 'active') {
+			list = list.filter((d) => d.is_active !== false)
+		} else if (filters.status === 'inactive') {
+			list = list.filter((d) => d.is_active === false)
+		}
 		return [...list].sort((a, b) =>
-			(a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+			String(a?.name || '').localeCompare(String(b?.name || ''), undefined, {
+				sensitivity: 'base',
+			})
 		)
-	}, [districts, search])
+	}, [districts, filters])
+
+	const totalPages = Math.max(1, Math.ceil(filteredDistricts.length / PER_PAGE))
+
+	useEffect(() => {
+		if (page > totalPages) setPage(totalPages)
+	}, [page, totalPages])
 
 	const paginatedDistricts = useMemo(() => {
 		const start = (page - 1) * PER_PAGE
@@ -78,29 +133,39 @@ function DistrictManagement({ user }) {
 		}))
 	}, [filteredDistricts, page])
 
-	const totalPages = Math.max(1, Math.ceil(filteredDistricts.length / PER_PAGE))
-
-	useEffect(() => {
-		if (page > totalPages) setPage(totalPages)
-	}, [page, totalPages])
-
 	const handleAddDistrict = async (e) => {
 		e.preventDefault()
 		const trimmed = districtName.trim()
-		if (!trimmed) return
+		if (!trimmed) {
+			setFormError('Please enter a district name.')
+			return
+		}
+		if (!/^[A-Za-z\s]+$/.test(trimmed)) {
+			setFormError('District name may only contain letters and spaces.')
+			return
+		}
 
+		setFormError('')
 		setError('')
-		setSuccess('')
 		setAdding(true)
 		try {
 			await csrf()
 			await api.post('/api/districts', { name: trimmed })
 			setDistrictName('')
 			setShowAddModal(false)
-			setSuccess(`District "${trimmed}" added`)
+			setSuccessModal({
+				title: 'District added',
+				message: `"${trimmed}" was added successfully and is now available across the portal.`,
+			})
 			await loadDistricts()
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to add district')
+			const apiErrors = err?.response?.data?.errors
+			const firstFieldError = apiErrors
+				? Object.values(apiErrors).flat().find(Boolean)
+				: null
+			setFormError(
+				firstFieldError || err?.response?.data?.message || 'Failed to add district'
+			)
 		} finally {
 			setAdding(false)
 		}
@@ -123,17 +188,21 @@ function DistrictManagement({ user }) {
 		if (deactivating && !reason) return
 		setStatusLoading(true)
 		setError('')
-		setSuccess('')
 		try {
 			await csrf()
 			await api.post(
 				`/api/districts/${district.id}/toggle-active`,
 				deactivating ? { reason } : {}
 			)
-			setSuccess(
-				`District "${district.name}" was ${deactivating ? 'deactivated' : 'activated'}`
-			)
 			closeStatusModal()
+			setSuccessModal({
+				title: deactivating ? 'District deactivated' : 'District activated',
+				message: deactivating
+					? `"${district.name}" has been deactivated and will be hidden from active use.${
+							reason ? ` Reason: ${reason}` : ''
+						}`
+					: `"${district.name}" has been activated and is available again.`,
+			})
 			loadDistricts()
 		} catch (err) {
 			setError(
@@ -145,26 +214,19 @@ function DistrictManagement({ user }) {
 		}
 	}
 
-	const clearSearch = () => {
-		setSearchInput('')
-		setSearch('')
-		setPage(1)
-	}
+	const statusFilterLabel =
+		STATUS_PILLS.find((pill) => pill.value === filters.status)?.label || 'All'
 
-	const closeAddModal = () => {
-		setShowAddModal(false)
-		setDistrictName('')
-	}
-
-	const toolbar = (
-		<div className="ws-status-section-toolbar admin-app-toolbar">
-			<div className="ws-status-section-controls">
-				<label className="ws-status-section-search admin-app-search">
-					<span className="ws-status-search-label">Search districts</span>
-					<div className="admin-app-search__field">
-						<Icon name="search" className="admin-app-search__icon" />
+	const filterToolbar = (
+		<div className="admin-district-panel">
+			<div className="admin-district-panel__top">
+				<label className="admin-district-panel__search">
+					<span className="admin-district-panel__label">Search districts</span>
+					<div className="admin-district-panel__search-field">
+						<Icon name="search" className="admin-district-panel__search-icon" />
 						<input
 							id="district-search"
+							className="admin-district-panel__input"
 							type="search"
 							value={searchInput}
 							onChange={(e) => setSearchInput(e.target.value)}
@@ -174,27 +236,63 @@ function DistrictManagement({ user }) {
 					</div>
 				</label>
 
-				{search ? (
-					<div className="admin-app-toolbar__clear">
-						<button
-							type="button"
-							className="ws-btn ws-btn--outline ws-btn--sm"
-							onClick={clearSearch}
-						>
-							Clear search
-						</button>
-					</div>
-				) : null}
+				<button
+					type="button"
+					className="ws-btn ws-btn--primary ws-btn--sm admin-district-panel__add"
+					onClick={() => {
+						setFormError('')
+						setDistrictName('')
+						setShowAddModal(true)
+					}}
+				>
+					Add district
+				</button>
+			</div>
 
-				<div className="admin-district-toolbar__add">
+			<div className="admin-district-panel__filters">
+				<div className="admin-district-panel__status" role="group" aria-label="Filter by status">
+					<span className="admin-district-panel__label">Status</span>
+					<div className="admin-district-panel__status-pills">
+						{STATUS_PILLS.map((pill) => (
+							<button
+								key={pill.value || 'all'}
+								type="button"
+								className={`ws-admin-district-pill${
+									filters.status === pill.value ? ' is-active' : ''
+								}${pill.value === 'active' ? ' ws-admin-district-pill--active' : ''}${
+									pill.value === 'inactive' ? ' ws-admin-district-pill--inactive' : ''
+								}`}
+								onClick={() => handleFilterChange('status', pill.value)}
+							>
+								{pill.label}
+							</button>
+						))}
+					</div>
+				</div>
+			</div>
+
+			<div className="admin-district-panel__meta">
+				<p className="admin-district-panel__summary">
+					Showing <strong>{paginatedDistricts.length}</strong> of{' '}
+					<strong>{filteredDistricts.length}</strong>
+					{filteredDistricts.length === 1 ? ' district' : ' districts'}
+					{filters.status ? (
+						<>
+							{' '}
+							· Status: <strong>{statusFilterLabel}</strong>
+						</>
+					) : null}
+				</p>
+
+				{hasActiveFilters ? (
 					<button
 						type="button"
-						className="ws-btn ws-btn--primary ws-btn--sm"
-						onClick={() => setShowAddModal(true)}
+						className="ws-btn ws-btn--outline ws-btn--sm admin-district-panel__clear"
+						onClick={clearFilters}
 					>
-						Add district
+						Clear filters
 					</button>
-				</div>
+				) : null}
 			</div>
 		</div>
 	)
@@ -206,71 +304,117 @@ function DistrictManagement({ user }) {
 					{error}
 				</div>
 			) : null}
-			{success ? (
-				<div className="ws-profile-alert ws-profile-alert--success" role="status">
-					{success}
-				</div>
-			) : null}
 
-			{showAddModal ? (
-				<div className="modal-overlay" onClick={closeAddModal}>
-					<div
-						className="admin-district-modal"
-						onClick={(e) => e.stopPropagation()}
-						role="dialog"
-						aria-labelledby="add-district-title"
-						aria-modal="true"
-					>
-						<h3 id="add-district-title">Add new district</h3>
-						<p className="admin-district-modal__hint">
-							Enter the official district name as it should appear across the portal.
-						</p>
-						<form onSubmit={handleAddDistrict}>
-							<div className="form-group">
-								<label htmlFor="district-name">District name</label>
-								<input
-									id="district-name"
-									type="text"
-									value={districtName}
-									onChange={(e) => setDistrictName(e.target.value)}
-									placeholder="Enter district name"
-									required
-									autoFocus
-								/>
-							</div>
-							<div className="nav-actions admin-district-modal__actions">
-								<button
-									type="submit"
-									className="ws-btn ws-btn--primary"
-									disabled={adding || !districtName.trim()}
-								>
-									{adding ? 'Adding…' : 'Add district'}
-								</button>
-								<button
-									type="button"
-									className="ws-btn ws-btn--outline"
-									onClick={closeAddModal}
-									disabled={adding}
-								>
-									Cancel
-								</button>
-							</div>
-						</form>
-					</div>
-				</div>
-			) : null}
+			{showAddModal
+				? createPortal(
+						<div
+							className="modal-overlay admin-district-modal-overlay"
+							onClick={(e) => {
+								if (e.target === e.currentTarget && !adding) closeAddModal()
+							}}
+						>
+							<div
+								className="admin-district-modal"
+								role="dialog"
+								aria-modal="true"
+								aria-labelledby="add-district-title"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<header className="admin-district-modal__header">
+									<div>
+										<h3 id="add-district-title">Add new district</h3>
+										<p className="admin-district-modal__hint">
+											Enter the official district name as it should appear across the
+											portal. Letters and spaces only.
+										</p>
+									</div>
+									<button
+										type="button"
+										className="admin-district-modal__close"
+										onClick={closeAddModal}
+										disabled={adding}
+										aria-label="Close"
+									>
+										×
+									</button>
+								</header>
 
-			<div className="admin-district-panel">
+								{formError ? (
+									<div className="admin-district-modal__error" role="alert">
+										{formError}
+									</div>
+								) : null}
+
+								<form
+									onSubmit={handleAddDistrict}
+									className="admin-district-modal__form"
+									noValidate
+								>
+									<div className="admin-district-modal__field">
+										<label htmlFor="district-name">District name</label>
+										<input
+											id="district-name"
+											type="text"
+											value={districtName}
+											onChange={(e) => {
+												setDistrictName(e.target.value)
+												if (formError) setFormError('')
+											}}
+											placeholder="e.g. Kamrup Metropolitan"
+											required
+											autoFocus
+											disabled={adding}
+											autoComplete="off"
+										/>
+									</div>
+									<div className="admin-district-modal__actions">
+										<button
+											type="button"
+											className="ws-btn ws-btn--outline"
+											onClick={closeAddModal}
+											disabled={adding}
+										>
+											Cancel
+										</button>
+										<button
+											type="submit"
+											className="ws-btn ws-btn--primary"
+											disabled={adding || !districtName.trim()}
+										>
+											{adding ? 'Adding…' : 'Add district'}
+										</button>
+									</div>
+								</form>
+							</div>
+						</div>,
+						document.body
+					)
+				: null}
+
 			<DataTable
+				className="admin-district-table"
 				title="Districts"
 				accent="default"
 				loading={loading}
 				data={paginatedDistricts}
 				totalCount={filteredDistricts.length}
-				toolbar={toolbar}
+				toolbar={filterToolbar}
 				columns={[
 					{ key: 'serial_no', label: 'S.no.', mono: true, width: '72px' },
-					{ key: 'name', label: 'District name' },
+					{
+						key: 'name',
+						label: 'District name',
+						render: (val, row) => (
+							<div className="admin-district-name">
+								<span className="admin-district-name__text">{val}</span>
+								{row.is_active === false && row.deactivation_reason ? (
+									<span className="admin-district-name__reason" title={row.deactivation_reason}>
+										{row.deactivation_reason}
+									</span>
+								) : null}
+							</div>
+						),
+					},
 					{
 						key: 'is_active',
 						label: 'Status',
@@ -278,10 +422,10 @@ function DistrictManagement({ user }) {
 							const inactive = val === false
 							return (
 								<span
-									className={`admin-user-status ${
+									className={`admin-district-status ${
 										inactive
-											? 'admin-user-status--inactive'
-											: 'admin-user-status--active'
+											? 'admin-district-status--inactive'
+											: 'admin-district-status--active'
 									}`}
 								>
 									{inactive ? 'Inactive' : 'Active'}
@@ -309,7 +453,9 @@ function DistrictManagement({ user }) {
 					)
 				}}
 				emptyMessage={
-					search ? 'No districts match your search.' : 'No districts found.'
+					hasActiveFilters
+						? 'No districts match your filters.'
+						: 'No districts found.'
 				}
 				pagination={
 					filteredDistricts.length > PER_PAGE
@@ -321,7 +467,6 @@ function DistrictManagement({ user }) {
 						: null
 				}
 			/>
-			</div>
 
 			<WorkflowConfirmModal
 				open={Boolean(statusModal)}
@@ -365,6 +510,13 @@ function DistrictManagement({ user }) {
 					</label>
 				) : null}
 			</WorkflowConfirmModal>
+
+			<SubmissionSuccessModal
+				open={Boolean(successModal)}
+				title={successModal?.title}
+				message={successModal?.message}
+				onClose={() => setSuccessModal(null)}
+			/>
 		</>
 	)
 }

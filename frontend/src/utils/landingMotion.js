@@ -65,6 +65,266 @@ export const scrollCardVariants = {
 	},
 }
 
+/** Portal services — modern cascade (blur fade + soft rise) */
+export const servicesGridVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.09,
+			delayChildren: 0.08,
+		},
+	},
+}
+
+export const servicesCardVariants = {
+	hidden: {
+		opacity: 0,
+		y: 36,
+		filter: 'blur(10px)',
+	},
+	visible: {
+		opacity: 1,
+		y: 0,
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.65,
+			ease: easeOutExpo,
+		},
+	},
+}
+
+export const servicesCardHover = {
+	y: -8,
+	transition: { type: 'spring', stiffness: 380, damping: 22 },
+}
+
+export const servicesCardTap = {
+	y: -2,
+	scale: 0.985,
+	transition: { type: 'spring', stiffness: 480, damping: 28 },
+}
+
+/** Portal benefits — cards rise when scrolled into view */
+export const benefitsModernGridVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.14,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const benefitsModernCardVariants = {
+	hidden: {
+		opacity: 0,
+		y: 48,
+		scale: 0.92,
+	},
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 260,
+			damping: 22,
+			mass: 0.9,
+		},
+	},
+}
+
+export const benefitsModernCardHover = {
+	y: -8,
+	transition: { type: 'spring', stiffness: 380, damping: 22 },
+}
+
+export const benefitsModernCardTap = {
+	scale: 0.985,
+	transition: { type: 'spring', stiffness: 480, damping: 28 },
+}
+
+/** How it works — timeline cascade (numbers pop, steps slide along a path) */
+export const guideSectionVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.16,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const guideIntroVariants = {
+	hidden: { opacity: 0, y: 28 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: { duration: 0.55, ease: easeOutExpo },
+	},
+}
+
+export const guideStepsVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.18,
+			delayChildren: 0.08,
+		},
+	},
+}
+
+export const guideStepVariants = {
+	hidden: {
+		opacity: 0,
+		x: -36,
+		y: 12,
+	},
+	visible: {
+		opacity: 1,
+		x: 0,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 240,
+			damping: 22,
+			mass: 0.95,
+			staggerChildren: 0.08,
+			delayChildren: 0.02,
+		},
+	},
+}
+
+export const guideStepNumVariants = {
+	hidden: { opacity: 0, scale: 0.4 },
+	visible: {
+		opacity: 1,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 420,
+			damping: 16,
+			mass: 0.7,
+		},
+	},
+}
+
+export const guideStepCopyVariants = {
+	hidden: { opacity: 0, x: -16 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 280,
+			damping: 24,
+		},
+	},
+}
+
+export const guideAccessVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.14,
+			delayChildren: 0.06,
+		},
+	},
+}
+
+export const guideAsideVariants = {
+	hidden: { opacity: 0, x: -40, y: 16 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 260,
+			damping: 24,
+			mass: 0.9,
+		},
+	},
+}
+
+export const guidePanelVariants = {
+	hidden: { opacity: 0, x: 40, y: 16 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 260,
+			damping: 24,
+			mass: 0.9,
+			staggerChildren: 0.08,
+			delayChildren: 0.12,
+		},
+	},
+}
+
+export const guideActionVariants = {
+	hidden: { opacity: 0, y: 18, scale: 0.96 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 320,
+			damping: 22,
+		},
+	},
+}
+
+/** FAQ — accordion stack (items unfold downward on scroll) */
+export const faqSectionVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.12,
+			delayChildren: 0.05,
+		},
+	},
+}
+
+export const faqIntroVariants = {
+	hidden: { opacity: 0, y: 24 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: { duration: 0.5, ease: easeOutExpo },
+	},
+}
+
+export const faqListVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.11,
+			delayChildren: 0.08,
+		},
+	},
+}
+
+export const faqItemVariants = {
+	hidden: {
+		opacity: 0,
+		y: -28,
+	},
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 300,
+			damping: 24,
+			mass: 0.85,
+		},
+	},
+}
+
 export const scrollStatRailVariants = {
 	hidden: { opacity: 0, y: 28 },
 	visible: {

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLanguage } from '../../i18n'
 
-function SubmissionSuccessModal({ open, message, onClose }) {
+function SubmissionSuccessModal({ open, title, message, onClose }) {
 	const { t } = useLanguage()
 
 	useEffect(() => {
@@ -32,7 +32,7 @@ function SubmissionSuccessModal({ open, message, onClose }) {
 					✓
 				</div>
 				<h2 id="submission-success-title" className="submission-success-modal__title">
-					{t('ws.citizen.modal.submittedTitle')}
+					{title || t('ws.citizen.modal.submittedTitle')}
 				</h2>
 				<p className="submission-success-modal__message">{message}</p>
 				<button

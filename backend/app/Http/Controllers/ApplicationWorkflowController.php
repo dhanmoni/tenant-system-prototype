@@ -375,7 +375,19 @@ class ApplicationWorkflowController extends Controller
         $districtFilter = $request->input('district_id');
 
         $districtId = $user->district_id;
+        // Service applications list only — UIN / tenancy certificate uses /admin/tenancy-records
         $types = ApplicationTypes::serviceForms();
+        if ($formTypeFilter === ApplicationTypes::TENANCY_CERTIFICATE) {
+            return response()->json([
+                'applications' => [],
+                'pagination' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => $perPage,
+                    'total' => 0,
+                ],
+            ]);
+        }
         if ($formTypeFilter && in_array($formTypeFilter, $types, true)) {
             $types = [$formTypeFilter];
         }
@@ -437,8 +449,8 @@ class ApplicationWorkflowController extends Controller
     public function update(Request $request, $type, $id)
     {
         $user = $request->user();
-        if ($user->role !== Roles::SUPER_ADMIN) {
-            return response()->json(['message' => 'Only super admins can edit applications'], 403);
+        if ($user->role !== Roles::DISTRICT_ADMIN) {
+            return response()->json(['message' => 'Only district admins can edit applications'], 403);
         }
 
         $modelClass = $this->getModel($type);
@@ -449,6 +461,10 @@ class ApplicationWorkflowController extends Controller
         $application = $modelClass::find($id);
         if (!$application) {
             return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        if ((int) $application->district_id !== (int) $user->district_id) {
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $protected = [
@@ -479,6 +495,7 @@ class ApplicationWorkflowController extends Controller
             'village_ward_id',
             'application_type',
             'movement_history',
+            'edit_history',
         ];
 
         $editable = array_values(array_filter(
@@ -487,11 +504,72 @@ class ApplicationWorkflowController extends Controller
         ));
 
         $data = $request->only($editable);
-        $application->update($data);
+
+        $normalize = static function ($value) {
+            if ($value === null || $value === '') {
+                return null;
+            }
+            if (is_bool($value)) {
+                return $value ? '1' : '0';
+            }
+            if (is_string($value)) {
+                $trimmed = trim($value);
+                if (preg_match('/^\d{4}-\d{2}-\d{2}T/', $trimmed)) {
+                    return substr($trimmed, 0, 10);
+                }
+                return $trimmed;
+            }
+            return (string) $value;
+        };
+
+        $changes = [];
+        foreach ($data as $key => $newValue) {
+            $oldValue = $application->getAttribute($key);
+            if ($normalize($oldValue) === $normalize($newValue)) {
+                continue;
+            }
+            $changes[] = [
+                'field' => $key,
+                'from' => $oldValue,
+                'to' => $newValue,
+            ];
+        }
+
+        if (count($changes) === 0) {
+            $application->load($relations = $type === ApplicationTypes::TENANCY_CERTIFICATE
+                ? ['district', 'office', 'villageWard']
+                : ['user', 'forwardedBy', 'district']);
+            $application->form_type = $type;
+
+            return response()->json([
+                'message' => 'No changes made',
+                'application' => new ApplicationResource($application),
+                'changes' => [],
+            ]);
+        }
+
+        $history = is_array($application->edit_history) ? $application->edit_history : [];
+        $history[] = [
+            'edited_at' => now()->toIso8601String(),
+            'edited_by' => $user->name,
+            'edited_by_user_id' => $user->id,
+            'role' => $user->role,
+            'changes' => $changes,
+            'summary' => array_map(
+                static fn (array $change) => $change['field'],
+                $changes
+            ),
+        ];
+        $application->edit_history = $history;
+        $application->fill($data);
+        $application->save();
 
         $relations = ['district'];
         if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
             $relations = ['user', 'forwardedBy', 'district'];
+        }
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $relations = ['district', 'office', 'villageWard'];
         }
         $application->load($relations);
         $application->form_type = $type;
@@ -499,6 +577,7 @@ class ApplicationWorkflowController extends Controller
         return response()->json([
             'message' => 'Application updated successfully',
             'application' => new ApplicationResource($application),
+            'changes' => $changes,
         ]);
     }
 
@@ -537,7 +616,9 @@ class ApplicationWorkflowController extends Controller
             $modelClass = $this->getModel($type);
             if ($modelClass) {
                 $relations = ['district'];
-                if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
+                if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+                    $relations = ['district', 'office', 'villageWard'];
+                } else {
                     $relations = ['user', 'forwardedBy', 'district'];
                 }
                 if ($type === ApplicationTypes::VALUER_APPOINTMENT) {

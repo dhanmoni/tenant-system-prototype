@@ -13,6 +13,10 @@ class OtherChargesRevisionApplication extends Model
 
     use GeneratesApplicationNo;
 
+    protected $casts = [
+        'edit_history' => 'array',
+    ];
+
     protected $table = 'rent_authority_form_ia_applications';
 
     protected $fillable = [

@@ -19,7 +19,8 @@ class ApplicationResource extends JsonResource
             'id', 'application_no', 'user_id', 'status', 'created_at', 'updated_at', 
             'district_id', 'forwarded_at', 'forwarded_by_user_id', 'rejected_at', 
             'rejected_by_user_id', 'rejection_message', 'assigned_to_role', 
-            'approved_at', 'approved_by_user_id', 'forward_remarks', 'approval_message'
+            'approved_at', 'approved_by_user_id', 'forward_remarks', 'approval_message',
+            'edit_history',
         ];
         
         // Get all attributes of the model
@@ -43,6 +44,7 @@ class ApplicationResource extends JsonResource
             'assigned_to_role' => $this->assigned_to_role,
             'district_id' => $this->district_id,
             'form_type' => $this->form_type ?? $this->resource->form_type, // Fallback if not set
+            'edit_history' => $this->edit_history ?? [],
             
             // Trimmed relationships (only included if loaded)
             'user' => $this->whenLoaded('user', function() {
@@ -55,6 +57,22 @@ class ApplicationResource extends JsonResource
             
             'district' => $this->whenLoaded('district', function() {
                 $rel = $this->getRelation('district');
+                return [
+                    'id' => $rel ? $rel->id : null,
+                    'name' => $rel ? $rel->name : null,
+                ];
+            }),
+
+            'office' => $this->whenLoaded('office', function () {
+                $rel = $this->getRelation('office');
+                return [
+                    'id' => $rel ? $rel->id : null,
+                    'name' => $rel ? $rel->name : null,
+                ];
+            }),
+
+            'village_ward' => $this->whenLoaded('villageWard', function () {
+                $rel = $this->getRelation('villageWard');
                 return [
                     'id' => $rel ? $rel->id : null,
                     'name' => $rel ? $rel->name : null,

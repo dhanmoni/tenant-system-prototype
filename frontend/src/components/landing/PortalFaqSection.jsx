@@ -1,8 +1,14 @@
-import { useId, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useId, useMemo, useRef, useState } from 'react'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import LandingSectionIntro from './LandingSectionIntro'
 import { useLanguage } from '../../i18n'
+import {
+	faqIntroVariants,
+	faqItemVariants,
+	faqListVariants,
+	faqSectionVariants,
+} from '../../utils/landingMotion'
 
 function FaqItem({ item, isOpen, onToggle }) {
 	const baseId = useId()
@@ -10,12 +16,12 @@ function FaqItem({ item, isOpen, onToggle }) {
 	const panelId = `${baseId}-panel`
 
 	return (
-		<div className="landing-faq__item">
+		<div className={`landing-faq__item${isOpen ? ' is-open' : ''}`}>
 			<h3 className="m-0">
 				<button
 					type="button"
 					id={buttonId}
-					className="landing-faq__trigger"
+					className={`landing-faq__trigger${isOpen ? ' is-open' : ''}`}
 					aria-expanded={isOpen}
 					aria-controls={panelId}
 					onClick={onToggle}
@@ -33,7 +39,8 @@ function FaqItem({ item, isOpen, onToggle }) {
 				id={panelId}
 				role="region"
 				aria-labelledby={buttonId}
-				className="landing-faq__panel"
+				aria-hidden={!isOpen}
+				className={`landing-faq__panel${isOpen ? ' is-open' : ''}`}
 				style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
 			>
 				<div className="landing-faq__panel-inner">
@@ -47,6 +54,14 @@ function FaqItem({ item, isOpen, onToggle }) {
 function PortalFaqSection() {
 	const { t } = useLanguage()
 	const [openFaqId, setOpenFaqId] = useState(null)
+	const sectionRef = useRef(null)
+	const reduceMotion = useReducedMotion()
+	const inView = useInView(sectionRef, {
+		once: true,
+		amount: 0.28,
+		margin: '0px 0px -10% 0px',
+	})
+	const reveal = Boolean(reduceMotion) || inView
 
 	const faqItems = useMemo(
 		() => [
@@ -84,38 +99,42 @@ function PortalFaqSection() {
 			className="landing-faq-section landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 py-14 sm:py-16 lg:py-20"
 			aria-labelledby="portal-faq-heading"
 		>
-			<div className="landing-faq-section__shell mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-				<LandingSectionIntro
-					className="landing-faq-section__intro"
-					align="center"
-					title={t('home.faq.title')}
-					lead={t('home.faq.lead')}
-					titleId="portal-faq-heading"
-				/>
+			<div ref={sectionRef} className="landing-faq-section__shell mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+				<motion.div
+					initial={reduceMotion ? false : 'hidden'}
+					animate={reveal ? 'visible' : 'hidden'}
+					variants={reduceMotion ? undefined : faqSectionVariants}
+				>
+					<motion.div variants={reduceMotion ? undefined : faqIntroVariants}>
+						<LandingSectionIntro
+							className="landing-faq-section__intro"
+							align="center"
+							title={t('home.faq.title')}
+							lead={t('home.faq.lead')}
+							titleId="portal-faq-heading"
+							animateWhen={reveal}
+						/>
+					</motion.div>
 
-				<div className="landing-faq__list mt-10 sm:mt-12">
-					{faqItems.map((item, index) => (
-						<motion.div
-							key={item.id}
-							custom={index}
-							initial={{ opacity: 0, y: 16, scale: 0.98 }}
-							whileInView={{ opacity: 1, y: 0, scale: 1 }}
-							viewport={{ once: true, margin: '-30px' }}
-							transition={{
-								type: 'spring',
-								stiffness: 340,
-								damping: 22,
-								delay: index * 0.06,
-							}}
-						>
-							<FaqItem
-								item={item}
-								isOpen={openFaqId === item.id}
-								onToggle={() => toggleFaq(item.id)}
-							/>
-						</motion.div>
-					))}
-				</div>
+					<motion.div
+						className="landing-faq__list mt-10 sm:mt-12"
+						variants={reduceMotion ? undefined : faqListVariants}
+					>
+						{faqItems.map((item) => (
+							<motion.div
+								key={item.id}
+								className="landing-faq__item-motion"
+								variants={reduceMotion ? undefined : faqItemVariants}
+							>
+								<FaqItem
+									item={item}
+									isOpen={openFaqId === item.id}
+									onToggle={() => toggleFaq(item.id)}
+								/>
+							</motion.div>
+						))}
+					</motion.div>
+				</motion.div>
 			</div>
 		</section>
 	)

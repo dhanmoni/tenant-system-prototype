@@ -4,11 +4,9 @@ import { Icon } from '../../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
 import { getRoleLabel } from '../../../constants/roleLabels'
 import NexusStatCard from '../../components/dashboard/NexusStatCard'
-import PipelineSummary from '../../components/dashboard/PipelineSummary'
 import DistrictAdminQuickActions from '../../components/dashboard/DistrictAdminQuickActions'
 import DistrictAdminAttentionPanel from '../../components/dashboard/DistrictAdminAttentionPanel'
 import DailyApplicationsPanel from '../../components/dashboard/DailyApplicationsPanel'
-import FormTypeTable from '../../components/dashboard/FormTypeTable'
 import DistrictCoverageMap from '../../components/dashboard/DistrictCoverageMap'
 
 function DistrictAdminDashboard({ user, stats, loading, error }) {
@@ -148,40 +146,9 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 									selectedDate={selectedDate}
 									onSelectDate={setSelectedDate}
 									scopeLabel="your district"
+									mode="stats"
 								/>
 							</section>
-
-							<section
-								className="ws-da-block ws-da-block--pipeline"
-								aria-labelledby="ws-da-pipeline-heading"
-							>
-								<div className="ws-da-block-head">
-									<h2 id="ws-da-pipeline-heading" className="ws-da-block-title">
-										Application pipeline
-									</h2>
-									<p className="ws-da-block-desc">
-										Status breakdown for service forms in your district
-									</p>
-								</div>
-								<PipelineSummary
-									breakdown={s.applications_by_status}
-									totalLabel="district form applications"
-								/>
-							</section>
-
-							{showFormBreakdown ? (
-								<section className="ws-da-block" aria-labelledby="ws-da-forms-heading">
-									<div className="ws-da-block-head">
-										<h2 id="ws-da-forms-heading" className="ws-da-block-title">
-											Forms in your district
-										</h2>
-										<p className="ws-da-block-desc">Volume by Assam Tenancy Act form type</p>
-									</div>
-									<div className="ws-da-table-panel">
-										<FormTypeTable forms={s.form_type_breakdown} />
-									</div>
-								</section>
-							) : null}
 						</div>
 
 						<aside className="ws-da-aside" aria-label="District oversight">
@@ -218,6 +185,25 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 									</div>
 								</dl>
 							</div>
+
+							{showFormBreakdown ? (
+								<div className="ws-da-panel ws-da-panel--forms">
+									<h3 className="ws-da-panel-title">Forms in your district</h3>
+									<p className="ws-da-panel-desc">Volume by Assam Tenancy Act form type</p>
+									<ul className="ws-da-forms-list">
+										{s.form_type_breakdown.map((row) => (
+											<li key={row.form_key || row.label}>
+												<span className="ws-da-forms-list__label" title={row.label}>
+													{row.label}
+												</span>
+												<strong className="ws-da-forms-list__count">
+													{(row.count ?? 0).toLocaleString('en-IN')}
+												</strong>
+											</li>
+										))}
+									</ul>
+								</div>
+							) : null}
 						</aside>
 					</div>
 				</>
