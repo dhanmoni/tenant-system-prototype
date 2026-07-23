@@ -218,8 +218,12 @@ function GetStartedSection({ authPanelProps }) {
 					>
 						{promoFeatures.map((item) => (
 							<motion.li key={item} variants={reduceMotion ? undefined : promoFeatureItemVariants}>
-								<motion.span variants={reduceMotion ? undefined : promoCheckVariants}>
-									<Check className="get-started-promo-check" aria-hidden strokeWidth={2.5} />
+								<motion.span
+									className="get-started-promo-check-wrap"
+									variants={reduceMotion ? undefined : promoCheckVariants}
+									aria-hidden
+								>
+									<Check className="get-started-promo-check" strokeWidth={2.75} />
 								</motion.span>
 								<span>{item}</span>
 							</motion.li>

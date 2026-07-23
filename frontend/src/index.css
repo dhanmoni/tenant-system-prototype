@@ -31,6 +31,7 @@
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	scrollbar-gutter: stable;
 
 	/* NIC Theme Colors */
 	--nic-green: #4b8aea;
@@ -83,6 +84,11 @@
 *::before,
 *::after {
 	box-sizing: border-box;
+}
+
+html {
+	scrollbar-gutter: stable;
+	overflow-y: scroll;
 }
 
 body {

@@ -2,6 +2,7 @@ import { useId, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import LandingSectionIntro from './LandingSectionIntro'
+import PortalFaqVector from './PortalFaqVector'
 import { useLanguage } from '../../i18n'
 import {
 	faqIntroVariants,
@@ -10,7 +11,7 @@ import {
 	faqSectionVariants,
 } from '../../utils/landingMotion'
 
-function FaqItem({ item, isOpen, onToggle }) {
+function FaqItem({ item, isOpen, onToggle, reduceMotion }) {
 	const baseId = useId()
 	const buttonId = `${baseId}-button`
 	const panelId = `${baseId}-panel`
@@ -35,25 +36,30 @@ function FaqItem({ item, isOpen, onToggle }) {
 					/>
 				</button>
 			</h3>
-			<div
+			<motion.div
 				id={panelId}
 				role="region"
 				aria-labelledby={buttonId}
 				aria-hidden={!isOpen}
 				className={`landing-faq__panel${isOpen ? ' is-open' : ''}`}
-				style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
+				initial={false}
+				animate={{ height: isOpen ? 'auto' : 0 }}
+				transition={
+					reduceMotion
+						? { duration: 0 }
+						: { duration: 0.34, ease: [0.22, 1, 0.36, 1] }
+				}
 			>
 				<div className="landing-faq__panel-inner">
 					<p className="landing-faq__answer">{item.answer}</p>
 				</div>
-			</div>
+			</motion.div>
 		</div>
 	)
 }
 
 function PortalFaqSection() {
 	const { t } = useLanguage()
-	const [openFaqId, setOpenFaqId] = useState(null)
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
 	const inView = useInView(sectionRef, {
@@ -89,6 +95,8 @@ function PortalFaqSection() {
 		[t],
 	)
 
+	const [openFaqId, setOpenFaqId] = useState(null)
+
 	const toggleFaq = (id) => {
 		setOpenFaqId((prev) => (prev === id ? null : id))
 	}
@@ -96,10 +104,10 @@ function PortalFaqSection() {
 	return (
 		<section
 			id="portal-faq"
-			className="landing-faq-section landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 py-14 sm:py-16 lg:py-20"
+			className="landing-faq-section landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 pt-14 sm:pt-16 lg:pt-20 pb-8 sm:pb-10 lg:pb-12"
 			aria-labelledby="portal-faq-heading"
 		>
-			<div ref={sectionRef} className="landing-faq-section__shell mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+			<div ref={sectionRef} className="landing-faq-section__shell mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<motion.div
 					initial={reduceMotion ? false : 'hidden'}
 					animate={reveal ? 'visible' : 'hidden'}
@@ -116,24 +124,48 @@ function PortalFaqSection() {
 						/>
 					</motion.div>
 
-					<motion.div
-						className="landing-faq__list mt-10 sm:mt-12"
-						variants={reduceMotion ? undefined : faqListVariants}
-					>
-						{faqItems.map((item) => (
-							<motion.div
-								key={item.id}
-								className="landing-faq__item-motion"
-								variants={reduceMotion ? undefined : faqItemVariants}
-							>
-								<FaqItem
-									item={item}
-									isOpen={openFaqId === item.id}
-									onToggle={() => toggleFaq(item.id)}
-								/>
-							</motion.div>
-						))}
-					</motion.div>
+					<div className="landing-faq__body">
+						<motion.div
+							className="landing-faq__list"
+							variants={reduceMotion ? undefined : faqListVariants}
+						>
+							{faqItems.map((item) => (
+								<motion.div
+									key={item.id}
+									className="landing-faq__item-motion"
+									variants={reduceMotion ? undefined : faqItemVariants}
+								>
+									<FaqItem
+										item={item}
+										isOpen={openFaqId === item.id}
+										onToggle={() => toggleFaq(item.id)}
+										reduceMotion={reduceMotion}
+									/>
+								</motion.div>
+							))}
+						</motion.div>
+
+						<motion.aside
+							className="landing-faq__visual"
+							aria-hidden
+							initial={reduceMotion ? false : { opacity: 0, x: 24, scale: 0.97 }}
+							animate={
+								reveal
+									? { opacity: 1, x: 0, scale: 1 }
+									: { opacity: 0, x: 24, scale: 0.97 }
+							}
+							transition={
+								reduceMotion
+									? { duration: 0 }
+									: { type: 'spring', stiffness: 170, damping: 22, delay: 0.1 }
+							}
+						>
+							<div className="landing-faq__visual-glow" />
+							<div className="landing-faq__visual-frame">
+								<PortalFaqVector className="landing-faq__vector" />
+							</div>
+						</motion.aside>
+					</div>
 				</motion.div>
 			</div>
 		</section>

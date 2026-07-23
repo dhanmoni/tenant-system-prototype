@@ -65,30 +65,43 @@ export const scrollCardVariants = {
 	},
 }
 
-/** Portal services — modern cascade (blur fade + soft rise) */
+/** Shared ladder timing for cards + connector paths */
+export const SERVICES_LADDER = {
+	delayChildren: 0.12,
+	stagger: 0.42,
+	/** Connector draws after its left-hand card lands */
+	segmentLead: 0.28,
+	segmentDuration: 0.48,
+}
+
+/** Portal services — ladder climb low → high */
 export const servicesGridVariants = {
 	hidden: {},
 	visible: {
 		transition: {
-			staggerChildren: 0.09,
-			delayChildren: 0.08,
+			staggerChildren: SERVICES_LADDER.stagger,
+			delayChildren: SERVICES_LADDER.delayChildren,
 		},
 	},
 }
 
 export const servicesCardVariants = {
-	hidden: {
+	hidden: (i = 0) => ({
 		opacity: 0,
-		y: 36,
-		filter: 'blur(10px)',
-	},
+		y: 64 + (3 - i) * 36,
+		scale: 0.9,
+		filter: 'blur(8px)',
+	}),
 	visible: {
 		opacity: 1,
 		y: 0,
+		scale: 1,
 		filter: 'blur(0px)',
 		transition: {
-			duration: 0.65,
-			ease: easeOutExpo,
+			type: 'spring',
+			stiffness: 240,
+			damping: 20,
+			mass: 0.92,
 		},
 	},
 }
@@ -104,38 +117,43 @@ export const servicesCardTap = {
 	transition: { type: 'spring', stiffness: 480, damping: 28 },
 }
 
-/** Portal benefits — cards rise when scrolled into view */
+/** Portal benefits — one-by-one cascade into view */
 export const benefitsModernGridVariants = {
 	hidden: {},
 	visible: {
 		transition: {
-			staggerChildren: 0.14,
-			delayChildren: 0.04,
+			staggerChildren: 0.28,
+			delayChildren: 0.18,
 		},
 	},
 }
 
 export const benefitsModernCardVariants = {
-	hidden: {
+	hidden: (i = 0) => ({
 		opacity: 0,
-		y: 48,
-		scale: 0.92,
-	},
+		x: 42,
+		y: 28 + i * 10,
+		scale: 0.94,
+		filter: 'blur(6px)',
+	}),
 	visible: {
 		opacity: 1,
+		x: 0,
 		y: 0,
 		scale: 1,
+		filter: 'blur(0px)',
 		transition: {
 			type: 'spring',
-			stiffness: 260,
-			damping: 22,
-			mass: 0.9,
+			stiffness: 220,
+			damping: 20,
+			mass: 0.88,
 		},
 	},
 }
 
 export const benefitsModernCardHover = {
-	y: -8,
+	y: -6,
+	x: 4,
 	transition: { type: 'spring', stiffness: 380, damping: 22 },
 }
 

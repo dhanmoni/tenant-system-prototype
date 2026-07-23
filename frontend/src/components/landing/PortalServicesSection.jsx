@@ -1,12 +1,24 @@
 import { useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
-import { ArrowRight, Building2, FileCheck, Gavel, Landmark } from 'lucide-react'
+import {
+	ArrowRight,
+	BadgeCheck,
+	Building2,
+	FileCheck,
+	FileText,
+	FolderOpen,
+	Gavel,
+	Landmark,
+	ScrollText,
+	Stamp,
+} from 'lucide-react'
 import { portalServiceHighlights } from '../../data/portalServices'
 import {
 	scrollCtaVariants,
 	scrollHeaderVariants,
 	scrollSectionVariants,
+	SERVICES_LADDER,
 	servicesCardHover,
 	servicesCardTap,
 	servicesCardVariants,
@@ -16,6 +28,172 @@ import LandingSectionIntro from './LandingSectionIntro'
 import { useLanguage } from '../../i18n'
 
 const SERVICE_ORDER = ['uin', 'rent-authority', 'rent-court', 'rent-tribunal']
+
+const FLOAT_MOTIFS = [
+	{ Icon: FileText, side: 'left', x: '6%', y: '8%', size: 'lg', delay: '0s', drift: 'a' },
+	{ Icon: Stamp, side: 'left', x: '14%', y: '42%', size: 'md', delay: '1.1s', drift: 'b' },
+	{ Icon: FolderOpen, side: 'left', x: '3%', y: '68%', size: 'sm', delay: '0.45s', drift: 'c' },
+	{ Icon: BadgeCheck, side: 'left', x: '18%', y: '18%', size: 'sm', delay: '1.8s', drift: 'a' },
+	{ Icon: ScrollText, side: 'left', x: '9%', y: '88%', size: 'md', delay: '2.4s', drift: 'b' },
+	{ Icon: Gavel, side: 'right', x: '88%', y: '12%', size: 'md', delay: '0.35s', drift: 'b' },
+	{ Icon: Landmark, side: 'right', x: '94%', y: '38%', size: 'lg', delay: '1.4s', drift: 'c' },
+	{ Icon: Building2, side: 'right', x: '82%', y: '62%', size: 'sm', delay: '0.9s', drift: 'a' },
+	{ Icon: FileCheck, side: 'right', x: '91%', y: '82%', size: 'md', delay: '2s', drift: 'b' },
+	{ Icon: FileText, side: 'right', x: '78%', y: '28%', size: 'sm', delay: '2.6s', drift: 'c' },
+]
+
+function ServicesFloatMotifs({ reduceMotion }) {
+	return (
+		<div className="portal-services-showcase__float" aria-hidden>
+			{FLOAT_MOTIFS.map(({ Icon, x, y, size, delay, drift }, i) => (
+				<span
+					key={`${x}-${y}-${i}`}
+					className={`portal-services-showcase__float-item portal-services-showcase__float-item--${size}${
+						reduceMotion ? '' : ` portal-services-showcase__float-item--drift-${drift}`
+					}`}
+					style={{ left: x, top: y, animationDelay: delay }}
+				>
+					<Icon strokeWidth={1.5} aria-hidden />
+				</span>
+			))}
+		</div>
+	)
+}
+
+const FLOW_DESKTOP = {
+	viewBox: '0 0 1000 360',
+	segments: [
+		'M 208 292 C 248 212, 278 198, 312 258',
+		'M 458 228 C 498 148, 528 134, 562 194',
+		'M 708 152 C 748 72, 778 58, 812 118',
+	],
+	nodes: [
+		[208, 292],
+		[312, 258],
+		[458, 228],
+		[562, 194],
+		[708, 152],
+		[812, 118],
+	],
+}
+
+/* 2×2 tablet path: 1→2 across, 2→3 down-left, 3→4 across */
+const FLOW_TABLET = {
+	viewBox: '0 0 1000 760',
+	segments: [
+		'M 220 188 C 360 98, 640 98, 780 188',
+		'M 780 230 C 690 360, 310 420, 220 550',
+		'M 220 592 C 360 502, 640 502, 780 592',
+	],
+	nodes: [
+		[220, 188],
+		[780, 188],
+		[780, 230],
+		[220, 550],
+		[220, 592],
+		[780, 592],
+	],
+}
+
+function segmentDelay(i) {
+	return SERVICES_LADDER.delayChildren + i * SERVICES_LADDER.stagger + SERVICES_LADDER.segmentLead
+}
+
+function nodeDelay(i) {
+	if (i === 0) return SERVICES_LADDER.delayChildren
+	const seg = Math.floor(i / 2)
+	const isEnd = i % 2 === 1
+	if (isEnd) return segmentDelay(seg) + SERVICES_LADDER.segmentDuration * 0.85
+	return SERVICES_LADDER.delayChildren + seg * SERVICES_LADDER.stagger
+}
+
+function ServicesFlowSvg({ flow, className, reveal, reduceMotion, gradientId }) {
+	return (
+		<svg
+			className={className}
+			viewBox={flow.viewBox}
+			preserveAspectRatio="none"
+			aria-hidden
+		>
+			<defs>
+				<linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+					<stop offset="0%" stopColor="var(--color-light-caramel-500)" stopOpacity="0.75" />
+					<stop offset="50%" stopColor="var(--landing-accent)" stopOpacity="0.9" />
+					<stop offset="100%" stopColor="var(--color-light-caramel-700)" stopOpacity="0.75" />
+				</linearGradient>
+			</defs>
+			{flow.segments.map((d, i) => {
+				const delay = segmentDelay(i)
+				return (
+					<g key={d}>
+						<motion.path
+							className="portal-services-showcase__flow-path portal-services-showcase__flow-path--soft"
+							d={d}
+							fill="none"
+							stroke={`url(#${gradientId})`}
+							strokeWidth="3.25"
+							strokeLinecap="round"
+							initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+							animate={reveal ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+							transition={
+								reduceMotion
+									? { duration: 0 }
+									: {
+											duration: SERVICES_LADDER.segmentDuration,
+											ease: [0.22, 1, 0.36, 1],
+											delay,
+										}
+							}
+						/>
+						<motion.path
+							className="portal-services-showcase__flow-path"
+							d={d}
+							fill="none"
+							stroke={`url(#${gradientId})`}
+							strokeWidth="1.35"
+							strokeLinecap="round"
+							strokeDasharray="4 8"
+							initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+							animate={
+								reveal ? { pathLength: 1, opacity: 0.95 } : { pathLength: 0, opacity: 0 }
+							}
+							transition={
+								reduceMotion
+									? { duration: 0 }
+									: {
+											duration: SERVICES_LADDER.segmentDuration + 0.08,
+											ease: [0.22, 1, 0.36, 1],
+											delay: delay + 0.04,
+										}
+							}
+						/>
+					</g>
+				)
+			})}
+			{flow.nodes.map(([cx, cy], i) => (
+				<motion.circle
+					key={`${cx}-${cy}`}
+					className="portal-services-showcase__flow-node"
+					cx={cx}
+					cy={cy}
+					r={i % 2 === 0 ? 4.75 : 3.75}
+					initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
+					animate={reveal ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+					transition={
+						reduceMotion
+							? { duration: 0 }
+							: {
+									type: 'spring',
+									stiffness: 320,
+									damping: 18,
+									delay: nodeDelay(i),
+								}
+					}
+				/>
+			))}
+		</svg>
+	)
+}
 
 function highlightHref(itemId) {
 	return `/services#${itemId === 'uin' ? 'uin-registration' : itemId}`
@@ -84,13 +262,14 @@ function PortalServicesSection() {
 	return (
 		<section
 			id="services"
-			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 py-14 sm:py-16 lg:py-20"
+			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 pt-8 sm:pt-10 lg:pt-12 pb-14 sm:pb-16 lg:pb-20"
 			aria-labelledby="services-heading"
 		>
 			<div className="portal-services-showcase__seam" aria-hidden />
 			<div id="tenancy-authorities" className="scroll-mt-28" tabIndex={-1} aria-hidden />
 
 			<div ref={sectionRef} className="portal-services-showcase__inner mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+				<ServicesFloatMotifs reduceMotion={reduceMotion} />
 				<motion.div
 					initial={reduceMotion ? false : 'hidden'}
 					animate={reveal ? 'visible' : 'hidden'}
@@ -121,44 +300,65 @@ function PortalServicesSection() {
 						</motion.div>
 					</motion.div>
 
-					<motion.ul
-						className="portal-services-showcase__grid"
-						role="list"
-						variants={reduceMotion ? undefined : servicesGridVariants}
-					>
-						{items.map((item) => {
-							const Icon = highlightIcons[item.id] || FileCheck
-							return (
-								<li key={item.id} className="portal-services-showcase__grid-item">
-									<motion.div
-										className="portal-services-showcase__card-motion"
-										variants={reduceMotion ? undefined : servicesCardVariants}
-										whileHover={reduceMotion ? undefined : servicesCardHover}
-										whileTap={reduceMotion ? undefined : servicesCardTap}
-									>
-										<Link
-											to={highlightHref(item.id)}
-											className={`portal-services-showcase-card portal-services-showcase-card--link ${item.accent}`}
-											aria-label={`${item.title}: ${item.description}`}
+					<div className="portal-services-showcase__stage">
+						<ServicesFlowSvg
+							flow={FLOW_TABLET}
+							className="portal-services-showcase__flow portal-services-showcase__flow--tablet"
+							reveal={reveal}
+							reduceMotion={reduceMotion}
+							gradientId="services-flow-grad-tablet"
+						/>
+						<ServicesFlowSvg
+							flow={FLOW_DESKTOP}
+							className="portal-services-showcase__flow portal-services-showcase__flow--desktop"
+							reveal={reveal}
+							reduceMotion={reduceMotion}
+							gradientId="services-flow-grad-desktop"
+						/>
+
+						<motion.ul
+							className="portal-services-showcase__grid"
+							role="list"
+							variants={reduceMotion ? undefined : servicesGridVariants}
+						>
+							{items.map((item, index) => {
+								const Icon = highlightIcons[item.id] || FileCheck
+								return (
+									<li key={item.id} className="portal-services-showcase__grid-item">
+										<motion.div
+											className="portal-services-showcase__card-motion"
+											custom={index}
+											variants={reduceMotion ? undefined : servicesCardVariants}
+											whileHover={reduceMotion ? undefined : servicesCardHover}
+											whileTap={reduceMotion ? undefined : servicesCardTap}
 										>
-											<span className="portal-services-showcase-card__icon" aria-hidden>
-												<Icon className="portal-services-showcase-card__icon-svg" strokeWidth={1.75} />
-											</span>
-											<div className="portal-services-showcase-card__body">
-												<p className="portal-services-showcase-card__tag">{item.tagline}</p>
-												<h3 className="portal-services-showcase-card__title">{item.title}</h3>
-												<p className="portal-services-showcase-card__desc">{item.description}</p>
-												<span className="portal-services-showcase-card__more">
-													{t('home.services.learnMore')}
-													<ArrowRight className="portal-services-showcase-card__more-icon" strokeWidth={2.25} />
+											<Link
+												to={highlightHref(item.id)}
+												className={`portal-services-showcase-card portal-services-showcase-card--link ${item.accent}`}
+												aria-label={`${item.title}: ${item.description}`}
+											>
+												<span className="portal-services-showcase-card__icon" aria-hidden>
+													<Icon className="portal-services-showcase-card__icon-svg" strokeWidth={1.75} />
 												</span>
-											</div>
-										</Link>
-									</motion.div>
-								</li>
-							)
-						})}
-					</motion.ul>
+												<div className="portal-services-showcase-card__body">
+													<p className="portal-services-showcase-card__tag">{item.tagline}</p>
+													<h3 className="portal-services-showcase-card__title">{item.title}</h3>
+													<p className="portal-services-showcase-card__desc">{item.description}</p>
+													<span className="portal-services-showcase-card__more">
+														{t('home.services.learnMore')}
+														<ArrowRight
+															className="portal-services-showcase-card__more-icon"
+															strokeWidth={2.25}
+														/>
+													</span>
+												</div>
+											</Link>
+										</motion.div>
+									</li>
+								)
+							})}
+						</motion.ul>
+					</div>
 				</motion.div>
 			</div>
 		</section>
