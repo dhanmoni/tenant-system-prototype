@@ -1,21 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
-import AuthNavLink from './AuthNavLink'
-import {
-	heroAccentLineVariants,
-	heroActionItemVariants,
-	heroActionsContainerVariants,
-	heroCopyContainerVariants,
-	heroLeadVariants,
-	heroSlideVariants,
-	heroTitleVariants,
-} from '../../utils/landingMotion'
+import { heroSlideVariants } from '../../utils/landingMotion'
 import heroCommunityHomes from '../../assets/img/img12.png'
-import heroPortalSlide from '../../assets/img/img10.png'
-import heroTenancyHandover from '../../assets/img/img8.png'
-import heroFamilyHome from '../../assets/img/img5.png'
-import HeroRotatingLead from './HeroRotatingLead'
+import heroPortalSlide from '../../assets/img/HeroBanner4.1.webp'
 import { useLanguage } from '../../i18n'
 
 const SLIDE_INTERVAL_MS = 6000
@@ -30,24 +18,14 @@ function LandingHero({ navSlot }) {
 	const heroSlides = useMemo(
 		() => [
 			{
+				src: heroPortalSlide,
+				alt: t('hero.slide3Alt'),
+				objectPosition: 'center center',
+			},
+			{
 				src: heroCommunityHomes,
 				alt: t('hero.slide1Alt'),
 				objectPosition: 'center 42%',
-			},
-			{
-				src: heroTenancyHandover,
-				alt: t('hero.slide2Alt'),
-				objectPosition: 'center 42%',
-			},
-			{
-				src: heroPortalSlide,
-				alt: t('hero.slide3Alt'),
-				objectPosition: 'center 40%',
-			},
-			{
-				src: heroFamilyHome,
-				alt: t('hero.slide4Alt'),
-				objectPosition: 'center 38%',
 			},
 		],
 		[t],
@@ -69,11 +47,6 @@ function LandingHero({ navSlot }) {
 		}, SLIDE_INTERVAL_MS)
 		return () => clearInterval(timer)
 	}, [reduceMotion, isPaused, heroSlides.length])
-
-	const scrollToHowToApply = (e) => {
-		e.preventDefault()
-		document.getElementById('portal-guide')?.scrollIntoView({ behavior: 'smooth' })
-	}
 
 	const goToSlide = (index) => {
 		const nextIndex =
@@ -105,74 +78,31 @@ function LandingHero({ navSlot }) {
 			{navSlot}
 			<div className="landing-hero-media">
 				<AnimatePresence initial={false} custom={slideDirection}>
-					<motion.img
+					<motion.div
 						key={activeSlide.src}
-						src={activeSlide.src}
-						alt=""
-						className="absolute inset-0 h-full w-full object-cover"
-						style={{ objectPosition: activeSlide.objectPosition }}
+						className="absolute inset-0 overflow-hidden"
 						custom={slideDirection}
 						variants={reduceMotion ? undefined : heroSlideVariants}
 						initial={reduceMotion ? false : 'enter'}
 						animate={reduceMotion ? { opacity: 1, x: 0 } : 'center'}
 						exit={reduceMotion ? undefined : 'exit'}
-					/>
+					>
+						<img
+							src={activeSlide.src}
+							alt=""
+							className="absolute inset-0 h-full w-full object-cover"
+							style={{
+								objectPosition: activeSlide.objectPosition,
+							}}
+						/>
+					</motion.div>
 				</AnimatePresence>
+				<h1 id="hero-heading" className="sr-only">
+					{t('gov.portalSystem')}
+				</h1>
 				<span className="sr-only">{activeSlide.alt}</span>
 				<div className="landing-hero-overlay landing-hero-overlay--lr" aria-hidden />
 				<div className="landing-hero-overlay landing-hero-overlay--tb" aria-hidden />
-
-				<div className="landing-hero-inner relative z-10 mx-auto flex w-full max-w-7xl px-6 sm:px-10 lg:px-12">
-					<motion.div
-						className="landing-hero-copy"
-						variants={reduceMotion ? undefined : heroCopyContainerVariants}
-						initial={reduceMotion ? false : 'hidden'}
-						animate={reduceMotion ? undefined : 'visible'}
-					>
-						<div className="landing-hero-copy__text">
-							<motion.h1
-								id="hero-heading"
-								className="landing-hero-title"
-								variants={reduceMotion ? undefined : heroTitleVariants}
-							>
-								{t('gov.portalSystem')}
-								<motion.span
-									className="landing-hero-title__accent"
-									variants={reduceMotion ? undefined : heroAccentLineVariants}
-									aria-hidden
-								/>
-							</motion.h1>
-							<motion.p
-								className="landing-hero-lead landing-hero-lead--rotating"
-								variants={reduceMotion ? undefined : heroLeadVariants}
-							>
-								<HeroRotatingLead />
-							</motion.p>
-						</div>
-						<motion.div
-							className="landing-hero-actions"
-							variants={reduceMotion ? undefined : heroActionsContainerVariants}
-						>
-							<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
-								<AuthNavLink
-									mode="login"
-									className="landing-hero-cta landing-hero-cta--primary"
-								>
-									{t('hero.applyNow')}
-								</AuthNavLink>
-							</motion.div>
-							<motion.div variants={reduceMotion ? undefined : heroActionItemVariants}>
-								<a
-									href="#portal-guide"
-									onClick={scrollToHowToApply}
-									className="landing-hero-cta landing-hero-cta--ghost"
-								>
-									{t('hero.howToApply')}
-								</a>
-							</motion.div>
-						</motion.div>
-					</motion.div>
-				</div>
 
 				{heroSlides.length > 1 ? (
 					<div className="landing-hero-controls">

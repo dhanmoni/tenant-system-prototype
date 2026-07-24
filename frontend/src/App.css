@@ -106,7 +106,7 @@ html.a11y-font-xlarge .landing-nav-partner-logo--di {
 	max-width: 3.2rem;
 }
 
-/* Keep links + Login/Register on one row; text scales with page size */
+/* Keep brand + links + Login/Register on one row; text scales with page size */
 html.a11y-font-large .landing-nav-shell-inner,
 html.a11y-font-xlarge .landing-nav-shell-inner {
 	flex-wrap: nowrap !important;
@@ -114,13 +114,27 @@ html.a11y-font-xlarge .landing-nav-shell-inner {
 	gap: 0.5rem 0.75rem;
 }
 
+html.a11y-font-large .landing-nav-shell-brand,
+html.a11y-font-xlarge .landing-nav-shell-brand {
+	flex: 0 1 auto !important;
+	min-width: 0;
+	max-width: 16rem;
+}
+
+html.a11y-font-large .landing-nav-shell-end,
+html.a11y-font-xlarge .landing-nav-shell-end {
+	flex: 1 1 auto !important;
+	min-width: 0;
+	justify-content: flex-end;
+}
+
 html.a11y-font-large .landing-nav-shell-links,
 html.a11y-font-xlarge .landing-nav-shell-links {
-	flex: 1 1 auto !important;
+	flex: 0 1 auto !important;
 	flex-wrap: nowrap !important;
 	max-width: none !important;
 	min-width: 0;
-	justify-content: center;
+	justify-content: flex-end;
 	gap: 0.35rem;
 	overflow-x: auto;
 }
@@ -141,7 +155,7 @@ html.a11y-font-large .landing-nav-cta-group,
 html.a11y-font-xlarge .landing-nav-cta-group {
 	flex: 0 0 auto !important;
 	flex-shrink: 0 !important;
-	margin-left: auto !important;
+	margin-left: 0 !important;
 }
 
 /* Prefer short "Policies" label so the bar still fits in one row */
@@ -1082,13 +1096,47 @@ html.landing-nav-menu-open .daily-update-ticker {
 		padding: 0.55rem 1rem;
 	}
 
+	.landing-nav-shell-brand {
+		max-width: 18rem;
+		gap: 0.45rem;
+	}
+
+	.landing-nav-shell-emblem {
+		height: 2.4rem;
+		max-height: 2.4rem;
+	}
+
+	.landing-nav-portal-mark {
+		width: 3.1rem;
+		height: 3.1rem;
+	}
+
+	.landing-nav-shell-brand-line {
+		font-size: 0.65rem;
+	}
+
+	.landing-nav-shell-brand-line--strong {
+		font-size: 0.72rem;
+	}
+
+	.landing-nav-shell-brand-title {
+		font-size: 0.92rem;
+	}
+
+	.landing-nav-shell-brand-sub {
+		font-size: 0.65rem;
+	}
+
+	.landing-nav-shell-end {
+		gap: 0.45rem 0.65rem;
+	}
+
 	.landing-nav-shell-links {
-		flex: 1 1 auto;
+		flex: 0 1 auto;
 		flex-wrap: nowrap;
-		justify-content: center;
+		justify-content: flex-end;
 		gap: 0.45rem;
 		min-width: 0;
-		max-width: calc(100% - 11rem);
 		overflow-x: auto;
 		-webkit-overflow-scrolling: touch;
 		scroll-padding-inline: 0.5rem;
@@ -1130,7 +1178,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 
 	.landing-nav-shell-links {
 		gap: 0.55rem;
-		max-width: calc(100% - 13rem);
+		max-width: none;
 	}
 
 	.landing-nav-shell-link,
@@ -1259,7 +1307,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 }
 
 .landing-nav-brand-line--strong {
-	font-size: 0.875rem;
+	font-size: 1rem;
 	font-weight: 800;
 	color: #1e293b;
 }
@@ -1422,12 +1470,108 @@ html.landing-nav-menu-open .daily-update-ticker {
 	}
 }
 
-.landing-nav-shell-links {
+.landing-nav-shell-brand {
+	display: flex;
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 28rem;
+	align-items: center;
+	gap: 0.55rem;
+	text-decoration: none !important;
+	color: inherit !important;
+}
+
+.landing-nav-shell-emblem {
+	display: block;
+	width: auto;
+	height: 2.75rem;
+	max-height: 2.75rem;
+	flex-shrink: 0;
+	object-fit: contain;
+}
+
+.landing-nav-shell-portal-mark {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	line-height: 0;
+}
+
+.landing-nav-portal-mark {
+	display: block;
+	width: 3.5rem;
+	height: 3.5rem;
+}
+
+.landing-nav-shell-brand-text {
+	display: flex;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	gap: 0.1rem;
+}
+
+.landing-nav-shell-brand-title {
+	font-size: 1.05rem;
+	font-weight: 800;
+	line-height: 1.25;
+	color: #1e293b;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.landing-nav-shell-brand-sub {
+	font-size: 0.72rem;
+	font-weight: 600;
+	line-height: 1.3;
+	color: #64748b;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@media (min-width: 1280px) {
+	.landing-nav-shell-brand {
+		max-width: 32rem;
+		gap: 0.7rem;
+	}
+
+	.landing-nav-shell-emblem {
+		height: 3rem;
+		max-height: 3rem;
+	}
+
+	.landing-nav-portal-mark {
+		width: 3.85rem;
+		height: 3.85rem;
+	}
+
+	.landing-nav-shell-brand-title {
+		font-size: 1.2rem;
+	}
+
+	.landing-nav-shell-brand-sub {
+		font-size: 0.78rem;
+	}
+}
+
+.landing-nav-shell-end {
 	display: flex;
 	flex: 1 1 auto;
+	min-width: 0;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.65rem 1rem;
+}
+
+.landing-nav-shell-links {
+	display: flex;
+	flex: 0 1 auto;
 	flex-wrap: nowrap;
 	align-items: center;
-	justify-content: flex-start;
+	justify-content: flex-end;
 	gap: 0.35rem;
 	min-width: 0;
 	overflow-x: auto;
@@ -1514,7 +1658,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 	flex-shrink: 0;
 	align-items: center;
 	gap: 0.55rem;
-	margin-left: auto;
+	margin-left: 0;
 }
 
 @media (min-width: 1024px) {
@@ -2495,8 +2639,8 @@ body.a11y-contrast-high .landing-need-support::after {
 	.landing-hero-overlay--lr {
 		background: radial-gradient(
 			ellipse 130% 90% at 50% 100%,
-			color-mix(in srgb, var(--landing-ink) 78%, transparent) 0%,
-			color-mix(in srgb, var(--landing-ink) 35%, transparent) 45%,
+			color-mix(in srgb, var(--landing-ink) 32%, transparent) 0%,
+			color-mix(in srgb, var(--landing-ink) 12%, transparent) 45%,
 			transparent 72%
 		);
 	}
@@ -2608,17 +2752,16 @@ body.a11y-contrast-high .landing-need-support::after {
 .landing-hero-overlay--lr {
 	background: linear-gradient(
 		102deg,
-		color-mix(in srgb, var(--landing-ink) 88%, transparent) 0%,
-		color-mix(in srgb, var(--landing-ink) 48%, transparent) 42%,
-		transparent 70%
+		color-mix(in srgb, var(--landing-ink) 18%, transparent) 0%,
+		transparent 38%
 	);
 }
 
 .landing-hero-overlay--tb {
 	background: linear-gradient(
 		to top,
-		color-mix(in srgb, var(--landing-ink) 55%, transparent) 0%,
-		transparent 50%
+		color-mix(in srgb, var(--landing-ink) 28%, transparent) 0%,
+		transparent 42%
 	);
 }
 
@@ -3951,6 +4094,36 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	margin: 0;
 	color: var(--landing-accent);
 	stroke-width: 2.75;
+}
+
+.get-started-promo-actions {
+	margin-top: 1.75rem;
+}
+
+.get-started-promo-link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.7rem 1.35rem;
+	border-radius: 999px;
+	border: 1.5px solid var(--landing-accent);
+	background: transparent;
+	font-family: var(--font-gov);
+	font-size: 0.95rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: var(--landing-accent) !important;
+	text-decoration: none !important;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease,
+		transform 0.2s ease;
+}
+
+.get-started-promo-link:hover {
+	background: color-mix(in srgb, var(--landing-accent) 14%, #fff);
+	color: var(--landing-accent) !important;
+	transform: translateY(-1px);
 }
 
 /* Right — auth column */
@@ -8942,6 +9115,12 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 .public-page__intro {
 	margin-bottom: 2.5rem;
 	max-width: none;
+}
+
+.page-public-site .public-page .public-page__intro .landing-section-lead,
+.page-public-site .public-page .public-page__lead {
+	max-width: none;
+	margin-top: 0.85rem !important;
 }
 
 /* Dedicated /services page — government-style readable guide (no cards / infographics) */

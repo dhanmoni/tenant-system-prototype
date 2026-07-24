@@ -538,7 +538,7 @@ export const heroSlideVariants = {
 export const heroCopyContainerVariants = {
 	hidden: {},
 	visible: {
-		transition: { staggerChildren: 0.14, delayChildren: 0.25 },
+		transition: { staggerChildren: 0.2, delayChildren: 0.4 },
 	},
 }
 
@@ -547,7 +547,7 @@ export const heroTitleVariants = {
 	visible: {
 		opacity: 1,
 		x: 0,
-		transition: { duration: 0.8, ease: heroIntroEase },
+		transition: { duration: 1.55, ease: heroIntroEase },
 	},
 }
 
@@ -581,7 +581,7 @@ export const heroAccentLineVariants = {
 	visible: {
 		scaleX: 1,
 		opacity: 1,
-		transition: { duration: 0.65, ease: heroIntroEase, delay: 0.15 },
+		transition: { duration: 1.2, ease: heroIntroEase, delay: 0.35 },
 	},
 }
 

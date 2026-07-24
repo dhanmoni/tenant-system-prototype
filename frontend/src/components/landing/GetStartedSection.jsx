@@ -109,6 +109,19 @@ const promoFeatureItemVariants = {
 	},
 }
 
+const promoCtaVariants = {
+	hidden: { opacity: 0, y: 14 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: {
+			duration: 0.48,
+			ease: easeOutExpo,
+			delay: 0.06,
+		},
+	},
+}
+
 const promoCheckVariants = {
 	hidden: { opacity: 0, scale: 0.4 },
 	visible: {
@@ -146,6 +159,11 @@ function GetStartedSection({ authPanelProps }) {
 		margin: '0px 0px -10% 0px',
 	})
 	const animate = Boolean(reduceMotion) || inView
+
+	const scrollToHowToApply = (e) => {
+		e.preventDefault()
+		document.getElementById('portal-guide')?.scrollIntoView({ behavior: 'smooth' })
+	}
 
 	const promoFeatures = useMemo(
 		() => [
@@ -229,6 +247,19 @@ function GetStartedSection({ authPanelProps }) {
 							</motion.li>
 						))}
 					</motion.ul>
+
+					<motion.div
+						className="get-started-promo-actions"
+						variants={reduceMotion ? undefined : promoCtaVariants}
+					>
+						<a
+							href="#portal-guide"
+							onClick={scrollToHowToApply}
+							className="get-started-promo-link"
+						>
+							{t('hero.howToApply')}
+						</a>
+					</motion.div>
 				</motion.div>
 
 				<motion.div

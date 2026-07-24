@@ -8,14 +8,14 @@ export const sitemapTree = [
 		to: '/',
 		children: [
 			{ label: 'How to apply', href: '/#portal-guide' },
-			{ label: 'Portal services', href: '/#services' },
+			{ label: 'Services', href: '/#services' },
 			{ label: 'Sign in', href: '/#login' },
 			{ label: 'New registration', href: '/#register' },
 		],
 	},
-	{ label: 'About us', to: '/about' },
+	{ label: 'About', to: '/about' },
 	{
-		label: 'Portal services',
+		label: 'Services',
 		to: '/services',
 		children: [
 			{ label: 'Tenancy registration & UIN', to: '/services#uin-registration' },
@@ -26,7 +26,7 @@ export const sitemapTree = [
 	},
 	{ label: 'Public dashboard', to: '/public-dashboard' },
 	{ label: 'Policies & guidelines', to: '/policies' },
-	{ label: 'Resources', to: '/resources' },
+	{ label: 'Documents', to: '/resources' },
 	{ label: 'Contact us', to: '/contact' },
 	{ label: 'Sign in', to: '/login' },
 	// { label: 'Sitemap', to: '/sitemap' },
