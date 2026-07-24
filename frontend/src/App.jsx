@@ -324,9 +324,12 @@ function App() {
 							<div className="accessibility-font-tools">
 								<button
 									type="button"
-									className="accessibility-toolbar-btn accessibility-toolbar-btn--font"
+									className={`accessibility-toolbar-btn accessibility-toolbar-btn--font${
+										fontScale === 'large' || fontScale === 'xlarge' ? ' is-active' : ''
+									}${fontScale === 'xlarge' ? ' is-active--strong' : ''}`}
 									onClick={increaseFontScale}
 									disabled={fontScale === 'xlarge'}
+									aria-pressed={fontScale === 'large' || fontScale === 'xlarge'}
 									title={t('a11y.increaseText')}
 									aria-label={t('a11y.increaseText')}
 								>
@@ -336,6 +339,7 @@ function App() {
 									type="button"
 									className={`accessibility-toolbar-btn accessibility-toolbar-btn--font${fontScale === 'normal' ? ' is-active' : ''}`}
 									onClick={() => setFontScale('normal')}
+									aria-pressed={fontScale === 'normal'}
 									title={t('a11y.resetText')}
 									aria-label={t('a11y.resetText')}
 								>
@@ -346,6 +350,7 @@ function App() {
 									className="accessibility-toolbar-btn accessibility-toolbar-btn--font"
 									onClick={decreaseFontScale}
 									disabled={fontScale === 'normal'}
+									aria-pressed={false}
 									title={t('a11y.decreaseText')}
 									aria-label={t('a11y.decreaseText')}
 								>

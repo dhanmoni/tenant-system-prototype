@@ -129,6 +129,11 @@ function Login({ onLogin }) {
 		}
 
 		setLoginForm((prev) => ({ ...prev, [name]: nextValue }))
+		// Keep "OTP sent" success visible while the user types the code
+		if (name === 'otp') {
+			setLoginError('')
+			return
+		}
 		clearLoginMessages()
 	}
 
@@ -294,7 +299,8 @@ function Login({ onLogin }) {
 
 	const handleSetRegOtp = (next) => {
 		setRegOtp(next)
-		clearRegMessages()
+		// Keep "OTP sent" success visible while the user types the code
+		setRegError('')
 	}
 
 	const handleSetRegStep = (step) => {

@@ -1,6 +1,14 @@
 import { useMemo, useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
-import { ClipboardList, Landmark, ShieldCheck } from 'lucide-react'
+import {
+	Award,
+	BadgeCheck,
+	ClipboardList,
+	Eye,
+	FileLock2,
+	Landmark,
+	ShieldCheck,
+} from 'lucide-react'
 import { portalBenefitItems } from '../../data/portalBenefits'
 import {
 	benefitsModernCardHover,
@@ -32,6 +40,35 @@ const benefitCopyKeys = {
 		title: 'home.benefits.records.title',
 		description: 'home.benefits.records.desc',
 	},
+}
+
+const BENEFITS_FLOAT_MOTIFS = [
+	{ Icon: ShieldCheck, x: '6%', y: '22%', size: 'lg', delay: '0s', drift: 'a' },
+	{ Icon: BadgeCheck, x: '14%', y: '48%', size: 'md', delay: '1.1s', drift: 'b' },
+	{ Icon: Eye, x: '4%', y: '72%', size: 'sm', delay: '0.45s', drift: 'c' },
+	{ Icon: FileLock2, x: '17%', y: '88%', size: 'md', delay: '1.9s', drift: 'a' },
+	{ Icon: Award, x: '90%', y: '26%', size: 'md', delay: '0.35s', drift: 'b' },
+	{ Icon: ClipboardList, x: '94%', y: '52%', size: 'lg', delay: '1.4s', drift: 'c' },
+	{ Icon: Landmark, x: '83%', y: '74%', size: 'sm', delay: '0.85s', drift: 'a' },
+	{ Icon: ShieldCheck, x: '91%', y: '90%', size: 'md', delay: '2.2s', drift: 'b' },
+]
+
+function BenefitsFloatMotifs({ reduceMotion }) {
+	return (
+		<div className="portal-benefits-float" aria-hidden>
+			{BENEFITS_FLOAT_MOTIFS.map(({ Icon, x, y, size, delay, drift }, i) => (
+				<span
+					key={`${x}-${y}-${i}`}
+					className={`portal-benefits-float__item portal-benefits-float__item--${size}${
+						reduceMotion ? '' : ` portal-benefits-float__item--drift-${drift}`
+					}`}
+					style={{ left: x, top: y, animationDelay: delay }}
+				>
+					<Icon strokeWidth={1.5} aria-hidden />
+				</span>
+			))}
+		</div>
+	)
 }
 
 function PortalBenefitsSection({ className = '' }) {
@@ -66,6 +103,7 @@ function PortalBenefitsSection({ className = '' }) {
 			aria-labelledby="portal-benefits-heading"
 		>
 			<div className="portal-benefits__shell mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+				<BenefitsFloatMotifs reduceMotion={reduceMotion} />
 				<motion.header
 					className="portal-benefits__header"
 					initial={reduceMotion ? false : 'hidden'}
