@@ -199,7 +199,8 @@ body:has(.page.page-dashboard) {
 	--dashboard-chrome-height: 72px;
 }
 
-.page.page-dashboard > .accessibility-bar {
+.page.page-dashboard > .accessibility-bar,
+.page.page-dashboard > .ux4g-topbar {
 	flex-shrink: 0;
 	width: 100%;
 	z-index: 110;
@@ -1379,8 +1380,8 @@ html.landing-nav-menu-open .daily-update-ticker {
 }
 
 .landing-nav-drawer-ctas {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
+	display: flex;
+	flex-direction: column;
 	gap: 0.75rem;
 	margin-top: 0.55rem;
 	padding-top: 0.75rem;
@@ -1391,16 +1392,35 @@ html.landing-nav-menu-open .daily-update-ticker {
 	display: inline-flex !important;
 	align-items: center;
 	justify-content: center;
-	padding: 0.75rem 1.1rem !important;
-	border-radius: 999px !important;
-	font-size: 1rem !important;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 0 !important;
+	padding: 0.85rem 1.25rem !important;
+	border: none !important;
+	border-radius: 10px !important;
+	font-size: 0.9375rem !important;
 	font-weight: 700 !important;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	text-align: center;
 	text-decoration: none !important;
+	line-height: 1.25;
+	white-space: nowrap;
+	box-shadow: none !important;
+	cursor: pointer;
+	transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .landing-nav-drawer-cta--primary {
 	background: var(--landing-accent) !important;
 	color: #fff !important;
+}
+
+.landing-nav-drawer-cta--primary:hover,
+.landing-nav-drawer-cta--primary:focus-visible {
+	background: var(--landing-accent-hover) !important;
+	color: #fff !important;
+	text-decoration: none !important;
 }
 
 .landing-nav-drawer-cta--outline {
@@ -1411,8 +1431,9 @@ html.landing-nav-menu-open .daily-update-ticker {
 	outline: none;
 }
 
-.landing-nav-mobile a.landing-nav-drawer-cta--outline:hover {
-	background: transparent !important;
+.landing-nav-panel a.landing-nav-drawer-cta--outline:hover,
+.landing-nav-panel a.landing-nav-drawer-cta--outline:focus-visible {
+	background: color-mix(in srgb, var(--landing-accent) 8%, #fff) !important;
 	color: var(--landing-accent) !important;
 	border-color: var(--landing-accent) !important;
 	text-decoration: none !important;
@@ -17974,7 +17995,7 @@ fieldset.profile-type-row label {
 
 /* ── Buttons (legacy public/auth only — dashboard uses workspace.css + component styles) ── */
 .page:not(.page-dashboard)
-	button:not(.need-support-faq__trigger):not(.landing-faq__trigger):not([class*='ws-']):not([class*='landing-']):not([class*='auth-panel']):not([class*='table-icon']):not([class*='action-icon']):not([class*='header-action']):not([class*='uin-wizard']):not(.public-page-hero__dot):not(.accessibility-toolbar-btn) {
+	button:not(.need-support-faq__trigger):not(.landing-faq__trigger):not([class*='ws-']):not([class*='landing-']):not([class*='auth-panel']):not([class*='table-icon']):not([class*='action-icon']):not([class*='header-action']):not([class*='uin-wizard']):not([class*='ux4g-']):not(.public-page-hero__dot):not(.accessibility-toolbar-btn) {
 	margin-top: 0px;
 	padding: 10px 24px;
 	border-radius: 4px;
@@ -17987,14 +18008,14 @@ fieldset.profile-type-row label {
 }
 
 .page:not(.page-dashboard)
-	button:not(.need-support-faq__trigger):not(.landing-faq__trigger):not([class*='ws-']):not([class*='landing-']):not([class*='auth-panel']):not([class*='table-icon']):not([class*='action-icon']):not([class*='header-action']):not([class*='uin-wizard']):not(.public-page-hero__dot):not(.accessibility-toolbar-btn):hover:not(:disabled) {
+	button:not(.need-support-faq__trigger):not(.landing-faq__trigger):not([class*='ws-']):not([class*='landing-']):not([class*='auth-panel']):not([class*='table-icon']):not([class*='action-icon']):not([class*='header-action']):not([class*='uin-wizard']):not([class*='ux4g-']):not(.public-page-hero__dot):not(.accessibility-toolbar-btn):hover:not(:disabled) {
 	background: var(--nic-green-dark);
 	box-shadow: var(--nic-card-shadow);
 	transform: none;
 }
 
 .page:not(.page-dashboard)
-	button:not(.need-support-faq__trigger):not(.landing-faq__trigger):not([class*='ws-']):not([class*='landing-']):not([class*='auth-panel']):not([class*='table-icon']):not([class*='action-icon']):not([class*='header-action']):not([class*='uin-wizard']):not(.public-page-hero__dot):not(.accessibility-toolbar-btn):disabled {
+	button:not(.need-support-faq__trigger):not(.landing-faq__trigger):not([class*='ws-']):not([class*='landing-']):not([class*='auth-panel']):not([class*='table-icon']):not([class*='action-icon']):not([class*='header-action']):not([class*='uin-wizard']):not([class*='ux4g-']):not(.public-page-hero__dot):not(.accessibility-toolbar-btn):disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
 	background: #ccc;

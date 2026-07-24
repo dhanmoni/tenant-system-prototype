@@ -1,0 +1,657 @@
+/* UX4G Accessibility Topbar — local tokens + utilities (avoid full DS reset).
+   Official bar chrome comes from CDN: components/accessibility-bar.css */
+
+/* Official UX4G Material Icons (CDN) — same font family as design system */
+@font-face {
+	font-family: 'UX4G Material Icons Outlined';
+	src: url('https://cdn.ux4g.gov.in/UX4G@3.0.18/assets/fonts/MaterialIconsOutlined-Regular.otf')
+		format('opentype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'UX4G Material Icons';
+	src: url('https://cdn.ux4g.gov.in/UX4G@3.0.18/assets/fonts/MaterialIcons-Regular.ttf')
+		format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+:root {
+	--ux4g-color-primary-600: #4a2bc2;
+	--ux4g-color-neutral-0: #fff;
+	--ux4g-color-neutral-200: #e5e5e5;
+	--ux4g-bg-primary-strong: var(--ux4g-color-primary-600);
+	--ux4g-bg-neutral-subtle: var(--ux4g-color-neutral-200);
+	--ux4g-text-neutral-inverse: #fafafa;
+	--ux4g-icon-neutral-inverse: #fafafa;
+	--ux4g-border-color-primary-default: rgba(255, 255, 255, 0.35);
+	--ux4g-border-width-sm: 1px;
+	--ux4g-border-width-none: 0;
+	--ux4g-space-1: 2px;
+	--ux4g-space-2: 4px;
+	--ux4g-space-4: 8px;
+	--ux4g-space-5: 12px;
+	--ux4g-space-6: 16px;
+	--ux4g-space-xs: 4px;
+	--ux4g-padding-3xs: var(--ux4g-space-1);
+	--ux4g-padding-2xs: var(--ux4g-space-2);
+	--ux4g-padding-xs: var(--ux4g-space-4);
+	--ux4g-padding-s: var(--ux4g-space-5);
+	--ux4g-margin-s: var(--ux4g-space-5);
+	--ux4g-margin-2xs: var(--ux4g-space-2);
+	--ux4g-inline-2xs: var(--ux4g-space-1);
+	--ux4g-inline-xs: var(--ux4g-space-2);
+	--ux4g-inline-s: var(--ux4g-space-4);
+	--ux4g-inline-l: var(--ux4g-space-6);
+	--ux4g-radius-sm: 4px;
+	--ux4g-fs-14: 14px;
+	--ux4g-fs-16: 16px;
+	--ux4g-fs-20: 20px;
+	--ux4g-fw-medium: 600;
+	--ux4g-gutter-x: 1.5rem;
+	--ux4g-rgb-white: 255, 255, 255;
+}
+
+.ux4g-icon,
+.ux4g-icon-filled {
+	font-family: 'UX4G Material Icons', sans-serif;
+}
+
+.ux4g-icon,
+.ux4g-icon-filled,
+.ux4g-icon-outlined {
+	font-weight: normal;
+	font-style: normal;
+	font-size: var(--ux4g-icon-size, 16px);
+	line-height: 1;
+	letter-spacing: normal;
+	text-transform: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	white-space: nowrap;
+	direction: ltr;
+	-webkit-font-smoothing: antialiased;
+	font-feature-settings: 'liga';
+	-webkit-font-feature-settings: 'liga';
+}
+
+.ux4g-icon-outlined {
+	font-family: 'UX4G Material Icons Outlined', sans-serif;
+}
+
+.ux4g-fs-20 {
+	font-size: var(--ux4g-fs-20);
+}
+
+.ux4g-container-fluid {
+	width: 100%;
+	max-width: 100%;
+	margin-inline: auto;
+	padding-inline: calc(var(--ux4g-gutter-x) * 0.5);
+}
+
+.ux4g-d-none {
+	display: none !important;
+}
+
+.ux4g-d-flex {
+	display: flex !important;
+}
+
+.ux4g-d-inline-flex {
+	display: inline-flex !important;
+}
+
+.ux4g-ai-center {
+	align-items: center;
+}
+
+.ux4g-jc-center {
+	justify-content: center;
+}
+
+.ux4g-jc-between {
+	justify-content: space-between;
+}
+
+.ux4g-bl {
+	border-inline-start: var(--ux4g-border-width-sm) solid
+		var(--ux4g-border-current, var(--ux4g-border-color-primary-default));
+}
+
+/* sm ≥576 — language + accessibility on phones in landscape / large phones */
+@media (min-width: 576px) {
+	.ux4g-sm-d-flex {
+		display: flex !important;
+	}
+
+	.ux4g-sm-d-inline-flex {
+		display: inline-flex !important;
+	}
+}
+
+/* md ≥768 — full utility cluster (font size + dividers) */
+@media (min-width: 768px) {
+	.ux4g-md-d-flex {
+		display: flex !important;
+	}
+
+	.ux4g-md-d-inline-flex {
+		display: inline-flex !important;
+	}
+}
+
+/* Portal layout hooks */
+.ux4g-topbar {
+	position: relative;
+	z-index: 50;
+	flex-shrink: 0;
+	width: 100%;
+	overflow: visible;
+}
+
+.page.page-dashboard > .ux4g-topbar {
+	z-index: 110;
+}
+
+html.a11y-font-large .ux4g-topbar,
+html.a11y-font-xlarge .ux4g-topbar {
+	font-size: 13px !important;
+}
+
+html.a11y-font-large .ux4g-topbar .ux4g-label-m-default,
+html.a11y-font-xlarge .ux4g-topbar .ux4g-label-m-default,
+html.a11y-font-large .ux4g-topbar .ux4g-topbar__iconbtn,
+html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__iconbtn,
+html.a11y-font-large .ux4g-topbar .ux4g-topbar__selectbtn,
+html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
+	font-size: 13px !important;
+}
+
+/* Kill global portal button / link overrides inside the official bar */
+.page .ux4g-topbar a,
+.page .ux4g-topbar a:hover,
+.page .ux4g-topbar a:focus {
+	color: var(--ux4g-text-neutral-inverse, #fafafa) !important;
+	text-decoration: none !important;
+	background: transparent !important;
+}
+
+.page .ux4g-topbar .ux4g-topbar__skip {
+	text-decoration: none !important;
+	white-space: nowrap;
+}
+
+.page .ux4g-topbar button.ux4g-topbar__iconbtn,
+.page .ux4g-topbar button.ux4g-topbar__selectbtn,
+.page .ux4g-topbar button.ux4g-topbar__iconbtn:focus,
+.page .ux4g-topbar button.ux4g-topbar__iconbtn:focus-visible,
+.page .ux4g-topbar button.ux4g-topbar__iconbtn:active,
+.page .ux4g-topbar button.ux4g-topbar__selectbtn:focus,
+.page .ux4g-topbar button.ux4g-topbar__selectbtn:focus-visible,
+.page .ux4g-topbar button.ux4g-topbar__selectbtn:active {
+	appearance: none !important;
+	margin: 0 !important;
+	border: 0 !important;
+	border-radius: var(--ux4g-radius-sm) !important;
+	background: transparent !important;
+	color: var(--ux4g-text-neutral-inverse, #fafafa) !important;
+	box-shadow: none !important;
+	font-weight: var(--ux4g-fw-medium, 600) !important;
+	transform: none !important;
+	min-width: 0;
+	outline: none;
+}
+
+.page .ux4g-topbar button.ux4g-topbar__iconbtn:focus-visible,
+.page .ux4g-topbar button.ux4g-topbar__selectbtn:focus-visible {
+	outline: 2px solid #fff !important;
+	outline-offset: 2px;
+}
+
+.page .ux4g-topbar button.ux4g-topbar__iconbtn {
+	height: 36px !important;
+	width: 36px !important;
+	padding: 0 !important;
+}
+
+.page .ux4g-topbar button.ux4g-topbar__selectbtn {
+	height: 36px !important;
+	padding-inline: var(--ux4g-padding-2xs) !important;
+	width: auto !important;
+	gap: var(--ux4g-space-xs);
+}
+
+.page .ux4g-topbar button.ux4g-topbar__iconbtn:hover:not(:disabled),
+.page .ux4g-topbar button.ux4g-topbar__selectbtn:hover:not(:disabled) {
+	background: rgba(255, 255, 255, 0.12) !important;
+	color: #fff !important;
+	box-shadow: none !important;
+}
+
+.page .ux4g-topbar button.ux4g-topbar__iconbtn:disabled {
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+	background: transparent !important;
+	color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.page .ux4g-topbar .ux4g-icon-outlined,
+.page .ux4g-topbar .ux4g-top-bar-icon {
+	color: var(--ux4g-icon-neutral-inverse, #fafafa) !important;
+	font-size: var(--ux4g-fs-20) !important;
+	width: auto;
+	height: auto;
+}
+
+.page .ux4g-topbar .ux4g-topbar__font-label {
+	font-family: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1;
+	color: inherit;
+	letter-spacing: 0.02em;
+}
+
+.ux4g-topbar__select {
+	position: relative;
+}
+
+.ux4g-topbar__lang-menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 4px);
+	z-index: 60;
+	min-width: 140px;
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	background: #fff;
+	color: #1a1a1a;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+}
+
+.page .ux4g-topbar .ux4g-topbar__lang-menu button {
+	display: block;
+	width: 100%;
+	appearance: none !important;
+	margin: 0 !important;
+	border: 0 !important;
+	border-radius: 4px !important;
+	background: transparent !important;
+	text-align: left;
+	padding: 8px 10px !important;
+	font: inherit;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+	color: #1a1a1a !important;
+	box-shadow: none !important;
+	cursor: pointer;
+}
+
+.page .ux4g-topbar .ux4g-topbar__lang-menu button:hover,
+.page .ux4g-topbar .ux4g-topbar__lang-menu button.is-active {
+	background: #f1f5f9 !important;
+	color: #1a1a1a !important;
+}
+
+.ux4g-topbar__wrap {
+	min-height: 46px;
+	gap: 8px;
+	flex-wrap: nowrap;
+	align-items: center;
+	padding-block: 4px;
+	overflow: visible;
+}
+
+/* Indian flag — from UX4G accessibility-bar.css (.india-flag) */
+.page .ux4g-topbar .india-flag,
+.ux4g-topbar .india-flag {
+	display: inline-block;
+	flex-shrink: 0;
+	width: 33px;
+	height: 22px;
+	margin-right: 8px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	overflow: visible;
+	align-self: center;
+}
+
+.page .ux4g-topbar .ux4g-topbar__gov {
+	gap: 0;
+	min-width: 0;
+	align-items: center;
+	overflow: visible;
+	padding-block: 2px;
+}
+
+.page .ux4g-topbar .ux4g-topbar__gov-label {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: min(42vw, 14rem);
+	text-decoration: none;
+	color: var(--ux4g-text-neutral-inverse, #fafafa);
+}
+
+.ux4g-topbar__skip-short {
+	display: inline;
+}
+
+.ux4g-topbar__skip-full {
+	display: none;
+}
+
+/* Phones — compact bar; font tools from 768px */
+@media (max-width: 575.98px) {
+	.ux4g-topbar .ux4g-container-fluid {
+		padding-inline: 12px;
+	}
+
+	.ux4g-topbar__wrap {
+		min-height: 44px;
+		gap: 6px;
+		padding-block: 6px;
+	}
+
+	.page .ux4g-topbar .india-flag {
+		width: 28px;
+		height: 19px;
+		margin-right: 6px;
+	}
+
+	.page .ux4g-topbar .ux4g-topbar__gov-label {
+		font-size: 11px;
+		max-width: min(38vw, 9.5rem);
+	}
+
+	.page .ux4g-topbar .ux4g-topbar__skip {
+		font-size: 12px;
+		padding-right: 2px;
+	}
+
+	.page .ux4g-topbar button.ux4g-topbar__iconbtn {
+		height: 34px !important;
+		width: 34px !important;
+	}
+
+	.page .ux4g-topbar nav.ux4g-d-flex {
+		gap: 2px;
+		min-width: 0;
+		flex-shrink: 0;
+	}
+
+	/* Globe only on very narrow screens */
+	.page .ux4g-topbar .ux4g-topbar__selectbtn .ux4g-label-m-default,
+	.page .ux4g-topbar .ux4g-topbar__selectbtn .ux4g-icon-outlined:not(.icon-language) {
+		display: none !important;
+	}
+
+	.page .ux4g-topbar button.ux4g-topbar__selectbtn {
+		width: 34px !important;
+		justify-content: center;
+		padding-inline: 0 !important;
+	}
+
+	.page .ux4g-topbar .acc-top-divider {
+		display: none !important;
+	}
+}
+
+@media (min-width: 576px) {
+	.ux4g-topbar__skip-short {
+		display: none;
+	}
+
+	.ux4g-topbar__skip-full {
+		display: inline;
+	}
+
+	.page .ux4g-topbar .ux4g-topbar__gov-label {
+		max-width: none;
+	}
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+	.ux4g-topbar .ux4g-container-fluid {
+		padding-inline: 12px;
+	}
+
+	.page .ux4g-topbar button.ux4g-topbar__iconbtn {
+		height: 34px !important;
+		width: 34px !important;
+	}
+
+	.page .ux4g-topbar .ux4g-topbar__selectbtn .ux4g-label-m-default {
+		max-width: 4.5rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+	.ux4g-topbar .ux4g-container-fluid {
+		padding-inline: 14px;
+	}
+
+	.ux4g-topbar__wrap {
+		gap: 6px;
+	}
+
+	.page .ux4g-topbar button.ux4g-topbar__iconbtn {
+		height: 34px !important;
+		width: 34px !important;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Protect topbar icons from UX4G widget CSS (.ux4g-icon uses mask/background)
+--------------------------------------------------------------------------- */
+.ux4g-topbar .ux4g-icon-outlined,
+.ux4g-topbar .ux4g-icon,
+.ux4g-topbar .ux4g-top-bar-icon {
+	background: none !important;
+	background-color: transparent !important;
+	mask-image: none !important;
+	-webkit-mask-image: none !important;
+	width: auto !important;
+	height: auto !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	color: var(--ux4g-icon-neutral-inverse, #fafafa) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Official UX4G accessibility widget — mobile / tablet polish
+   Topbar already opens the panel; hide the large floating FAB on small screens
+   so it does not cover headings. Panel becomes a full-width bottom sheet.
+--------------------------------------------------------------------------- */
+
+/* Hide default FAB whenever the topbar trigger is available (all breakpoints) */
+.uw-widget-custom-trigger {
+	display: none !important;
+}
+
+/* Soft scrim while the panel is open (JS sets inline right: 0) */
+#uw-main[style*='right: 0'],
+#uw-main[style*='right:0'] {
+	box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.28) !important;
+}
+
+/* Broken UX4G logo URL → text credit on all viewports */
+#uw-main .copyrights-accessibility a.copyright-text img {
+	display: none !important;
+}
+
+#uw-main .copyrights-accessibility a.copyright-text::after {
+	content: 'UX4G';
+	font-weight: 700;
+	color: #613af5;
+	letter-spacing: 0.02em;
+}
+
+#uw-main .copyrights-accessibility {
+	display: flex !important;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+#uw-main .reset-panel {
+	position: static !important;
+	width: 100% !important;
+	bottom: auto !important;
+}
+
+@media (max-width: 767.98px) {
+	/*
+	  Widget toggles inline right: -530px / 0.
+	  On phones, pin to the viewport and slide with transform so width stays 100%.
+	*/
+	#uw-main.uwaw,
+	#uw-main {
+		left: 0 !important;
+		right: 0 !important;
+		width: 100% !important;
+		max-width: 100% !important;
+		min-height: 0 !important;
+		height: min(72dvh, 560px) !important;
+		max-height: min(72dvh, 560px) !important;
+		border-top-left-radius: 16px !important;
+		border-top-right-radius: 16px !important;
+		border-bottom-left-radius: 0 !important;
+		border-bottom-right-radius: 0 !important;
+		bottom: 0 !important;
+		padding-bottom: env(safe-area-inset-bottom, 0) !important;
+		transform: translate3d(100%, 0, 0);
+		transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+		pointer-events: none;
+		display: flex !important;
+		flex-direction: column !important;
+		overflow: hidden !important;
+		font-family: 'Lato', 'Noto Sans', system-ui, sans-serif !important;
+		font-style: normal !important;
+	}
+
+	#uw-main[style*='right: 0'],
+	#uw-main[style*='right:0'] {
+		transform: translate3d(0, 0, 0) !important;
+		pointer-events: auto;
+	}
+
+	#uw-main .second-panel {
+		flex-shrink: 0;
+		padding: 12px 14px !important;
+		gap: 12px !important;
+	}
+
+	#uw-main .second-panel h2,
+	#uw-main .second-panel h3 {
+		font-size: 1.05rem !important;
+		line-height: 1.3 !important;
+		font-style: normal !important;
+		font-weight: 600 !important;
+		font-family: inherit !important;
+	}
+
+	#uw-main .uwaw-body {
+		flex: 1 1 auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		padding: 10px 12px 0 !important;
+		margin-bottom: 0 !important;
+		overflow: hidden;
+	}
+
+	#uw-main .h-scroll {
+		flex: 1 1 auto;
+		height: auto !important;
+		max-height: none !important;
+		min-height: 0 !important;
+		-webkit-overflow-scrolling: touch;
+		padding-bottom: 8px;
+	}
+
+	#uw-main .uwaw-features {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+		gap: 8px !important;
+		padding-bottom: 8px !important;
+	}
+
+	#uw-main .uwaw-features__item__i {
+		height: auto !important;
+		min-height: 84px !important;
+		padding: 8px 6px !important;
+	}
+
+	#uw-main .uwaw-features__item__name,
+	#uw-main .ux4g-copy {
+		font-style: normal !important;
+		font-size: 12px !important;
+		line-height: 1.25 !important;
+	}
+
+	/* Footer: reset + credit — stop absolute overlap / broken logo */
+	#uw-main .reset-panel {
+		position: static !important;
+		flex-shrink: 0;
+		width: 100% !important;
+		bottom: auto !important;
+		padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0)) !important;
+		background: #fff !important;
+		border-top: 1px solid #e2e8f0;
+	}
+
+	#uw-main .copyrights-accessibility {
+		display: flex !important;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 0 !important;
+		width: 100%;
+	}
+
+	#uw-main .btn-reset-all {
+		flex: 1 1 auto;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	#uw-main .copyrights-accessibility a.copyright-text {
+		flex: 0 0 auto;
+		justify-content: flex-end !important;
+		gap: 6px !important;
+		padding: 0 !important;
+		width: auto !important;
+		font-size: 12px;
+		color: #475569 !important;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1023.98px) {
+	#uw-main.uwaw,
+	#uw-main {
+		max-width: min(420px, 92vw) !important;
+		max-height: min(80dvh, 560px) !important;
+		height: min(80dvh, 560px) !important;
+	}
+
+	#uw-main .h-scroll {
+		height: calc(min(80dvh, 560px) - 140px) !important;
+		max-height: calc(min(80dvh, 560px) - 140px) !important;
+	}
+}
+

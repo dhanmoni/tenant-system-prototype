@@ -59,6 +59,7 @@ function JoinEntryRedirect({ user }) {
 	)
 }
 import PortalLoadingScreen from './components/PortalLoadingScreen'
+import Ux4gTopbar from './components/a11y/Ux4gTopbar'
 import {
 	getMainContentTargetId,
 	handleSkipLinkClick,
@@ -70,7 +71,7 @@ import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
 
 function App() {
-	const { language, setLanguage, t } = useLanguage()
+	const { t } = useLanguage()
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [portalEntering, setPortalEntering] = useState(false)
@@ -293,100 +294,14 @@ function App() {
 			>
 				{t('a11y.skipToContent')}
 			</a>
-			{/* Accessibility utility strip — india.gov.in style (skip, font size, language) */}
-			<div id="accessibility-bar" className="accessibility-bar">
-				<div className="accessibility-bar-inner">
-					<div className="accessibility-gov">
-						<img className="accessibility-emblem" src={tcpLogo} alt="" aria-hidden />
-						<div className="accessibility-gov-text">
-							<p className="accessibility-gov-line">
-								<span>{t('gov.assam')}</span>
-							</p>
-							<p className="accessibility-ministry">
-								{t('gov.housing')}
-							</p>
-							<p className="accessibility-directorate">
-								{t('gov.directorate')}
-							</p>
-						</div>
-					</div>
-					<div className="accessibility-toolbar" role="toolbar" aria-label={t('a11y.options')}>
-						<a
-							className="accessibility-toolbar-link"
-							href={`#${mainContentTargetId}`}
-							onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
-						>
-							{t('a11y.skipToMain')}
-						</a>
-						<span className="accessibility-toolbar-divider" aria-hidden />
-						<div className="accessibility-toolbar-group" role="group" aria-label={t('a11y.fontSize')}>
-							<span className="accessibility-toolbar-label">{t('a11y.fontSize')}</span>
-							<div className="accessibility-font-tools">
-								<button
-									type="button"
-									className={`accessibility-toolbar-btn accessibility-toolbar-btn--font${
-										fontScale === 'large' || fontScale === 'xlarge' ? ' is-active' : ''
-									}${fontScale === 'xlarge' ? ' is-active--strong' : ''}`}
-									onClick={increaseFontScale}
-									disabled={fontScale === 'xlarge'}
-									aria-pressed={fontScale === 'large' || fontScale === 'xlarge'}
-									title={t('a11y.increaseText')}
-									aria-label={t('a11y.increaseText')}
-								>
-									A+
-								</button>
-								<button
-									type="button"
-									className={`accessibility-toolbar-btn accessibility-toolbar-btn--font${fontScale === 'normal' ? ' is-active' : ''}`}
-									onClick={() => setFontScale('normal')}
-									aria-pressed={fontScale === 'normal'}
-									title={t('a11y.resetText')}
-									aria-label={t('a11y.resetText')}
-								>
-									A
-								</button>
-								<button
-									type="button"
-									className="accessibility-toolbar-btn accessibility-toolbar-btn--font"
-									onClick={decreaseFontScale}
-									disabled={fontScale === 'normal'}
-									aria-pressed={false}
-									title={t('a11y.decreaseText')}
-									aria-label={t('a11y.decreaseText')}
-								>
-									A-
-								</button>
-							</div>
-						</div>
-						<span className="accessibility-toolbar-divider" aria-hidden />
-						<div className="accessibility-toolbar-group" role="group" aria-label={t('a11y.language')}>
-							<span className="accessibility-toolbar-label">{t('a11y.language')}</span>
-							<div className="accessibility-lang-tools">
-								<button
-									type="button"
-									className={`accessibility-toolbar-btn${language === 'en' ? ' is-active' : ''}`}
-									onClick={() => setLanguage('en')}
-									aria-pressed={language === 'en'}
-									aria-label={t('a11y.english')}
-									title={t('a11y.english')}
-								>
-									EN
-								</button>
-								<button
-									type="button"
-									className={`accessibility-toolbar-btn${language === 'as' ? ' is-active' : ''}`}
-									onClick={() => setLanguage('as')}
-									aria-pressed={language === 'as'}
-									aria-label={t('a11y.assamese')}
-									title={t('a11y.assamese')}
-								>
-									অসমীয়া
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			{/* Official UX4G 3.0 accessibility / GoI utility topbar */}
+			<Ux4gTopbar
+				mainContentTargetId={mainContentTargetId}
+				fontScale={fontScale}
+				onIncreaseFont={increaseFontScale}
+				onDecreaseFont={decreaseFontScale}
+				onResetFont={() => setFontScale('normal')}
+			/>
 
 			{/* Header (emblem + directorate title) — public only; hidden after login */}
 			{showLegacyPublicChrome ? (
