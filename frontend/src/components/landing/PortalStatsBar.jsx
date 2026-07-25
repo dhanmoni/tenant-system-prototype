@@ -128,12 +128,6 @@ function PortalStatsBar() {
 								className="portal-stats-card__item"
 								role="listitem"
 								variants={reduceMotion ? undefined : scrollStatItemVariants}
-								whileHover={
-									reduceMotion
-										? undefined
-										: { y: -5, scale: 1.04 }
-								}
-								transition={{ type: 'spring', stiffness: 420, damping: 22 }}
 							>
 								<span className="portal-stats-card__icon" aria-hidden>
 									<Icon className="portal-stats-card__icon-svg" strokeWidth={1.85} />

@@ -21,14 +21,15 @@
 }
 
 :root {
-	--ux4g-color-primary-600: #4a2bc2;
+	/* Assam portal utility strip — deep navy (not UX4G purple) */
+	--ux4g-color-primary-600: #0b2545;
 	--ux4g-color-neutral-0: #fff;
 	--ux4g-color-neutral-200: #e5e5e5;
 	--ux4g-bg-primary-strong: var(--ux4g-color-primary-600);
 	--ux4g-bg-neutral-subtle: var(--ux4g-color-neutral-200);
 	--ux4g-text-neutral-inverse: #fafafa;
 	--ux4g-icon-neutral-inverse: #fafafa;
-	--ux4g-border-color-primary-default: rgba(255, 255, 255, 0.35);
+	--ux4g-border-color-primary-default: rgba(255, 255, 255, 0.28);
 	--ux4g-border-width-sm: 1px;
 	--ux4g-border-width-none: 0;
 	--ux4g-space-1: 2px;
@@ -153,6 +154,8 @@
 	flex-shrink: 0;
 	width: 100%;
 	overflow: visible;
+	background: var(--ux4g-bg-primary-strong, #0b2545) !important;
+	color: var(--ux4g-text-neutral-inverse, #fafafa);
 }
 
 .page.page-dashboard > .ux4g-topbar {

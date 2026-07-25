@@ -790,6 +790,19 @@ body:has(.page.page-dashboard) {
 	position: relative;
 	z-index: 5;
 	background-color: var(--landing-cream);
+	background-image:
+		linear-gradient(
+			180deg,
+			color-mix(in srgb, #fff 78%, transparent) 0%,
+			transparent 55%
+		),
+		linear-gradient(
+			105deg,
+			#fff 0%,
+			color-mix(in srgb, var(--landing-cream) 55%, #fff) 38%,
+			color-mix(in srgb, var(--landing-accent) 7%, var(--landing-cream)) 72%,
+			var(--landing-cream) 100%
+		);
 	border-bottom: 1px solid color-mix(in srgb, var(--landing-accent) 12%, #e8e0d8);
 	box-shadow: 0 2px 12px rgba(31, 22, 18, 0.06);
 }
@@ -976,12 +989,6 @@ html.landing-nav-menu-open .daily-update-ticker {
 
 	.landing-nav-a11y-label--short {
 		display: inline;
-	}
-
-	/* Keep landing back-to-top off the mobile overlay chrome */
-	.page-landing-home .landing-fab-top,
-	.page-public-marketing .landing-fab-top {
-		display: none !important;
 	}
 }
 
@@ -1468,6 +1475,19 @@ html.landing-nav-menu-open .daily-update-ticker {
 	width: 100%;
 	position: relative;
 	background-color: var(--landing-cream);
+	background-image:
+		linear-gradient(
+			180deg,
+			color-mix(in srgb, #fff 78%, transparent) 0%,
+			transparent 55%
+		),
+		linear-gradient(
+			105deg,
+			#fff 0%,
+			color-mix(in srgb, var(--landing-cream) 55%, #fff) 38%,
+			color-mix(in srgb, var(--landing-accent) 7%, var(--landing-cream)) 72%,
+			var(--landing-cream) 100%
+		);
 	border-bottom: 1px solid color-mix(in srgb, var(--landing-accent) 12%, #e8e0d8);
 	box-shadow: 0 2px 12px rgba(31, 22, 18, 0.06);
 }
@@ -1899,11 +1919,11 @@ html.landing-nav-menu-open .daily-update-ticker {
 
 @media (min-width: 1024px) {
 	.portal-services-showcase:has(+ .portal-stats-card--bridge) {
-		padding-bottom: 10.5rem;
+		padding-bottom: 9.5rem;
 	}
 
 	.portal-services-showcase.landing-wallpaper-bg > .portal-services-showcase__seam {
-		height: 12.5rem;
+		height: 11rem;
 	}
 }
 
@@ -1942,11 +1962,12 @@ html.landing-nav-menu-open .daily-update-ticker {
 	width: 100%;
 }
 
-/* Editorial metric rail — figures first, hairline dividers (not service cards) */
+/* Editorial metric rail — figures first; panel-level dividers stay put on hover */
 .portal-stats-card--rail .portal-stats-card__panel {
+	--stats-divider: color-mix(in srgb, var(--landing-accent) 16%, #e8e2da);
 	position: relative;
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 0;
 	margin: 0;
 	padding: 0.35rem 0;
@@ -1966,11 +1987,13 @@ html.landing-nav-menu-open .daily-update-ticker {
 }
 
 .portal-stats-card--rail .portal-stats-card__item {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: flex-start;
 	gap: 0.7rem;
+	min-width: 0;
 	height: auto;
 	padding: 1.15rem 0.85rem 1.25rem;
 	text-align: center;
@@ -1978,66 +2001,67 @@ html.landing-nav-menu-open .daily-update-ticker {
 	border-radius: 0;
 	background: transparent;
 	box-shadow: none;
-	transform: none;
-	transition: background-color 0.22s ease;
 }
 
-.portal-stats-card--rail .portal-stats-card__item:nth-child(odd) {
-	border-right: 1px solid color-mix(in srgb, var(--landing-accent) 16%, #e8e2da);
+/* Hairline dividers via pseudo-elements (not item borders — those tear on motion/hover) */
+.portal-stats-card--rail .portal-stats-card__item:nth-child(odd)::after {
+	content: '';
+	position: absolute;
+	top: 18%;
+	right: 0;
+	bottom: 18%;
+	width: 1px;
+	background: var(--stats-divider);
+	pointer-events: none;
 }
 
-/* Bottom rule only for the 2×2 mobile/tablet row — not on desktop 4-col */
 @media (max-width: 1023px) {
-	.portal-stats-card--rail .portal-stats-card__item:nth-child(-n + 2) {
-		border-bottom: 1px solid color-mix(in srgb, var(--landing-accent) 14%, #e8e2da);
-	}
-}
-
-@media (hover: hover) {
-	.portal-stats-card--rail .portal-stats-card__item:hover {
-		/* Keep divider lines stable — do not recolor borders on hover */
-		border-right-color: color-mix(in srgb, var(--landing-accent) 16%, #e8e2da);
-		border-bottom-color: color-mix(in srgb, var(--landing-accent) 14%, #e8e2da);
-		background: transparent;
-		box-shadow: none;
-		z-index: 1;
-	}
-
-	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__figure {
-		color: var(--landing-accent);
-		transform: scale(1.06);
-	}
-
-	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__icon {
-		background: var(--landing-accent);
-		color: #fff;
-		transform: scale(1.12);
-	}
-
-	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__rule {
-		width: 2.35rem;
-		opacity: 1;
-		background: var(--landing-accent);
-	}
-
-	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__label {
-		color: var(--landing-text);
+	.portal-stats-card--rail .portal-stats-card__item:nth-child(-n + 2)::before {
+		content: '';
+		position: absolute;
+		left: 12%;
+		right: 12%;
+		bottom: 0;
+		height: 1px;
+		background: color-mix(in srgb, var(--landing-accent) 14%, #e8e2da);
+		pointer-events: none;
 	}
 }
 
 @media (min-width: 1024px) {
 	.portal-stats-card--rail .portal-stats-card__item {
 		padding: 1.1rem 1rem 1.2rem;
-		border-bottom: none;
-		border-right: 1px solid color-mix(in srgb, var(--landing-accent) 16%, #e8e2da);
 	}
 
-	.portal-stats-card--rail .portal-stats-card__item:nth-child(odd) {
-		border-right: 1px solid color-mix(in srgb, var(--landing-accent) 16%, #e8e2da);
+	.portal-stats-card--rail .portal-stats-card__item:not(:last-child)::after {
+		content: '';
+		position: absolute;
+		top: 18%;
+		right: 0;
+		bottom: 18%;
+		width: 1px;
+		background: var(--stats-divider);
+		pointer-events: none;
+	}
+}
+
+@media (hover: hover) {
+	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__figure {
+		color: var(--landing-accent);
 	}
 
-	.portal-stats-card--rail .portal-stats-card__item:last-child {
-		border-right: none;
+	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__icon {
+		background: var(--landing-accent);
+		color: #fff;
+	}
+
+	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__rule {
+		width: 2.35rem;
+		opacity: 1;
+	}
+
+	.portal-stats-card--rail .portal-stats-card__item:hover .portal-stats-card__label {
+		color: var(--landing-text);
 	}
 }
 
@@ -2053,8 +2077,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 	color: var(--landing-accent);
 	transition:
 		background-color 0.22s ease,
-		color 0.22s ease,
-		transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+		color 0.22s ease;
 }
 
 .portal-stats-card--rail .portal-stats-card__icon-svg {
@@ -2079,9 +2102,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 	line-height: 1;
 	letter-spacing: -0.035em;
 	color: var(--landing-text);
-	transition:
-		color 0.22s ease,
-		transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: color 0.22s ease;
 }
 
 .portal-stats-card--rail .portal-stats-card__rule {
@@ -6503,6 +6524,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	width: auto;
 }
 
+
 .portal-services-showcase__stage {
 	position: relative;
 }
@@ -10430,7 +10452,8 @@ body.a11y-highlight-links .landing-footer a.landing-footer-social {
 .landing-page-home .landing-back-to-top {
 	position: fixed;
 	right: 24px;
-	bottom: 24px;
+	left: auto;
+	bottom: 16px;
 	z-index: 50;
 	width: 48px;
 	height: 48px;
@@ -10454,7 +10477,7 @@ body.a11y-highlight-links .landing-footer a.landing-footer-social {
 /* Shared position for back-to-top + accessibility FAB */
 :root {
 	--fab-inset-x: 20px;
-	--fab-inset-y: 20px;
+	--fab-inset-y: 16px;
 	--fab-size: 56px;
 	--fab-top-size: 46px;
 	--fab-gap: 12px;
@@ -10466,14 +10489,15 @@ body.a11y-highlight-links .landing-footer a.landing-footer-social {
 @media (min-width: 640px) {
 	:root {
 		--fab-inset-x: 24px;
-		--fab-inset-y: 24px;
+		--fab-inset-y: 20px;
 	}
 }
 
 .landing-fab-top {
 	position: fixed;
-	right: calc(var(--fab-inset-x) + (var(--fab-size) - var(--fab-top-size)) / 2);
-	bottom: calc(var(--fab-inset-y) + var(--fab-size) + 4px);
+	right: var(--fab-inset-x);
+	left: auto;
+	bottom: var(--fab-inset-y);
 	z-index: 59;
 	display: inline-flex;
 	align-items: center;
@@ -11903,7 +11927,8 @@ section.landing-section:not(.landing-wallpaper-bg) h2 {
 .landing-back-to-top {
 	position: fixed;
 	right: 22px;
-	bottom: 22px;
+	left: auto;
+	bottom: 14px;
 	width: 50px;
 	height: 50px;
 	border-radius: 999px;
@@ -11947,7 +11972,8 @@ section.landing-section:not(.landing-wallpaper-bg) h2 {
 
 	.landing-back-to-top {
 		right: 14px;
-		bottom: 14px;
+		left: auto;
+		bottom: 12px;
 		width: 46px;
 		height: 46px;
 		font-size: 1.35rem;

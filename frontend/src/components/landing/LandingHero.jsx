@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import { heroSlideVariants } from '../../utils/landingMotion'
-import heroCommunityHomes from '../../assets/img/img12.png'
+import heroCommunityHomes from '../../assets/img/HeroBanner5.1.webp'
 import heroPortalSlide from '../../assets/img/HeroBanner4.1.webp'
 import { useLanguage } from '../../i18n'
 
