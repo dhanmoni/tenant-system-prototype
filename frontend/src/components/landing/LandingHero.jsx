@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
 import { heroSlideVariants } from '../../utils/landingMotion'
-import heroCommunityHomes from '../../assets/img/HeroBanner5.1.webp'
-import heroPortalSlide from '../../assets/img/HeroBanner4.1.webp'
+import heroCommunityHomes from '../../assets/img/HeroBanner7.2.webp'
+import heroPortalSlide from '../../assets/img/HeroBanner6.2.webp'
 import { useLanguage } from '../../i18n'
 
 const SLIDE_INTERVAL_MS = 6000

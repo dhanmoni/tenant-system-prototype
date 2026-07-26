@@ -17,12 +17,12 @@ function PortalNavMark({ className = '' }) {
 					<stop offset="1" stopColor="#f8d5b0" />
 				</linearGradient>
 				<linearGradient id="portalNavMarkRoof" x1="18" y1="18" x2="46" y2="34" gradientUnits="userSpaceOnUse">
-					<stop stopColor="#ee8011" />
-					<stop offset="1" stopColor="#8f4c0a" />
+					<stop stopColor="#e87400" />
+					<stop offset="1" stopColor="#904400" />
 				</linearGradient>
 				<linearGradient id="portalNavMarkDoor" x1="28" y1="36" x2="36" y2="52" gradientUnits="userSpaceOnUse">
-					<stop stopColor="#bf660d" />
-					<stop offset="0.55" stopColor="#8f4c0a" />
+					<stop stopColor="#c66300" />
+					<stop offset="0.55" stopColor="#904400" />
 				</linearGradient>
 			</defs>
 
@@ -42,7 +42,7 @@ function PortalNavMark({ className = '' }) {
 				cx="32"
 				cy="32"
 				r="24.5"
-				stroke="#bf660d"
+				stroke="#c66300"
 				strokeOpacity="0.45"
 				strokeWidth="1.1"
 				strokeDasharray="1.8 2.6"
@@ -51,13 +51,13 @@ function PortalNavMark({ className = '' }) {
 			{/* Gateway arch */}
 			<path
 				d="M16 46.5V34C16 24.6 23.2 17 32 17C40.8 17 48 24.6 48 34V46.5"
-				stroke="#8f4c0a"
+				stroke="#904400"
 				strokeWidth="2.1"
 				strokeLinecap="round"
 			/>
 			<path
 				d="M19.5 46V34.2C19.5 26.7 25.1 20.8 32 20.8C38.9 20.8 44.5 26.7 44.5 34.2V46"
-				stroke="#ee8011"
+				stroke="#e87400"
 				strokeOpacity="0.55"
 				strokeWidth="1.35"
 				strokeLinecap="round"
@@ -73,7 +73,7 @@ function PortalNavMark({ className = '' }) {
 				d="M25.8 39.2V47.2H38.2V39.2"
 				fill="#fff"
 				fillOpacity="0.72"
-				stroke="#8f4c0a"
+				stroke="#904400"
 				strokeWidth="1.35"
 				strokeLinejoin="round"
 			/>
@@ -99,7 +99,7 @@ function PortalNavMark({ className = '' }) {
 			{/* Soft ground curve */}
 			<path
 				d="M18 49.5C22.5 51.8 27 52.8 32 52.8C37 52.8 41.5 51.8 46 49.5"
-				stroke="#bf660d"
+				stroke="#c66300"
 				strokeOpacity="0.4"
 				strokeWidth="1.3"
 				strokeLinecap="round"

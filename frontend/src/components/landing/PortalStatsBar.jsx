@@ -2,7 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Building2, CircleCheckBig, FileStack, IdCard } from 'lucide-react'
 import { portalPublicStats } from '../../data/portalPublicStats'
-import { scrollStatItemVariants, scrollStatRailVariants } from '../../utils/landingMotion'
+import {
+	scrollStatIconVariants,
+	scrollStatItemVariants,
+	scrollStatLabelVariants,
+	scrollStatRailVariants,
+} from '../../utils/landingMotion'
 import { useLanguage } from '../../i18n'
 
 const statIcons = {
@@ -76,9 +81,9 @@ function AnimatedFigure({ stat, active }) {
 	return (
 		<motion.span
 			className="portal-stats-card__figure"
-			initial={reduceMotion ? false : { opacity: 0, scale: 0.86 }}
-			animate={reduceMotion || active ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.86 }}
-			transition={{ type: 'spring', stiffness: 340, damping: 18, delay: 0.12 }}
+			initial={reduceMotion ? false : { opacity: 0, scale: 0.7, y: 12 }}
+			animate={reduceMotion || active ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.7, y: 12 }}
+			transition={{ type: 'spring', stiffness: 360, damping: 16, delay: 0.14 }}
 		>
 			{display}
 		</motion.span>
@@ -88,7 +93,7 @@ function AnimatedFigure({ stat, active }) {
 function PortalStatsBar() {
 	const { t } = useLanguage()
 	const stripRef = useRef(null)
-	const isInView = useInView(stripRef, { once: true, margin: '-14% 0px -10% 0px' })
+	const isInView = useInView(stripRef, { once: true, margin: '-12% 0px -8% 0px' })
 	const reduceMotion = useReducedMotion()
 	const reveal = reduceMotion || isInView
 
@@ -129,13 +134,22 @@ function PortalStatsBar() {
 								role="listitem"
 								variants={reduceMotion ? undefined : scrollStatItemVariants}
 							>
-								<span className="portal-stats-card__icon" aria-hidden>
+								<motion.span
+									className="portal-stats-card__icon"
+									aria-hidden
+									variants={reduceMotion ? undefined : scrollStatIconVariants}
+								>
 									<Icon className="portal-stats-card__icon-svg" strokeWidth={1.85} />
-								</span>
+								</motion.span>
 								<div className="portal-stats-card__body">
 									<AnimatedFigure stat={stat} active={reveal} />
 									<span className="portal-stats-card__rule" aria-hidden />
-									<p className="portal-stats-card__label">{stat.label}</p>
+									<motion.p
+										className="portal-stats-card__label"
+										variants={reduceMotion ? undefined : scrollStatLabelVariants}
+									>
+										{stat.label}
+									</motion.p>
 									<p className="sr-only">{stat.description}</p>
 								</div>
 							</motion.li>

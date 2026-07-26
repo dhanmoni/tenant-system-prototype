@@ -23,8 +23,11 @@ import {
 	servicesCardTap,
 	servicesCardVariants,
 	servicesGridVariants,
+	servicesTitleAccentVariants,
+	servicesTitleWordVariants,
+	introLeadVariants,
 } from '../../utils/landingMotion'
-import LandingSectionIntro from './LandingSectionIntro'
+import PortalServicesWatermark from './PortalServicesWatermark'
 import { useLanguage } from '../../i18n'
 
 const SERVICE_ORDER = ['uin', 'rent-authority', 'rent-court', 'rent-tribunal']
@@ -57,6 +60,34 @@ function ServicesFloatMotifs({ reduceMotion }) {
 				</span>
 			))}
 		</div>
+	)
+}
+
+function ServicesAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMotion }) {
+	const leadWords = leadText.trim().split(/\s+/).filter(Boolean)
+
+	return (
+		<motion.h2
+			id={titleId}
+			className="landing-section-title landing-section-title--playful"
+			aria-label={fullTitle}
+		>
+			{leadWords.map((word) => (
+				<motion.span
+					key={word}
+					className="landing-section-title__word"
+					variants={reduceMotion ? undefined : servicesTitleWordVariants}
+				>
+					{word}
+				</motion.span>
+			))}
+			<motion.span
+				className="landing-section-title__word landing-section-title__word--accent"
+				variants={reduceMotion ? undefined : servicesTitleAccentVariants}
+			>
+				{accentText}
+			</motion.span>
+		</motion.h2>
 	)
 }
 
@@ -262,7 +293,7 @@ function PortalServicesSection() {
 	return (
 		<section
 			id="services"
-			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 pt-8 sm:pt-10 lg:pt-12 pb-14 sm:pb-16 lg:pb-20"
+			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 pt-20 sm:pt-24 lg:pt-28 pb-24 sm:pb-28 lg:pb-32"
 			aria-labelledby="services-heading"
 		>
 			<div className="portal-services-showcase__seam" aria-hidden />
@@ -276,17 +307,22 @@ function PortalServicesSection() {
 					variants={reduceMotion ? undefined : scrollSectionVariants}
 				>
 					<motion.div
-						className="portal-services-showcase__header"
+						className="portal-services-showcase__header landing-section-intro-block landing-section-intro-block--center"
 						variants={reduceMotion ? undefined : scrollHeaderVariants}
 					>
-						<LandingSectionIntro
-							className="portal-services-showcase__intro"
-							align="center"
-							title={t('home.services.title')}
-							lead={t('home.services.lead')}
+						<ServicesAnimatedTitle
 							titleId="services-heading"
-							animateWhen={reveal}
+							leadText={t('home.services.titleLead')}
+							accentText={t('home.services.titleAccent')}
+							fullTitle={t('home.services.title')}
+							reduceMotion={reduceMotion}
 						/>
+						<motion.p
+							className="landing-section-lead landing-section-intro-lead portal-services-showcase__intro-lead"
+							variants={reduceMotion ? undefined : introLeadVariants}
+						>
+							{t('home.services.lead')}
+						</motion.p>
 						<motion.div
 							className="portal-services-showcase__cta-wrap"
 							variants={reduceMotion ? undefined : scrollCtaVariants}
@@ -361,6 +397,8 @@ function PortalServicesSection() {
 					</div>
 				</motion.div>
 			</div>
+
+			<PortalServicesWatermark />
 		</section>
 	)
 }

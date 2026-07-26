@@ -173,7 +173,7 @@ const en = {
 	'footer.portal': 'Portal',
 	'footer.resources': 'Documents',
 	'footer.external': 'External',
-	'footer.howItWorks': 'How it works',
+	'footer.howItWorks': 'How to apply',
 	'footer.newRegistration': 'New registration',
 	'footer.policiesGuidelines': 'Policies & guidelines',
 	'footer.sitemap': 'Sitemap',
@@ -213,7 +213,9 @@ const en = {
 	'home.getStarted.feature2': 'File Rent Authority, Court, and Tribunal forms online',
 	'home.getStarted.feature3': 'Secure sign-in with mobile OTP — no password to remember',
 
-	'home.services.title': 'Portal services',
+	'home.services.title': 'Portal Services',
+	'home.services.titleLead': 'Portal ',
+	'home.services.titleAccent': 'Services',
 	'home.services.lead':
 		'This portal provides tenancy certificate registration and services with the Rent Authority, Rent Court, and Rent Tribunal.',
 	'home.services.explore': 'Explore all services',
@@ -249,6 +251,8 @@ const en = {
 	'home.stats.disputesDesc': 'Disputes and appeals concluded through the digital workflow.',
 
 	'home.benefits.title': 'Portal Benefits',
+	'home.benefits.titleLead': 'Portal ',
+	'home.benefits.titleAccent': 'Benefits',
 	'home.benefits.lead':
 		'One secure platform for tenancy registration, UIN, and filings across Assam.',
 	'home.benefits.services.title': 'Services',
@@ -274,7 +278,9 @@ const en = {
 	'home.benefits.orbit.center': 'ATRP',
 	'home.benefits.mediaAlt': 'Citizens using online tenancy registration and UIN services',
 
-	'home.guide.title': 'How it works',
+	'home.guide.title': 'How to apply',
+	'home.guide.titleLead': 'How to ',
+	'home.guide.titleAccent': 'apply',
 	'home.guide.lead':
 		'Register, apply for UIN, track your application, and use tenancy services online.',
 	'home.guide.step1.title': 'Create your account',
@@ -289,6 +295,8 @@ const en = {
 	'home.guide.viewServices': 'View services',
 
 	'home.faq.title': 'Frequently asked questions',
+	'home.faq.titleLead': 'Frequently asked ',
+	'home.faq.titleAccent': 'questions',
 	'home.faq.lead':
 		'Quick answers about UIN applications, required documents, and tracking your status.',
 	'home.faq.uin.q': 'What is a UIN?',

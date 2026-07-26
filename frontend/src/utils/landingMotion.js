@@ -15,13 +15,49 @@ export const scrollSectionVariants = {
 }
 
 export const scrollHeaderVariants = {
-	hidden: { opacity: 0, y: 32 },
+	hidden: { opacity: 0, y: 36, filter: 'blur(5px)' },
 	visible: {
 		opacity: 1,
 		y: 0,
+		filter: 'blur(0px)',
 		transition: {
 			duration: 0.58,
 			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const servicesTitleWordVariants = {
+	hidden: { opacity: 0, y: 22, rotate: -4, scale: 0.86 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		rotate: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 380,
+			damping: 16,
+			mass: 0.72,
+		},
+	},
+}
+
+export const servicesTitleAccentVariants = {
+	hidden: { opacity: 0, y: 28, scale: 0.68, rotate: -7 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 420,
+			damping: 13,
+			mass: 0.62,
+			delay: 0.1,
 		},
 	},
 }
@@ -123,7 +159,7 @@ export const benefitsModernGridVariants = {
 	visible: {
 		transition: {
 			staggerChildren: 0.28,
-			delayChildren: 0.18,
+			delayChildren: 0.22,
 		},
 	},
 }
@@ -131,10 +167,10 @@ export const benefitsModernGridVariants = {
 export const benefitsModernCardVariants = {
 	hidden: (i = 0) => ({
 		opacity: 0,
-		x: 42,
-		y: 28 + i * 10,
-		scale: 0.94,
-		filter: 'blur(6px)',
+		x: 48,
+		y: 32 + i * 12,
+		scale: 0.92,
+		filter: 'blur(7px)',
 	}),
 	visible: {
 		opacity: 1,
@@ -145,7 +181,7 @@ export const benefitsModernCardVariants = {
 		transition: {
 			type: 'spring',
 			stiffness: 220,
-			damping: 20,
+			damping: 18,
 			mass: 0.88,
 		},
 	},
@@ -162,6 +198,54 @@ export const benefitsModernCardTap = {
 	transition: { type: 'spring', stiffness: 480, damping: 28 },
 }
 
+export const benefitsIntroVariants = {
+	hidden: { opacity: 0, y: 36, filter: 'blur(6px)' },
+	visible: {
+		opacity: 1,
+		y: 0,
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.6,
+			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const benefitsTitleWordVariants = {
+	hidden: { opacity: 0, y: 22, rotate: -5, scale: 0.86 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		rotate: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 380,
+			damping: 16,
+			mass: 0.72,
+		},
+	},
+}
+
+export const benefitsTitleAccentVariants = {
+	hidden: { opacity: 0, y: 28, scale: 0.68, rotate: 8 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 420,
+			damping: 13,
+			mass: 0.62,
+			delay: 0.12,
+		},
+	},
+}
+
 /** How it works — timeline cascade (numbers pop, steps slide along a path) */
 export const guideSectionVariants = {
 	hidden: {},
@@ -174,11 +258,50 @@ export const guideSectionVariants = {
 }
 
 export const guideIntroVariants = {
-	hidden: { opacity: 0, y: 28 },
+	hidden: { opacity: 0, y: 36, filter: 'blur(6px)' },
 	visible: {
 		opacity: 1,
 		y: 0,
-		transition: { duration: 0.55, ease: easeOutExpo },
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.62,
+			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const guideTitleWordVariants = {
+	hidden: { opacity: 0, y: 22, rotate: -4, scale: 0.86 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		rotate: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 380,
+			damping: 16,
+			mass: 0.72,
+		},
+	},
+}
+
+export const guideTitleAccentVariants = {
+	hidden: { opacity: 0, y: 28, scale: 0.7, rotate: -8 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 420,
+			damping: 14,
+			mass: 0.65,
+			delay: 0.12,
+		},
 	},
 }
 
@@ -186,8 +309,8 @@ export const guideStepsVariants = {
 	hidden: {},
 	visible: {
 		transition: {
-			staggerChildren: 0.18,
-			delayChildren: 0.08,
+			staggerChildren: 0.22,
+			delayChildren: 0.18,
 		},
 	},
 }
@@ -195,34 +318,39 @@ export const guideStepsVariants = {
 export const guideStepVariants = {
 	hidden: {
 		opacity: 0,
-		x: -36,
-		y: 12,
+		x: -42,
+		y: 18,
+		scale: 0.96,
+		filter: 'blur(5px)',
 	},
 	visible: {
 		opacity: 1,
 		x: 0,
 		y: 0,
+		scale: 1,
+		filter: 'blur(0px)',
 		transition: {
 			type: 'spring',
 			stiffness: 240,
-			damping: 22,
-			mass: 0.95,
-			staggerChildren: 0.08,
-			delayChildren: 0.02,
+			damping: 20,
+			mass: 0.9,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
 		},
 	},
 }
 
 export const guideStepNumVariants = {
-	hidden: { opacity: 0, scale: 0.4 },
+	hidden: { opacity: 0, scale: 0.25, rotate: -24 },
 	visible: {
 		opacity: 1,
 		scale: 1,
+		rotate: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 420,
-			damping: 16,
-			mass: 0.7,
+			stiffness: 460,
+			damping: 14,
+			mass: 0.65,
 		},
 	},
 }
@@ -301,18 +429,56 @@ export const faqSectionVariants = {
 	hidden: {},
 	visible: {
 		transition: {
-			staggerChildren: 0.12,
-			delayChildren: 0.05,
+			staggerChildren: 0.14,
+			delayChildren: 0.04,
 		},
 	},
 }
 
 export const faqIntroVariants = {
-	hidden: { opacity: 0, y: 24 },
+	hidden: { opacity: 0, y: 34, filter: 'blur(6px)' },
 	visible: {
 		opacity: 1,
 		y: 0,
-		transition: { duration: 0.5, ease: easeOutExpo },
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.58,
+			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const faqTitleWordVariants = {
+	hidden: { opacity: 0, y: 20, scale: 0.88 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 360,
+			damping: 17,
+			mass: 0.72,
+		},
+	},
+}
+
+export const faqTitleAccentVariants = {
+	hidden: { opacity: 0, y: 26, scale: 0.72, rotate: 6 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 400,
+			damping: 14,
+			mass: 0.65,
+			delay: 0.1,
+		},
 	},
 }
 
@@ -320,8 +486,8 @@ export const faqListVariants = {
 	hidden: {},
 	visible: {
 		transition: {
-			staggerChildren: 0.11,
-			delayChildren: 0.08,
+			staggerChildren: 0.14,
+			delayChildren: 0.14,
 		},
 	},
 }
@@ -329,45 +495,81 @@ export const faqListVariants = {
 export const faqItemVariants = {
 	hidden: {
 		opacity: 0,
-		y: -28,
+		y: -36,
+		scale: 0.96,
+		filter: 'blur(5px)',
 	},
 	visible: {
 		opacity: 1,
 		y: 0,
+		scale: 1,
+		filter: 'blur(0px)',
 		transition: {
 			type: 'spring',
-			stiffness: 300,
-			damping: 24,
-			mass: 0.85,
+			stiffness: 280,
+			damping: 20,
+			mass: 0.82,
 		},
 	},
 }
 
 export const scrollStatRailVariants = {
-	hidden: { opacity: 0, y: 28 },
+	hidden: { opacity: 0, y: 36, filter: 'blur(4px)' },
 	visible: {
 		opacity: 1,
 		y: 0,
+		filter: 'blur(0px)',
 		transition: {
-			duration: 0.5,
+			duration: 0.52,
 			ease: easeOutExpo,
-			staggerChildren: 0.09,
-			delayChildren: 0.08,
+			staggerChildren: 0.12,
+			delayChildren: 0.06,
 		},
 	},
 }
 
 export const scrollStatItemVariants = {
-	hidden: { opacity: 0, y: 28, scale: 0.88 },
+	hidden: { opacity: 0, y: 36, scale: 0.78, rotate: -3 },
 	visible: {
 		opacity: 1,
 		y: 0,
 		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 320,
+			damping: 16,
+			mass: 0.75,
+			staggerChildren: 0.06,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const scrollStatIconVariants = {
+	hidden: { opacity: 0, scale: 0.35, rotate: -18 },
+	visible: {
+		opacity: 1,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 460,
+			damping: 14,
+			mass: 0.6,
+		},
+	},
+}
+
+export const scrollStatLabelVariants = {
+	hidden: { opacity: 0, y: 12 },
+	visible: {
+		opacity: 1,
+		y: 0,
 		transition: {
 			type: 'spring',
 			stiffness: 300,
-			damping: 20,
-			mass: 0.8,
+			damping: 22,
 		},
 	},
 }

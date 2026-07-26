@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
 import { AuthPanelNavigationContext } from '../context/AuthPanelNavigationContext'
@@ -49,6 +49,8 @@ function Login({ onLogin }) {
 	const [regPendingPhone, setRegPendingPhone] = useState('')
 	const [regOtpMessage, setRegOtpMessage] = useState('')
 	const [districts, setDistricts] = useState([])
+	const landingBootstrapped = useRef(false)
+	const suppressAuthHashScroll = useRef(true)
 
 	useEffect(() => {
 		if (resendTimer > 0) {
@@ -342,15 +344,39 @@ function Login({ onLogin }) {
 		}
 	}, [])
 
+	// Refresh / first paint: always land on home (top) with a clean URL
 	useEffect(() => {
-		if (!modeFromHash(location.hash)) {
-			window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+		if (landingBootstrapped.current) return
+		landingBootstrapped.current = true
+
+		const targetMode = modeFromHash(location.hash)
+		if (targetMode) switchMode(targetMode)
+
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+
+		if (location.hash) {
+			suppressAuthHashScroll.current = true
+			navigate(
+				{ pathname: location.pathname, search: location.search, hash: '' },
+				{ replace: true, state: location.state },
+			)
+		} else {
+			suppressAuthHashScroll.current = false
 		}
-	}, [location.pathname, location.hash])
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
+	}, [])
 
 	useEffect(() => {
+		if (suppressAuthHashScroll.current) {
+			if (!location.hash || location.hash === '#') {
+				suppressAuthHashScroll.current = false
+			}
+			return
+		}
+
 		const targetMode = modeFromHash(location.hash)
 		if (!targetMode) return
+
 		switchMode(targetMode)
 		scrollToAuthPanel()
 		requestAnimationFrame(() => {

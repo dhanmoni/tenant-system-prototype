@@ -8,7 +8,6 @@ import {
 	UserPlus,
 	Users,
 } from 'lucide-react'
-import LandingSectionIntro from './LandingSectionIntro'
 import AuthNavLink from './AuthNavLink'
 import { useLanguage } from '../../i18n'
 import {
@@ -19,6 +18,9 @@ import {
 	guideStepNumVariants,
 	guideStepsVariants,
 	guideStepVariants,
+	guideTitleAccentVariants,
+	guideTitleWordVariants,
+	introLeadVariants,
 } from '../../utils/landingMotion'
 
 const GUIDE_FLOAT_MOTIFS = [
@@ -50,14 +52,42 @@ function GuideFloatMotifs({ reduceMotion }) {
 	)
 }
 
+function GuideAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMotion }) {
+	const leadWords = leadText.trim().split(/\s+/).filter(Boolean)
+
+	return (
+		<motion.h2
+			id={titleId}
+			className="landing-section-title landing-section-title--playful"
+			aria-label={fullTitle}
+		>
+			{leadWords.map((word) => (
+				<motion.span
+					key={word}
+					className="landing-section-title__word"
+					variants={reduceMotion ? undefined : guideTitleWordVariants}
+				>
+					{word}
+				</motion.span>
+			))}
+			<motion.span
+				className="landing-section-title__word landing-section-title__word--accent"
+				variants={reduceMotion ? undefined : guideTitleAccentVariants}
+			>
+				{accentText}
+			</motion.span>
+		</motion.h2>
+	)
+}
+
 function PortalGuideSection() {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
 	const inView = useInView(sectionRef, {
 		once: true,
-		amount: 0.22,
-		margin: '0px 0px -10% 0px',
+		amount: 0.2,
+		margin: '0px 0px -8% 0px',
 	})
 	const reveal = Boolean(reduceMotion) || inView
 
@@ -97,16 +127,24 @@ function PortalGuideSection() {
 					animate={reveal ? 'visible' : 'hidden'}
 					variants={reduceMotion ? undefined : guideSectionVariants}
 				>
-					<motion.div variants={reduceMotion ? undefined : guideIntroVariants}>
-						<LandingSectionIntro
-							className="mx-auto max-w-2xl"
-							align="center"
-							title={t('home.guide.title')}
-							lead={t('home.guide.lead')}
+					<motion.header
+						className="landing-section-intro-block landing-section-intro-block--center mx-auto max-w-2xl"
+						variants={reduceMotion ? undefined : guideIntroVariants}
+					>
+						<GuideAnimatedTitle
 							titleId="portal-guide-heading"
-							animateWhen={reveal}
+							leadText={t('home.guide.titleLead')}
+							accentText={t('home.guide.titleAccent')}
+							fullTitle={t('home.guide.title')}
+							reduceMotion={reduceMotion}
 						/>
-					</motion.div>
+						<motion.p
+							className="landing-section-lead landing-section-intro-lead"
+							variants={reduceMotion ? undefined : introLeadVariants}
+						>
+							{t('home.guide.lead')}
+						</motion.p>
+					</motion.header>
 
 					<motion.ol
 						className="portal-guide-steps"

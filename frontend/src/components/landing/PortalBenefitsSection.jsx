@@ -11,13 +11,15 @@ import {
 } from 'lucide-react'
 import { portalBenefitItems } from '../../data/portalBenefits'
 import {
+	benefitsIntroVariants,
 	benefitsModernCardHover,
 	benefitsModernCardTap,
 	benefitsModernCardVariants,
 	benefitsModernGridVariants,
-	scrollHeaderVariants,
+	benefitsTitleAccentVariants,
+	benefitsTitleWordVariants,
+	introLeadVariants,
 } from '../../utils/landingMotion'
-import LandingSectionIntro from './LandingSectionIntro'
 import PortalBenefitsVector from './PortalBenefitsVector'
 import { useLanguage } from '../../i18n'
 
@@ -71,15 +73,43 @@ function BenefitsFloatMotifs({ reduceMotion }) {
 	)
 }
 
+function BenefitsAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMotion }) {
+	const leadWords = leadText.trim().split(/\s+/).filter(Boolean)
+
+	return (
+		<motion.h2
+			id={titleId}
+			className="landing-section-title landing-section-title--playful"
+			aria-label={fullTitle}
+		>
+			{leadWords.map((word) => (
+				<motion.span
+					key={word}
+					className="landing-section-title__word"
+					variants={reduceMotion ? undefined : benefitsTitleWordVariants}
+				>
+					{word}
+				</motion.span>
+			))}
+			<motion.span
+				className="landing-section-title__word landing-section-title__word--accent"
+				variants={reduceMotion ? undefined : benefitsTitleAccentVariants}
+			>
+				{accentText}
+			</motion.span>
+		</motion.h2>
+	)
+}
+
 function PortalBenefitsSection({ className = '' }) {
 	const { t } = useLanguage()
-	const layoutRef = useRef(null)
+	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
 
-	const inView = useInView(layoutRef, {
+	const inView = useInView(sectionRef, {
 		once: true,
-		amount: 0.25,
-		margin: '0px 0px -8% 0px',
+		amount: 0.18,
+		margin: '0px 0px -6% 0px',
 	})
 	const reveal = Boolean(reduceMotion) || inView
 
@@ -98,42 +128,48 @@ function PortalBenefitsSection({ className = '' }) {
 
 	return (
 		<section
+			ref={sectionRef}
 			id="portal-benefits"
-			className={`portal-benefits landing-body landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 pt-14 sm:pt-16 lg:pt-20 pb-8 sm:pb-10 lg:pb-12${className ? ` ${className}` : ''}`}
+			className={`portal-benefits landing-body landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 pt-10 sm:pt-12 lg:pt-14 pb-8 sm:pb-10 lg:pb-12${className ? ` ${className}` : ''}`}
 			aria-labelledby="portal-benefits-heading"
 		>
 			<div className="portal-benefits__shell mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<BenefitsFloatMotifs reduceMotion={reduceMotion} />
 				<motion.header
-					className="portal-benefits__header"
+					className="portal-benefits__header landing-section-intro-block landing-section-intro-block--center"
 					initial={reduceMotion ? false : 'hidden'}
 					animate={reveal ? 'visible' : 'hidden'}
-					variants={reduceMotion ? undefined : scrollHeaderVariants}
+					variants={reduceMotion ? undefined : benefitsIntroVariants}
 				>
-					<LandingSectionIntro
-						className="portal-benefits__intro"
-						align="center"
-						title={t('home.benefits.title')}
-						lead={t('home.benefits.lead')}
+					<BenefitsAnimatedTitle
 						titleId="portal-benefits-heading"
-						animateWhen={reveal}
+						leadText={t('home.benefits.titleLead')}
+						accentText={t('home.benefits.titleAccent')}
+						fullTitle={t('home.benefits.title')}
+						reduceMotion={reduceMotion}
 					/>
+					<motion.p
+						className="landing-section-lead landing-section-intro-lead portal-benefits__intro-lead"
+						variants={reduceMotion ? undefined : introLeadVariants}
+					>
+						{t('home.benefits.lead')}
+					</motion.p>
 				</motion.header>
 
-				<div ref={layoutRef} className="portal-benefits__body">
+				<div className="portal-benefits__body">
 					<motion.aside
 						className="portal-benefits__visual"
 						aria-hidden
-						initial={reduceMotion ? false : { opacity: 0, x: -24, scale: 0.97 }}
+						initial={reduceMotion ? false : { opacity: 0, x: -32, scale: 0.94, rotate: -2 }}
 						animate={
 							reveal
-								? { opacity: 1, x: 0, scale: 1 }
-								: { opacity: 0, x: -24, scale: 0.97 }
+								? { opacity: 1, x: 0, scale: 1, rotate: 0 }
+								: { opacity: 0, x: -32, scale: 0.94, rotate: -2 }
 						}
 						transition={
 							reduceMotion
 								? { duration: 0 }
-								: { type: 'spring', stiffness: 170, damping: 22, delay: 0.06 }
+								: { type: 'spring', stiffness: 180, damping: 18, delay: 0.12 }
 						}
 					>
 						<div className="portal-benefits__visual-glow" />

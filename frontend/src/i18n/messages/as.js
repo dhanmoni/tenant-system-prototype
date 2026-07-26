@@ -172,7 +172,7 @@ const as = {
 	'footer.portal': 'পৰ্টেল',
 	'footer.resources': 'নথিপত্ৰ',
 	'footer.external': 'বাহ্যিক',
-	'footer.howItWorks': 'কেনেকৈ কাম কৰে',
+	'footer.howItWorks': 'কেনেকৈ আবেদন কৰিব',
 	'footer.newRegistration': 'নতুন পঞ্জীয়ন',
 	'footer.policiesGuidelines': 'নীতি আৰু নিৰ্দেশনা',
 	'footer.sitemap': 'ছাইটমেপ',
@@ -213,6 +213,8 @@ const as = {
 	'home.getStarted.feature3': 'ম\'বাইল OTP-ৰে সুৰক্ষিত ছাইন ইন — পাছৱৰ্ড মনত ৰাখিব নালাগে',
 
 	'home.services.title': 'পৰ্টেল সেৱাসমূহ',
+	'home.services.titleLead': 'পৰ্টেল ',
+	'home.services.titleAccent': 'সেৱাসমূহ',
 	'home.services.lead':
 		'এই পৰ্টেলে ভাড়া কৰ্তৃপক্ষ, ভাড়া ন্যায়ালয় আৰু ভাড়া ট্ৰাইবিউনেলৰ সৈতে পঞ্জীয়ন আৰু সেৱা প্ৰদান কৰে।',
 	'home.services.explore': 'সকলো সেৱা চাওক',
@@ -248,6 +250,8 @@ const as = {
 	'home.stats.disputesDesc': 'ডিজিটেল কাৰ্যপ্ৰবাহৰ জৰিয়তে সমাপ্ত হোৱা বিবাদ আৰু আপীল।',
 
 	'home.benefits.title': 'পৰ্টেলৰ সুবিধাসমূহ',
+	'home.benefits.titleLead': 'পৰ্টেলৰ ',
+	'home.benefits.titleAccent': 'সুবিধাসমূহ',
 	'home.benefits.lead':
 		'অসমজুৰি ভাড়াঘৰ পঞ্জীয়ন, UIN আৰু দাখিলৰ বাবে এটা সুৰক্ষিত মঞ্চ।',
 	'home.benefits.services.title': 'সেৱাসমূহ',
@@ -273,7 +277,9 @@ const as = {
 	'home.benefits.orbit.center': 'ATRP',
 	'home.benefits.mediaAlt': 'অনলাইন ভাড়াঘৰ পঞ্জীয়ন আৰু UIN সেৱা ব্যৱহাৰ কৰা নাগৰিক',
 
-	'home.guide.title': 'কেনেকৈ কাম কৰে',
+	'home.guide.title': 'কেনেকৈ আবেদন কৰিব',
+	'home.guide.titleLead': 'কেনেকৈ ',
+	'home.guide.titleAccent': 'আবেদন কৰিব',
 	'home.guide.lead':
 		'পঞ্জীয়ন কৰক, UIN-ৰ বাবে আবেদন কৰক, আবেদন অনুসৰণ কৰক, আৰু ভাড়াঘৰ সেৱা অনলাইনত ব্যৱহাৰ কৰক।',
 	'home.guide.step1.title': 'একাউণ্ট সৃষ্টি কৰক',
@@ -288,6 +294,8 @@ const as = {
 	'home.guide.viewServices': 'সেৱাসমূহ চাওক',
 
 	'home.faq.title': 'সঘনাই সোধা প্ৰশ্ন',
+	'home.faq.titleLead': 'সঘনাই সোধা ',
+	'home.faq.titleAccent': 'প্ৰশ্ন',
 	'home.faq.lead':
 		'UIN আবেদন, প্ৰয়োজনীয় নথি আৰু স্থিতি অনুসৰণ সম্পৰ্কে দ্ৰুত উত্তৰ।',
 	'home.faq.uin.q': 'UIN কি?',

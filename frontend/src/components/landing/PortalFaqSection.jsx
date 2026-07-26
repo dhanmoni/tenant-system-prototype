@@ -1,7 +1,6 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import LandingSectionIntro from './LandingSectionIntro'
 import PortalFaqVector from './PortalFaqVector'
 import { useLanguage } from '../../i18n'
 import {
@@ -9,6 +8,9 @@ import {
 	faqItemVariants,
 	faqListVariants,
 	faqSectionVariants,
+	faqTitleAccentVariants,
+	faqTitleWordVariants,
+	introLeadVariants,
 } from '../../utils/landingMotion'
 
 function FaqItem({ item, isOpen, onToggle, reduceMotion }) {
@@ -58,14 +60,42 @@ function FaqItem({ item, isOpen, onToggle, reduceMotion }) {
 	)
 }
 
+function FaqAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMotion }) {
+	const leadWords = leadText.trim().split(/\s+/).filter(Boolean)
+
+	return (
+		<motion.h2
+			id={titleId}
+			className="landing-section-title landing-section-title--playful"
+			aria-label={fullTitle}
+		>
+			{leadWords.map((word) => (
+				<motion.span
+					key={word}
+					className="landing-section-title__word"
+					variants={reduceMotion ? undefined : faqTitleWordVariants}
+				>
+					{word}
+				</motion.span>
+			))}
+			<motion.span
+				className="landing-section-title__word landing-section-title__word--accent"
+				variants={reduceMotion ? undefined : faqTitleAccentVariants}
+			>
+				{accentText}
+			</motion.span>
+		</motion.h2>
+	)
+}
+
 function PortalFaqSection() {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
 	const inView = useInView(sectionRef, {
 		once: true,
-		amount: 0.28,
-		margin: '0px 0px -10% 0px',
+		amount: 0.22,
+		margin: '0px 0px -8% 0px',
 	})
 	const reveal = Boolean(reduceMotion) || inView
 
@@ -113,16 +143,24 @@ function PortalFaqSection() {
 					animate={reveal ? 'visible' : 'hidden'}
 					variants={reduceMotion ? undefined : faqSectionVariants}
 				>
-					<motion.div variants={reduceMotion ? undefined : faqIntroVariants}>
-						<LandingSectionIntro
-							className="landing-faq-section__intro"
-							align="center"
-							title={t('home.faq.title')}
-							lead={t('home.faq.lead')}
+					<motion.header
+						className="landing-section-intro-block landing-section-intro-block--center landing-faq-section__intro"
+						variants={reduceMotion ? undefined : faqIntroVariants}
+					>
+						<FaqAnimatedTitle
 							titleId="portal-faq-heading"
-							animateWhen={reveal}
+							leadText={t('home.faq.titleLead')}
+							accentText={t('home.faq.titleAccent')}
+							fullTitle={t('home.faq.title')}
+							reduceMotion={reduceMotion}
 						/>
-					</motion.div>
+						<motion.p
+							className="landing-section-lead landing-section-intro-lead"
+							variants={reduceMotion ? undefined : introLeadVariants}
+						>
+							{t('home.faq.lead')}
+						</motion.p>
+					</motion.header>
 
 					<div className="landing-faq__body">
 						<motion.div
@@ -148,16 +186,16 @@ function PortalFaqSection() {
 						<motion.aside
 							className="landing-faq__visual"
 							aria-hidden
-							initial={reduceMotion ? false : { opacity: 0, x: 24, scale: 0.97 }}
+							initial={reduceMotion ? false : { opacity: 0, x: 28, scale: 0.94, rotate: 2 }}
 							animate={
 								reveal
-									? { opacity: 1, x: 0, scale: 1 }
-									: { opacity: 0, x: 24, scale: 0.97 }
+									? { opacity: 1, x: 0, scale: 1, rotate: 0 }
+									: { opacity: 0, x: 28, scale: 0.94, rotate: 2 }
 							}
 							transition={
 								reduceMotion
 									? { duration: 0 }
-									: { type: 'spring', stiffness: 170, damping: 22, delay: 0.1 }
+									: { type: 'spring', stiffness: 180, damping: 18, delay: 0.16 }
 							}
 						>
 							<div className="landing-faq__visual-glow" />

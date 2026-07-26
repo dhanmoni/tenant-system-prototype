@@ -203,7 +203,7 @@ function AuthPanel({
 	return (
 		<div
 			id="auth-card-section"
-			className="auth-panel auth-panel--get-started auth-panel--modern"
+			className="auth-panel auth-panel--get-started auth-panel--modern scroll-mt-28"
 		>
 			<div className="auth-panel-card-inner">
 				<div
