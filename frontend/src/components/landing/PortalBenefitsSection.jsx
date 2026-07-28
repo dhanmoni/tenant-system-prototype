@@ -1,34 +1,26 @@
 import { useMemo, useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import {
-	Building2,
+	Award,
+	BadgeCheck,
 	ClipboardList,
-	FileCheck2,
-	IdCard,
+	Eye,
+	FileLock2,
 	Landmark,
 	ShieldCheck,
 } from 'lucide-react'
 import { portalBenefitItems } from '../../data/portalBenefits'
 import {
-	benefitsBodyVariants,
-	benefitsIntroWrapVariants,
-	benefitsItemContentVariants,
-	benefitsItemDividerVariants,
-	benefitsItemHover,
-	benefitsItemIconHover,
-	benefitsItemIconVariants,
-	benefitsItemRowVariants,
-	benefitsItemVariants,
-	benefitsListRuleVariants,
-	benefitsListVariants,
-	benefitsMediaVariants,
-	benefitsOrbitVariants,
-	benefitsSectionVariants,
-	benefitsSymbolHover,
-	benefitsSymbolVariants,
-	benefitsSymbolsRingVariants,
+	benefitsIntroVariants,
+	benefitsModernCardHover,
+	benefitsModernCardTap,
+	benefitsModernCardVariants,
+	benefitsModernGridVariants,
+	benefitsTitleAccentVariants,
+	benefitsTitleWordVariants,
+	introLeadVariants,
 } from '../../utils/landingMotion'
-import LandingSectionIntro from './LandingSectionIntro'
+import PortalBenefitsVector from './PortalBenefitsVector'
 import { useLanguage } from '../../i18n'
 
 const iconMap = {
@@ -52,24 +44,74 @@ const benefitCopyKeys = {
 	},
 }
 
-const orbitSymbols = [
-	{ id: 'center', className: 'portal-benefits__symbol--center', Icon: Building2, strokeWidth: 1.5 },
-	{ id: 'services', className: 'portal-benefits__symbol--services', Icon: Landmark, strokeWidth: 1.6 },
-	{ id: 'tracking', className: 'portal-benefits__symbol--tracking', Icon: ClipboardList, strokeWidth: 1.6 },
-	{ id: 'records', className: 'portal-benefits__symbol--records', Icon: ShieldCheck, strokeWidth: 1.6 },
-	{ id: 'docs', className: 'portal-benefits__symbol--docs', Icon: FileCheck2, strokeWidth: 1.6 },
-	{ id: 'uin', className: 'portal-benefits__symbol--uin', Icon: IdCard, strokeWidth: 1.6 },
+const BENEFITS_FLOAT_MOTIFS = [
+	{ Icon: ShieldCheck, x: '6%', y: '22%', size: 'lg', delay: '0s', drift: 'a' },
+	{ Icon: BadgeCheck, x: '14%', y: '48%', size: 'md', delay: '1.1s', drift: 'b' },
+	{ Icon: Eye, x: '4%', y: '72%', size: 'sm', delay: '0.45s', drift: 'c' },
+	{ Icon: FileLock2, x: '17%', y: '88%', size: 'md', delay: '1.9s', drift: 'a' },
+	{ Icon: Award, x: '90%', y: '26%', size: 'md', delay: '0.35s', drift: 'b' },
+	{ Icon: ClipboardList, x: '94%', y: '52%', size: 'lg', delay: '1.4s', drift: 'c' },
+	{ Icon: Landmark, x: '83%', y: '74%', size: 'sm', delay: '0.85s', drift: 'a' },
+	{ Icon: ShieldCheck, x: '91%', y: '90%', size: 'md', delay: '2.2s', drift: 'b' },
 ]
+
+function BenefitsFloatMotifs({ reduceMotion }) {
+	return (
+		<div className="portal-benefits-float" aria-hidden>
+			{BENEFITS_FLOAT_MOTIFS.map(({ Icon, x, y, size, delay, drift }, i) => (
+				<span
+					key={`${x}-${y}-${i}`}
+					className={`portal-benefits-float__item portal-benefits-float__item--${size}${
+						reduceMotion ? '' : ` portal-benefits-float__item--drift-${drift}`
+					}`}
+					style={{ left: x, top: y, animationDelay: delay }}
+				>
+					<Icon strokeWidth={1.5} aria-hidden />
+				</span>
+			))}
+		</div>
+	)
+}
+
+function BenefitsAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMotion }) {
+	const leadWords = leadText.trim().split(/\s+/).filter(Boolean)
+
+	return (
+		<motion.h2
+			id={titleId}
+			className="landing-section-title landing-section-title--playful"
+			aria-label={fullTitle}
+		>
+			{leadWords.map((word) => (
+				<motion.span
+					key={word}
+					className="landing-section-title__word"
+					variants={reduceMotion ? undefined : benefitsTitleWordVariants}
+				>
+					{word}
+				</motion.span>
+			))}
+			<motion.span
+				className="landing-section-title__word landing-section-title__word--accent"
+				variants={reduceMotion ? undefined : benefitsTitleAccentVariants}
+			>
+				{accentText}
+			</motion.span>
+		</motion.h2>
+	)
+}
 
 function PortalBenefitsSection({ className = '' }) {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const sectionInView = useInView(sectionRef, {
+
+	const inView = useInView(sectionRef, {
 		once: true,
-		margin: '-14% 0px -10% 0px',
+		amount: 0.18,
+		margin: '0px 0px -6% 0px',
 	})
-	const reveal = reduceMotion || sectionInView
+	const reveal = Boolean(reduceMotion) || inView
 
 	const items = useMemo(
 		() =>
@@ -88,188 +130,96 @@ function PortalBenefitsSection({ className = '' }) {
 		<section
 			ref={sectionRef}
 			id="portal-benefits"
-			className={`portal-benefits landing-body landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 py-14 sm:py-16 lg:py-20${className ? ` ${className}` : ''}${reveal && !reduceMotion ? ' is-animated' : ''}`}
+			className={`portal-benefits landing-body landing-wallpaper-bg landing-wallpaper-bg--cream scroll-mt-28 pt-10 sm:pt-12 lg:pt-14 pb-8 sm:pb-10 lg:pb-12${className ? ` ${className}` : ''}`}
 			aria-labelledby="portal-benefits-heading"
 		>
 			<div className="portal-benefits__shell mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<motion.div
-					className="portal-benefits__inner"
+				<BenefitsFloatMotifs reduceMotion={reduceMotion} />
+				<motion.header
+					className="portal-benefits__header landing-section-intro-block landing-section-intro-block--center"
 					initial={reduceMotion ? false : 'hidden'}
 					animate={reveal ? 'visible' : 'hidden'}
-					variants={reduceMotion ? undefined : benefitsSectionVariants}
+					variants={reduceMotion ? undefined : benefitsIntroVariants}
 				>
-					<motion.div
-						className="portal-benefits__intro-wrap"
-						variants={reduceMotion ? undefined : benefitsIntroWrapVariants}
+					<BenefitsAnimatedTitle
+						titleId="portal-benefits-heading"
+						leadText={t('home.benefits.titleLead')}
+						accentText={t('home.benefits.titleAccent')}
+						fullTitle={t('home.benefits.title')}
+						reduceMotion={reduceMotion}
+					/>
+					<motion.p
+						className="landing-section-lead landing-section-intro-lead portal-benefits__intro-lead"
+						variants={reduceMotion ? undefined : introLeadVariants}
 					>
-						<LandingSectionIntro
-							className="portal-benefits__intro"
-							align="center"
-							title={t('home.benefits.title')}
-							lead={t('home.benefits.lead')}
-							titleId="portal-benefits-heading"
-						/>
-					</motion.div>
+						{t('home.benefits.lead')}
+					</motion.p>
+				</motion.header>
 
-					<motion.div
-						className="portal-benefits__body"
-						variants={reduceMotion ? undefined : benefitsBodyVariants}
+				<div className="portal-benefits__body">
+					<motion.aside
+						className="portal-benefits__visual"
+						aria-hidden
+						initial={reduceMotion ? false : { opacity: 0, x: -32, scale: 0.94, rotate: -2 }}
+						animate={
+							reveal
+								? { opacity: 1, x: 0, scale: 1, rotate: 0 }
+								: { opacity: 0, x: -32, scale: 0.94, rotate: -2 }
+						}
+						transition={
+							reduceMotion
+								? { duration: 0 }
+								: { type: 'spring', stiffness: 180, damping: 18, delay: 0.12 }
+						}
 					>
-						<motion.div
-							className="portal-benefits__media"
-							variants={reduceMotion ? undefined : benefitsMediaVariants}
-							aria-hidden
-						>
-							<motion.div
-								className="portal-benefits__media-float"
-								animate={
-									reveal && !reduceMotion
-										? { y: [0, 10, 0] }
-										: undefined
-								}
-								transition={
-									reduceMotion
-										? undefined
-										: {
-												y: {
-													duration: 7,
-													repeat: Infinity,
-													ease: 'easeInOut',
-													delay: 1.15,
-												},
-											}
-								}
-							>
-								<div className="portal-benefits__symbols">
-									<motion.span
-										className="portal-benefits__symbols-ring-host"
-										variants={reduceMotion ? undefined : benefitsSymbolsRingVariants}
-									>
-										<span className="portal-benefits__symbols-ring" />
-									</motion.span>
-									<motion.span
-										className="portal-benefits__symbols-ring-host portal-benefits__symbols-ring-host--inner"
-										variants={reduceMotion ? undefined : benefitsSymbolsRingVariants}
-									>
-										<span className="portal-benefits__symbols-ring portal-benefits__symbols-ring--inner" />
-									</motion.span>
+						<div className="portal-benefits__visual-glow" />
+						<div className="portal-benefits__visual-frame">
+							<PortalBenefitsVector className="portal-benefits__vector" />
+						</div>
+					</motion.aside>
 
-									{orbitSymbols
-										.filter((symbol) => symbol.id === 'center')
-										.map((symbol) => {
-											const SymbolIcon = symbol.Icon
-											return (
-												<motion.span
-													key={symbol.id}
-													className={`portal-benefits__symbol ${symbol.className}`}
-													custom={0}
-													variants={reduceMotion ? undefined : benefitsSymbolVariants}
-													whileHover={reduceMotion ? undefined : benefitsSymbolHover}
-												>
-													<SymbolIcon strokeWidth={symbol.strokeWidth} />
-												</motion.span>
-											)
-										})}
-
+					<motion.ul
+						className="portal-benefits__grid"
+						role="list"
+						initial={reduceMotion ? false : 'hidden'}
+						animate={reveal ? 'visible' : 'hidden'}
+						variants={reduceMotion ? undefined : benefitsModernGridVariants}
+					>
+						{items.map((item, index) => {
+							const Icon = iconMap[item.icon] || Landmark
+							const step = String(index + 1).padStart(2, '0')
+							return (
+								<li key={item.id} className="portal-benefits__grid-item" role="listitem">
 									<motion.div
-										className="portal-benefits__orbit"
-										variants={reduceMotion ? undefined : benefitsOrbitVariants}
+										className="portal-benefits__card-motion"
+										custom={index}
+										variants={reduceMotion ? undefined : benefitsModernCardVariants}
+										whileHover={reduceMotion ? undefined : benefitsModernCardHover}
+										whileTap={reduceMotion ? undefined : benefitsModernCardTap}
 									>
-										<div className="portal-benefits__orbit-spin">
-											{orbitSymbols
-												.filter((symbol) => symbol.id !== 'center')
-												.map((symbol, index) => {
-													const SymbolIcon = symbol.Icon
-													return (
-														<span
-															key={symbol.id}
-															className={`portal-benefits__orbit-node portal-benefits__orbit-node--${symbol.id}`}
-														>
-															<span className="portal-benefits__orbit-counter">
-																<motion.span
-																	className={`portal-benefits__symbol ${symbol.className}`}
-																	custom={index + 1}
-																	variants={
-																		reduceMotion
-																			? undefined
-																			: benefitsSymbolVariants
-																	}
-																	whileHover={
-																		reduceMotion
-																			? undefined
-																			: benefitsSymbolHover
-																	}
-																>
-																	<SymbolIcon
-																		strokeWidth={symbol.strokeWidth}
-																	/>
-																</motion.span>
-															</span>
-														</span>
-													)
-												})}
-										</div>
-									</motion.div>
-								</div>
-							</motion.div>
-						</motion.div>
-
-						<motion.div
-							className="portal-benefits__list-wrap"
-							variants={reduceMotion ? undefined : benefitsListVariants}
-						>
-							<motion.div
-								className="portal-benefits__list-rule"
-								aria-hidden
-								variants={reduceMotion ? undefined : benefitsListRuleVariants}
-							/>
-
-							<ul className="portal-benefits__list">
-								{items.map((item, index) => {
-									const Icon = iconMap[item.icon] || Landmark
-									return (
-										<motion.li
-											key={item.id}
+										<article
 											className={`portal-benefits-item portal-benefits-item--${item.id}`}
-											custom={index}
-											variants={reduceMotion ? undefined : benefitsItemVariants}
-											whileHover={reduceMotion ? undefined : benefitsItemHover}
 										>
-											<motion.div
-												className="portal-benefits-item__divider"
-												aria-hidden
-												variants={reduceMotion ? undefined : benefitsItemDividerVariants}
-											/>
-											<motion.div
-												className="portal-benefits-item__row"
-												variants={reduceMotion ? undefined : benefitsItemRowVariants}
-											>
-												<motion.span
-													className="portal-benefits-item__icon"
-													aria-hidden
-													variants={reduceMotion ? undefined : benefitsItemIconVariants}
-													whileHover={reduceMotion ? undefined : benefitsItemIconHover}
-												>
-													<Icon
-														className="portal-benefits-item__icon-svg"
-														strokeWidth={1.75}
-													/>
-												</motion.span>
-												<motion.div
-													className="portal-benefits-item__content"
-													variants={reduceMotion ? undefined : benefitsItemContentVariants}
-												>
-													<h3 className="portal-benefits-item__title">{item.title}</h3>
-													<p className="portal-benefits-item__desc">{item.description}</p>
-												</motion.div>
-											</motion.div>
-										</motion.li>
-									)
-								})}
-							</ul>
-						</motion.div>
-					</motion.div>
-				</motion.div>
+											<span className="portal-benefits-item__index" aria-hidden>
+												{step}
+											</span>
+											<span className="portal-benefits-item__icon" aria-hidden>
+												<Icon
+													className="portal-benefits-item__icon-svg"
+													strokeWidth={1.75}
+												/>
+											</span>
+											<div className="portal-benefits-item__content">
+												<h3 className="portal-benefits-item__title">{item.title}</h3>
+												<p className="portal-benefits-item__desc">{item.description}</p>
+											</div>
+										</article>
+									</motion.div>
+								</li>
+							)
+						})}
+					</motion.ul>
+				</div>
 			</div>
 		</section>
 	)

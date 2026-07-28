@@ -1,10 +1,10 @@
 const notices = [
 	{
-		date: 'Demo',
-		text: 'Portal content is for demonstration; data and timelines are illustrative.',
+		date: 'Notice',
+		text: 'Official circulars and gazette notifications will be published here.',
 	},
 	{
-		date: 'Demo',
+		date: 'Notice',
 		text: 'Use official circulars and gazette notifications for legal reference.',
 	},
 ]

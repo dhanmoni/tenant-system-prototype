@@ -319,16 +319,31 @@ function UserOverview() {
 												<span className="ws-citizen-recent-no">
 													{app.application_no || '—'}
 												</span>
-												<span className="ws-citizen-recent-type">
-													{formatAppType(app.application_type)}
+												<span className="ws-citizen-recent-field ws-citizen-recent-field--type">
+													<span className="ws-citizen-recent-field-label">
+														{t('ws.citizen.recent.col.type')}
+													</span>
+													<span className="ws-citizen-recent-type">
+														{formatAppType(app.application_type)}
+													</span>
 												</span>
-												<span
-													className={`ws-citizen-recent-status ${statusBadgeClass(app.status)}`}
-												>
-													{formatStatus(app.status, app.application_type)}
+												<span className="ws-citizen-recent-field ws-citizen-recent-field--status">
+													<span className="ws-citizen-recent-field-label">
+														{t('ws.citizen.recent.col.status')}
+													</span>
+													<span
+														className={`ws-citizen-recent-status ${statusBadgeClass(app.status)}`}
+													>
+														{formatStatus(app.status, app.application_type)}
+													</span>
 												</span>
-												<span className="ws-citizen-recent-date">
-													{formatDate(app.created_at)}
+												<span className="ws-citizen-recent-field ws-citizen-recent-field--date">
+													<span className="ws-citizen-recent-field-label">
+														{t('ws.citizen.recent.col.submitted')}
+													</span>
+													<span className="ws-citizen-recent-date">
+														{formatDate(app.created_at)}
+													</span>
 												</span>
 											</button>
 										</li>

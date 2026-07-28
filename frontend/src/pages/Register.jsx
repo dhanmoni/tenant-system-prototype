@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
 import { formatApiErrors } from '../utils/formatApiErrors'
+import { useLanguage } from '../i18n'
 
 function Register({ onLogin }) {
 	const navigate = useNavigate()
+	const { t } = useLanguage()
 	const [form, setForm] = useState({
 		name: '',
 		email: '',
@@ -54,7 +56,7 @@ function Register({ onLogin }) {
 			onLogin(data.user)
 			navigate('/dashboard')
 		} catch (err) {
-			setError(formatApiErrors(err, 'Registration failed. Please check your details.'))
+			setError(formatApiErrors(err, t('auth.registrationFailed'), t))
 		} finally {
 			setLoading(false)
 		}

@@ -2,6 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Building2, CircleCheckBig, FileStack, IdCard } from 'lucide-react'
 import { portalPublicStats } from '../../data/portalPublicStats'
+import {
+	scrollStatIconVariants,
+	scrollStatItemVariants,
+	scrollStatLabelVariants,
+	scrollStatRailVariants,
+} from '../../utils/landingMotion'
 import { useLanguage } from '../../i18n'
 
 const statIcons = {
@@ -28,20 +34,6 @@ const statCopyKeys = {
 		label: 'home.stats.disputes',
 		description: 'home.stats.disputesDesc',
 	},
-}
-
-const itemVariants = {
-	hidden: { opacity: 0, y: 16 },
-	visible: (i) => ({
-		opacity: 1,
-		y: 0,
-		transition: {
-			type: 'spring',
-			stiffness: 320,
-			damping: 24,
-			delay: i * 0.08,
-		},
-	}),
 }
 
 function formatCompact(value) {
@@ -89,11 +81,9 @@ function AnimatedFigure({ stat, active }) {
 	return (
 		<motion.span
 			className="portal-stats-card__figure"
-			initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
-			animate={
-				reduceMotion || active ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }
-			}
-			transition={{ type: 'spring', stiffness: 380, damping: 20 }}
+			initial={reduceMotion ? false : { opacity: 0, scale: 0.7, y: 12 }}
+			animate={reduceMotion || active ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.7, y: 12 }}
+			transition={{ type: 'spring', stiffness: 360, damping: 16, delay: 0.14 }}
 		>
 			{display}
 		</motion.span>
@@ -103,8 +93,9 @@ function AnimatedFigure({ stat, active }) {
 function PortalStatsBar() {
 	const { t } = useLanguage()
 	const stripRef = useRef(null)
-	const isInView = useInView(stripRef, { once: true, margin: '-12%' })
+	const isInView = useInView(stripRef, { once: true, margin: '-12% 0px -8% 0px' })
 	const reduceMotion = useReducedMotion()
+	const reveal = reduceMotion || isInView
 
 	const stats = useMemo(
 		() =>
@@ -123,41 +114,48 @@ function PortalStatsBar() {
 		<section
 			ref={stripRef}
 			id="portal-stats"
-			className="portal-stats-card portal-stats-card--bridge scroll-mt-28"
+			className="portal-stats-card portal-stats-card--bridge portal-stats-card--rail scroll-mt-28"
 			aria-label={t('home.stats.aria')}
 		>
 			<div className="portal-stats-card__wrap mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<motion.div
+				<motion.ul
 					className="portal-stats-card__panel"
-					initial={reduceMotion ? false : { opacity: 0, y: 20 }}
-					whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-					viewport={{ once: true, margin: '-40px' }}
-					transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+					role="list"
+					initial={reduceMotion ? false : 'hidden'}
+					animate={reveal ? 'visible' : 'hidden'}
+					variants={reduceMotion ? undefined : scrollStatRailVariants}
 				>
-					{stats.map((stat, index) => {
+					{stats.map((stat) => {
 						const Icon = statIcons[stat.icon] || FileStack
 						return (
-							<motion.div
+							<motion.li
 								key={stat.id}
 								className="portal-stats-card__item"
-								custom={index}
-								initial={reduceMotion ? false : 'hidden'}
-								whileInView={reduceMotion ? undefined : 'visible'}
-								viewport={{ once: true, margin: '-40px' }}
-								variants={reduceMotion ? undefined : itemVariants}
+								role="listitem"
+								variants={reduceMotion ? undefined : scrollStatItemVariants}
 							>
-								<span className="portal-stats-card__icon" aria-hidden>
-									<Icon className="portal-stats-card__icon-svg" strokeWidth={1.5} />
-								</span>
+								<motion.span
+									className="portal-stats-card__icon"
+									aria-hidden
+									variants={reduceMotion ? undefined : scrollStatIconVariants}
+								>
+									<Icon className="portal-stats-card__icon-svg" strokeWidth={1.85} />
+								</motion.span>
 								<div className="portal-stats-card__body">
-									<AnimatedFigure stat={stat} active={isInView} />
-									<p className="portal-stats-card__label">{stat.label}</p>
+									<AnimatedFigure stat={stat} active={reveal} />
+									<span className="portal-stats-card__rule" aria-hidden />
+									<motion.p
+										className="portal-stats-card__label"
+										variants={reduceMotion ? undefined : scrollStatLabelVariants}
+									>
+										{stat.label}
+									</motion.p>
 									<p className="sr-only">{stat.description}</p>
 								</div>
-							</motion.div>
+							</motion.li>
 						)
 					})}
-				</motion.div>
+				</motion.ul>
 			</div>
 		</section>
 	)

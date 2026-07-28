@@ -6,12 +6,12 @@ const publicPagesEn = {
 	// Public dashboard
 	'pd.title': 'Public dashboard',
 	'pd.lead':
-		'Summary view of portal activity across Assam — tenancy registrations, UIN issuance, and filings before the Rent Authority, Rent Court, and Rent Tribunal. Figures below are sample data for demonstration until live reporting is connected.',
+		'Summary of Assam portal activity — tenancy registrations, UIN issuance, and filings before the Rent Authority, Rent Court, and Rent Tribunal.',
 	'pd.demoNote':
-		'Prototype only: statistics are illustrative and do not reflect live departmental records. Production will publish verified figures from official reporting systems.',
-	'pd.lastUpdated': 'May 2026 (sample)',
+		'Figures are published for public information and may be updated as departmental reports are finalised.',
+	'pd.lastUpdated': 'May 2026',
 	'pd.kpis.title': 'Key indicators',
-	'pd.kpis.meta': 'Sample data · Last updated {date}',
+	'pd.kpis.meta': 'Last updated {date}',
 	'pd.kpis.caption': 'Portal activity summary for citizens and researchers',
 	'pd.kpis.indicator': 'Indicator',
 	'pd.kpis.count': 'Count',
@@ -52,7 +52,7 @@ const publicPagesEn = {
 	'pd.status.underReview': 'Under review',
 	'pd.status.returned': 'Returned / draft',
 	'pd.pipeline.title': 'Application pipeline',
-	'pd.pipeline.note': 'From submission to acknowledgement (illustrative)',
+	'pd.pipeline.note': 'From submission to acknowledgement',
 	'pd.pipeline.stage': 'Stage',
 	'pd.pipeline.count': 'Count',
 	'pd.pipeline.share': 'Share',
@@ -61,7 +61,7 @@ const publicPagesEn = {
 	'pd.pipeline.issued': 'Acknowledgement issued',
 	'pd.pipeline.returned': 'Returned for correction',
 	'pd.districts.title': 'Top districts by volume',
-	'pd.districts.note': 'Highest application counts among Assam districts (sample)',
+	'pd.districts.note': 'Highest application counts among Assam districts',
 	'pd.districts.rank': 'Rank',
 	'pd.districts.district': 'District',
 	'pd.districts.applications': 'Applications',
@@ -70,9 +70,9 @@ const publicPagesEn = {
 	'pd.link.login': 'Login or create account',
 
 	// Services page
-	'services.title': 'Portal services',
+	'services.title': 'Services',
 	'services.lead':
-		'Read below to understand which online service applies to your situation, what each authority does, and how to file after you sign in. Matters are listed in the order most citizens follow — from tenancy registration through the Rent Authority, Rent Court, and Rent Tribunal.',
+		'Find which online service applies to you, what each authority does, and how to file after you sign in.',
 	'services.breadcrumb': 'Services',
 	'services.toc': 'On this page',
 	'services.when': 'When to use',
@@ -168,9 +168,9 @@ const publicPagesEn = {
 		'Appeals by any person aggrieved by the order of the Rent Court',
 
 	// About
-	'about.title': 'About us',
+	'about.title': 'About',
 	'about.lead':
-		'The Assam Tenancy Registration & Management System is a unified digital portal for citizens, tenants, and property owners under the Government of Assam.',
+		'A unified digital portal for citizens, tenants, and property owners under the Government of Assam.',
 	'about.mission.title': 'Our mission',
 	'about.mission.body':
 		'To make tenancy registration, management and dispute filing accessible online — reducing visits to offices while keeping records trackable and verifiable for tenants and owners across Assam.',
@@ -179,9 +179,9 @@ const publicPagesEn = {
 		'The portal is operated under the Department of Housing And Urban Affairs, Government of Assam, through the Directorate of Town and Country Planning (TCP), in line with the Assam Tenancy Act and related rules.',
 
 	// Contact
-	'contact.title': 'Contact Us',
+	'contact.title': 'Contact',
 	'contact.lead':
-		'Directorate of Town and Country Planning, Assam — helpdesk and office contact details. Information below is for demonstration; replace with official published contacts for production.',
+		'Directorate of Town and Country Planning, Assam — helpdesk and office contact details.',
 	'contact.helpdesk': 'Helpdesk',
 	'contact.tollFree': 'Toll-free:',
 	'contact.emailLabel': 'Email:',
@@ -196,6 +196,8 @@ const publicPagesEn = {
 	'contact.mapAddress':
 		'Directorate of Town and Country Planning, Urban Affairs Complex, Sachivalaya Road, Dispur, Guwahati, Assam 781006',
 	'contact.mapIframe': 'Directorate of Town and Country Planning office location',
+	'contact.loadMap': 'Load interactive map',
+	'contact.loadingMap': 'Loading map…',
 	'contact.openMaps': 'Open in Google Maps',
 	'contact.meta':
 		'Map and contact details are for reference only. Verify the exact office location and published helpline numbers with the department before visiting.',
@@ -216,10 +218,10 @@ const publicPagesEn = {
 	'policies.privacy.p1':
 		'Personal information collected during registration and application submission is used solely for tenancy administration, verification, and services. Data is handled in line with applicable government data protection guidelines and departmental policies.',
 
-	// Resources
-	'resources.title': 'Resources',
-	'resources.lead':
-		'Download agreement drafts, notice formats, and application checklists. Draft files are placeholders until official formats are published by the department.',
+	// Documents (route: /resources)
+	'resources.title': 'Documents',
+	'resources.lead': 'Guides, drafts, and reference materials for Assam tenancy services.',
+	'resources.comingSoonPage': 'Documents are coming soon.',
 	'resources.notice':
 		'Downloads are not yet available. The items below show what will be offered when official draft formats are released.',
 	'resources.format': 'Format:',
@@ -263,17 +265,17 @@ const publicPagesEn = {
 	'sitemap.tcp': 'TCP Assam website',
 	'sitemap.home': 'Home',
 	'sitemap.howToApply': 'How to apply',
-	'sitemap.portalServices': 'Portal services',
+	'sitemap.portalServices': 'Services',
 	'sitemap.signIn': 'Sign in',
 	'sitemap.newRegistration': 'New registration',
-	'sitemap.about': 'About us',
+	'sitemap.about': 'About',
 	'sitemap.uin': 'Tenancy registration & UIN',
 	'sitemap.rt': 'Rent Tribunal services',
 	'sitemap.rc': 'Rent Court services',
 	'sitemap.ra': 'Rent Authority services',
 	'sitemap.dashboard': 'Public dashboard',
 	'sitemap.policies': 'Policies & guidelines',
-	'sitemap.resources': 'Resources',
+	'sitemap.resources': 'Documents',
 	'sitemap.contactUs': 'Contact us',
 	'sitemap.related': 'Related government websites',
 	'sitemap.tcpFull': 'Directorate of Town & Country Planning, Assam',

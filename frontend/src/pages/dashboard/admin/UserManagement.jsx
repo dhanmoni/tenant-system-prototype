@@ -7,7 +7,6 @@ import { Icon } from '../../../components/dashboard/Icons'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
 import { getRoleLabel } from '../../../constants/roleLabels'
-import './ApplicationList.css'
 import './UserManagement.css'
 
 const STAFF_ROLE_OPTIONS = [
@@ -15,6 +14,15 @@ const STAFF_ROLE_OPTIONS = [
 	...PRINCIPAL_ROLES,
 	...ASSISTANT_ROLES,
 	ROLES.VALUER,
+]
+
+const SORT_OPTIONS = [
+	{ key: 'name', label: 'Name' },
+	{ key: 'email', label: 'Email' },
+	{ key: 'phone', label: 'Phone' },
+	{ key: 'role', label: 'Role' },
+	{ key: 'district', label: 'District' },
+	{ key: 'is_blocked', label: 'Status' },
 ]
 
 function UserManagement({ user: currentUser }) {
@@ -32,8 +40,11 @@ function UserManagement({ user: currentUser }) {
 	const [statusReason, setStatusReason] = useState('')
 	const [statusLoading, setStatusLoading] = useState(false)
 	const [districts, setDistricts] = useState([])
-	const [filters, setFilters] = useState({ search: '', role: '', district_id: '' })
+	const [filters, setFilters] = useState({ search: '', role: '', district_id: '', status: '' })
 	const [searchInput, setSearchInput] = useState('')
+	const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' })
+	const [page, setPage] = useState(1)
+	const PAGE_SIZE = 15
 	const [formData, setFormData] = useState({
 		name: '',
 		email: '',
@@ -103,22 +114,31 @@ function UserManagement({ user: currentUser }) {
 			const trimmed = searchInput.trim()
 			setFilters((prev) => {
 				if (prev.search === trimmed) return prev
+				setPage(1)
 				return { ...prev, search: trimmed }
 			})
 		}, 350)
 		return () => clearTimeout(timer)
 	}, [searchInput])
 
+	useEffect(() => {
+		setPage(1)
+	}, [mode])
+
 	const handleFilterChange = (key, value) => {
 		setFilters((prev) => ({ ...prev, [key]: value }))
+		setPage(1)
 	}
 
 	const clearFilters = () => {
 		setSearchInput('')
-		setFilters({ search: '', role: '', district_id: '' })
+		setFilters({ search: '', role: '', district_id: '', status: '' })
+		setPage(1)
 	}
 
-	const hasActiveFilters = Boolean(filters.search || filters.role || filters.district_id)
+	const hasActiveFilters = Boolean(
+		filters.search || filters.role || filters.district_id || filters.status
+	)
 
 	const baseUsers = useMemo(
 		() => users.filter((u) => (mode === 'tenant' ? u.role === ROLES.USER : u.role !== ROLES.USER)),
@@ -141,8 +161,89 @@ function UserManagement({ user: currentUser }) {
 		if (filters.district_id) {
 			list = list.filter((u) => String(u.district_id) === String(filters.district_id))
 		}
+		if (filters.status === 'active') {
+			list = list.filter((u) => !u.is_blocked)
+		} else if (filters.status === 'inactive') {
+			list = list.filter((u) => Boolean(u.is_blocked))
+		}
 		return list
 	}, [baseUsers, filters])
+
+	const sortedUsers = useMemo(() => {
+		const { key, direction } = sortConfig
+		const dir = direction === 'desc' ? -1 : 1
+		const list = [...filteredUsers]
+		const roleRank = STAFF_ROLE_OPTIONS.reduce((acc, role, idx) => {
+			acc[role] = idx + 1
+			return acc
+		}, { [ROLES.SUPER_ADMIN]: 0, [ROLES.USER]: 99 })
+		const getValue = (user) => {
+			switch (key) {
+				case 'district':
+					return user?.district?.name || ''
+				case 'is_blocked':
+					return user?.is_blocked ? 'inactive' : 'active'
+				case 'role':
+					return roleRank[user?.role] ?? 999
+				default:
+					return user?.[key] ?? ''
+			}
+		}
+
+		list.sort((a, b) => {
+			const av = getValue(a)
+			const bv = getValue(b)
+			let cmp = 0
+			if (typeof av === 'number' && typeof bv === 'number') {
+				cmp = av - bv
+			} else {
+				cmp = String(av).localeCompare(String(bv), undefined, {
+					numeric: true,
+					sensitivity: 'base',
+				})
+			}
+
+			// Stable tie-break arrangement.
+			if (cmp === 0) {
+				cmp = String(a?.name || '').localeCompare(String(b?.name || ''), undefined, {
+					sensitivity: 'base',
+				})
+			}
+			if (cmp === 0) {
+				cmp = String(a?.email || '').localeCompare(String(b?.email || ''), undefined, {
+					sensitivity: 'base',
+				})
+			}
+
+			return cmp * dir
+		})
+
+		return list
+	}, [filteredUsers, sortConfig])
+
+	const totalPages = Math.max(1, Math.ceil(sortedUsers.length / PAGE_SIZE))
+
+	useEffect(() => {
+		if (page > totalPages) setPage(totalPages)
+	}, [page, totalPages])
+
+	const pagedUsers = useMemo(() => {
+		const start = (page - 1) * PAGE_SIZE
+		return sortedUsers.slice(start, start + PAGE_SIZE)
+	}, [sortedUsers, page])
+
+	const handleSort = (key) => {
+		setPage(1)
+		setSortConfig((prev) => {
+			if (prev.key === key) {
+				return {
+					key,
+					direction: prev.direction === 'asc' ? 'desc' : 'asc',
+				}
+			}
+			return { key, direction: 'asc' }
+		})
+	}
 
 	const handleSubmit = async (e) => {
 		e.preventDefault()
@@ -260,32 +361,97 @@ function UserManagement({ user: currentUser }) {
 
 	const canAddStaff = mode !== 'tenant' && getAllowedRoles().length > 0
 	const tableTitle = mode === 'tenant' ? 'Registered users' : 'Staff users'
+	const statusFilterLabel =
+		filters.status === 'active'
+			? 'Active'
+			: filters.status === 'inactive'
+				? 'Inactive'
+				: 'All'
 
 	const filterToolbar = (
-		<div className="ws-status-section-toolbar admin-app-toolbar admin-user-toolbar">
-			<div className="ws-status-section-controls">
-				<label className="ws-status-section-search admin-app-search">
-					<span className="ws-status-search-label">
+		<div className="admin-user-panel">
+			<div className="admin-user-panel__top">
+				<label className="admin-user-panel__search">
+					<span className="admin-user-panel__label">
 						{mode === 'tenant' ? 'Search users' : 'Search staff'}
 					</span>
-					<div className="admin-app-search__field">
-						<Icon name="search" className="admin-app-search__icon" />
+					<div className="admin-user-panel__search-field">
+						<Icon name="search" className="admin-user-panel__search-icon" />
 						<input
 							id="user-search"
+							className="admin-user-panel__input"
 							type="search"
 							value={searchInput}
 							onChange={(e) => setSearchInput(e.target.value)}
-							placeholder="Name or email…"
+							placeholder={
+								mode === 'tenant'
+									? 'Search by name or email…'
+									: 'Find staff by name or email…'
+							}
 							autoComplete="off"
 						/>
 					</div>
 				</label>
 
+				{canAddStaff ? (
+					<button
+						type="button"
+						className="ws-btn ws-btn--primary ws-btn--sm admin-user-panel__add"
+						onClick={() => {
+							setFormError('')
+							setFormData({
+								name: '',
+								email: '',
+								phone: '',
+								role: '',
+								district_id: currentUser?.district_id || '',
+							})
+							setShowAddForm(true)
+						}}
+					>
+						Add staff user
+					</button>
+				) : null}
+			</div>
+
+			<div className="admin-user-panel__filters">
+				<div className="admin-user-panel__status" role="group" aria-label="Filter by status">
+					<span className="admin-user-panel__label">Status</span>
+					<div className="admin-user-panel__status-pills">
+						<button
+							type="button"
+							className={`ws-admin-user-pill${!filters.status ? ' is-active' : ''}`}
+							onClick={() => handleFilterChange('status', '')}
+						>
+							All
+						</button>
+						<button
+							type="button"
+							className={`ws-admin-user-pill ws-admin-user-pill--active${
+								filters.status === 'active' ? ' is-active' : ''
+							}`}
+							onClick={() => handleFilterChange('status', 'active')}
+						>
+							Active
+						</button>
+						<button
+							type="button"
+							className={`ws-admin-user-pill ws-admin-user-pill--inactive${
+								filters.status === 'inactive' ? ' is-active' : ''
+							}`}
+							onClick={() => handleFilterChange('status', 'inactive')}
+						>
+							Inactive
+						</button>
+					</div>
+				</div>
+
 				{mode !== 'tenant' ? (
-					<label className="ws-status-section-sort">
-						<span className="ws-status-search-label">Role</span>
+					<label className="admin-user-panel__field">
+						<span className="admin-user-panel__label">Role</span>
 						<select
 							id="user-role"
+							className="admin-user-panel__select"
 							value={filters.role}
 							onChange={(e) => handleFilterChange('role', e.target.value)}
 						>
@@ -300,53 +466,70 @@ function UserManagement({ user: currentUser }) {
 				) : null}
 
 				{currentUser?.role === ROLES.SUPER_ADMIN ? (
-					<label className="ws-status-section-sort">
-						<span className="ws-status-search-label">District</span>
+					<label className="admin-user-panel__field">
+						<span className="admin-user-panel__label">District</span>
 						<select
 							id="user-district"
+							className="admin-user-panel__select"
 							value={filters.district_id}
 							onChange={(e) => handleFilterChange('district_id', e.target.value)}
 						>
 							<option value="">All districts</option>
 							{districts.map((d) => (
-								<option key={d.id} value={d.id}>{d.name}</option>
+								<option key={d.id} value={d.id}>
+									{d.name}
+								</option>
 							))}
 						</select>
 					</label>
 				) : null}
 
-				{hasActiveFilters ? (
-					<div className="admin-app-toolbar__clear">
-						<button
-							type="button"
-							className="ws-btn ws-btn--outline ws-btn--sm"
-							onClick={clearFilters}
-						>
-							Clear filters
-						</button>
-					</div>
-				) : null}
+				<label className="admin-user-panel__field">
+					<span className="admin-user-panel__label">Sort by</span>
+					<select
+						id="user-sort-by"
+						className="admin-user-panel__select"
+						value={sortConfig.key}
+						onChange={(e) =>
+							setSortConfig((prev) => ({ ...prev, key: e.target.value, direction: 'asc' }))
+						}
+					>
+						{SORT_OPTIONS.map((opt) => (
+							<option key={opt.key} value={opt.key}>
+								{opt.label}
+							</option>
+						))}
+					</select>
+				</label>
+			</div>
 
-				{canAddStaff ? (
-					<div className="admin-user-toolbar__add">
-						<button
-							type="button"
-							className="ws-btn ws-btn--primary ws-btn--sm"
-							onClick={() => {
-								setFormError('')
-								setFormData({
-									name: '',
-									email: '',
-									phone: '',
-									role: '',
-									district_id: currentUser?.district_id || '',
-								})
-								setShowAddForm(true)
-							}}
-						>
-							Add staff user
-						</button>
-					</div>
+			<div className="admin-user-panel__meta">
+				<p className="admin-user-panel__summary">
+					Showing <strong>{pagedUsers.length}</strong> of{' '}
+					<strong>{sortedUsers.length}</strong>
+					{sortedUsers.length === 1 ? ' user' : ' users'}
+					{filters.status ? (
+						<>
+							{' '}
+							· Status: <strong>{statusFilterLabel}</strong>
+						</>
+					) : null}
+					{filters.role ? (
+						<>
+							{' '}
+							· Role: <strong>{getRoleLabel(filters.role)}</strong>
+						</>
+					) : null}
+				</p>
+
+				{hasActiveFilters ? (
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm admin-user-panel__clear"
+						onClick={clearFilters}
+					>
+						Clear filters
+					</button>
 				) : null}
 			</div>
 		</div>
@@ -360,12 +543,34 @@ function UserManagement({ user: currentUser }) {
 				</div>
 			) : null}
 
-			{showAddForm ? createPortal(
-				<div className="modal-overlay">
-					<div className="auth-card admin-user-modal">
-						<header className="admin-user-modal__header">
-							<h3>Create staff user</h3>
-							<button type="button" className="admin-user-modal__close" onClick={() => setShowAddForm(false)}>
+			{showAddForm
+				? createPortal(
+						<div
+							className="modal-overlay admin-user-modal-overlay"
+							onClick={(e) => {
+								if (e.target === e.currentTarget && !creating) closeAddForm()
+							}}
+						>
+							<div
+								className="admin-user-modal"
+								role="dialog"
+								aria-modal="true"
+								aria-labelledby="admin-user-modal-title"
+							>
+								<header className="admin-user-modal__header">
+									<div>
+										<h3 id="admin-user-modal-title">Create staff user</h3>
+										<p className="admin-user-modal__hint">
+											Fill in the details below. The user can sign in after creation.
+										</p>
+									</div>
+									<button
+										type="button"
+										className="admin-user-modal__close"
+										onClick={closeAddForm}
+										disabled={creating}
+										aria-label="Close"
+									>
 										×
 									</button>
 								</header>
@@ -376,8 +581,8 @@ function UserManagement({ user: currentUser }) {
 									</div>
 								) : null}
 
-								<form onSubmit={handleSubmit} className="admin-user-modal__form">
-									<div className="form-group">
+								<form onSubmit={handleSubmit} className="admin-user-modal__form" noValidate>
+									<div className="admin-user-modal__field">
 										<label htmlFor="staff-name">Name</label>
 										<input
 											id="staff-name"
@@ -390,7 +595,7 @@ function UserManagement({ user: currentUser }) {
 											disabled={creating}
 										/>
 									</div>
-									<div className="form-group">
+									<div className="admin-user-modal__field">
 										<label htmlFor="staff-email">Email</label>
 										<input
 											id="staff-email"
@@ -402,7 +607,7 @@ function UserManagement({ user: currentUser }) {
 											disabled={creating}
 										/>
 									</div>
-									<div className="form-group">
+									<div className="admin-user-modal__field">
 										<label htmlFor="staff-phone">Phone</label>
 										<input
 											id="staff-phone"
@@ -423,7 +628,7 @@ function UserManagement({ user: currentUser }) {
 											disabled={creating}
 										/>
 									</div>
-									<div className="form-group">
+									<div className="admin-user-modal__field">
 										<label htmlFor="staff-role">Role</label>
 										<select
 											id="staff-role"
@@ -441,7 +646,7 @@ function UserManagement({ user: currentUser }) {
 										</select>
 									</div>
 									{currentUser.role === ROLES.SUPER_ADMIN ? (
-										<div className="form-group">
+										<div className="admin-user-modal__field">
 											<label htmlFor="staff-district">District</label>
 											<select
 												id="staff-district"
@@ -463,13 +668,6 @@ function UserManagement({ user: currentUser }) {
 									) : null}
 									<div className="admin-user-modal__actions">
 										<button
-											type="submit"
-											className="ws-btn ws-btn--primary"
-											disabled={creating}
-										>
-											{creating ? 'Creating…' : 'Create user'}
-										</button>
-										<button
 											type="button"
 											className="ws-btn ws-btn--outline"
 											onClick={closeAddForm}
@@ -477,11 +675,18 @@ function UserManagement({ user: currentUser }) {
 										>
 											Cancel
 										</button>
+										<button
+											type="submit"
+											className="ws-btn ws-btn--primary"
+											disabled={creating}
+										>
+											{creating ? 'Creating…' : 'Create user'}
+										</button>
 									</div>
 								</form>
 							</div>
 						</div>,
-						document.body
+						document.body,
 					)
 				: null}
 
@@ -489,20 +694,26 @@ function UserManagement({ user: currentUser }) {
 				title={tableTitle}
 				accent="default"
 				loading={loading}
-				data={filteredUsers}
-				totalCount={filteredUsers.length}
+				data={pagedUsers}
+				totalCount={sortedUsers.length}
 				toolbar={filterToolbar}
+				className="admin-user-table"
+				onSort={handleSort}
+				sortKey={sortConfig.key}
+				sortDirection={sortConfig.direction}
 				columns={[
-					{ key: 'name', label: 'Name' },
+					{ key: 'name', label: 'Name', sortable: true },
 					{
 						key: 'email',
 						label: 'Email',
+						sortable: true,
 						cellClassName: 'ws-status-cell-mono',
 					},
-					{ key: 'phone', label: 'Phone' },
+					{ key: 'phone', label: 'Phone', sortable: true },
 					{
 						key: 'role',
 						label: 'Role',
+						sortable: true,
 						render: (val) => (
 							<span className="admin-user-role">{getRoleLabel(val)}</span>
 						),
@@ -510,11 +721,13 @@ function UserManagement({ user: currentUser }) {
 					{
 						key: 'district',
 						label: 'District',
+						sortable: true,
 						render: (val) => val?.name || '—',
 					},
 					{
 						key: 'is_blocked',
 						label: 'Status',
+						sortable: true,
 						render: (val) => (
 							<span
 								className={`admin-user-status ${
@@ -544,6 +757,11 @@ function UserManagement({ user: currentUser }) {
 					) : null
 				}
 				emptyMessage={mode === 'tenant' ? 'No registered users found.' : 'No staff users found.'}
+				pagination={{
+					currentPage: page,
+					totalPages,
+					onPageChange: setPage,
+				}}
 			/>
 
 			<WorkflowConfirmModal

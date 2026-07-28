@@ -13,6 +13,10 @@ class RentRevisionApplication extends Model
 
     use GeneratesApplicationNo;
 
+    protected $casts = [
+        'edit_history' => 'array',
+    ];
+
     protected $table = 'rent_authority_form_i_applications';
 
     protected $fillable = [

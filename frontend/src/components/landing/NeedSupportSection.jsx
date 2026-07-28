@@ -8,7 +8,7 @@ function NeedSupportSection() {
 	return (
 		<section
 			id="need-support"
-			className="landing-need-support scroll-mt-28 bg-[#111111] text-white"
+			className="landing-need-support scroll-mt-28 text-white"
 			aria-labelledby="need-support-heading"
 		>
 			<div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">

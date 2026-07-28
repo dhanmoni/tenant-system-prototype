@@ -5,15 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import NavDashboardMenu from './NavDashboardMenu'
+import PortalNavMark from './PortalNavMark'
 import tcpLogo from '../../assets/img/TCP logo.png'
+import nicLogo from '../../assets/img/NIC.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
-import { emitLandingA11y } from '../../utils/landingA11y'
 import { useLanguage } from '../../i18n'
 
 function LandingNav({ variant = 'overlay' }) {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const location = useLocation()
-	const { language, t } = useLanguage()
+	const { t } = useLanguage()
 	const isStatic = variant === 'static'
 
 	const shellLinkClass = (path, exact = true) => {
@@ -108,30 +109,15 @@ function LandingNav({ variant = 'overlay' }) {
 										<Link to="/" onClick={closeMenu} className={drawerLinkClass('/')}>
 											{t('nav.home')}
 										</Link>
+										<Link to="/about" onClick={closeMenu} className={drawerLinkClass('/about')}>
+											{t('nav.about')}
+										</Link>
 										<Link
 											to="/services"
 											onClick={closeMenu}
 											className={drawerLinkClass('/services')}
 										>
 											{t('nav.services')}
-										</Link>
-										<NavDashboardMenu variant="drawer" onNavigate={closeMenu} />
-										<Link to="/about" onClick={closeMenu} className={drawerLinkClass('/about')}>
-											{t('nav.about')}
-										</Link>
-										<Link
-											to="/contact"
-											onClick={closeMenu}
-											className={drawerLinkClass('/contact')}
-										>
-											{t('nav.contact')}
-										</Link>
-										<Link
-											to="/policies"
-											onClick={closeMenu}
-											className={drawerLinkClass('/policies')}
-										>
-											{t('nav.policies')}
 										</Link>
 										<Link
 											to="/resources"
@@ -140,27 +126,33 @@ function LandingNav({ variant = 'overlay' }) {
 										>
 											{t('nav.resources')}
 										</Link>
+										<NavDashboardMenu variant="drawer" onNavigate={closeMenu} />
+										<Link
+											to="/contact"
+											onClick={closeMenu}
+											className={drawerLinkClass('/contact')}
+										>
+											{t('nav.contact')}
+										</Link>
 										<div className="landing-nav-drawer-ctas">
 											<AuthNavLink
 												mode="login"
 												onClick={closeMenu}
 												className="landing-nav-drawer-cta landing-nav-drawer-cta--primary"
 											>
-												{t('nav.login')}
-											</AuthNavLink>
-											<AuthNavLink
-												mode="register"
-												onClick={closeMenu}
-												className="landing-nav-drawer-cta landing-nav-drawer-cta--outline"
-											>
-												{t('nav.register')}
+												{t('nav.loginRegister')}
 											</AuthNavLink>
 										</div>
 										<div className="landing-nav-drawer-footer">
 											<img
+												src={nicLogo}
+												alt="NIC"
+												className="landing-nav-drawer-partner-logo landing-nav-drawer-partner-logo--nic"
+											/>
+											<img
 												src={digitalIndiaLogo}
 												alt="Digital India"
-												className="landing-nav-drawer-di-logo"
+												className="landing-nav-drawer-partner-logo landing-nav-drawer-partner-logo--di"
 											/>
 										</div>
 									</div>
@@ -180,95 +172,30 @@ function LandingNav({ variant = 'overlay' }) {
 			aria-label={t('nav.main')}
 		>
 			<div className="landing-nav-mobile">
-				<div
-					className="landing-nav-mobile-a11y"
-					role="toolbar"
-					aria-label={t('a11y.options')}
-				>
-					<div className="landing-nav-mobile-a11y-inner">
-						<div className="landing-nav-mobile-a11y-links">
-							<a href="#portal-content" className="landing-nav-mobile-skip">
-								{t('a11y.skipToContent')}
-							</a>
-						</div>
-						<div className="landing-nav-mobile-a11y-tools">
-							<div className="landing-nav-mobile-a11y-fonts" role="group" aria-label={t('a11y.textSize')}>
-								<button
-									type="button"
-									className="landing-nav-mobile-a11y-btn"
-									onClick={() => emitLandingA11y('decrease')}
-									aria-label={t('a11y.decreaseText')}
-								>
-									A−
-								</button>
-								<button
-									type="button"
-									className="landing-nav-mobile-a11y-btn"
-									onClick={() => emitLandingA11y('reset')}
-									aria-label={t('a11y.resetText')}
-								>
-									A
-								</button>
-								<button
-									type="button"
-									className="landing-nav-mobile-a11y-btn"
-									onClick={() => emitLandingA11y('increase')}
-									aria-label={t('a11y.increaseText')}
-								>
-									A+
-								</button>
-							</div>
-							<span className="landing-nav-mobile-sep" aria-hidden>
-								|
-							</span>
-							<button
-								type="button"
-								className="landing-nav-mobile-a11y-btn landing-nav-mobile-a11y-btn--text"
-								onClick={() => emitLandingA11y('contrast')}
-								aria-label={t('a11y.toggleContrast')}
-							>
-								{t('a11y.contrast')}
-							</button>
-							<span className="landing-nav-mobile-sep" aria-hidden>
-								|
-							</span>
-							<div className="landing-nav-mobile-a11y-lang" role="group" aria-label={t('a11y.language')}>
-								<button
-									type="button"
-									className={`landing-nav-mobile-a11y-btn${language === 'en' ? ' is-active' : ''}`}
-									onClick={() => emitLandingA11y('lang-en')}
-									aria-label={t('a11y.english')}
-									aria-pressed={language === 'en'}
-								>
-									English
-								</button>
-								<span className="landing-nav-mobile-sep" aria-hidden>
-									|
-								</span>
-								<button
-									type="button"
-									className={`landing-nav-mobile-a11y-btn${language === 'as' ? ' is-active' : ''}`}
-									onClick={() => emitLandingA11y('lang-as')}
-									aria-label={t('a11y.assamese')}
-									aria-pressed={language === 'as'}
-								>
-									অসমীয়া
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-
 				<div className="landing-nav-mobile-brand">
 					<Link to="/" onClick={closeMenu} className="landing-nav-brand">
 						<img src={tcpLogo} alt="" className="landing-nav-emblem" aria-hidden />
 						<span className="landing-nav-brand-text">
-							<span className="landing-nav-brand-line">{t('gov.brandLine')}</span>
 							<span className="landing-nav-brand-line landing-nav-brand-line--strong">
 								{t('gov.portalName')}
 							</span>
+							<span className="landing-nav-brand-line">
+								{t('gov.brandLine')}
+							</span>
 						</span>
 					</Link>
+					<div className="landing-nav-mobile-logos">
+						<img
+							src={nicLogo}
+							alt="NIC"
+							className="landing-nav-partner-logo landing-nav-partner-logo--nic"
+						/>
+						<img
+							src={digitalIndiaLogo}
+							alt="Digital India"
+							className="landing-nav-partner-logo landing-nav-partner-logo--di"
+						/>
+					</div>
 					<button
 						type="button"
 						className="landing-nav-mobile-menu-btn"
@@ -291,41 +218,56 @@ function LandingNav({ variant = 'overlay' }) {
 			<div className="landing-nav-overlay">
 				<div className="landing-nav-shell">
 					<div className="landing-nav-shell-inner">
-						<div className="landing-nav-shell-links">
-							<Link to="/" className={shellLinkClass('/')}>
-								{t('nav.home')}
-							</Link>
-							<Link to="/services" className={shellLinkClass('/services')}>
-								{t('nav.services')}
-							</Link>
-							<NavDashboardMenu />
-							<Link to="/about" className={shellLinkClass('/about')}>
-								{t('nav.about')}
-							</Link>
-							<Link to="/contact" className={shellLinkClass('/contact')}>
-								{t('nav.contact')}
-							</Link>
-							<Link to="/policies" className={shellLinkClass('/policies')}>
-								<span className="landing-nav-shell-link-long">{t('nav.policies')}</span>
-								<span className="landing-nav-shell-link-short">{t('nav.policiesShort')}</span>
-							</Link>
-							<Link to="/resources" className={shellLinkClass('/resources')}>
-								{t('nav.resources')}
-							</Link>
-						</div>
-						<div className="landing-nav-cta-group">
-							<AuthNavLink
-								mode="login"
-								className="landing-nav-cta landing-nav-cta--primary"
+						<Link to="/" className="landing-nav-shell-brand">
+							<img
+								src={tcpLogo}
+								alt=""
+								className="landing-nav-shell-emblem"
+								aria-hidden
+							/>
+							<span
+								className="landing-nav-shell-portal-mark"
+								title={t('gov.portalName')}
+								aria-hidden
 							>
-								{t('nav.login')}
-							</AuthNavLink>
-							<AuthNavLink
-								mode="register"
-								className="landing-nav-cta landing-nav-cta--outline"
-							>
-								{t('nav.register')}
-							</AuthNavLink>
+								<PortalNavMark />
+							</span>
+							<span className="landing-nav-shell-brand-text">
+								<span className="landing-nav-shell-brand-title">
+									{t('gov.portalName')}
+								</span>
+								<span className="landing-nav-shell-brand-sub">
+									{t('gov.brandLine')}
+								</span>
+							</span>
+						</Link>
+						<div className="landing-nav-shell-end">
+							<div className="landing-nav-shell-links">
+								<Link to="/" className={shellLinkClass('/')}>
+									{t('nav.home')}
+								</Link>
+								<Link to="/about" className={shellLinkClass('/about')}>
+									{t('nav.about')}
+								</Link>
+								<Link to="/services" className={shellLinkClass('/services')}>
+									{t('nav.services')}
+								</Link>
+								<Link to="/resources" className={shellLinkClass('/resources')}>
+									{t('nav.resources')}
+								</Link>
+								<NavDashboardMenu />
+								<Link to="/contact" className={shellLinkClass('/contact')}>
+									{t('nav.contact')}
+								</Link>
+							</div>
+							<div className="landing-nav-cta-group">
+								<AuthNavLink
+									mode="login"
+									className="landing-nav-cta landing-nav-cta--primary"
+								>
+									{t('nav.loginRegister')}
+								</AuthNavLink>
+							</div>
 						</div>
 					</div>
 				</div>

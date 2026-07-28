@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
 import NexusStatCard from '../../components/dashboard/NexusStatCard'
-import PipelineSummary from '../../components/dashboard/PipelineSummary'
 import SuperAdminQuickActions from '../../components/dashboard/SuperAdminQuickActions'
 import SuperAdminAttentionPanel from '../../components/dashboard/SuperAdminAttentionPanel'
 import SuperAdminPlatformHealth from '../../components/dashboard/SuperAdminPlatformHealth'
@@ -155,50 +154,36 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 									selectedDate={selectedDate}
 									onSelectDate={setSelectedDate}
 									scopeLabel="statewide"
+									mode="stats"
 								/>
 							</section>
 
 							<section
-								className="ws-sa-block ws-sa-block--pipeline"
-								aria-labelledby="ws-sa-pipeline-heading"
+								className="ws-sa-block ws-sa-block--activity"
+								aria-labelledby="ws-sa-activity-heading"
 							>
 								<div className="ws-sa-block-head">
-									<h2 id="ws-sa-pipeline-heading" className="ws-sa-block-title">
-										Application pipeline
+									<h2 id="ws-sa-activity-heading" className="ws-sa-block-title">
+										Recent activity
 									</h2>
 									<p className="ws-sa-block-desc">
-										Statewide status for Assam Tenancy Act form submissions
+										Sign-ins and administrative actions
 									</p>
 								</div>
-								<PipelineSummary
-									breakdown={s.applications_by_status}
-									totalLabel="form applications statewide"
-								/>
+								<ActivityFeed />
 							</section>
-
-							{showFormBreakdown ? (
-								<section className="ws-sa-block" aria-labelledby="ws-sa-forms-heading">
-									<div className="ws-sa-block-head">
-										<h2 id="ws-sa-forms-heading" className="ws-sa-block-title">
-											Forms breakdown
-										</h2>
-										<p className="ws-sa-block-desc">Volume by form type (statewide)</p>
-									</div>
-									<div className="ws-sa-table-panel">
-										<FormTypeTable forms={s.form_type_breakdown} />
-									</div>
-								</section>
-							) : null}
 						</div>
 
 						<aside className="ws-sa-aside" aria-label="Monitoring sidebar">
 							<SuperAdminAttentionPanel stats={stats} />
 							<SuperAdminPlatformHealth stats={stats} />
-							<div className="ws-sa-panel">
-								<h3 className="ws-sa-panel-title">Recent activity</h3>
-								<p className="ws-sa-panel-desc">Sign-ins and administrative actions</p>
-								<ActivityFeed />
-							</div>
+							{showFormBreakdown ? (
+								<div className="ws-sa-panel ws-sa-panel--forms">
+									<h3 className="ws-sa-panel-title">Forms breakdown</h3>
+									<p className="ws-sa-panel-desc">Volume by form type (statewide)</p>
+									<FormTypeTable forms={s.form_type_breakdown} />
+								</div>
+							) : null}
 						</aside>
 					</div>
 				</>

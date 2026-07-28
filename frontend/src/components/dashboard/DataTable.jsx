@@ -10,6 +10,8 @@ const DataTable = ({
 	data,
 	loading,
 	onSort,
+	sortKey,
+	sortDirection = 'asc',
 	onSearch,
 	pagination,
 	actions,
@@ -18,6 +20,7 @@ const DataTable = ({
 	onRowClick,
 	toolbar,
 	totalCount,
+	className = '',
 }) => {
 	const [activeSearch, setActiveSearch] = useState(null);
 	const [searchValues, setSearchValues] = useState({});
@@ -55,7 +58,7 @@ const DataTable = ({
 
 	return (
 		<section
-			className={`ws-card ws-status-category ws-status-category--${accent}`}
+			className={`ws-card ws-status-category ws-status-category--${accent}${className ? ` ${className}` : ''}`}
 		>
 			{title ? (
 				<div className="ws-card-header ws-status-category-header">
@@ -87,11 +90,23 @@ const DataTable = ({
 											type="button"
 											className="ws-status-th-sort"
 											onClick={() => onSort(col.key)}
+											aria-label={`Sort by ${col.label}`}
 										>
 											{col.label}
-											<span className="ws-status-sort" aria-hidden>
-												↕
-											</span>
+											{sortKey === col.key ? (
+												<span
+													className={`ws-status-sort is-active ${
+														sortDirection === 'asc' ? 'is-asc' : ''
+													}`}
+													aria-hidden
+												>
+													↓
+												</span>
+											) : (
+												<span className="ws-status-sort" aria-hidden>
+													↕
+												</span>
+											)}
 										</button>
 									) : (
 										<div className="th-content">
@@ -181,6 +196,7 @@ const DataTable = ({
 									{columns.map((col) => (
 										<td
 											key={col.key}
+											data-label={col.label}
 											className={
 												col.mono
 													? 'ws-status-cell-mono'
@@ -194,10 +210,11 @@ const DataTable = ({
 									))}
 									{actions ? (
 										<td
+											data-label="Actions"
 											className="ws-status-actions"
 											onClick={(e) => e.stopPropagation()}
 										>
-											{actions(row)}
+											<div className="ws-status-actions-inner">{actions(row)}</div>
 										</td>
 									) : null}
 								</tr>

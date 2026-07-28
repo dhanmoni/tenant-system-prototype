@@ -16,8 +16,10 @@ export function isPublicMarketingPath(pathname = '') {
 export function getMainContentTargetId(pathname = '') {
 	const path = String(pathname || '')
 	if (path.startsWith('/dashboard')) return 'dashboard-primary-content'
-	// Home landing: skip into Apply / Sign in (get started) section
-	if (path === '/' || path === '') return 'portal-content'
+	// Home landing: skip into the login / get-started section
+	if (path === '/' || path === '' || path === '/login' || path === '/join') {
+		return 'portal-content'
+	}
 	return 'main-content'
 }
 

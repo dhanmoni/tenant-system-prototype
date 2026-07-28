@@ -129,7 +129,12 @@
   </head>
   <body>
     @php
-      $toDataUri = function ($path) {
+      $embedImages = ($embedImages ?? true) === true;
+
+      $toDataUri = function ($path) use ($embedImages) {
+          if (!$embedImages) {
+              return null;
+          }
           $full = $path ? public_path('storage/' . $path) : null;
           if (!$full || !is_file($full) || !is_readable($full)) {
               return null;

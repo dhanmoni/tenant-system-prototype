@@ -32,6 +32,12 @@
 	gap: 0.35rem;
 }
 
+.admin-app-details__btn-icon {
+	width: 0.95rem;
+	height: 0.95rem;
+	flex-shrink: 0;
+}
+
 .admin-app-details__back {
 	display: inline-flex !important;
 	align-items: center;
@@ -52,6 +58,316 @@
 	background: #fffbeb;
 	border: 1px solid #fcd34d;
 	border-radius: 8px;
+}
+
+/* District admin edit form */
+.admin-edit-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+}
+
+.admin-edit-form__header {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	padding: 1.15rem 1.25rem;
+	background: #fff;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-left: 3px solid var(--ws-accent, #2563eb);
+	border-radius: 10px;
+}
+
+.admin-edit-form__eyebrow {
+	margin: 0 0 0.2rem;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--ws-accent, #2563eb);
+}
+
+.admin-edit-form__title {
+	margin: 0;
+	font-size: 1.15rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+	line-height: 1.3;
+}
+
+.admin-edit-form__ref {
+	margin: 0.25rem 0 0;
+	font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-edit-form__hint {
+	margin: 0;
+	padding: 0.65rem 0.8rem;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #334155;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+}
+
+.admin-edit-form__body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	width: 100%;
+}
+
+.admin-edit-form__section {
+	width: 100%;
+	padding: 1rem 1.15rem 1.15rem;
+	background: #fff;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 10px;
+}
+
+.admin-edit-form__section-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.4rem 0.75rem;
+	margin-bottom: 0.9rem;
+	padding-bottom: 0.55rem;
+	border-bottom: 1px solid var(--ws-border, #e8edf3);
+}
+
+.admin-edit-form__section-title {
+	margin: 0;
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+}
+
+.admin-edit-form__section-tag {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.15rem 0.45rem;
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: #1d4ed8;
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	border-radius: 4px;
+}
+
+.admin-edit-form .admin-app-details__grid--edit {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.9rem 1.1rem;
+	padding: 0;
+	width: 100%;
+}
+
+.admin-edit-form .admin-app-details__field {
+	padding: 0;
+	border: none;
+	background: transparent;
+}
+
+.admin-edit-form .admin-app-details__field--wide {
+	grid-column: 1 / -1;
+}
+
+.admin-edit-form .admin-app-details__field dt {
+	margin-bottom: 0.3rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-edit-form .admin-app-details__input,
+.admin-edit-form .admin-app-details__textarea {
+	padding: 0.55rem 0.7rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	background: #fff;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+}
+
+.admin-edit-form .admin-app-details__input:focus,
+.admin-edit-form .admin-app-details__textarea:focus {
+	border-color: var(--ws-accent, #2563eb);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.admin-edit-form .admin-app-details__textarea {
+	min-height: 4rem;
+	line-height: 1.45;
+}
+
+@media (max-width: 1100px) {
+	.admin-edit-form .admin-app-details__grid--edit {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 640px) {
+	.admin-edit-form .admin-app-details__grid--edit {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Edit change notes */
+.admin-edit-changes {
+	margin-top: 0.35rem;
+	padding: 0.75rem 0.85rem;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+}
+
+.admin-edit-changes__label {
+	margin: 0 0 0.55rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.admin-edit-changes__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+}
+
+.admin-edit-changes__list li {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.admin-edit-changes__field {
+	font-size: 0.8125rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.admin-edit-changes__diff {
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: #475569;
+	word-break: break-word;
+}
+
+.admin-edit-changes__from {
+	color: #94a3b8;
+	text-decoration: line-through;
+}
+
+.admin-edit-changes__to {
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.admin-edit-history {
+	padding: 1rem 1.15rem;
+	background: #fff;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 10px;
+}
+
+.admin-edit-history__title {
+	margin: 0 0 0.25rem;
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+}
+
+.admin-edit-history__lead {
+	margin: 0 0 0.85rem;
+	font-size: 0.8125rem;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-edit-history__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.admin-edit-history__item {
+	padding: 0.75rem 0.85rem;
+	background: #f8fafc;
+	border: 1px solid #e8edf3;
+	border-radius: 8px;
+}
+
+.admin-edit-history__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.35rem 0.75rem;
+	margin-bottom: 0.55rem;
+}
+
+.admin-edit-history__meta strong {
+	font-size: 0.8125rem;
+	color: #0f172a;
+}
+
+.admin-edit-history__meta span {
+	font-size: 0.75rem;
+	color: #64748b;
+}
+
+.admin-edit-history__changes {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.admin-edit-history__changes li {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.admin-edit-history__field {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #334155;
+}
+
+.admin-edit-history__diff {
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: #475569;
+	word-break: break-word;
+}
+
+.admin-edit-history__from {
+	color: #94a3b8;
+	text-decoration: line-through;
+}
+
+.admin-edit-history__to {
+	font-weight: 600;
+	color: #0f172a;
 }
 
 /* Hero */
@@ -355,9 +671,19 @@
 	flex-wrap: wrap;
 	justify-content: flex-end;
 	gap: 0.75rem;
-	padding: 0.75rem 0 0;
+	padding: 0.85rem 1.1rem;
 	margin-top: 0.15rem;
-	border-top: 1px solid var(--ws-border, #e2e8f0);
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-app-details__staff-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	margin-top: 0.25rem;
 }
 
 .page.page-dashboard .ws-root .admin-app-details__actions .ws-btn--danger {
@@ -414,5 +740,433 @@
 	.admin-app-details__actions .ws-btn {
 		width: 100%;
 		justify-content: center;
+	}
+}
+
+/* Super Admin — submitted UIN / tenancy document (view only) */
+.admin-tenancy-doc {
+	gap: 0.85rem;
+	min-width: 0;
+}
+
+.admin-tenancy-doc__preview {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	width: 100%;
+	min-width: 0;
+}
+
+.admin-tenancy-doc__registry {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.65rem 0.85rem;
+	padding: 0.9rem 1rem;
+	background: var(--ws-surface, #fff);
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 12px;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-tenancy-doc__registry-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	min-width: 0;
+	align-items: flex-start;
+}
+
+.admin-tenancy-doc__registry-item > span:first-child {
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-tenancy-doc__registry-item strong {
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+	word-break: break-word;
+}
+
+.admin-tenancy-doc__registry-item .ws-badge {
+	display: inline-flex;
+	width: auto;
+	max-width: 100%;
+	align-self: flex-start;
+	white-space: nowrap;
+}
+
+.admin-tenancy-doc__attachments {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem 1rem;
+	padding: 0.85rem 1rem;
+	background: #f8fafc;
+	border: 1px solid #dbe3ee;
+	border-radius: 12px;
+}
+
+.admin-tenancy-doc__attachments-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.admin-tenancy-doc__attachments-copy strong {
+	font-size: 0.9rem;
+	color: var(--ws-text, #0f172a);
+}
+
+.admin-tenancy-doc__attachments-copy span {
+	font-size: 0.8rem;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-tenancy-doc__viewer {
+	width: 100%;
+	min-width: 0;
+	border: 1px solid #c5ccd6;
+	border-radius: 14px;
+	overflow: hidden;
+	background: #4b5563;
+	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+.admin-tenancy-doc__viewer-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.35rem 0.75rem;
+	padding: 0.55rem 0.85rem;
+	background: #374151;
+	color: #f3f4f6;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-tenancy-doc__viewer-label {
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.admin-tenancy-doc__zoom {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.admin-tenancy-doc__zoom-btn,
+.admin-tenancy-doc__zoom-action {
+	appearance: none;
+	border: 1px solid rgba(255, 255, 255, 0.22);
+	background: rgba(255, 255, 255, 0.08);
+	color: #f9fafb;
+	font: inherit;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1;
+	min-width: 1.85rem;
+	height: 1.85rem;
+	padding: 0 0.55rem;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.admin-tenancy-doc__zoom-btn {
+	font-size: 1rem;
+}
+
+.admin-tenancy-doc__zoom-btn:hover:not(:disabled),
+.admin-tenancy-doc__zoom-action:hover {
+	background: rgba(255, 255, 255, 0.16);
+}
+
+.admin-tenancy-doc__zoom-btn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.admin-tenancy-doc__zoom-action.is-active {
+	background: #fff;
+	color: #111827;
+	border-color: #fff;
+}
+
+.admin-tenancy-doc__zoom-value {
+	min-width: 3.1rem;
+	text-align: center;
+	font-size: 0.75rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.admin-tenancy-doc__viewer-stage {
+	width: 100%;
+	max-height: min(78vh, 980px);
+	overflow: auto;
+	padding: 1rem 0.75rem 1.35rem;
+	-webkit-overflow-scrolling: touch;
+	background:
+		radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 40%),
+		#4b5563;
+}
+
+.admin-tenancy-doc__paper-frame {
+	margin: 0 auto;
+	position: relative;
+}
+
+.admin-tenancy-doc__paper,
+.admin-tenancy-doc .govt-form-document.admin-tenancy-doc__paper {
+	width: 794px;
+	min-width: 794px;
+	max-width: none;
+	margin: 0;
+	background: #fff;
+	color: #111;
+	padding: 48px 56px;
+	border: 1px solid #d1d5db;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+	font-family: 'Times New Roman', Times, Georgia, serif;
+	line-height: 1.55;
+	transform-origin: top left;
+	position: relative;
+}
+
+.admin-tenancy-doc__schedule {
+	font-weight: 700;
+	font-size: 1.15rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.admin-tenancy-doc__section-ref {
+	font-style: italic;
+	margin: 0.2rem 0 0.35rem;
+}
+
+.admin-tenancy-doc__form-title {
+	font-weight: 700;
+	font-size: 1.05rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.admin-tenancy-doc__addressee {
+	margin: 0 0 1.35rem;
+}
+
+.admin-tenancy-doc__row {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.85rem;
+	align-items: flex-start;
+}
+
+.admin-tenancy-doc__sl {
+	width: 2rem;
+	flex: 0 0 2rem;
+	font-weight: 600;
+}
+
+.admin-tenancy-doc__label {
+	flex: 1.4;
+	min-width: 0;
+	padding-right: 0.35rem;
+}
+
+.admin-tenancy-doc__value {
+	flex: 1.8;
+	min-width: 0;
+	word-break: break-word;
+}
+
+.admin-tenancy-doc__value--stack {
+	display: flex;
+	flex-direction: column;
+}
+
+.admin-tenancy-doc__signatures {
+	display: flex;
+	justify-content: space-between;
+	gap: 1.5rem;
+	margin: 2.5rem 0 1.5rem;
+}
+
+.admin-tenancy-doc__sign-block {
+	flex: 1;
+	text-align: center;
+	max-width: 220px;
+}
+
+.admin-tenancy-doc__sign-caption {
+	margin-bottom: 0.5rem;
+	font-weight: 600;
+}
+
+.admin-tenancy-doc__photo-box {
+	border: 1px solid #111;
+	width: 120px;
+	height: 140px;
+	margin: 0.5rem auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+	font-size: 0.8rem;
+	text-align: center;
+	overflow: hidden;
+}
+
+.admin-tenancy-doc__photo-box img {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: cover;
+}
+
+.admin-tenancy-doc__sign-line {
+	height: 50px;
+	margin-top: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.admin-tenancy-doc__sign-line img {
+	max-height: 100%;
+	max-width: 150px;
+}
+
+.admin-tenancy-doc__enclosed {
+	margin-top: 1rem;
+}
+
+.admin-tenancy-doc__enclosed ol {
+	margin: 0.5rem 0 0 1.25rem;
+	padding: 0;
+}
+
+.admin-tenancy-doc__enclosed li {
+	margin-bottom: 0.25rem;
+}
+
+.admin-tenancy-doc__workflow {
+	width: 100%;
+	background: var(--ws-surface, #fff);
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.admin-tenancy-doc__workflow-title {
+	margin: 0;
+	padding: 0.75rem 1.15rem;
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--ws-text, #1e293b);
+	background: var(--ws-surface-muted, #f8fafc);
+	border-bottom: 1px solid var(--ws-border, #e2e8f0);
+}
+
+@media (max-width: 900px) {
+	.admin-tenancy-doc__registry {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 640px) {
+	.admin-tenancy-doc__registry {
+		grid-template-columns: 1fr;
+	}
+
+	.admin-tenancy-doc__viewer-bar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.admin-tenancy-doc__zoom {
+		justify-content: flex-start;
+	}
+
+	.admin-tenancy-doc__viewer-stage {
+		max-height: min(70vh, 720px);
+		padding: 0.75rem 0.5rem 1rem;
+	}
+
+	.admin-tenancy-doc .govt-form-document.admin-tenancy-doc__paper {
+		padding: 40px 36px;
+	}
+}
+
+@media print {
+	.admin-tenancy-doc__viewer {
+		border: none;
+		box-shadow: none;
+		background: #fff;
+	}
+
+	.admin-tenancy-doc__viewer-stage {
+		max-height: none;
+		overflow: visible;
+		padding: 0;
+		background: #fff;
+	}
+
+	.admin-tenancy-doc__paper-frame {
+		width: auto !important;
+		height: auto !important;
+	}
+
+	.admin-tenancy-doc__paper,
+	.admin-tenancy-doc .govt-form-document.admin-tenancy-doc__paper {
+		transform: none !important;
+		box-shadow: none;
+		border: none;
+		width: 100%;
+		min-width: 0;
+	}
+}
+
+/* Super Admin — service application form paper (reuses tenancy viewer chrome) */
+.admin-service-doc__signature {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 1.5rem;
+	margin-top: 2rem;
+	padding-top: 1rem;
+	flex-wrap: wrap;
+}
+
+.admin-service-doc__signature-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	font-size: 0.95rem;
+	min-width: 12rem;
+}
+
+.admin-service-doc__sign-placeholder {
+	display: inline-block;
+	min-width: 12rem;
+	color: #64748b;
+}
+
+.admin-service-doc__paper .admin-tenancy-doc__value--stack {
+	white-space: pre-wrap;
+}
+
+@media (max-width: 560px) {
+	.admin-service-doc__signature {
+		flex-direction: column;
+		align-items: stretch;
 	}
 }

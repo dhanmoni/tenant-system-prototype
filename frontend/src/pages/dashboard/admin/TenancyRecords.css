@@ -1,0 +1,354 @@
+/* Tenancy applications (UIN) — scoped panel + mobile table */
+
+.page.page-dashboard .ws-root .admin-tenancy-table .admin-tenancy-panel,
+.admin-tenancy-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	padding: 0.9rem 1rem 0.95rem;
+	border-bottom: 1px solid var(--ws-border, #e2e8f0);
+	background: #f8fafc;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel label,
+.admin-tenancy-panel label {
+	display: block;
+	margin: 0;
+	padding: 0;
+	gap: 0;
+	font-weight: inherit;
+	color: inherit;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__top,
+.admin-tenancy-panel__top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.65rem 0.75rem;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__search,
+.admin-tenancy-panel__search {
+	flex: 1 1 18rem;
+	min-width: 0;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__search-field,
+.admin-tenancy-panel__search-field {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__search-icon,
+.admin-tenancy-panel__search-icon {
+	position: absolute;
+	left: 0.85rem;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 1.05rem;
+	height: 1.05rem;
+	color: #94a3b8;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__label,
+.admin-tenancy-panel__label {
+	display: block;
+	margin: 0 0 0.3rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+.page.page-dashboard .ws-root input.admin-tenancy-panel__input[type='search'],
+.page.page-dashboard .ws-root input.admin-tenancy-panel__input,
+input.admin-tenancy-panel__input[type='search'],
+input.admin-tenancy-panel__input {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.7rem 0.9rem 0.7rem 2.85rem !important;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	border-radius: 8px;
+	background: #fff;
+	font-size: 0.875rem;
+	font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+	font-weight: 400;
+	letter-spacing: 0.02em;
+	color: var(--ws-text, #0f172a);
+	box-sizing: border-box;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.page.page-dashboard .ws-root input.admin-tenancy-panel__input[type='search']::-webkit-search-decoration,
+.page.page-dashboard .ws-root input.admin-tenancy-panel__input[type='search']::-webkit-search-cancel-button,
+.page.page-dashboard .ws-root input.admin-tenancy-panel__input[type='search']::-webkit-search-results-button,
+.page.page-dashboard .ws-root input.admin-tenancy-panel__input[type='search']::-webkit-search-results-decoration {
+	-webkit-appearance: none;
+	display: none;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__input:focus,
+.page.page-dashboard .ws-root .admin-tenancy-panel__select:focus,
+.admin-tenancy-panel__input:focus,
+.admin-tenancy-panel__select:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__filters,
+.admin-tenancy-panel__filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.75rem 0.85rem;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__status,
+.admin-tenancy-panel__status {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__status-pills,
+.admin-tenancy-panel__status-pills {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 0;
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	border-radius: 8px;
+	background: #fff;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	margin: 0 !important;
+	min-height: 2.15rem;
+	padding: 0.4rem 0.75rem !important;
+	border: none !important;
+	border-right: 1px solid #e2e8f0 !important;
+	border-radius: 0 !important;
+	background: #fff !important;
+	color: #475569 !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+	font-family: inherit;
+	line-height: 1.2;
+	cursor: pointer;
+	box-shadow: none !important;
+	text-decoration: none !important;
+	appearance: none;
+	-webkit-appearance: none;
+	transition:
+		background-color 0.18s ease,
+		color 0.18s ease;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill:last-child {
+	border-right: none !important;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill:hover:not(:disabled):not(.is-active) {
+	background: #f8fafc !important;
+	color: #0f172a !important;
+	transform: none;
+	box-shadow: none !important;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill.is-active {
+	background: #0d47a1 !important;
+	color: #fff !important;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill--ok.is-active {
+	background: #15803d !important;
+	color: #fff !important;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill--bad.is-active {
+	background: #b91c1c !important;
+	color: #fff !important;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill--review.is-active {
+	background: #b45309 !important;
+	color: #fff !important;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__field,
+.admin-tenancy-panel__field {
+	flex: 1 1 10rem;
+	min-width: 9.5rem;
+	max-width: 14rem;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__select,
+.admin-tenancy-panel__select {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.6rem 2rem 0.6rem 0.75rem;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	border-radius: 8px;
+	background-color: #fff;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1.4.6 6 5.2 10.6.6 12 2 6 8 0 2z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 0.7rem center;
+	background-size: 0.7rem;
+	font-size: 0.875rem;
+	font-family: inherit;
+	font-weight: 400;
+	color: var(--ws-text, #0f172a);
+	box-sizing: border-box;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__meta,
+.admin-tenancy-panel__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem 0.85rem;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__summary,
+.admin-tenancy-panel__summary {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	font-weight: 400;
+	color: #64748b;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__summary strong,
+.admin-tenancy-panel__summary strong {
+	color: #0f172a;
+	font-weight: 700;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel__note,
+.admin-tenancy-panel__note {
+	color: #94a3b8;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.admin-tenancy-panel__clear.ws-btn,
+.page.page-dashboard .ws-root button.admin-tenancy-panel__clear {
+	margin: 0 !important;
+	min-height: 2rem;
+	padding: 0.35rem 0.8rem !important;
+	border: 1px solid #cbd5e1 !important;
+	border-radius: 8px !important;
+	background: #fff !important;
+	color: #0d47a1 !important;
+	font-size: 0.8125rem !important;
+	font-weight: 700 !important;
+	text-decoration: none !important;
+	box-shadow: none !important;
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-panel button.admin-tenancy-panel__clear.ws-btn:hover:not(:disabled),
+.page.page-dashboard .ws-root button.admin-tenancy-panel__clear:hover:not(:disabled) {
+	background: #eff6ff !important;
+	border-color: #93c5fd !important;
+	color: #0d47a1 !important;
+	transform: none;
+	box-shadow: none !important;
+}
+
+@media (max-width: 1024px) {
+	.page.page-dashboard .ws-root .admin-tenancy-panel__field,
+	.admin-tenancy-panel__field {
+		flex: 1 1 calc(50% - 0.5rem);
+		max-width: none;
+	}
+}
+
+@media (max-width: 720px) {
+	.page.page-dashboard .ws-root .admin-tenancy-panel,
+	.admin-tenancy-panel {
+		padding: 0.85rem 0.75rem;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-panel__field,
+	.admin-tenancy-panel__field {
+		flex-basis: 100%;
+		max-width: none;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-panel__status,
+	.admin-tenancy-panel__status {
+		width: 100%;
+		flex: 1 1 100%;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-panel__status-pills,
+	.admin-tenancy-panel__status-pills {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		width: 100%;
+		overflow: hidden;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill {
+		flex: none;
+		width: 100%;
+		min-width: 0;
+		padding: 0.55rem 0.45rem !important;
+		border-right: 1px solid #e2e8f0 !important;
+		border-bottom: 1px solid #e2e8f0 !important;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill:nth-child(2n) {
+		border-right: none !important;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill:nth-child(n + 3) {
+		border-bottom: none !important;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill:last-child {
+		border-right: none !important;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-table .ws-status-table-wrap,
+	.admin-tenancy-table .ws-status-table-wrap {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-table .ws-status-table,
+	.admin-tenancy-table .ws-status-table {
+		min-width: 860px;
+	}
+
+	.page.page-dashboard .ws-root .admin-tenancy-table .ws-status-table th,
+	.page.page-dashboard .ws-root .admin-tenancy-table .ws-status-table td,
+	.admin-tenancy-table .ws-status-table th,
+	.admin-tenancy-table .ws-status-table td {
+		white-space: nowrap;
+	}
+}
+
+.page.page-dashboard .ws-root .admin-tenancy-table .ws-status-th-actions,
+.page.page-dashboard .ws-root .admin-tenancy-table .ws-status-actions,
+.admin-tenancy-table .ws-status-th-actions,
+.admin-tenancy-table .ws-status-actions {
+	width: 1%;
+	min-width: 6.5rem;
+	text-align: right;
+	vertical-align: middle;
+}
