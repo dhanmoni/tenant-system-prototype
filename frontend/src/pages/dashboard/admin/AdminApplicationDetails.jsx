@@ -323,6 +323,7 @@ const AdminApplicationDetails = () => {
 	const [saveError, setSaveError] = useState('')
 	const [valuers, setValuers] = useState([])
 	const [selectedValuerId, setSelectedValuerId] = useState('')
+	const [valuerLoadError, setValuerLoadError] = useState('')
 	const [valuerReport, setValuerReport] = useState('')
 	const [workflowModal, setWorkflowModal] = useState(null)
 	const [workflowMessage, setWorkflowMessage] = useState('')
@@ -503,6 +504,7 @@ const AdminApplicationDetails = () => {
 			const response = await api.get(`/api/admin/applications/${applicationNo}`)
 			const app = response.data.application
 			setApplication(app)
+			setSelectedValuerId(app?.assigned_valuer_id ? String(app.assigned_valuer_id) : '')
 			// Initialize superadmin controls to a valid transition for this form type
 			const transitions = getValidTransitions(app.form_type)
 			if (transitions) {
@@ -531,11 +533,19 @@ const AdminApplicationDetails = () => {
 	const fetchValuers = async () => {
 		try {
 			const { data } = await api.get('/api/users?role=valuer')
-			// The backend currently might just return assistants and valuers together for RA, we can filter it locally
-			const valuerUsers = (data.users || []).filter(u => u.role === ROLES.VALUER)
+			// Support both { users: [...] } and resource-wrapped { users: { data: [...] } } shapes.
+			const rawUsers = Array.isArray(data?.users)
+				? data.users
+				: Array.isArray(data?.users?.data)
+					? data.users.data
+					: []
+			const valuerUsers = rawUsers.filter((u) => u?.role === ROLES.VALUER)
 			setValuers(valuerUsers)
+			setValuerLoadError('')
 		} catch (err) {
 			console.error('Error fetching valuers:', err)
+			setValuers([])
+			setValuerLoadError('Could not load valuer list. Please refresh and try again.')
 		}
 	}
 
@@ -553,6 +563,7 @@ const AdminApplicationDetails = () => {
 				assigned_valuer_id: selectedValuerId
 			})
 			alert('Valuer assigned successfully')
+			setValuerLoadError('')
 			fetchDetails()
 		} catch (err) {
 			console.error(err)
@@ -1058,12 +1069,23 @@ const AdminApplicationDetails = () => {
 
 	const renderValuerSections = () => {
 		if (application?.form_type !== APPLICATION_TYPES.VALUER_APPOINTMENT) return null
+		const canManageValuerAssignment = [
+			STATUS.IN_REVIEW,
+			STATUS.VALUER_ASSIGNED,
+			STATUS.VALUER_REPORT_SUBMITTED,
+		].includes(application.status)
 
 		return (
 			<>
-				{user?.role === ROLES.RENT_AUTHORITY && (application.status === STATUS.IN_REVIEW || application.status === STATUS.VALUER_REPORT_SUBMITTED || application.status === STATUS.VALUER_ASSIGNED) && (
+				{user?.role === ROLES.RENT_AUTHORITY && (
 					<section className="admin-app-details__card admin-app-details__valuer-card" style={{ border: '1px solid var(--clr-primary-200)', backgroundColor: 'var(--clr-primary-50)' }}>
 						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-primary-700)' }}>Valuer Assignment</h3>
+						{!canManageValuerAssignment ? (
+							<p style={{ marginBottom: '0.9rem', color: 'var(--clr-gray-700)' }}>
+								Valuer can be assigned after this Form I-B reaches <strong>In Review</strong>.
+								Current status: <strong>{adminStatusLabel(application.status)}</strong>.
+							</p>
+						) : null}
 						
 						{application.assigned_valuer_id ? (
 							<div className="admin-app-details__grid" style={{ marginBottom: '1rem' }}>
@@ -1081,20 +1103,27 @@ const AdminApplicationDetails = () => {
 									className="ws-input"
 									value={selectedValuerId}
 									onChange={(e) => setSelectedValuerId(e.target.value)}
-									disabled={actionLoading}
+									disabled={actionLoading || valuers.length === 0 || !canManageValuerAssignment}
 								>
-									<option value="">-- Select a Valuer --</option>
+									<option value="">
+										{valuers.length === 0 ? '-- No valuer available --' : '-- Select a Valuer --'}
+									</option>
 									{valuers.map(v => (
 										<option key={v.id} value={v.id}>{v.name} ({v.email})</option>
 									))}
 								</select>
+								{valuerLoadError ? (
+									<p style={{ marginTop: '0.45rem', color: 'var(--clr-danger-700)', fontSize: '0.78rem' }}>
+										{valuerLoadError}
+									</p>
+								) : null}
 							</div>
 							<div style={{ display: 'flex', gap: '0.5rem' }}>
 								<button
 									type="button"
 									className="ws-btn ws-btn--primary"
 									onClick={handleAssignValuer}
-									disabled={actionLoading || !selectedValuerId}
+									disabled={actionLoading || !selectedValuerId || !canManageValuerAssignment}
 								>
 									{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
 								</button>
@@ -1103,7 +1132,7 @@ const AdminApplicationDetails = () => {
 										type="button"
 										className="ws-btn ws-btn--danger"
 										onClick={handleRemoveValuer}
-										disabled={actionLoading}
+										disabled={actionLoading || !canManageValuerAssignment}
 									>
 										Remove Valuer
 									</button>
