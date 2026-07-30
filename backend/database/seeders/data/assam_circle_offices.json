@@ -1,0 +1,349 @@
+[
+  {
+    "district": "Bajali",
+    "circles": [
+      "Bajali (Pt)",
+      "Sarupeta (Pt)"
+    ]
+  },
+  {
+    "district": "Baksa",
+    "circles": [
+      "Baganpara (Pt)",
+      "Barama Pt",
+      "Barnagar (Pt)",
+      "Baska",
+      "Jalah (Pt)",
+      "Sarupeta (Pt)",
+      "Tihu (Pt)"
+    ]
+  },
+  {
+    "district": "Barpeta",
+    "circles": [
+      "Baghbor",
+      "Barnagar (Pt)",
+      "Barpeta",
+      "Chenga",
+      "Kalgachia",
+      "Sarthebari"
+    ]
+  },
+  {
+    "district": "Biswanath",
+    "circles": [
+      "Biswanath",
+      "Gohpur",
+      "Helem",
+      "Na-Duar"
+    ]
+  },
+  {
+    "district": "Bongaigaon",
+    "circles": [
+      "Boitamari",
+      "Bongaigaon (Pt)",
+      "Katlichara",
+      "Sidli (Pt)"
+    ]
+  },
+  {
+    "district": "Cachar",
+    "circles": [
+      "Katigora",
+      "Maibong",
+      "Silchar",
+      "Sonai",
+      "Udarbond"
+    ]
+  },
+  {
+    "district": "Charaideo",
+    "circles": [
+      "Mahmora",
+      "Sonari"
+    ]
+  },
+  {
+    "district": "Chirang",
+    "circles": [
+      "Bengtol",
+      "Bijni (Pt)",
+      "Sidli (Pt)",
+      "Srijangram"
+    ]
+  },
+  {
+    "district": "Darrang",
+    "circles": [
+      "Dalgaon (Pt)",
+      "Kalaigaon",
+      "Mangaldoi (Pt)",
+      "Pathorighat (Pt)",
+      "Sipajhar"
+    ]
+  },
+  {
+    "district": "Dhemaji",
+    "circles": [
+      "Dhakuakhana (Pt-I)",
+      "Dhemaji",
+      "Gogamukh",
+      "Jonai",
+      "Sissibargaon"
+    ]
+  },
+  {
+    "district": "Dhubri",
+    "circles": [
+      "Agamoni",
+      "Bagribari (Pt)",
+      "Bilasipara Pt",
+      "Chapar Pt",
+      "Dhubri",
+      "Golakganj Pt",
+      "Gossaigaon (Pt)"
+    ]
+  },
+  {
+    "district": "Dibrugarh",
+    "circles": [
+      "Chabua",
+      "Dibrugarh East",
+      "Dibrugarh West",
+      "Moran",
+      "Naharkatiya",
+      "Tengakhat",
+      "Tingkhong"
+    ]
+  },
+  {
+    "district": "Dima Hasao",
+    "circles": [
+      "Haflong",
+      "Mahur",
+      "Silonijan",
+      "Umrangso"
+    ]
+  },
+  {
+    "district": "Goalpara",
+    "circles": [
+      "Balijana",
+      "Dudhnai",
+      "Lakhipur",
+      "Matia",
+      "Rangjuli"
+    ]
+  },
+  {
+    "district": "Golaghat",
+    "circles": [
+      "Bokakhat",
+      "Dergaon",
+      "Golaghat",
+      "Khumtai",
+      "Morangi",
+      "Sarupathar"
+    ]
+  },
+  {
+    "district": "Hailakandi",
+    "circles": [
+      "Algapur",
+      "Hailakandi",
+      "Lala",
+      "Ramkrishna Nagar"
+    ]
+  },
+  {
+    "district": "Hojai",
+    "circles": [
+      "Doboka",
+      "Hojai",
+      "Lanka"
+    ]
+  },
+  {
+    "district": "Jorhat",
+    "circles": [
+      "Jorhat East",
+      "Jorhat West",
+      "Mariani",
+      "Teok",
+      "Titabor"
+    ]
+  },
+  {
+    "district": "Kamrup Metropolitan",
+    "circles": [
+      "Azara",
+      "Chandrapur",
+      "Dispur",
+      "Guwahati",
+      "Sonapur"
+    ]
+  },
+  {
+    "district": "Kamrup Rural",
+    "circles": [
+      "Azara",
+      "Boko",
+      "Chamaria",
+      "Chhaygaon",
+      "Goreswar (Pt)",
+      "Goroimari",
+      "Hajo",
+      "Kamalpur",
+      "Koya",
+      "Nagarbera",
+      "North Guwahati (Pt)",
+      "PALASHBARI CIRCLE",
+      "Rangia Pt"
+    ]
+  },
+  {
+    "district": "Karbi Anglong",
+    "circles": [
+      "Diphu",
+      "Donka",
+      "Phuloni"
+    ]
+  },
+  {
+    "district": "Karimganj",
+    "circles": [
+      "Badarpur",
+      "Karimganj",
+      "Lakhipur",
+      "Nilambazar",
+      "Patharkandi"
+    ]
+  },
+  {
+    "district": "Kokrajhar",
+    "circles": [
+      "Bagribari (Pt)",
+      "Bhowraguri",
+      "Chapar Pt",
+      "Dhubri",
+      "Dotoma",
+      "Golakganj Pt",
+      "Gossaigaon (Pt)",
+      "Kokrajhar (Pt)"
+    ]
+  },
+  {
+    "district": "Lakhimpur",
+    "circles": [
+      "Bihpuria",
+      "Dhakuakhana (Pt-I)",
+      "Kadam",
+      "Naobaicha",
+      "Narayanpur",
+      "North Lakhimpur",
+      "Subansiri (Pt-I)"
+    ]
+  },
+  {
+    "district": "Majuli",
+    "circles": [
+      "Majuli"
+    ]
+  },
+  {
+    "district": "Morigaon",
+    "circles": [
+      "Bhuragaon",
+      "Laharighat",
+      "Marigaon",
+      "Mayong",
+      "Mikirbheta"
+    ]
+  },
+  {
+    "district": "Nagaon",
+    "circles": [
+      "Dhing",
+      "Kaliabor",
+      "Kampur",
+      "Nagaon",
+      "Raha",
+      "Rupahi",
+      "Samaguri"
+    ]
+  },
+  {
+    "district": "Nalbari",
+    "circles": [
+      "Baganpara (Pt)",
+      "Banekuchi",
+      "Barama Pt",
+      "Barbhag",
+      "Barkhetri",
+      "Ghograpar (Pt)",
+      "Nalbari",
+      "Pachim Nalbari",
+      "Tihu (Pt)"
+    ]
+  },
+  {
+    "district": "Sivasagar",
+    "circles": [
+      "Amguri",
+      "Dimow",
+      "Nazira",
+      "Sibsagar"
+    ]
+  },
+  {
+    "district": "Sonitpur",
+    "circles": [
+      "Chariduar",
+      "Dhekiajuli (Pt)",
+      "Tezpur",
+      "Thelamara"
+    ]
+  },
+  {
+    "district": "South Salmara-Mankachar",
+    "circles": [
+      "Mankachar",
+      "South Salmara"
+    ]
+  },
+  {
+    "district": "Tamulpur",
+    "circles": [
+      "Goreswar (Pt)",
+      "Rangia Pt",
+      "Tamulpur"
+    ]
+  },
+  {
+    "district": "Tinsukia",
+    "circles": [
+      "Doom Dooma",
+      "Margherita",
+      "Sadiya",
+      "Tinsukia"
+    ]
+  },
+  {
+    "district": "Udalguri",
+    "circles": [
+      "Dalgaon (Pt)",
+      "Harisinga",
+      "Kalaigaon",
+      "Khoirabari (Pt)",
+      "Mazbat",
+      "Udalguri"
+    ]
+  },
+  {
+    "district": "West Karbi Anglong",
+    "circles": [
+      "Sarupathar"
+    ]
+  }
+]

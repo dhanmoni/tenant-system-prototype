@@ -1439,7 +1439,9 @@ html.landing-nav-menu-open .daily-update-ticker {
 }
 
 .landing-nav-panel a.landing-nav-drawer-cta--outline:hover,
-.landing-nav-panel a.landing-nav-drawer-cta--outline:focus-visible {
+.landing-nav-panel a.landing-nav-drawer-cta--outline:focus-visible,
+.landing-nav-panel button.landing-nav-drawer-cta--outline:hover,
+.landing-nav-panel button.landing-nav-drawer-cta--outline:focus-visible {
 	background: color-mix(in srgb, var(--landing-accent) 8%, #fff) !important;
 	color: var(--landing-accent) !important;
 	border-color: var(--landing-accent) !important;
@@ -1742,7 +1744,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 	text-decoration: none !important;
 }
 
-.landing-nav-overlay button {
+.landing-nav-overlay button:not(.landing-nav-cta) {
 	border: none !important;
 	background: transparent !important;
 	text-decoration: none !important;
@@ -1750,22 +1752,26 @@ html.landing-nav-menu-open .daily-update-ticker {
 }
 
 .landing-nav-overlay a:hover,
-.landing-nav-overlay button:hover {
+.landing-nav-overlay button:not(.landing-nav-cta):hover {
 	text-decoration: none !important;
 }
 
-.landing-nav-overlay a.landing-nav-cta--primary {
+.landing-nav-overlay a.landing-nav-cta--primary,
+.landing-nav-overlay button.landing-nav-cta--primary {
 	color: #fff !important;
 	background-color: var(--landing-accent) !important;
 	border: 1px solid var(--landing-accent) !important;
 	box-shadow: none !important;
 	outline: none;
+	cursor: pointer;
+	font: inherit;
 	transition:
 		transform 0.2s ease,
 		box-shadow 0.2s ease;
 }
 
-.landing-nav-overlay a.landing-nav-cta--primary:hover {
+.landing-nav-overlay a.landing-nav-cta--primary:hover,
+.landing-nav-overlay button.landing-nav-cta--primary:hover {
 	background-color: var(--landing-accent) !important;
 	border-color: var(--landing-accent) !important;
 	color: #fff !important;
@@ -1773,18 +1779,22 @@ html.landing-nav-menu-open .daily-update-ticker {
 	box-shadow: 0 8px 18px color-mix(in srgb, var(--landing-accent) 35%, transparent) !important;
 }
 
-.landing-nav-overlay a.landing-nav-cta--outline {
+.landing-nav-overlay a.landing-nav-cta--outline,
+.landing-nav-overlay button.landing-nav-cta--outline {
 	background-color: transparent !important;
 	color: var(--landing-accent) !important;
 	border: 2px solid var(--landing-accent) !important;
 	box-shadow: none !important;
 	outline: none;
+	cursor: pointer;
+	font: inherit;
 	transition:
 		transform 0.2s ease,
 		box-shadow 0.2s ease;
 }
 
-.landing-nav-overlay a.landing-nav-cta--outline:hover {
+.landing-nav-overlay a.landing-nav-cta--outline:hover,
+.landing-nav-overlay button.landing-nav-cta--outline:hover {
 	background-color: transparent !important;
 	color: var(--landing-accent) !important;
 	border-color: var(--landing-accent) !important;
@@ -1793,16 +1803,20 @@ html.landing-nav-menu-open .daily-update-ticker {
 }
 
 .landing-nav-overlay a.landing-nav-cta:focus,
-.landing-nav-overlay a.landing-nav-cta:active {
+.landing-nav-overlay a.landing-nav-cta:active,
+.landing-nav-overlay button.landing-nav-cta:focus,
+.landing-nav-overlay button.landing-nav-cta:active {
 	outline: none;
 }
 
-.landing-nav-overlay a.landing-nav-cta:active {
+.landing-nav-overlay a.landing-nav-cta:active,
+.landing-nav-overlay button.landing-nav-cta:active {
 	transform: translateY(0);
 	box-shadow: none !important;
 }
 
-.landing-nav-overlay a.landing-nav-cta:focus-visible {
+.landing-nav-overlay a.landing-nav-cta:focus-visible,
+.landing-nav-overlay button.landing-nav-cta:focus-visible {
 	outline: 2px solid var(--landing-accent);
 	outline-offset: 2px;
 }
@@ -13559,31 +13573,37 @@ main.main-fluid {
 .workflow-confirm-field {
 	display: flex;
 	flex-direction: column;
-	gap: 0.4rem;
+	gap: 0.45rem;
 }
 
 .workflow-confirm-field__label {
-	font-size: 0.8125rem;
+	font-size: 0.75rem;
 	font-weight: 700;
+	letter-spacing: 0.02em;
 	color: #334155;
 }
 
 .workflow-confirm-field__input {
 	width: 100%;
-	padding: 0.65rem 0.75rem;
-	border: 1px solid #cfd8dc;
-	border-radius: 0.5rem;
+	padding: 0.85rem 1rem;
+	border: 1px solid #d5deea;
+	border-radius: 12px;
 	font-family: inherit;
 	font-size: 0.9375rem;
-	line-height: 1.45;
+	line-height: 1.5;
 	resize: vertical;
-	background: var(--form-field-bg, #f1f3f5);
+	background: #fff;
+	box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .workflow-confirm-field__input:focus {
-	outline: 2px solid color-mix(in srgb, var(--landing-accent) 45%, transparent);
-	outline-offset: 1px;
-	border-color: var(--landing-accent);
+	outline: none;
+	border-color: #93c5fd;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.workflow-confirm-field__input::placeholder {
+	color: #94a3b8;
 }
 
 .workflow-confirm-modal__actions {
@@ -17515,16 +17535,6 @@ main.main-fluid {
 	font-size: 2rem;
 }
 
-.full-page-loader {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	min-height: 100vh;
-	padding: 2rem 1.5rem;
-	text-align: center;
-}
-
 /* Portal boot / session loader — terracotta theme */
 .portal-loader {
 	display: flex;
@@ -17690,6 +17700,16 @@ main.main-fluid {
 	inset: 0;
 	z-index: 10000;
 	min-height: 100dvh;
+}
+
+.full-page-loader {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	padding: 2rem 1.5rem;
+	text-align: center;
 }
 
 @keyframes portal-orbit-spin {

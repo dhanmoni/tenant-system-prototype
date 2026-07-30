@@ -1,5 +1,6 @@
 import './App.css'
 import './styles/service-forms.css'
+import './styles/a11y-dark-mode.css'
 import './workspace/styles/workspace.css'
 import { useEffect, useState } from 'react'
 import bannerImage from './assets/img/banner.png'
@@ -42,6 +43,7 @@ import PublicDashboard from './pages/PublicDashboard'
 import Sitemap from './pages/Sitemap'
 import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
+import { AuthSessionProvider } from './context/AuthSessionContext'
 
 /** Invite links: logged-in users → join form; others → new login (no legacy carousel flash). */
 function JoinEntryRedirect({ user }) {
@@ -158,7 +160,8 @@ function App() {
 	const isLandingHome =
 		!user &&
 		(location.pathname === '/' || location.pathname === '/login' || isJoinEntry)
-	const isPublicMarketingPage = !user && isPublicMarketingPath(location.pathname)
+	/* Keep landing chrome on marketing pages even after login (no legacy welcome strip). */
+	const isPublicMarketingPage = isPublicMarketingPath(location.pathname)
 	const usesLandingChrome = isLandingHome || isPublicMarketingPage
 	const mainContentTargetId = getMainContentTargetId(location.pathname)
 	/* Show homepage immediately on reload — session check runs in background */
@@ -284,8 +287,9 @@ function App() {
 	}
 
 	return (
+		<AuthSessionProvider user={user} onLogout={handleLogout}>
 		<div
-			className={`page${!user && !isDashboardRoute ? ' page-landing' : ''}${usesLandingChrome ? ' page-landing-home page-public-marketing' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
+			className={`page${usesLandingChrome || (!user && !isDashboardRoute) ? ' page-landing' : ''}${usesLandingChrome ? ' page-landing-home page-public-marketing' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
 		>
 			<a
 				className="skip-link"
@@ -553,6 +557,7 @@ function App() {
 			)} */}
 
 		</div>
+		</AuthSessionProvider>
 	)
 }
 

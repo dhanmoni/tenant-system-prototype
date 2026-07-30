@@ -6,6 +6,7 @@ import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmM
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
+import { getRoleLabel } from '../../../constants/roleLabels'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
 import { formatDate, formatDateTime } from '../../../utils/formatters'
 import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress'
@@ -776,13 +777,12 @@ const AdminApplicationDetails = () => {
 		)
 	}, [application?.form_type])
 
-	const { workflowFields, detailFields } = useMemo(() => {
+	const { detailFields } = useMemo(() => {
 		if (!application) {
-			return { workflowFields: [], detailFields: [] }
+			return { detailFields: [] }
 		}
 
 		const entries = Object.entries(application).filter(([key]) => !EXCLUDED_FIELDS.has(key))
-		const workflow = []
 		const details = []
 
 		for (const [key, value] of entries) {
@@ -793,7 +793,6 @@ const AdminApplicationDetails = () => {
 			}
 
 			if (WORKFLOW_FIELDS.has(key)) {
-				if (hasDisplayValue(value)) workflow.push([key, value])
 				continue
 			}
 
@@ -801,7 +800,6 @@ const AdminApplicationDetails = () => {
 		}
 
 		return {
-			workflowFields: workflow,
 			detailFields: details,
 		}
 	}, [application])
@@ -1067,6 +1065,129 @@ const AdminApplicationDetails = () => {
 		</div>
 	)
 
+	const renderReviewComment = ({
+		title,
+		authorName,
+		roleLabel,
+		roleTone = 'default',
+		at,
+		dateTime,
+		text,
+	}) => {
+		if (!hasDisplayValue(text)) return null
+		const name = authorName || roleLabel || 'Reviewer'
+		const initial = String(name).trim().charAt(0).toUpperCase() || 'R'
+
+		return (
+			<div className="admin-app-details__review-thread">
+				{title ? <h4 className="admin-app-details__review-thread-title">{title}</h4> : null}
+				<article
+					className={`admin-app-details__review-comment admin-app-details__review-comment--${roleTone}`}
+				>
+					<div className="admin-app-details__review-comment-avatar" aria-hidden>
+						{initial}
+					</div>
+					<div className="admin-app-details__review-comment-main">
+						<header className="admin-app-details__review-comment-meta">
+							<span className="admin-app-details__review-comment-author">{name}</span>
+							{roleLabel ? (
+								<span className="admin-app-details__review-comment-role">{roleLabel}</span>
+							) : null}
+							{at ? (
+								<time
+									className="admin-app-details__review-comment-time"
+									dateTime={dateTime || undefined}
+								>
+									{at}
+								</time>
+							) : null}
+						</header>
+						<div className="admin-app-details__review-comment-bubble">
+							<p>{text}</p>
+						</div>
+					</div>
+				</article>
+			</div>
+		)
+	}
+
+	const renderWorkflowRecord = () => {
+		if (!application) return null
+
+		const forwardComment = renderReviewComment({
+			title: 'Assistant review',
+			authorName: application.forwarded_by?.name,
+			roleLabel: application.forwarded_by?.role
+				? getRoleLabel(application.forwarded_by.role)
+				: 'Assistant',
+			roleTone: 'assistant',
+			at: application.forwarded_at
+				? formatDateTime(application.forwarded_at) ||
+					new Date(application.forwarded_at).toLocaleString()
+				: null,
+			dateTime: application.forwarded_at,
+			text: application.forward_remarks || (application.forwarded_at ? 'Forwarded for review.' : null),
+		})
+
+		const approvalComment = renderReviewComment({
+			title: 'Approval note',
+			authorName: application.approved_by?.name,
+			roleLabel: 'Approver',
+			roleTone: 'approve',
+			at: application.approved_at
+				? formatDateTime(application.approved_at) ||
+					new Date(application.approved_at).toLocaleString()
+				: null,
+			dateTime: application.approved_at,
+			text: application.approval_message,
+		})
+
+		const rejectionComment = renderReviewComment({
+			title: 'Rejection note',
+			authorName: application.rejected_by?.name,
+			roleLabel: 'Reviewer',
+			roleTone: 'reject',
+			at: application.rejected_at
+				? formatDateTime(application.rejected_at) ||
+					new Date(application.rejected_at).toLocaleString()
+				: null,
+			dateTime: application.rejected_at,
+			text: application.rejection_message,
+		})
+
+		const comments = [forwardComment, approvalComment, rejectionComment].filter(Boolean)
+		if (comments.length === 0) return null
+
+		return (
+			<section className="admin-app-details__card admin-app-details__workflow-card no-print">
+				<h2 className="admin-app-details__section-title">Workflow record</h2>
+				<div className="admin-app-details__workflow-body">{comments}</div>
+			</section>
+		)
+	}
+
+	const renderValuerReportComment = (reportText, { title = "Valuer's Report" } = {}) => {
+		const valuerName =
+			application.assigned_valuer?.name ||
+			(application.assigned_valuer_id ? `Valuer #${application.assigned_valuer_id}` : 'Valuer')
+		const submittedAt = application.valuer_report_submitted_at
+			? new Date(application.valuer_report_submitted_at).toLocaleString()
+			: application.valuer_assigned_at
+				? new Date(application.valuer_assigned_at).toLocaleString()
+				: null
+
+		return renderReviewComment({
+			title,
+			authorName: valuerName,
+			roleLabel: 'Valuer',
+			roleTone: 'valuer',
+			at: submittedAt,
+			dateTime:
+				application.valuer_report_submitted_at || application.valuer_assigned_at || undefined,
+			text: reportText,
+		})
+	}
+
 	const renderValuerSections = () => {
 		if (application?.form_type !== APPLICATION_TYPES.VALUER_APPOINTMENT) return null
 		const canManageValuerAssignment = [
@@ -1078,110 +1199,150 @@ const AdminApplicationDetails = () => {
 		return (
 			<>
 				{user?.role === ROLES.RENT_AUTHORITY && (
-					<section className="admin-app-details__card admin-app-details__valuer-card" style={{ border: '1px solid var(--clr-primary-200)', backgroundColor: 'var(--clr-primary-50)' }}>
-						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-primary-700)' }}>Valuer Assignment</h3>
-						{!canManageValuerAssignment ? (
-							<p style={{ marginBottom: '0.9rem', color: 'var(--clr-gray-700)' }}>
-								Valuer can be assigned after this Form I-B reaches <strong>In Review</strong>.
-								Current status: <strong>{adminStatusLabel(application.status)}</strong>.
-							</p>
-						) : null}
-						
-						{application.assigned_valuer_id ? (
-							<div className="admin-app-details__grid" style={{ marginBottom: '1rem' }}>
-								{renderStat('Assigned Valuer', application.assigned_valuer?.name || `Valuer ID: ${application.assigned_valuer_id}`)}
-								{renderStat('Assigned Date', new Date(application.valuer_assigned_at).toLocaleString())}
-							</div>
-						) : (
-							<p style={{ marginBottom: '1rem', color: 'var(--clr-gray-600)' }}>No valuer assigned yet.</p>
-						)}
+					<section className="admin-app-details__card admin-app-details__valuer-card admin-app-details__valuer-card--assign">
+						<h3 className="admin-app-details__section-title">Valuer Assignment</h3>
+						<div className="admin-app-details__valuer-body">
+							{!canManageValuerAssignment ? (
+								<p className="admin-app-details__valuer-note">
+									Valuer can be assigned after this Form I-B reaches <strong>In Review</strong>.
+									Current status: <strong>{adminStatusLabel(application.status)}</strong>.
+								</p>
+							) : null}
 
-						<div className="admin-app-details__grid" style={{ alignItems: 'flex-end', marginBottom: '1rem' }}>
-							<div className="admin-app-details__field">
-								<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Assign / Reassign Valuer</label>
-								<select
-									className="ws-input"
-									value={selectedValuerId}
-									onChange={(e) => setSelectedValuerId(e.target.value)}
-									disabled={actionLoading || valuers.length === 0 || !canManageValuerAssignment}
+							{application.assigned_valuer_id ? (
+								<div className="admin-app-details__valuer-stats">
+									{renderStat(
+										'Assigned Valuer',
+										application.assigned_valuer?.name ||
+											`Valuer ID: ${application.assigned_valuer_id}`
+									)}
+									{renderStat(
+										'Assigned Date',
+										application.valuer_assigned_at
+											? new Date(application.valuer_assigned_at).toLocaleString()
+											: '—'
+									)}
+								</div>
+							) : (
+								<p className="admin-app-details__valuer-note admin-app-details__valuer-note--muted">
+									No valuer assigned yet.
+								</p>
+							)}
+
+							<div className="admin-app-details__valuer-assign">
+								<label
+									className="admin-app-details__valuer-label"
+									htmlFor="admin-valuer-select"
 								>
-									<option value="">
-										{valuers.length === 0 ? '-- No valuer available --' : '-- Select a Valuer --'}
-									</option>
-									{valuers.map(v => (
-										<option key={v.id} value={v.id}>{v.name} ({v.email})</option>
-									))}
-								</select>
+									Assign / Reassign Valuer
+								</label>
+								<div className="admin-app-details__valuer-assign-row">
+									<select
+										id="admin-valuer-select"
+										className="ws-input admin-app-details__valuer-select"
+										value={selectedValuerId}
+										onChange={(e) => setSelectedValuerId(e.target.value)}
+										disabled={
+											actionLoading || valuers.length === 0 || !canManageValuerAssignment
+										}
+									>
+										<option value="">
+											{valuers.length === 0
+												? '-- No valuer available --'
+												: '-- Select a Valuer --'}
+										</option>
+										{valuers.map((v) => (
+											<option key={v.id} value={v.id}>
+												{v.name} ({v.email})
+											</option>
+										))}
+									</select>
+									<div className="admin-app-details__valuer-assign-actions">
+										<button
+											type="button"
+											className="ws-btn ws-btn--primary"
+											onClick={handleAssignValuer}
+											disabled={
+												actionLoading || !selectedValuerId || !canManageValuerAssignment
+											}
+										>
+											{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
+										</button>
+										{application.assigned_valuer_id ? (
+											<button
+												type="button"
+												className="ws-btn ws-btn--danger"
+												onClick={handleRemoveValuer}
+												disabled={actionLoading || !canManageValuerAssignment}
+											>
+												Remove Valuer
+											</button>
+										) : null}
+									</div>
+								</div>
 								{valuerLoadError ? (
-									<p style={{ marginTop: '0.45rem', color: 'var(--clr-danger-700)', fontSize: '0.78rem' }}>
+									<p className="admin-app-details__valuer-error" role="alert">
 										{valuerLoadError}
 									</p>
 								) : null}
 							</div>
-							<div style={{ display: 'flex', gap: '0.5rem' }}>
-								<button
-									type="button"
-									className="ws-btn ws-btn--primary"
-									onClick={handleAssignValuer}
-									disabled={actionLoading || !selectedValuerId || !canManageValuerAssignment}
-								>
-									{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
-								</button>
-								{application.assigned_valuer_id && (
-									<button
-										type="button"
-										className="ws-btn ws-btn--danger"
-										onClick={handleRemoveValuer}
-										disabled={actionLoading || !canManageValuerAssignment}
-									>
-										Remove Valuer
-									</button>
-								)}
-							</div>
-						</div>
 
-						{application.valuer_report && (
-							<div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--clr-primary-200)' }}>
-								<h4 style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--clr-primary-700)' }}>Valuer's Report</h4>
-								<div className="ws-card" style={{ backgroundColor: '#fff', padding: '1rem' }}>
-									<p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{application.valuer_report}</p>
-								</div>
-							</div>
-						)}
+							{application.valuer_report
+								? renderValuerReportComment(application.valuer_report)
+								: null}
+						</div>
 					</section>
 				)}
 
 				{user?.role === ROLES.VALUER && (
-					<section className="admin-app-details__card admin-app-details__valuer-card" style={{ border: '1px solid var(--clr-info-200)', backgroundColor: 'var(--clr-info-50)' }}>
-						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-info-700)' }}>Submit Valuer Report</h3>
-						{application.status === STATUS.VALUER_REPORT_SUBMITTED ? (
-							<div className="ws-card" style={{ backgroundColor: '#fff', padding: '1rem' }}>
-								<p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Report Submitted:</p>
-								<p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{application.valuer_report}</p>
-							</div>
-						) : (
-							<>
-								<div className="admin-app-details__field" style={{ marginBottom: '1rem' }}>
-									<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Your Report</label>
-									<textarea
-										className="ws-input"
-										rows="5"
-										value={valuerReport}
-										onChange={(e) => setValuerReport(e.target.value)}
-										placeholder="Enter your detailed report here..."
-										disabled={actionLoading}
-									/>
+					<section className="admin-app-details__card admin-app-details__valuer-card admin-app-details__valuer-card--report">
+						<h3 className="admin-app-details__section-title">Submit Valuer Report</h3>
+						<div className="admin-app-details__valuer-body">
+							{application.status === STATUS.VALUER_REPORT_SUBMITTED ? (
+								renderValuerReportComment(application.valuer_report, {
+									title: 'Your submitted report',
+								})
+							) : (
+								<div className="admin-app-details__valuer-composer">
+									<div
+										className="admin-app-details__valuer-comment-avatar"
+										aria-hidden
+									>
+										{(user?.name || 'V').trim().charAt(0).toUpperCase()}
+									</div>
+									<div className="admin-app-details__valuer-composer-main">
+										<label
+											className="admin-app-details__valuer-label"
+											htmlFor="admin-valuer-report-input"
+										>
+											Add your report comment
+										</label>
+										<textarea
+											id="admin-valuer-report-input"
+											className="ws-input admin-app-details__valuer-textarea"
+											rows={5}
+											value={valuerReport}
+											onChange={(e) => setValuerReport(e.target.value)}
+											placeholder="Write your valuation findings and recommendation…"
+											disabled={actionLoading}
+										/>
+										<div className="admin-app-details__valuer-composer-actions">
+											<span className="admin-app-details__valuer-composer-hint">
+												This will be visible to the Rent Authority as a report comment.
+											</span>
+											<button
+												type="button"
+												className="ws-btn ws-btn--primary"
+												onClick={handleSubmitValuerReport}
+												disabled={actionLoading || !valuerReport.trim()}
+											>
+												Post report
+											</button>
+										</div>
+									</div>
 								</div>
-								<button
-									type="button"
-									className="ws-btn ws-btn--primary"
-									onClick={handleSubmitValuerReport}
-									disabled={actionLoading || !valuerReport.trim()}
-								>
-									Submit Report
-								</button>
-							</>
-						)}
+							)}
+						</div>
 					</section>
 				)}
 			</>
@@ -1674,19 +1835,7 @@ const AdminApplicationDetails = () => {
 						</div>
 					</div>
 
-					{workflowFields.length > 0 ? (
-						<section className="admin-tenancy-doc__workflow no-print">
-							<h2 className="admin-tenancy-doc__workflow-title">Workflow record</h2>
-							<dl className="admin-app-details__grid">
-								{workflowFields.map(([key, value]) => (
-									<div className="admin-app-details__field" key={key}>
-										<dt>{labelize(key)}</dt>
-										<dd>{renderValue(key, value)}</dd>
-									</div>
-								))}
-							</dl>
-						</section>
-					) : null}
+					{renderWorkflowRecord()}
 				</div>
 			) : !editing && isServiceViewOnly ? (
 				<div className="admin-tenancy-doc__preview">
@@ -1892,19 +2041,7 @@ const AdminApplicationDetails = () => {
 						</section>
 					) : null}
 
-					{workflowFields.length > 0 ? (
-						<section className="admin-tenancy-doc__workflow no-print">
-							<h2 className="admin-tenancy-doc__workflow-title">Workflow record</h2>
-							<dl className="admin-app-details__grid">
-								{workflowFields.map(([key, value]) => (
-									<div className="admin-app-details__field" key={key}>
-										<dt>{labelize(key)}</dt>
-										<dd>{renderValue(key, value)}</dd>
-									</div>
-								))}
-							</dl>
-						</section>
-					) : null}
+					{renderWorkflowRecord()}
 				</div>
 			) : !editing ? (
 				<>
@@ -1945,7 +2082,7 @@ const AdminApplicationDetails = () => {
 						</div>
 					</header>
 
-					{(application.user || isTenancy || workflowFields.length > 0) && !editing ? (
+					{(application.user || isTenancy) && !editing ? (
 						<div className="admin-app-details__meta-row">
 							{application.user ? (
 								<div className="admin-app-details__contact">
@@ -2002,11 +2139,10 @@ const AdminApplicationDetails = () => {
 									) : null}
 								</>
 							) : null}
-							{workflowFields.map(([key, value]) =>
-								renderStat(labelize(key), renderValue(key, value))
-							)}
 						</div>
 					) : null}
+
+					{renderWorkflowRecord()}
 
 					{detailSections.map((section) => {
 						if (section.fields.length === 0) return null
@@ -2201,7 +2337,7 @@ const AdminApplicationDetails = () => {
 				primaryDisabled={Boolean(actionLoading)}
 			>
 				<label className="workflow-confirm-field">
-					<span className="workflow-confirm-field__label">Remarks (optional)</span>
+					<span className="workflow-confirm-field__label">Review comment (optional)</span>
 					<textarea
 						className="workflow-confirm-field__input"
 						value={workflowMessage}
@@ -2222,7 +2358,7 @@ const AdminApplicationDetails = () => {
 				primaryDisabled={Boolean(actionLoading) || !workflowMessage.trim()}
 			>
 				<label className="workflow-confirm-field">
-					<span className="workflow-confirm-field__label">Approval message (required)</span>
+					<span className="workflow-confirm-field__label">Approval comment (required)</span>
 					<textarea
 						className="workflow-confirm-field__input"
 						value={workflowMessage}
@@ -2245,7 +2381,7 @@ const AdminApplicationDetails = () => {
 				primaryDisabled={Boolean(actionLoading) || !workflowMessage.trim()}
 			>
 				<label className="workflow-confirm-field">
-					<span className="workflow-confirm-field__label">Rejection reason (required)</span>
+					<span className="workflow-confirm-field__label">Rejection comment (required)</span>
 					<textarea
 						className="workflow-confirm-field__input"
 						value={workflowMessage}

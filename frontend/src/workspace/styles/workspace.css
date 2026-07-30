@@ -1459,6 +1459,20 @@
 	transform: none;
 }
 
+.page.page-dashboard .ws-root button.ws-btn--danger {
+	background: #b91c1c;
+	color: #fff;
+	border-color: #b91c1c;
+}
+
+.page.page-dashboard .ws-root button.ws-btn--danger:hover:not(:disabled) {
+	background: #991b1b;
+	border-color: #991b1b;
+	color: #fff;
+	box-shadow: 0 4px 14px rgba(185, 28, 28, 0.28);
+	transform: none;
+}
+
 .page.page-dashboard .ws-root button.ws-btn:focus-visible {
 	outline: none;
 	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.35);
@@ -7057,6 +7071,21 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.ws-assam-map-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.8125rem;
+	color: var(--ws-text);
+	cursor: pointer;
+	user-select: none;
+}
+
+.ws-assam-map-toggle input {
+	accent-color: #1d4ed8;
 }
 
 .ws-assam-map-layout {
@@ -7087,7 +7116,7 @@
 }
 
 .ws-assam-map-panel--fill .ws-assam-map-frame {
-	height: clamp(520px, 58vh, 680px);
+	height: clamp(580px, 68vh, 820px);
 	border-radius: 14px;
 }
 
@@ -7221,6 +7250,72 @@
 	display: none !important;
 }
 
+/* Google Maps–style place names on polygons (horizontal, centered) */
+.ws-assam-map-place-label {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	pointer-events: none !important;
+	width: 0 !important;
+	height: 0 !important;
+	margin: 0 !important;
+	overflow: visible !important;
+}
+
+.ws-assam-map-place-label span {
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: block;
+	transform: translate(-50%, -50%);
+	width: max-content;
+	max-width: none;
+	padding: 1px 3px;
+	font-family: system-ui, Segoe UI, sans-serif;
+	font-weight: 700;
+	font-size: 10px;
+	line-height: 1.2;
+	letter-spacing: 0.02em;
+	text-align: center;
+	color: #1e3a8a;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-shadow:
+		0 0 2px #fff,
+		0 0 3px #fff,
+		1px 0 1px #fff,
+		-1px 0 1px #fff,
+		0 1px 1px #fff,
+		0 -1px 1px #fff;
+}
+
+.ws-assam-map-place-label--district span {
+	font-size: 9.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	max-width: 5.75rem;
+	color: #1e3a8a;
+}
+
+.ws-assam-map-place-label--district-focus span {
+	font-size: 12px;
+	max-width: 11rem;
+	color: #0f172a;
+}
+
+.ws-assam-map-place-label--subdistrict span {
+	font-size: 9.5px;
+	font-weight: 600;
+	max-width: 6.5rem;
+	color: #9a3412;
+}
+
+.ws-assam-map .ws-assam-sub-focus {
+	stroke-linejoin: round;
+	filter: drop-shadow(0 0 3px rgba(154, 52, 18, 0.55));
+}
+
 .ws-assam-map-info {
 	padding: 16px;
 	border: 1px solid var(--ws-border);
@@ -7289,6 +7384,89 @@
 	font-size: 0.875rem;
 	font-weight: 800;
 	color: #1d4ed8;
+}
+
+.ws-assam-map-subs {
+	margin-top: 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-height: 0;
+}
+
+.ws-assam-map-subs-title {
+	margin: 0;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ws-muted);
+}
+
+.ws-assam-map-subs-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 11rem;
+	overflow: auto;
+	border: 1px solid var(--ws-border);
+	border-radius: 8px;
+	background: #fff;
+}
+
+.ws-assam-map-subs-list li + li {
+	border-top: 1px solid var(--ws-border);
+}
+
+.ws-assam-map-subs-list button {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+	padding: 7px 10px;
+	border: 0;
+	background: transparent;
+	text-align: left;
+	font: inherit;
+	font-size: 0.8125rem;
+	color: var(--ws-text);
+	cursor: pointer;
+}
+
+.ws-assam-map-subs-name {
+	min-width: 0;
+	flex: 1;
+}
+
+.ws-assam-map-subs-count {
+	flex-shrink: 0;
+	font-weight: 800;
+	font-variant-numeric: tabular-nums;
+	color: #9a3412;
+}
+
+.ws-assam-map-subs-list button:hover {
+	background: #fff7ed;
+}
+
+.ws-assam-map-subs-list button.is-active {
+	background: #ffedd5;
+	font-weight: 700;
+	color: #9a3412;
+}
+
+.ws-assam-map-subs-note {
+	margin: 0;
+	font-size: 0.6875rem;
+	line-height: 1.35;
+	color: var(--ws-muted);
+}
+
+.ws-assam-map-tooltip .ws-assam-tip-sub {
+	display: block;
+	opacity: 0.85;
+	font-size: 0.7rem;
 }
 
 .ws-assam-map-legend {

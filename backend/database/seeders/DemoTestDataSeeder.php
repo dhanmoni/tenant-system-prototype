@@ -44,7 +44,8 @@ class DemoTestDataSeeder extends Seeder
         $districtsToSeed = collect([$primaryDistrict])->merge($otherDistricts);
 
         foreach ($districtsToSeed as $district) {
-            $office = Office::where('district_id', $district->id)->first();
+            $offices = Office::where('district_id', $district->id)->orderBy('id')->get();
+            $office = $offices->first();
             $villageWard = VillageWard::where('district_id', $district->id)->first();
             $tenantUser = User::where('email', 'tenant@nic.in')->first();
             $landlordUser = User::where('email', 'landlord@nic.in')->first();
@@ -87,6 +88,43 @@ class DemoTestDataSeeder extends Seeder
                 'district_id' => $district->id,
             ]);
 
+            // Extra UIN apps spread across circle offices so the district map can show per-subdivision counts.
+            if ($offices->count() > 0) {
+                $extraCount = min(8, $offices->count());
+                for ($n = 0; $n < $extraCount; $n++) {
+                    $circleOffice = $offices[$n % $offices->count()];
+                    TenancyApplication::create([
+                        'application_no' => 'APP-DEMO-' . str_pad($district->id, 2, '0', STR_PAD_LEFT) . '-C' . str_pad((string) ($n + 2), 2, '0', STR_PAD_LEFT),
+                        'ref_code' => 'DEMOREF' . str_pad($district->id, 2, '0', STR_PAD_LEFT) . 'C' . str_pad((string) ($n + 2), 2, '0', STR_PAD_LEFT),
+                        'user_id' => $tenantUser->id,
+                        'initiator_role' => 'TENANT',
+                        'initiator_completed' => true,
+                        'second_party_completed' => true,
+                        'landlord_user_id' => $landlordUser?->id,
+                        'tenant_user_id' => $tenantUser->id,
+                        'registration_date' => now()->subDays(20 + $n),
+                        'office_id' => $circleOffice->id,
+                        'village_ward_id' => $villageWard?->id,
+                        'apply_type' => 'Joint',
+                        'status' => $n % 3 === 0 ? 'COMPLETED' : 'SUBMITTED',
+                        'application_type' => 'Tenancy Certificate',
+                        'landlord_name' => 'Circle Landlord ' . ($n + 1),
+                        'landlord_address' => 'Demo Address',
+                        'landlord_email' => 'landlord' . ($n + 1) . '@demo.com',
+                        'landlord_phone' => '92222222' . str_pad((string) ($n + 10), 2, '0', STR_PAD_LEFT),
+                        'tenant_name' => $tenantUser->name,
+                        'tenant_address' => 'Demo Tenant Address',
+                        'tenant_email' => $tenantUser->email,
+                        'tenant_phone' => $tenantUser->phone,
+                        'property_possession_date' => now()->subMonths(2),
+                        'property_rent_payable' => 10000 + ($n * 500),
+                        'property_premises_description' => 'Circle office demo premises ' . ($n + 1),
+                        'property_tenancy_duration' => '11 months',
+                        'uid' => 'ATRMS-' . str_pad($district->id, 2, '0', STR_PAD_LEFT) . str_pad((string) ($n + 2), 2, '0', STR_PAD_LEFT) . date('Y') . '-' . str_pad((string) ($n + 2), 4, '0', STR_PAD_LEFT),
+                        'district_id' => $district->id,
+                    ]);
+                }
+            }
             // 4. Create Service Applications in different stages (Distribution: 2 IN-REVIEW, 1 REJECTED, 2 SUBMITTED, 1 COMPLETED)
 
             // 5. Add specific distribution to each category (2 IN-REVIEW, 1 REJECTED, 2 SUBMITTED, 1 COMPLETED)

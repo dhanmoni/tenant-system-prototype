@@ -9,12 +9,14 @@ import PortalNavMark from './PortalNavMark'
 import tcpLogo from '../../assets/img/TCP logo.png'
 import nicLogo from '../../assets/img/NIC.png'
 import digitalIndiaLogo from '../../assets/img/digital-india.png'
+import { useAuthSession } from '../../context/AuthSessionContext'
 import { useLanguage } from '../../i18n'
 
 function LandingNav({ variant = 'overlay' }) {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const location = useLocation()
 	const { t } = useLanguage()
+	const { user, onLogout } = useAuthSession()
 	const isStatic = variant === 'static'
 
 	const shellLinkClass = (path, exact = true) => {
@@ -135,13 +137,37 @@ function LandingNav({ variant = 'overlay' }) {
 											{t('nav.contact')}
 										</Link>
 										<div className="landing-nav-drawer-ctas">
-											<AuthNavLink
-												mode="login"
-												onClick={closeMenu}
-												className="landing-nav-drawer-cta landing-nav-drawer-cta--primary"
-											>
-												{t('nav.loginRegister')}
-											</AuthNavLink>
+											{user ? (
+												<>
+													<Link
+														to="/dashboard"
+														onClick={closeMenu}
+														className="landing-nav-drawer-cta landing-nav-drawer-cta--primary"
+													>
+														{t('nav.dashboard')}
+													</Link>
+													{onLogout ? (
+														<button
+															type="button"
+															onClick={() => {
+																closeMenu()
+																onLogout()
+															}}
+															className="landing-nav-drawer-cta landing-nav-drawer-cta--outline"
+														>
+															{t('nav.logout')}
+														</button>
+													) : null}
+												</>
+											) : (
+												<AuthNavLink
+													mode="login"
+													onClick={closeMenu}
+													className="landing-nav-drawer-cta landing-nav-drawer-cta--primary"
+												>
+													{t('nav.loginRegister')}
+												</AuthNavLink>
+											)}
 										</div>
 										<div className="landing-nav-drawer-footer">
 											<img
@@ -261,12 +287,32 @@ function LandingNav({ variant = 'overlay' }) {
 								</Link>
 							</div>
 							<div className="landing-nav-cta-group">
-								<AuthNavLink
-									mode="login"
-									className="landing-nav-cta landing-nav-cta--primary"
-								>
-									{t('nav.loginRegister')}
-								</AuthNavLink>
+								{user ? (
+									<>
+										<Link
+											to="/dashboard"
+											className="landing-nav-cta landing-nav-cta--primary"
+										>
+											{t('nav.dashboard')}
+										</Link>
+										{onLogout ? (
+											<button
+												type="button"
+												onClick={onLogout}
+												className="landing-nav-cta landing-nav-cta--outline"
+											>
+												{t('nav.logout')}
+											</button>
+										) : null}
+									</>
+								) : (
+									<AuthNavLink
+										mode="login"
+										className="landing-nav-cta landing-nav-cta--primary"
+									>
+										{t('nav.loginRegister')}
+									</AuthNavLink>
+								)}
 							</div>
 						</div>
 					</div>

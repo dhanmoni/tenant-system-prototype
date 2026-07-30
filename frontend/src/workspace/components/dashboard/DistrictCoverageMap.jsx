@@ -1,7 +1,7 @@
 import AssamDistrictMap from './AssamDistrictMap'
 
 /**
- * District coverage — Assam outline map with district boundaries.
+ * District coverage — Assam outline map with district and sub-division boundaries.
  */
 function DistrictCoverageMap({
 	districts = [],
