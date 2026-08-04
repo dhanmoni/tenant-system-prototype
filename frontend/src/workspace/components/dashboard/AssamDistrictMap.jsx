@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { MapContainer, GeoJSON, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -20,64 +21,179 @@ function fillForVolume(total, max) {
 	return '#eef2f7'
 }
 
-function MapViewController({ geojson, zoomTargetName, viewMode, fillPadding, singleDistrict }) {
+function fitMapToView(map, geojson, { zoomTargetName, viewMode, fillPadding, singleDistrict, animate = false }) {
+	if (!geojson?.features?.length) return
+
+	const fitOptions = {
+		padding: fillPadding || [28, 28],
+		animate: Boolean(animate),
+		duration: 0.35,
+	}
+
+	if (singleDistrict) {
+		const layer = L.geoJSON(geojson)
+		const bounds = layer.getBounds()
+		if (bounds.isValid()) {
+			map.stop()
+			map.fitBounds(bounds, {
+				...fitOptions,
+				padding: fillPadding || [28, 28],
+				maxZoom: 11,
+			})
+		}
+		return
+	}
+
+	if (viewMode === 'state' || !zoomTargetName) {
+		const layer = L.geoJSON(geojson)
+		const bounds = layer.getBounds()
+		if (bounds.isValid()) {
+			map.stop()
+			map.fitBounds(bounds, {
+				...fitOptions,
+				padding: fillPadding || [4, 4],
+				maxZoom: 9.6,
+			})
+		}
+		return
+	}
+
+	const focus = String(zoomTargetName).toLowerCase()
+	const match = geojson.features.find((f) => {
+		const name = String(f.properties?.district || '').toLowerCase()
+		return (
+			name === focus ||
+			name.includes(focus) ||
+			focus.includes(name) ||
+			(focus.includes('kamrup rural') && name === 'kamrup') ||
+			(focus.includes('south salmara') && name.includes('salmara'))
+		)
+	})
+
+	if (match) {
+		const bounds = L.geoJSON(match).getBounds()
+		if (bounds.isValid()) {
+			map.stop()
+			map.fitBounds(bounds, {
+				...fitOptions,
+				padding: [32, 32],
+				maxZoom: 10.2,
+			})
+		}
+	}
+}
+
+/**
+ * Resize: only invalidateSize (no re-fit) so page scroll / scrollbar flicker
+ * does not make the map jump or feel like it is dragging.
+ * View changes / reset: invalidate + fitBounds once.
+ */
+function MapResizeSync({
+	geojson,
+	zoomTargetName,
+	viewMode,
+	fillPadding,
+	singleDistrict,
+	fitNonce = 0,
+}) {
 	const map = useMap()
-	const lastTarget = useRef(null)
+	const lastSize = useRef({ w: 0, h: 0 })
 
 	useEffect(() => {
-		if (!geojson?.features?.length) return
+		const container = map.getContainer()
+		let raf = 0
 
-		// District-only view: always fit the single boundary tightly.
-		if (singleDistrict) {
-			const layer = L.geoJSON(geojson)
-			const bounds = layer.getBounds()
-			if (bounds.isValid()) {
-				map.fitBounds(bounds, {
-					padding: fillPadding || [28, 28],
-					maxZoom: 11,
-				})
-			}
-			lastTarget.current = zoomTargetName || 'single'
-			return
+		const onFrameResize = () => {
+			cancelAnimationFrame(raf)
+			raf = requestAnimationFrame(() => {
+				const el = container.parentElement || container
+				const w = el.clientWidth
+				const h = el.clientHeight
+				if (Math.abs(w - lastSize.current.w) < 2 && Math.abs(h - lastSize.current.h) < 2) {
+					return
+				}
+				lastSize.current = { w, h }
+				map.invalidateSize({ animate: false })
+			})
 		}
 
-		if (viewMode === 'state' || !zoomTargetName) {
-			const layer = L.geoJSON(geojson)
-			const bounds = layer.getBounds()
-			if (bounds.isValid()) {
-				map.fitBounds(bounds, {
-					padding: fillPadding || [4, 4],
-					maxZoom: 9.6,
-				})
-			}
-			lastTarget.current = null
-			return
+		onFrameResize()
+		const ro =
+			typeof ResizeObserver !== 'undefined' ? new ResizeObserver(onFrameResize) : null
+		ro?.observe(container.parentElement || container)
+		window.addEventListener('orientationchange', onFrameResize)
+
+		return () => {
+			cancelAnimationFrame(raf)
+			ro?.disconnect()
+			window.removeEventListener('orientationchange', onFrameResize)
 		}
+	}, [map])
 
-		if (lastTarget.current === zoomTargetName && viewMode === 'district') return
-
-		const focus = String(zoomTargetName).toLowerCase()
-		const match = geojson.features.find((f) => {
-			const name = String(f.properties?.district || '').toLowerCase()
-			return (
-				name === focus ||
-				name.includes(focus) ||
-				focus.includes(name) ||
-				(focus.includes('kamrup rural') && name === 'kamrup') ||
-				(focus.includes('south salmara') && name.includes('salmara'))
-			)
+	useEffect(() => {
+		map.invalidateSize({ animate: false })
+		fitMapToView(map, geojson, {
+			zoomTargetName,
+			viewMode,
+			fillPadding,
+			singleDistrict,
+			animate: fitNonce > 0,
 		})
-
-		if (match) {
-			const bounds = L.geoJSON(match).getBounds()
-			if (bounds.isValid()) {
-				map.fitBounds(bounds, { padding: [32, 32], maxZoom: 10.2 })
-				lastTarget.current = zoomTargetName
-			}
-		}
-	}, [map, geojson, zoomTargetName, viewMode, fillPadding, singleDistrict])
+	}, [map, geojson, zoomTargetName, viewMode, fillPadding, singleDistrict, fitNonce])
 
 	return null
+}
+
+/** Google Maps–style + / − zoom buttons */
+function MapZoomControls() {
+	const map = useMap()
+	const [zoom, setZoom] = useState(() => map.getZoom())
+
+	useEffect(() => {
+		const syncZoom = () => setZoom(map.getZoom())
+		map.on('zoomend zoom', syncZoom)
+		syncZoom()
+		return () => {
+			map.off('zoomend zoom', syncZoom)
+		}
+	}, [map])
+
+	const minZoom = map.getMinZoom()
+	const maxZoom = map.getMaxZoom()
+
+	return createPortal(
+		<div className="ws-assam-map-zoom" role="group" aria-label="Map zoom">
+			<button
+				type="button"
+				className="ws-assam-map-zoom__btn"
+				onClick={(e) => {
+					e.preventDefault()
+					e.stopPropagation()
+					map.zoomIn()
+				}}
+				disabled={zoom >= maxZoom}
+				aria-label="Zoom in"
+				title="Zoom in"
+			>
+				+
+			</button>
+			<button
+				type="button"
+				className="ws-assam-map-zoom__btn"
+				onClick={(e) => {
+					e.preventDefault()
+					e.stopPropagation()
+					map.zoomOut()
+				}}
+				disabled={zoom <= minZoom}
+				aria-label="Zoom out"
+				title="Zoom out"
+			>
+				−
+			</button>
+		</div>,
+		map.getContainer()
+	)
 }
 
 /**
@@ -100,6 +216,7 @@ function AssamDistrictMap({
 		lockToDistrict || focusDistrictName ? 'district' : 'state'
 	)
 	const [zoomTarget, setZoomTarget] = useState(focusDistrictName || null)
+	const [fitNonce, setFitNonce] = useState(0)
 
 	useEffect(() => {
 		let cancelled = false
@@ -201,6 +318,16 @@ function AssamDistrictMap({
 		setSelected(null)
 	}
 
+	const resetMapView = () => {
+		if (!lockToDistrict) {
+			setViewMode('state')
+			setZoomTarget(null)
+			setSelected(null)
+		}
+		// Always re-fit to the default size (undoes manual +/- zoom)
+		setFitNonce((n) => n + 1)
+	}
+
 	const styleFeature = (feature) => {
 		const district = findDistrictForGeoFeature(feature, lookup)
 		const geoName = feature.properties?.district || ''
@@ -237,7 +364,7 @@ function AssamDistrictMap({
 				<strong>${label}</strong>
 				<span>${total} apps · ${uin} UIN · ${forms} forms · ${users} users</span>
 			</div>`,
-			{ sticky: true, className: 'ws-assam-map-tooltip', direction: 'top' }
+			{ sticky: false, className: 'ws-assam-map-tooltip', direction: 'top', opacity: 1 }
 		)
 
 		if (lockToDistrict) return
@@ -314,19 +441,19 @@ function AssamDistrictMap({
 						</select>
 					</label>
 					<div className="ws-assam-map-toolbar-actions">
-						{viewMode === 'district' ? (
-							<button
-								type="button"
-								className="ws-btn ws-btn--sm ws-btn--outline"
-								onClick={showAllAssam}
-							>
-								Show all Assam
-							</button>
-						) : (
+						<button
+							type="button"
+							className="ws-btn ws-btn--sm ws-btn--outline"
+							onClick={resetMapView}
+							title="Return map to the default size"
+						>
+							Reset view
+						</button>
+						{viewMode !== 'district' ? (
 							<span className="ws-assam-map-toolbar-hint">
-								Select a district to zoom in — statewide view is the widest level
+								Select a district to zoom in — Reset view returns to default size
 							</span>
-						)}
+						) : null}
 					</div>
 				</div>
 			) : (
@@ -334,9 +461,19 @@ function AssamDistrictMap({
 					<p className="ws-assam-map-locked-badge">
 						District boundary · <strong>{focusDistrictName || 'your district'}</strong>
 					</p>
-					<span className="ws-assam-map-toolbar-hint">
-						Only your district outline is shown
-					</span>
+					<div className="ws-assam-map-toolbar-actions">
+						<button
+							type="button"
+							className="ws-btn ws-btn--sm ws-btn--outline"
+							onClick={resetMapView}
+							title="Return map to the default size"
+						>
+							Reset view
+						</button>
+						<span className="ws-assam-map-toolbar-hint">
+							Only your district outline is shown
+						</span>
+					</div>
 				</div>
 			)}
 
@@ -345,14 +482,17 @@ function AssamDistrictMap({
 					<MapContainer
 						center={ASSAM_MAP_CENTER}
 						zoom={ASSAM_MAP_ZOOM}
+						minZoom={6}
+						maxZoom={12}
 						scrollWheelZoom={false}
-						dragging={false}
-						doubleClickZoom={false}
+						dragging
+						doubleClickZoom
 						boxZoom={false}
 						keyboard={false}
-						touchZoom={false}
+						touchZoom
 						zoomControl={false}
 						attributionControl={false}
+						trackResize={false}
 						className="ws-assam-map"
 					>
 						<GeoJSON
@@ -361,7 +501,7 @@ function AssamDistrictMap({
 							style={styleFeature}
 							onEachFeature={onEachFeature}
 						/>
-						<MapViewController
+						<MapResizeSync
 							geojson={displayGeojson}
 							zoomTargetName={zoomTarget}
 							viewMode={viewMode}
@@ -369,7 +509,9 @@ function AssamDistrictMap({
 								lockToDistrict ? [36, 36] : fillContainer ? [2, 2] : [6, 6]
 							}
 							singleDistrict={lockToDistrict}
+							fitNonce={fitNonce}
 						/>
+						<MapZoomControls />
 					</MapContainer>
 				</div>
 
@@ -421,9 +563,9 @@ function AssamDistrictMap({
 								<button
 									type="button"
 									className="ws-btn ws-btn--sm ws-btn--outline"
-									onClick={showAllAssam}
+									onClick={resetMapView}
 								>
-									Back to Assam
+									Reset view
 								</button>
 							) : null}
 						</>

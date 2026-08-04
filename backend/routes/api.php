@@ -62,6 +62,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     Route::post('/tenancy-applications', [TenancyApplicationController::class, 'store']);
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);
     Route::get('/tenancy-applications/{tenancyApplication}/acknowledgement', [TenancyApplicationController::class, 'downloadAcknowledgement']);
+    Route::get('/tenancy-applications/{tenancyApplication}/agreement', [TenancyApplicationController::class, 'downloadAgreement']);
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
 
     // Tenant Forms (Assam Tenancy Rules draft) - user only

@@ -1,33 +1,603 @@
 /** Shared motion presets for landing section intros (respect reduced motion in components). */
 
 export const easePlayful = [0.34, 1.45, 0.64, 1]
+export const easeOutExpo = [0.22, 1, 0.36, 1]
 
-export const introContainerVariants = {
+/* ── Modern scroll intros (Services / Stats / Benefits) ── */
+export const scrollSectionVariants = {
 	hidden: {},
 	visible: {
-		transition: { staggerChildren: 0.11, delayChildren: 0.05 },
+		transition: {
+			staggerChildren: 0.14,
+			delayChildren: 0.02,
+		},
 	},
 }
 
-export const introEyebrowVariants = {
-	hidden: { opacity: 0, y: 12, scale: 0.82, rotate: -4 },
+export const scrollHeaderVariants = {
+	hidden: { opacity: 0, y: 36, filter: 'blur(5px)' },
+	visible: {
+		opacity: 1,
+		y: 0,
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.58,
+			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const servicesTitleWordVariants = {
+	hidden: { opacity: 0, y: 22, rotate: -4, scale: 0.86 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		rotate: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 380,
+			damping: 16,
+			mass: 0.72,
+		},
+	},
+}
+
+export const servicesTitleAccentVariants = {
+	hidden: { opacity: 0, y: 28, scale: 0.68, rotate: -7 },
 	visible: {
 		opacity: 1,
 		y: 0,
 		scale: 1,
 		rotate: 0,
-		transition: { type: 'spring', stiffness: 440, damping: 15 },
+		transition: {
+			type: 'spring',
+			stiffness: 420,
+			damping: 13,
+			mass: 0.62,
+			delay: 0.1,
+		},
 	},
 }
 
-export const introTitleVariants = {
-	hidden: { opacity: 0, y: 36, scale: 0.9, filter: 'blur(8px)' },
+export const scrollCtaVariants = {
+	hidden: { opacity: 0, y: 18, scale: 0.96 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 320,
+			damping: 24,
+		},
+	},
+}
+
+export const scrollGridVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.1,
+			delayChildren: 0.06,
+		},
+	},
+}
+
+export const scrollCardVariants = {
+	hidden: { opacity: 0, y: 48, scale: 0.92 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 260,
+			damping: 22,
+			mass: 0.9,
+		},
+	},
+}
+
+/** Shared ladder timing for cards + connector paths */
+export const SERVICES_LADDER = {
+	delayChildren: 0.12,
+	stagger: 0.42,
+	/** Connector draws after its left-hand card lands */
+	segmentLead: 0.28,
+	segmentDuration: 0.48,
+}
+
+/** Portal services — ladder climb low → high */
+export const servicesGridVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: SERVICES_LADDER.stagger,
+			delayChildren: SERVICES_LADDER.delayChildren,
+		},
+	},
+}
+
+export const servicesCardVariants = {
+	hidden: (i = 0) => ({
+		opacity: 0,
+		y: 64 + (3 - i) * 36,
+		scale: 0.9,
+		filter: 'blur(8px)',
+	}),
 	visible: {
 		opacity: 1,
 		y: 0,
 		scale: 1,
 		filter: 'blur(0px)',
-		transition: { type: 'spring', stiffness: 300, damping: 18, mass: 0.85 },
+		transition: {
+			type: 'spring',
+			stiffness: 240,
+			damping: 20,
+			mass: 0.92,
+		},
+	},
+}
+
+export const servicesCardHover = {
+	y: -8,
+	transition: { type: 'spring', stiffness: 380, damping: 22 },
+}
+
+export const servicesCardTap = {
+	y: -2,
+	scale: 0.985,
+	transition: { type: 'spring', stiffness: 480, damping: 28 },
+}
+
+/** Portal benefits — one-by-one cascade into view */
+export const benefitsModernGridVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.28,
+			delayChildren: 0.22,
+		},
+	},
+}
+
+export const benefitsModernCardVariants = {
+	hidden: (i = 0) => ({
+		opacity: 0,
+		x: 48,
+		y: 32 + i * 12,
+		scale: 0.92,
+		filter: 'blur(7px)',
+	}),
+	visible: {
+		opacity: 1,
+		x: 0,
+		y: 0,
+		scale: 1,
+		filter: 'blur(0px)',
+		transition: {
+			type: 'spring',
+			stiffness: 220,
+			damping: 18,
+			mass: 0.88,
+		},
+	},
+}
+
+export const benefitsModernCardHover = {
+	y: -6,
+	x: 4,
+	transition: { type: 'spring', stiffness: 380, damping: 22 },
+}
+
+export const benefitsModernCardTap = {
+	scale: 0.985,
+	transition: { type: 'spring', stiffness: 480, damping: 28 },
+}
+
+export const benefitsIntroVariants = {
+	hidden: { opacity: 0, y: 36, filter: 'blur(6px)' },
+	visible: {
+		opacity: 1,
+		y: 0,
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.6,
+			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const benefitsTitleWordVariants = {
+	hidden: { opacity: 0, y: 22, rotate: -5, scale: 0.86 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		rotate: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 380,
+			damping: 16,
+			mass: 0.72,
+		},
+	},
+}
+
+export const benefitsTitleAccentVariants = {
+	hidden: { opacity: 0, y: 28, scale: 0.68, rotate: 8 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 420,
+			damping: 13,
+			mass: 0.62,
+			delay: 0.12,
+		},
+	},
+}
+
+/** How it works — timeline cascade (numbers pop, steps slide along a path) */
+export const guideSectionVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.16,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const guideIntroVariants = {
+	hidden: { opacity: 0, y: 36, filter: 'blur(6px)' },
+	visible: {
+		opacity: 1,
+		y: 0,
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.62,
+			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const guideTitleWordVariants = {
+	hidden: { opacity: 0, y: 22, rotate: -4, scale: 0.86 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		rotate: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 380,
+			damping: 16,
+			mass: 0.72,
+		},
+	},
+}
+
+export const guideTitleAccentVariants = {
+	hidden: { opacity: 0, y: 28, scale: 0.7, rotate: -8 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 420,
+			damping: 14,
+			mass: 0.65,
+			delay: 0.12,
+		},
+	},
+}
+
+export const guideStepsVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.22,
+			delayChildren: 0.18,
+		},
+	},
+}
+
+export const guideStepVariants = {
+	hidden: {
+		opacity: 0,
+		x: -42,
+		y: 18,
+		scale: 0.96,
+		filter: 'blur(5px)',
+	},
+	visible: {
+		opacity: 1,
+		x: 0,
+		y: 0,
+		scale: 1,
+		filter: 'blur(0px)',
+		transition: {
+			type: 'spring',
+			stiffness: 240,
+			damping: 20,
+			mass: 0.9,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const guideStepNumVariants = {
+	hidden: { opacity: 0, scale: 0.25, rotate: -24 },
+	visible: {
+		opacity: 1,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 460,
+			damping: 14,
+			mass: 0.65,
+		},
+	},
+}
+
+export const guideStepCopyVariants = {
+	hidden: { opacity: 0, x: -16 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 280,
+			damping: 24,
+		},
+	},
+}
+
+export const guideAccessVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.14,
+			delayChildren: 0.06,
+		},
+	},
+}
+
+export const guideAsideVariants = {
+	hidden: { opacity: 0, x: -40, y: 16 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 260,
+			damping: 24,
+			mass: 0.9,
+		},
+	},
+}
+
+export const guidePanelVariants = {
+	hidden: { opacity: 0, x: 40, y: 16 },
+	visible: {
+		opacity: 1,
+		x: 0,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 260,
+			damping: 24,
+			mass: 0.9,
+			staggerChildren: 0.08,
+			delayChildren: 0.12,
+		},
+	},
+}
+
+export const guideActionVariants = {
+	hidden: { opacity: 0, y: 18, scale: 0.96 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 320,
+			damping: 22,
+		},
+	},
+}
+
+/** FAQ — accordion stack (items unfold downward on scroll) */
+export const faqSectionVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.14,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const faqIntroVariants = {
+	hidden: { opacity: 0, y: 34, filter: 'blur(6px)' },
+	visible: {
+		opacity: 1,
+		y: 0,
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.58,
+			ease: easeOutExpo,
+			staggerChildren: 0.1,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const faqTitleWordVariants = {
+	hidden: { opacity: 0, y: 20, scale: 0.88 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: {
+			type: 'spring',
+			stiffness: 360,
+			damping: 17,
+			mass: 0.72,
+		},
+	},
+}
+
+export const faqTitleAccentVariants = {
+	hidden: { opacity: 0, y: 26, scale: 0.72, rotate: 6 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 400,
+			damping: 14,
+			mass: 0.65,
+			delay: 0.1,
+		},
+	},
+}
+
+export const faqListVariants = {
+	hidden: {},
+	visible: {
+		transition: {
+			staggerChildren: 0.14,
+			delayChildren: 0.14,
+		},
+	},
+}
+
+export const faqItemVariants = {
+	hidden: {
+		opacity: 0,
+		y: -36,
+		scale: 0.96,
+		filter: 'blur(5px)',
+	},
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		filter: 'blur(0px)',
+		transition: {
+			type: 'spring',
+			stiffness: 280,
+			damping: 20,
+			mass: 0.82,
+		},
+	},
+}
+
+export const scrollStatRailVariants = {
+	hidden: { opacity: 0, y: 36, filter: 'blur(4px)' },
+	visible: {
+		opacity: 1,
+		y: 0,
+		filter: 'blur(0px)',
+		transition: {
+			duration: 0.52,
+			ease: easeOutExpo,
+			staggerChildren: 0.12,
+			delayChildren: 0.06,
+		},
+	},
+}
+
+export const scrollStatItemVariants = {
+	hidden: { opacity: 0, y: 36, scale: 0.78, rotate: -3 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 320,
+			damping: 16,
+			mass: 0.75,
+			staggerChildren: 0.06,
+			delayChildren: 0.04,
+		},
+	},
+}
+
+export const scrollStatIconVariants = {
+	hidden: { opacity: 0, scale: 0.35, rotate: -18 },
+	visible: {
+		opacity: 1,
+		scale: 1,
+		rotate: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 460,
+			damping: 14,
+			mass: 0.6,
+		},
+	},
+}
+
+export const scrollStatLabelVariants = {
+	hidden: { opacity: 0, y: 12 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 300,
+			damping: 22,
+		},
+	},
+}
+
+export const introContainerVariants = {
+	hidden: {},
+	visible: {
+		transition: { staggerChildren: 0.08, delayChildren: 0.04 },
+	},
+}
+
+export const introEyebrowVariants = {
+	hidden: { opacity: 0, y: 14, scale: 0.88 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: { type: 'spring', stiffness: 400, damping: 18 },
+	},
+}
+
+export const introTitleVariants = {
+	hidden: { opacity: 0, y: 28, scale: 0.97 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+		transition: { type: 'spring', stiffness: 360, damping: 26, mass: 0.8 },
 	},
 }
 
@@ -41,12 +611,11 @@ export const introLineVariants = {
 }
 
 export const introLeadVariants = {
-	hidden: { opacity: 0, y: 20, x: -10 },
+	hidden: { opacity: 0, y: 18 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		x: 0,
-		transition: { type: 'spring', stiffness: 260, damping: 22 },
+		transition: { type: 'spring', stiffness: 360, damping: 26, mass: 0.8 },
 	},
 }
 
@@ -171,7 +740,7 @@ export const heroSlideVariants = {
 export const heroCopyContainerVariants = {
 	hidden: {},
 	visible: {
-		transition: { staggerChildren: 0.14, delayChildren: 0.25 },
+		transition: { staggerChildren: 0.2, delayChildren: 0.4 },
 	},
 }
 
@@ -180,7 +749,7 @@ export const heroTitleVariants = {
 	visible: {
 		opacity: 1,
 		x: 0,
-		transition: { duration: 0.8, ease: heroIntroEase },
+		transition: { duration: 1.55, ease: heroIntroEase },
 	},
 }
 
@@ -214,38 +783,38 @@ export const heroAccentLineVariants = {
 	visible: {
 		scaleX: 1,
 		opacity: 1,
-		transition: { duration: 0.65, ease: heroIntroEase, delay: 0.15 },
+		transition: { duration: 1.2, ease: heroIntroEase, delay: 0.35 },
 	},
 }
 
-/** Portal benefits — whole-section entrance on scroll (spring language like Portal Services) */
+/** Portal benefits — whole-section entrance on scroll */
 export const benefitsSectionVariants = {
-	hidden: { opacity: 0, y: 28 },
+	hidden: { opacity: 0, y: 20 },
 	visible: {
 		opacity: 1,
 		y: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 320,
-			damping: 26,
-			mass: 0.9,
+			stiffness: 520,
+			damping: 32,
+			mass: 0.75,
 			when: 'beforeChildren',
-			staggerChildren: 0.14,
-			delayChildren: 0.04,
+			staggerChildren: 0.06,
+			delayChildren: 0,
 		},
 	},
 }
 
 export const benefitsIntroWrapVariants = {
-	hidden: { opacity: 0, y: 18 },
+	hidden: { opacity: 0, y: 12 },
 	visible: {
 		opacity: 1,
 		y: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 340,
-			damping: 24,
-			mass: 0.88,
+			stiffness: 520,
+			damping: 30,
+			mass: 0.75,
 		},
 	},
 }
@@ -260,11 +829,11 @@ export const benefitsListVariants = {
 		x: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 360,
-			damping: 26,
-			mass: 0.9,
-			staggerChildren: 0.1,
-			delayChildren: 0.06,
+			stiffness: 220,
+			damping: 28,
+			mass: 1.05,
+			staggerChildren: 0.14,
+			delayChildren: 0.22,
 		},
 	},
 }
@@ -274,25 +843,24 @@ export const benefitsListRuleVariants = {
 	visible: {
 		opacity: 1,
 		scaleX: 1,
-		transition: { duration: 0.32, ease: benefitsListEase },
+		transition: { duration: 0.22, ease: benefitsListEase },
 	},
 }
 
 export const benefitsItemVariants = {
-	hidden: { opacity: 0, x: -32, y: 16, scale: 0.96 },
+	hidden: { opacity: 0, x: -24, y: 12 },
 	visible: (i = 0) => ({
 		opacity: 1,
 		x: 0,
 		y: 0,
-		scale: 1,
 		transition: {
 			type: 'spring',
-			stiffness: 380,
-			damping: 24,
-			mass: 0.88,
-			delay: i * 0.08,
-			staggerChildren: 0.05,
-			delayChildren: 0.02,
+			stiffness: 240,
+			damping: 28,
+			mass: 1,
+			delay: i * 0.1,
+			staggerChildren: 0.06,
+			delayChildren: 0.04,
 		},
 	}),
 }
@@ -302,41 +870,41 @@ export const benefitsItemDividerVariants = {
 	visible: {
 		opacity: 1,
 		scaleX: 1,
-		transition: { duration: 0.28, ease: benefitsListEase },
+		transition: { duration: 0.18, ease: benefitsListEase },
 	},
 }
 
 export const benefitsItemRowVariants = {
 	hidden: {},
 	visible: {
-		transition: { staggerChildren: 0.05, delayChildren: 0.01 },
+		transition: { staggerChildren: 0.03, delayChildren: 0 },
 	},
 }
 
 export const benefitsItemIconVariants = {
-	hidden: { opacity: 0, scale: 0.72, rotate: -8 },
+	hidden: { opacity: 0, scale: 0.9 },
 	visible: {
 		opacity: 1,
 		scale: 1,
-		rotate: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 420,
-			damping: 18,
-			mass: 0.85,
+			stiffness: 260,
+			damping: 26,
+			mass: 0.95,
 		},
 	},
 }
 
 export const benefitsItemContentVariants = {
-	hidden: { opacity: 0, x: -12 },
+	hidden: { opacity: 0, x: -10 },
 	visible: {
 		opacity: 1,
 		x: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 380,
-			damping: 24,
+			stiffness: 240,
+			damping: 28,
+			mass: 1,
 		},
 	},
 }
@@ -357,9 +925,8 @@ export const benefitsBodyVariants = {
 	hidden: {},
 	visible: {
 		transition: {
-			when: 'beforeChildren',
-			staggerChildren: 0.16,
-			delayChildren: 0.04,
+			staggerChildren: 0.72,
+			delayChildren: 0.06,
 		},
 	},
 }
@@ -397,7 +964,7 @@ export const benefitsCardVariants = {
 
 /** Diagram pop — same spring language as Portal Services showcase tiles */
 export const benefitsMediaVariants = {
-	hidden: { opacity: 0, scale: 0.82, y: 28, rotate: 3 },
+	hidden: { opacity: 0, scale: 0.92, y: 16, rotate: 2 },
 	visible: {
 		opacity: 1,
 		scale: 1,
@@ -405,44 +972,44 @@ export const benefitsMediaVariants = {
 		rotate: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 380,
-			damping: 22,
-			mass: 0.88,
+			stiffness: 480,
+			damping: 28,
+			mass: 0.75,
 			when: 'beforeChildren',
-			staggerChildren: 0.08,
-			delayChildren: 0.1,
+			staggerChildren: 0.04,
+			delayChildren: 0,
 		},
 	},
 }
 
 /** Rings expand in softly after the diagram frame pops */
 export const benefitsSymbolsRingVariants = {
-	hidden: { opacity: 0, scale: 0.78 },
+	hidden: { opacity: 0, scale: 0.9 },
 	visible: {
 		opacity: 1,
 		scale: 1,
 		transition: {
 			type: 'spring',
-			stiffness: 300,
-			damping: 20,
-			mass: 0.9,
+			stiffness: 480,
+			damping: 28,
+			mass: 0.75,
 		},
 	},
 }
 
-/** Orbit icons — lively staggered spring pop (like showcase cards) */
+/** Orbit icons — quick staggered spring pop */
 export const benefitsSymbolVariants = {
-	hidden: { opacity: 0, scale: 0.55, y: 18 },
+	hidden: { opacity: 0, scale: 0.75, y: 10 },
 	visible: (i = 0) => ({
 		opacity: 1,
 		scale: 1,
 		y: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 420,
-			damping: 18,
-			mass: 0.82,
-			delay: 0.06 + i * 0.07,
+			stiffness: 520,
+			damping: 26,
+			mass: 0.75,
+			delay: 0.02 + i * 0.04,
 		},
 	}),
 }
@@ -452,9 +1019,9 @@ export const benefitsOrbitVariants = {
 	visible: {
 		opacity: 1,
 		transition: {
-			duration: 0.2,
-			staggerChildren: 0.07,
-			delayChildren: 0.08,
+			duration: 0.15,
+			staggerChildren: 0.03,
+			delayChildren: 0.02,
 		},
 	},
 }
@@ -465,16 +1032,16 @@ export const benefitsSymbolHover = {
 }
 
 export const benefitsMediaFrameVariants = {
-	hidden: { opacity: 0, scale: 0.92, y: 16 },
+	hidden: { opacity: 0, scale: 0.96, y: 10 },
 	visible: {
 		opacity: 1,
 		scale: 1,
 		y: 0,
 		transition: {
 			type: 'spring',
-			stiffness: 360,
-			damping: 22,
-			delay: 0.08,
+			stiffness: 520,
+			damping: 28,
+			delay: 0,
 		},
 	},
 }

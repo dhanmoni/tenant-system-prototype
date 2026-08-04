@@ -13,6 +13,10 @@ class ValuerAppointmentApplication extends Model
 
     use GeneratesApplicationNo;
 
+    protected $casts = [
+        'edit_history' => 'array',
+    ];
+
     protected $table = 'rent_authority_form_ib_applications';
 
     protected $fillable = [

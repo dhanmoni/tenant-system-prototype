@@ -765,19 +765,42 @@ class TenancyApplicationController extends Controller
     public function applicationDetails(Request $request, TenancyApplication $tenancyApplication)
     {
         $tenancyApplication->load(['office', 'district']);
-        $html = view('tenancy.application-details', [
-            'application' => $tenancyApplication,
-            'print' => $request->boolean('print'),
-        ])->render();
+        $wantPdf = $request->query('format') === 'pdf' && class_exists('Dompdf\\Dompdf');
+        $embedImages = !$wantPdf || extension_loaded('gd');
 
-        if ($request->query('format') === 'pdf' && class_exists('Dompdf\\Dompdf')) {
-            $dompdf = new \Dompdf\Dompdf();
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4');
-            $dompdf->render();
-            $applicationPdf = $dompdf->output();
+        $renderHtml = function (bool $withImages) use ($tenancyApplication, $request) {
+            return view('tenancy.application-details', [
+                'application' => $tenancyApplication,
+                'print' => $request->boolean('print'),
+                'embedImages' => $withImages,
+            ])->render();
+        };
+
+        $html = $renderHtml($embedImages);
+
+        if ($wantPdf) {
+            $buildPdf = function (string $htmlContent) {
+                $dompdf = new \Dompdf\Dompdf();
+                $dompdf->loadHtml($htmlContent);
+                $dompdf->setPaper('A4');
+                $dompdf->render();
+                return $dompdf->output();
+            };
+
+            try {
+                $applicationPdf = $buildPdf($html);
+            } catch (\Throwable $e) {
+                // Dompdf needs GD for embedded photos/signatures — retry without images.
+                $html = $renderHtml(false);
+                try {
+                    $applicationPdf = $buildPdf($html);
+                } catch (\Throwable $retryError) {
+                    report($retryError);
+                    return response($html, 200)->header('Content-Type', 'text/html');
+                }
+            }
+
             $pdfOutput = $applicationPdf;
-
             $agreementPath = $this->getAgreementPdfPath($tenancyApplication);
             if ($agreementPath && class_exists('\\setasign\\Fpdi\\Fpdi')) {
                 $mergedOutput = $this->mergePdfFiles($applicationPdf, $agreementPath);
@@ -793,6 +816,28 @@ class TenancyApplicationController extends Controller
         }
 
         return response($html, 200)->header('Content-Type', 'text/html');
+    }
+
+    public function downloadAgreement(Request $request, TenancyApplication $tenancyApplication)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!$this->userCanAccess($user, $tenancyApplication)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $agreementPath = $this->getAgreementPdfPath($tenancyApplication);
+        if (!$agreementPath) {
+            return response()->json(['message' => 'Agreement PDF not found.'], 404);
+        }
+
+        return response()->file($agreementPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="agreement-' . $tenancyApplication->application_no . '.pdf"',
+        ]);
     }
 
     public function adminIndex(Request $request)
@@ -832,8 +877,13 @@ class TenancyApplicationController extends Controller
             'district_id',
         ]);
 
+        $records = collect($paginated->items())->map(function ($app) {
+            $app->form_type = \App\Constants\ApplicationTypes::TENANCY_CERTIFICATE;
+            return $app;
+        })->values();
+
         return response()->json([
-            'records' => $paginated->items(),
+            'records' => $records,
             'pagination' => [
                 'current_page' => $paginated->currentPage(),
                 'last_page' => $paginated->lastPage(),

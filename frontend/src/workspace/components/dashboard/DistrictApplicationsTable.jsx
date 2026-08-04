@@ -113,9 +113,14 @@ function DistrictApplicationsTable({ applications = [], selectedDate = null }) {
 	}, [applications])
 
 	const handleRow = (app) => {
-		if (app.application_no) {
-			navigate(`/dashboard/admin/applications/${encodeURIComponent(app.application_no)}`)
-		}
+		if (!app.application_no) return
+		const fromTenancy = app.category === 'uin' || app.application_type === 'tenancy'
+		const base = fromTenancy
+			? '/dashboard/admin/tenancy'
+			: '/dashboard/admin/applications'
+		navigate(`${base}/${encodeURIComponent(app.application_no)}`, {
+			state: fromTenancy ? { from: 'tenancy' } : undefined,
+		})
 	}
 
 	return (
@@ -154,6 +159,22 @@ function DistrictApplicationsTable({ applications = [], selectedDate = null }) {
 					{filtered.length} record{filtered.length === 1 ? '' : 's'}
 					{selectedDate ? ' for selected date' : ''}
 				</p>
+				<div className="ws-da-apps-links">
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm"
+						onClick={() => navigate('/dashboard/admin/tenancy')}
+					>
+						All UIN applications
+					</button>
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm"
+						onClick={() => navigate('/dashboard/admin/applications')}
+					>
+						All service applications
+					</button>
+				</div>
 			</div>
 
 			{!filtered.length ? (

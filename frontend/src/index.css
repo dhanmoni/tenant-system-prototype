@@ -2,17 +2,17 @@
 @import "tailwindcss";
 
 @theme {
-	--color-light-caramel-50: #fdf2e7;
-	--color-light-caramel-100: #fce6cf;
-	--color-light-caramel-200: #f8cca0;
-	--color-light-caramel-300: #f5b370;
-	--color-light-caramel-400: #f29940;
-	--color-light-caramel-500: #ef7a00;
-	--color-light-caramel-600: #bf660d;
-	--color-light-caramel-700: #8f4c0a;
-	--color-light-caramel-800: #5f3307;
-	--color-light-caramel-900: #301a03;
-	--color-light-caramel-950: #211202;
+	--color-light-caramel-50: #fdf4eb;
+	--color-light-caramel-100: #f9e4d4;
+	--color-light-caramel-200: #f3c69d;
+	--color-light-caramel-300: #eea86a;
+	--color-light-caramel-400: #e89035;
+	--color-light-caramel-500: #e87400;
+	--color-light-caramel-600: #c66300;
+	--color-light-caramel-700: #904400;
+	--color-light-caramel-800: #5c2c00;
+	--color-light-caramel-900: #351e08;
+	--color-light-caramel-950: #1f1003;
 	--color-landing: var(--color-light-caramel-500);
 	--color-landing-dark: var(--color-light-caramel-700);
 	--color-landing-hover: var(--color-light-caramel-600);
@@ -31,6 +31,7 @@
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	scrollbar-gutter: stable;
 
 	/* NIC Theme Colors */
 	--nic-green: #4b8aea;
@@ -54,18 +55,18 @@
 	/* Form fields: subtle grey (gov-style) */
 	--form-field-bg: #f1f3f5;
 	--form-field-border: #cfd8dc;
-	/* Landing page light caramel palette */
-	--color-light-caramel-50: #fdf2e7;
-	--color-light-caramel-100: #fce6cf;
-	--color-light-caramel-200: #f8cca0;
-	--color-light-caramel-300: #f5b370;
-	--color-light-caramel-400: #f29940;
-	--color-light-caramel-500: #ee8011;
-	--color-light-caramel-600: #bf660d;
-	--color-light-caramel-700: #8f4c0a;
-	--color-light-caramel-800: #5f3307;
-	--color-light-caramel-900: #301a03;
-	--color-light-caramel-950: #211202;
+	/* Landing page refined caramel palette */
+	--color-light-caramel-50: #fdf4eb;
+	--color-light-caramel-100: #f9e4d4;
+	--color-light-caramel-200: #f3c69d;
+	--color-light-caramel-300: #eea86a;
+	--color-light-caramel-400: #e89035;
+	--color-light-caramel-500: #e87400;
+	--color-light-caramel-600: #c66300;
+	--color-light-caramel-700: #904400;
+	--color-light-caramel-800: #5c2c00;
+	--color-light-caramel-900: #351e08;
+	--color-light-caramel-950: #1f1003;
 	--landing-accent: var(--color-light-caramel-500);
 	--landing-accent-dark: var(--color-light-caramel-700);
 	--landing-accent-hover: var(--color-light-caramel-600);
@@ -83,6 +84,11 @@
 *::before,
 *::after {
 	box-sizing: border-box;
+}
+
+html {
+	scrollbar-gutter: stable;
+	overflow-y: scroll;
 }
 
 body {

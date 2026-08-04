@@ -13,6 +13,10 @@ class RentCourtAppealApplication extends Model
 
     use GeneratesApplicationNo;
 
+    protected $casts = [
+        'edit_history' => 'array',
+    ];
+
     protected $table = 'rent_court_form_7_applications';
 
     protected $fillable = [

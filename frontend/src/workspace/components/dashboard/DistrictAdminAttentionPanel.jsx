@@ -37,9 +37,9 @@ function DistrictAdminAttentionPanel({ stats }) {
 				key: 'today',
 				icon: 'timeline',
 				label: 'Submitted today',
-				detail: 'New UIN and form applications',
+				detail: 'Open district activity feed',
 				count: today,
-				to: '/dashboard/admin/applications',
+				to: '/dashboard',
 				tone: today > 0 ? 'accent' : 'default',
 			},
 			{

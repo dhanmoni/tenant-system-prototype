@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
@@ -9,6 +9,7 @@ import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/role
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
 import { formatDate, formatDateTime } from '../../../utils/formatters'
 import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress'
+import { buildServiceFormDocument } from '../../../utils/buildServiceFormDocument'
 import './ApplicationDetails.css'
 
 const EXCLUDED_FIELDS = new Set([
@@ -23,6 +24,7 @@ const EXCLUDED_FIELDS = new Set([
 	'rejected_by',
 	'approved_by',
 	'movement_history',
+	'edit_history',
 	'created_at',
 	'updated_at',
 	'deleted_at',
@@ -41,6 +43,9 @@ const EXCLUDED_FIELDS = new Set([
 	'area_type',
 	'local_body',
 	'application_type',
+	'assigned_valuer',
+	'office',
+	'village_ward',
 ])
 
 const WORKFLOW_FIELDS = new Set([
@@ -66,6 +71,7 @@ const NON_EDITABLE_KEYS = new Set([
 	...UIN_FIELDS,
 	'application_no',
 	'status',
+	'district',
 	'district_id',
 	'form_type',
 	'forwarded_at',
@@ -88,6 +94,10 @@ const NON_EDITABLE_KEYS = new Set([
 	'area_type',
 	'local_body',
 	'application_type',
+	'assigned_valuer_id',
+	'valuer_assigned_at',
+	'valuer_report',
+	'valuer_report_submitted_at',
 ])
 
 const TENANCY_FIELD_SECTIONS = [
@@ -96,6 +106,44 @@ const TENANCY_FIELD_SECTIONS = [
 	{ title: 'Tenant details', prefixes: ['tenant_'] },
 	{ title: 'Manager details', prefixes: ['manager_'] },
 	{ title: 'Property & charges', prefixes: ['property_'] },
+]
+
+const SERVICE_FIELD_SECTIONS = [
+	{
+		title: 'Applicant & parties',
+		prefixes: [
+			'applicant_',
+			'appellant_',
+			'landlord_',
+			'tenant_',
+			'signed_',
+			'signature_',
+			'respondent_',
+		],
+	},
+	{
+		title: 'Property & premises',
+		prefixes: ['property_', 'premises_', 'building_', 'schedule_'],
+	},
+	{
+		title: 'Rent & charges',
+		prefixes: ['rent_', 'charge_', 'other_charges', 'existing_', 'amount'],
+	},
+	{
+		title: 'Case & filing',
+		prefixes: [
+			'case_',
+			'order_',
+			'appeal_',
+			'filing_',
+			'court_',
+			'authority_',
+			'tenancy_agreement',
+			'reason_',
+			'grounds_',
+			'prayer_',
+		],
+	},
 ]
 
 function hasDisplayValue(value) {
@@ -172,6 +220,27 @@ function isEditableField(key) {
 	return !NON_EDITABLE_KEYS.has(key) && !isFileField(key)
 }
 
+function isWideEditField(key) {
+	return (
+		key.includes('address') ||
+		key.includes('reason') ||
+		key.includes('description') ||
+		key.includes('grounds') ||
+		key.includes('prayer') ||
+		key.includes('remarks') ||
+		key.includes('details') ||
+		key.includes('particulars') ||
+		key.includes('schedule')
+	)
+}
+
+function buildEditSections(editForm, formType) {
+	const fields = Object.entries(editForm).filter(([key]) => isEditableField(key))
+	return groupDetailFields(fields, formType).filter((section) =>
+		section.fields.some(([key]) => isEditableField(key))
+	)
+}
+
 function getUinValue(app) {
 	if (!app) return null
 	for (const key of UIN_FIELDS) {
@@ -181,11 +250,26 @@ function getUinValue(app) {
 }
 
 function groupDetailFields(fields, formType) {
-	if (formType !== APPLICATION_TYPES.TENANCY_CERTIFICATE) {
-		return [{ title: 'Application details', fields }]
+	if (formType === APPLICATION_TYPES.TENANCY_CERTIFICATE) {
+		const sections = TENANCY_FIELD_SECTIONS.map((section) => ({
+			title: section.title,
+			fields: fields.filter(([key]) =>
+				section.prefixes.some(
+					(prefix) => key === prefix || key.startsWith(prefix)
+				)
+			),
+		})).filter((section) => section.fields.length > 0)
+
+		const assigned = new Set(sections.flatMap((s) => s.fields.map(([key]) => key)))
+		const other = fields.filter(([key]) => !assigned.has(key))
+		if (other.length > 0) {
+			sections.push({ title: 'Other details', fields: other })
+		}
+
+		return sections.length > 0 ? sections : [{ title: 'Application details', fields }]
 	}
 
-	const sections = TENANCY_FIELD_SECTIONS.map((section) => ({
+	const sections = SERVICE_FIELD_SECTIONS.map((section) => ({
 		title: section.title,
 		fields: fields.filter(([key]) =>
 			section.prefixes.some(
@@ -195,7 +279,12 @@ function groupDetailFields(fields, formType) {
 	})).filter((section) => section.fields.length > 0)
 
 	const assigned = new Set(sections.flatMap((s) => s.fields.map(([key]) => key)))
-	const other = fields.filter(([key]) => !assigned.has(key))
+	const documents = fields.filter(([key]) => isFileField(key) && !assigned.has(key))
+	const other = fields.filter(([key]) => !assigned.has(key) && !isFileField(key))
+
+	if (documents.length > 0) {
+		sections.push({ title: 'Documents & uploads', fields: documents })
+	}
 	if (other.length > 0) {
 		sections.push({ title: 'Other details', fields: other })
 	}
@@ -207,9 +296,10 @@ function buildEditForm(app) {
 	if (!app) return {}
 	const form = {}
 	for (const [key, value] of Object.entries(app)) {
-		if (isEditableField(key)) {
-			form[key] = value ?? ''
-		}
+		if (!isEditableField(key)) continue
+		// Skip nested relation objects — only scalar form fields are editable
+		if (value !== null && typeof value === 'object') continue
+		form[key] = value ?? ''
 	}
 	return form
 }
@@ -219,9 +309,11 @@ const AdminApplicationDetails = () => {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { user } = useOutletContext()
-	const fromTenancy = location.state?.from === 'tenancy'
+	const fromTenancy =
+		location.state?.from === 'tenancy' ||
+		location.pathname.includes('/admin/tenancy/')
 	const listPath = fromTenancy ? '/dashboard/admin/tenancy' : '/dashboard/admin/applications'
-	const listLabel = fromTenancy ? 'tenancy applications' : 'applications'
+	const listLabel = fromTenancy ? 'tenancy applications' : 'service applications'
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
@@ -236,14 +328,175 @@ const AdminApplicationDetails = () => {
 	const [workflowModal, setWorkflowModal] = useState(null)
 	const [workflowMessage, setWorkflowMessage] = useState('')
 	const [successModal, setSuccessModal] = useState(null)
+	const [docPreview, setDocPreview] = useState(null)
+	const [agreementLoading, setAgreementLoading] = useState(false)
+	const [viewerScale, setViewerScale] = useState(1)
+	const [viewerMode, setViewerMode] = useState('fit')
+	const [paperHeight, setPaperHeight] = useState(1100)
+	const viewerStageRef = useRef(null)
+	const paperRef = useRef(null)
+	const viewerModeRef = useRef('fit')
 
 	const forwardOffice = getAssistantForwardOfficeLabel(user?.role)
 
 	const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN
+	const isDistrictAdmin = user?.role === ROLES.DISTRICT_ADMIN
+
+	useEffect(() => {
+		viewerModeRef.current = viewerMode
+	}, [viewerMode])
+
+	const updatePaperHeight = useCallback(() => {
+		if (paperRef.current) {
+			setPaperHeight(paperRef.current.scrollHeight || 1100)
+		}
+	}, [])
+
+	const computeFitScale = useCallback(() => {
+		const stage = viewerStageRef.current
+		const paper = paperRef.current
+		if (!stage || !paper) return 1
+		const available = Math.max(240, stage.clientWidth - 28)
+		const naturalWidth = paper.scrollWidth || 794
+		return Math.min(1, available / naturalWidth)
+	}, [])
+
+	const fitViewerToWidth = useCallback(() => {
+		const next = computeFitScale()
+		setViewerMode('fit')
+		setViewerScale(next)
+		updatePaperHeight()
+	}, [computeFitScale, updatePaperHeight])
+
+	const zoomBy = (delta) => {
+		setViewerMode('manual')
+		setViewerScale((prev) => {
+			const next = Math.min(2, Math.max(0.4, Math.round((prev + delta) * 20) / 20))
+			return next
+		})
+	}
+
+	const zoomToActual = () => {
+		setViewerMode('manual')
+		setViewerScale(1)
+	}
+	const closeDocPreview = useCallback(() => {
+		setDocPreview((prev) => {
+			if (prev?.revokeOnClose && prev.url) {
+				URL.revokeObjectURL(prev.url)
+			}
+			return null
+		})
+	}, [])
+
+	const openInPrintWindow = (html) => {
+		const printWindow = window.open('', '_blank')
+		if (!printWindow) return
+		printWindow.document.write(html)
+		printWindow.document.close()
+	}
+
+	const handlePrintTenancyForm = async () => {
+		if (!application?.application_no) return
+		try {
+			setActionLoading(true)
+			const res = await api.get(
+				`/api/tenancy-applications/${application.application_no}/application-details?print=1`
+			)
+			openInPrintWindow(res.data)
+		} catch (err) {
+			alert(err?.response?.data?.message || 'Failed to open printable application.')
+		} finally {
+			setActionLoading(false)
+		}
+	}
+
+	const handleViewAgreement = async () => {
+		if (!application?.application_no || !application?.agreement_pdf_path) return
+		try {
+			setAgreementLoading(true)
+			const res = await api.get(
+				`/api/tenancy-applications/${application.application_no}/agreement`,
+				{ responseType: 'blob' }
+			)
+			const contentType = res.headers?.['content-type'] || ''
+			if (contentType.includes('application/json')) {
+				const text = await res.data.text()
+				const parsed = JSON.parse(text)
+				throw new Error(parsed.message || 'Failed to open agreement.')
+			}
+			const url = URL.createObjectURL(res.data)
+			setDocPreview({
+				title: 'Registered tenancy agreement',
+				url,
+				isPdf: true,
+				revokeOnClose: true,
+			})
+		} catch (err) {
+			let message = 'Failed to open agreement PDF.'
+			const data = err?.response?.data
+			if (data instanceof Blob) {
+				try {
+					const parsed = JSON.parse(await data.text())
+					message = parsed.message || message
+				} catch {
+					/* keep default */
+				}
+			} else if (err?.message) {
+				message = err.message
+			}
+			alert(message)
+		} finally {
+			setAgreementLoading(false)
+		}
+	}
 
 	useEffect(() => {
 		fetchDetails()
 	}, [applicationNo])
+
+	useEffect(() => {
+		if (!docPreview) return undefined
+		const onKey = (event) => {
+			if (event.key === 'Escape') closeDocPreview()
+		}
+		document.addEventListener('keydown', onKey)
+		const prev = document.body.style.overflow
+		document.body.style.overflow = 'hidden'
+		return () => {
+			document.removeEventListener('keydown', onKey)
+			document.body.style.overflow = prev
+		}
+	}, [docPreview, closeDocPreview])
+
+	useEffect(() => {
+		if (!application || user?.role !== ROLES.SUPER_ADMIN) {
+			return undefined
+		}
+
+		const syncViewer = () => {
+			updatePaperHeight()
+			if (viewerModeRef.current === 'fit') {
+				setViewerScale(computeFitScale())
+			}
+		}
+
+		syncViewer()
+		const frame = window.requestAnimationFrame(syncViewer)
+		const observer = new ResizeObserver(syncViewer)
+		if (viewerStageRef.current) observer.observe(viewerStageRef.current)
+		if (paperRef.current) observer.observe(paperRef.current)
+		window.addEventListener('resize', syncViewer)
+		return () => {
+			window.cancelAnimationFrame(frame)
+			observer.disconnect()
+			window.removeEventListener('resize', syncViewer)
+		}
+	}, [application, user?.role, computeFitScale, updatePaperHeight])
+
+	useEffect(() => {
+		updatePaperHeight()
+	}, [viewerScale, updatePaperHeight])
 
 	const fetchDetails = async ({ silent = false } = {}) => {
 		try {
@@ -395,6 +648,12 @@ const AdminApplicationDetails = () => {
 	}
 
 	const handleSuperAdminMove = async () => {
+		if (
+			!isSuperAdmin ||
+			application?.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE
+		) {
+			return
+		}
 		if (!window.confirm('Are you sure you want to forcefully move this application?')) return
 
 		try {
@@ -414,6 +673,7 @@ const AdminApplicationDetails = () => {
 	}
 
 	const startEditing = () => {
+		if (!isDistrictAdmin || !application) return
 		setEditForm(buildEditForm(application))
 		setSaveError('')
 		setIsEditing(true)
@@ -430,22 +690,67 @@ const AdminApplicationDetails = () => {
 	}
 
 	const handleSave = async () => {
+		if (!isDistrictAdmin || !application?.form_type || !application?.id) {
+			return
+		}
 		setSaveError('')
 		setActionLoading(true)
 		try {
+			const normalize = (value) => {
+				if (value === null || value === undefined || value === '') return null
+				if (typeof value === 'boolean') return value ? '1' : '0'
+				if (typeof value === 'string') {
+					const trimmed = value.trim()
+					if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) return trimmed.slice(0, 10)
+					return trimmed
+				}
+				return String(value)
+			}
+
 			const payload = {}
+			const localChanges = []
 			for (const [key, value] of Object.entries(editForm)) {
-				if (isEditableField(key)) {
-					payload[key] = value === '' ? null : value
+				if (!isEditableField(key)) continue
+				const next = value === '' ? null : value
+				payload[key] = next
+				if (normalize(application[key]) !== normalize(next)) {
+					localChanges.push({
+						field: key,
+						from: application[key] ?? null,
+						to: next,
+					})
 				}
 			}
+
+			if (localChanges.length === 0) {
+				setIsEditing(false)
+				setEditForm({})
+				setSuccessModal({
+					title: 'No changes made',
+					description: `${application.application_no} was left unchanged.`,
+					changes: [],
+				})
+				setActionLoading(false)
+				return
+			}
+
 			const { data } = await api.put(
 				`/api/admin/applications/${application.form_type}/${application.id}`,
 				payload
 			)
-			setApplication(data.application)
+			const updated = data.application || {}
+			const changes = Array.isArray(data.changes) ? data.changes : localChanges
+			setApplication({
+				...updated,
+				form_type: updated.form_type || application.form_type,
+			})
 			setIsEditing(false)
 			setEditForm({})
+			setSuccessModal({
+				title: 'Form updated',
+				description: `${application.application_no} was saved successfully.`,
+				changes,
+			})
 		} catch (err) {
 			setSaveError(err?.response?.data?.message || 'Failed to save changes.')
 		} finally {
@@ -555,9 +860,11 @@ const AdminApplicationDetails = () => {
 
 	const renderEditInput = (key, value) => {
 		const raw = editForm[key] ?? value ?? ''
+		const inputId = `edit-field-${key}`
 		if (typeof raw === 'boolean') {
 			return (
 				<select
+					id={inputId}
 					className="admin-app-details__input"
 					value={String(raw)}
 					onChange={(e) => handleFieldChange(key, e.target.value === 'true')}
@@ -568,23 +875,42 @@ const AdminApplicationDetails = () => {
 			)
 		}
 
-		if (typeof raw === 'number' || key.includes('rent') || key.includes('amount') || key.includes('charge')) {
+		if (key.endsWith('_date') || key.includes('date')) {
+			const dateVal = typeof raw === 'string' && raw.includes('T') ? raw.slice(0, 10) : raw
 			return (
 				<input
-					type="text"
+					id={inputId}
+					type="date"
 					className="admin-app-details__input"
-					value={raw}
+					value={dateVal || ''}
 					onChange={(e) => handleFieldChange(key, e.target.value)}
 				/>
 			)
 		}
 
-		if (String(raw).length > 120 || key.includes('reason') || key.includes('description') || key.includes('address')) {
+		if (
+			typeof raw === 'number' ||
+			(key.includes('phone') || key.includes('mobile') || key.includes('aadhar') || key.includes('pan'))
+		) {
+			return (
+				<input
+					id={inputId}
+					type="text"
+					className="admin-app-details__input"
+					value={raw}
+					onChange={(e) => handleFieldChange(key, e.target.value)}
+					autoComplete="off"
+				/>
+			)
+		}
+
+		if (isWideEditField(key) || String(raw).length > 100) {
 			return (
 				<textarea
+					id={inputId}
 					className="admin-app-details__input admin-app-details__textarea"
 					value={raw}
-					rows={3}
+					rows={isWideEditField(key) ? 3 : 2}
 					onChange={(e) => handleFieldChange(key, e.target.value)}
 				/>
 			)
@@ -592,10 +918,12 @@ const AdminApplicationDetails = () => {
 
 		return (
 			<input
+				id={inputId}
 				type="text"
 				className="admin-app-details__input"
 				value={raw}
 				onChange={(e) => handleFieldChange(key, e.target.value)}
+				autoComplete="off"
 			/>
 		)
 	}
@@ -614,12 +942,111 @@ const AdminApplicationDetails = () => {
 				}${editable ? ' admin-app-details__grid--edit' : ''}`}
 			>
 				{visibleFields.map(([key, value]) => (
-					<div className="admin-app-details__field" key={key}>
+					<div
+						className={`admin-app-details__field${
+							editable && isWideEditField(key) ? ' admin-app-details__field--wide' : ''
+						}`}
+						key={key}
+					>
 						<dt>{labelize(key)}</dt>
 						<dd>{editable ? renderEditInput(key, value) : renderValue(key, value)}</dd>
 					</div>
 				))}
 			</dl>
+		)
+	}
+
+	const renderEditWorkspace = () => {
+		const editSections = buildEditSections(editForm, application.form_type)
+		return (
+			<div className="admin-edit-form">
+				<header className="admin-edit-form__header">
+					<div className="admin-edit-form__header-text">
+						<p className="admin-edit-form__eyebrow">Edit application</p>
+						<h2 className="admin-edit-form__title">{formLabel}</h2>
+						<p className="admin-edit-form__ref">{application.application_no}</p>
+					</div>
+					<p className="admin-edit-form__hint">
+						These fields were filled in by the applicant when they applied. You can
+						correct or update them here. Application number, UIN, status, district, and
+						uploaded documents cannot be changed.
+					</p>
+				</header>
+
+				<div className="admin-edit-form__body">
+					{editSections.map((section) => {
+						const fields = section.fields.filter(([key]) => isEditableField(key))
+						if (fields.length === 0) return null
+						return (
+							<section className="admin-edit-form__section" key={section.title}>
+								<div className="admin-edit-form__section-head">
+									<h3 className="admin-edit-form__section-title">{section.title}</h3>
+									<span className="admin-edit-form__section-tag">Applicant entered</span>
+								</div>
+								{renderFieldGrid(fields, true, false)}
+							</section>
+						)
+					})}
+				</div>
+			</div>
+		)
+	}
+
+	const formatEditValue = (value) => {
+		if (value === null || value === undefined || value === '') return '—'
+		if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+		return String(value)
+	}
+
+	const renderEditHistory = () => {
+		const history = Array.isArray(application?.edit_history)
+			? [...application.edit_history].reverse()
+			: []
+		if (history.length === 0) return null
+
+		return (
+			<section className="admin-edit-history no-print">
+				<h2 className="admin-edit-history__title">District admin edit notes</h2>
+				<p className="admin-edit-history__lead">
+					Record of corrections made after the applicant submitted the form.
+				</p>
+				<ul className="admin-edit-history__list">
+					{history.map((entry, index) => {
+						const changes = Array.isArray(entry.changes) ? entry.changes : []
+						const key = `${entry.edited_at || 'edit'}-${index}`
+						return (
+							<li className="admin-edit-history__item" key={key}>
+								<div className="admin-edit-history__meta">
+									<strong>{entry.edited_by || 'District admin'}</strong>
+									<span>
+										{entry.edited_at
+											? formatDateTime(entry.edited_at) || formatDate(entry.edited_at)
+											: '—'}
+									</span>
+								</div>
+								<ul className="admin-edit-history__changes">
+									{changes.map((change) => (
+										<li key={`${key}-${change.field}`}>
+											<span className="admin-edit-history__field">
+												{labelize(change.field)}
+											</span>
+											<span className="admin-edit-history__diff">
+												<span className="admin-edit-history__from">
+													{formatEditValue(change.from)}
+												</span>
+												<span aria-hidden> → </span>
+												<span className="admin-edit-history__to">
+													{formatEditValue(change.to)}
+												</span>
+											</span>
+										</li>
+									))}
+								</ul>
+							</li>
+						)
+					})}
+				</ul>
+			</section>
 		)
 	}
 
@@ -733,6 +1160,18 @@ const AdminApplicationDetails = () => {
 		)
 	}
 
+	const isTenancy = application?.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE
+	const allowEditing = Boolean(isDistrictAdmin && application)
+	const editing = allowEditing && isEditing
+	// Real government form paper view for every role (edit mode uses field form instead)
+	const isTenancyViewOnly = Boolean(application && isTenancy && !editing)
+	const isServiceViewOnly = Boolean(application && !isTenancy && !editing)
+	const isDocViewOnly = isTenancyViewOnly || isServiceViewOnly
+	const serviceFormDoc = useMemo(
+		() => (isServiceViewOnly ? buildServiceFormDocument(application) : null),
+		[isServiceViewOnly, application]
+	)
+
 	if (loading) {
 		return <div className="ws-dashboard-loading">Loading application details…</div>
 	}
@@ -755,33 +1194,68 @@ const AdminApplicationDetails = () => {
 
 	const statusClass = adminStatusBadgeClass(application.status)
 	const statusText = adminStatusLabel(application.status)
-	const isTenancy = application.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE
 	const detailSections = groupDetailFields(detailFields, application.form_type)
+	const storageBase = (api.defaults.baseURL || '').replace(/\/$/, '')
+	const hasManager =
+		hasDisplayValue(application.manager_name) &&
+		String(application.manager_name).toUpperCase() !== 'NA'
+	const officeAddress = application.office?.name
+		? `${application.office.name}${
+				application.district?.name ? `, ${application.district.name}` : ''
+			}`
+		: application.district?.name || '________________________'
+	const storageUrl = (path) => (path ? `${storageBase}/storage/${path}` : '')
 
 	return (
-		<div className="admin-app-details">
-			<div className="admin-app-details__toolbar">
+		<div
+			className={`admin-app-details${isDocViewOnly ? ' admin-tenancy-doc' : ''}${
+				isServiceViewOnly ? ' admin-service-doc' : ''
+			}`}
+		>
+			<div className="admin-app-details__toolbar no-print">
 				<button
 					type="button"
 					className="ws-btn ws-btn--outline ws-btn--sm admin-app-details__back"
-					onClick={() => navigate(listPath)}
+					onClick={() => (editing ? cancelEditing() : navigate(listPath))}
 				>
 					<Icon name="collapse" className="admin-app-details__back-icon" />
-					Back to {listLabel}
+					{editing ? 'Exit edit mode' : `Back to ${listLabel}`}
 				</button>
 
 				<div className="admin-app-details__toolbar-actions">
-					{isSuperAdmin && !isEditing ? (
+					{isTenancyViewOnly ? (
+						<>
+							<button
+								type="button"
+								className="ws-btn ws-btn--outline ws-btn--sm"
+								onClick={handlePrintTenancyForm}
+								disabled={actionLoading}
+							>
+								{actionLoading ? 'Opening…' : 'Print / Save PDF'}
+							</button>
+							{application.agreement_pdf_path ? (
+								<button
+									type="button"
+									className="ws-btn ws-btn--primary ws-btn--sm"
+									onClick={handleViewAgreement}
+									disabled={agreementLoading}
+								>
+									{agreementLoading ? 'Loading…' : 'View agreement'}
+								</button>
+							) : null}
+						</>
+					) : null}
+					{allowEditing && !editing ? (
 						<button
 							type="button"
 							className="ws-btn ws-btn--primary ws-btn--sm"
 							onClick={startEditing}
 						>
-							<Icon name="edit" />
+							<Icon name="edit" className="admin-app-details__btn-icon" />
 							Edit application
 						</button>
 					) : null}
-					{isEditing ? (
+					{editing ? (
 						<>
 							<button
 								type="button"
@@ -810,205 +1284,883 @@ const AdminApplicationDetails = () => {
 				</div>
 			) : null}
 
-			{isEditing ? (
-				<div className="admin-app-details__edit-banner" role="status">
-					Editing submitted form details only. Application number, UIN, status, district,
-					workflow history, and uploaded documents cannot be changed here.
-				</div>
-			) : null}
+			{editing ? renderEditWorkspace() : null}
 
-			<header className="admin-app-details__hero ws-card">
-				<div className="admin-app-details__hero-main">
-					<p className="admin-app-details__eyebrow">{formLabel}</p>
-					<div className="admin-app-details__hero-row">
-						<h2 className="admin-app-details__ref">{application.application_no}</h2>
-						{!isEditing ? (
-							<span className={statusClass}>{statusText}</span>
-						) : null}
-					</div>
-					<div className="admin-app-details__chips">
+			{!editing && isTenancyViewOnly ? (
+				<div className="admin-tenancy-doc__preview">
+					<aside className="admin-tenancy-doc__registry no-print">
+						<div className="admin-tenancy-doc__registry-item">
+							<span>Application no.</span>
+							<strong>{application.application_no}</strong>
+						</div>
 						{getUinValue(application) ? (
-							<span className="admin-app-details__chip admin-app-details__chip--uin">
-								UIN {getUinValue(application)}
-							</span>
-						) : null}
-						{application.district?.name ? (
-							<span className="admin-app-details__chip">{application.district.name}</span>
-						) : null}
-						{application.area_type ? (<span className="admin-app-details__chip">{application.area_type}</span>) : null}
-						{application.local_body ? (<span className="admin-app-details__chip">{application.local_body}</span>) : null}
-						{application.village_ward?.name ? (
-							<span className="admin-app-details__chip">{application.village_ward.name}</span>
-						) : null}
-						{application.village_name ? (
-							<span className="admin-app-details__chip">{application.village_name}</span>
-						) : null}
-						<span className="admin-app-details__chip">
-							Submitted {formatDate(application.created_at)}
-						</span>
-					</div>
-				</div>
-			</header>
-
-			{(application.user || isTenancy || workflowFields.length > 0) && !isEditing ? (
-				<div className="admin-app-details__meta-row">
-					{application.user ? (
-						<div className="admin-app-details__contact">
-							<div className="admin-app-details__contact-icon" aria-hidden>
-								<Icon name="user" />
+							<div className="admin-tenancy-doc__registry-item">
+								<span>UIN</span>
+								<strong>{getUinValue(application)}</strong>
 							</div>
-							<div className="admin-app-details__contact-body">
-								<span className="admin-app-details__contact-name">
-									{application.user.name || 'Applicant'}
+						) : null}
+						<div className="admin-tenancy-doc__registry-item">
+							<span>Status</span>
+							<span className={statusClass}>{statusText}</span>
+						</div>
+						<div className="admin-tenancy-doc__registry-item">
+							<span>Submitted on</span>
+							<strong>{formatDate(application.created_at)}</strong>
+						</div>
+						{application.district?.name ? (
+							<div className="admin-tenancy-doc__registry-item">
+								<span>District</span>
+								<strong>{application.district.name}</strong>
+							</div>
+						) : null}
+						{application.apply_type ? (
+							<div className="admin-tenancy-doc__registry-item">
+								<span>Apply type</span>
+								<strong>{labelize(String(application.apply_type))}</strong>
+							</div>
+						) : null}
+					</aside>
+
+					<div className="admin-tenancy-doc__viewer">
+						<div className="admin-tenancy-doc__viewer-bar no-print">
+							<span className="admin-tenancy-doc__viewer-label">
+								Submitted form · First Schedule
+							</span>
+							<div className="admin-tenancy-doc__zoom" role="group" aria-label="Zoom controls">
+								<button
+									type="button"
+									className="admin-tenancy-doc__zoom-btn"
+									onClick={() => zoomBy(-0.1)}
+									disabled={viewerScale <= 0.4}
+									aria-label="Zoom out"
+								>
+									−
+								</button>
+								<span className="admin-tenancy-doc__zoom-value" aria-live="polite">
+									{Math.round(viewerScale * 100)}%
 								</span>
-								<span className="admin-app-details__contact-meta">
-									{[application.user.email, application.user.phone].filter(Boolean).join(' · ')}
-								</span>
+								<button
+									type="button"
+									className="admin-tenancy-doc__zoom-btn"
+									onClick={() => zoomBy(0.1)}
+									disabled={viewerScale >= 2}
+									aria-label="Zoom in"
+								>
+									+
+								</button>
+								<button
+									type="button"
+									className={`admin-tenancy-doc__zoom-action${
+										viewerMode === 'manual' && viewerScale === 1 ? ' is-active' : ''
+									}`}
+									onClick={zoomToActual}
+								>
+									100%
+								</button>
+								<button
+									type="button"
+									className={`admin-tenancy-doc__zoom-action${
+										viewerMode === 'fit' ? ' is-active' : ''
+									}`}
+									onClick={fitViewerToWidth}
+								>
+									Fit width
+								</button>
 							</div>
 						</div>
-					) : null}
-					{isTenancy && !application.user ? (
-						<>
-							{hasDisplayValue(application.landlord_name) ? (
-								<div className="admin-app-details__contact">
-									<div className="admin-app-details__contact-icon" aria-hidden>
-										<Icon name="user" />
-									</div>
-									<div className="admin-app-details__contact-body">
-										<span className="admin-app-details__contact-name">
-											Landlord: {application.landlord_name}
-										</span>
-										<span className="admin-app-details__contact-meta">
-											{[application.landlord_email, application.landlord_phone]
-												.filter(Boolean)
-												.join(' · ')}
-										</span>
-									</div>
-								</div>
-							) : null}
-							{hasDisplayValue(application.tenant_name) ? (
-								<div className="admin-app-details__contact">
-									<div className="admin-app-details__contact-icon" aria-hidden>
-										<Icon name="user" />
-									</div>
-									<div className="admin-app-details__contact-body">
-										<span className="admin-app-details__contact-name">
-											Tenant: {application.tenant_name}
-										</span>
-										<span className="admin-app-details__contact-meta">
-											{[application.tenant_email, application.tenant_phone]
-												.filter(Boolean)
-												.join(' · ')}
-										</span>
-									</div>
-								</div>
-							) : null}
-						</>
-					) : null}
-					{workflowFields.map(([key, value]) =>
-						renderStat(labelize(key), renderValue(key, value))
-					)}
-				</div>
-			) : null}
-
-			{detailSections.map((section) => {
-				const hasContent = isEditing
-					? section.fields.some(([key]) => isEditableField(key))
-					: section.fields.length > 0
-				if (!hasContent) return null
-
-				return (
-					<section className="admin-app-details__card ws-card" key={section.title}>
-						<h3 className="admin-app-details__section-title">
-							{isEditing ? `Edit — ${section.title.toLowerCase()}` : section.title}
-						</h3>
-						{renderFieldGrid(section.fields, isEditing, true)}
-					</section>
-				)
-			})}
-
-			{renderValuerSections()}
-
-			{user?.role === 'super_admin' && application.form_type && (() => {
-				const transitions = getValidTransitions(application.form_type)
-				if (!transitions) return null
-				return (
-					<section className="admin-app-details__card admin-app-details__superadmin-card" style={{ border: '2px solid var(--clr-primary-500)', backgroundColor: 'var(--clr-primary-50)' }}>
-						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-primary-700)' }}>Superadmin Workflow Override</h3>
-						<div className="admin-app-details__grid" style={{ marginBottom: '1rem' }}>
-							<div className="admin-app-details__field">
-								<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Move To</label>
-								<select 
-									className="ws-input" 
-									value={`${superAdminControls.assigned_to_role}|${superAdminControls.status}`} 
-									onChange={(e) => {
-										const [role, status] = e.target.value.split('|')
-										setSuperAdminControls({ assigned_to_role: role, status })
+						<div className="admin-tenancy-doc__viewer-stage" ref={viewerStageRef}>
+							<div
+								className="admin-tenancy-doc__paper-frame"
+								style={{
+									width: `${794 * viewerScale}px`,
+									height: `${paperHeight * viewerScale}px`,
+								}}
+							>
+								<article
+									className="govt-form-document admin-tenancy-doc__paper"
+									ref={paperRef}
+									style={{
+										transform: `scale(${viewerScale})`,
 									}}
 								>
-									{transitions.map(({ role, status, label }) => (
-										<option key={`${role}|${status}`} value={`${role}|${status}`}>{label}</option>
-									))}
-								</select>
+									<div className="govt-form-watermark">SUBMITTED</div>
+
+									<header className="govt-form-header">
+										<div className="admin-tenancy-doc__schedule">THE FIRST SCHEDULE</div>
+										<div className="admin-tenancy-doc__section-ref">
+											[See section 4(1) and 7(2)]
+										</div>
+										<div className="admin-tenancy-doc__form-title">
+											FORM FOR INFORMATION OF TENANCY
+										</div>
+									</header>
+
+									<div className="admin-tenancy-doc__addressee">
+										<div>To,</div>
+										<div>The Rent Authority</div>
+										<div>{officeAddress} (Address)</div>
+									</div>
+
+									<div className="preview-list-container">
+										{[
+											[
+												'1.',
+												'Name and address of the landlord',
+												application.landlord_name
+													? `${application.landlord_name}, ${application.landlord_address || ''}`
+													: '',
+											],
+											[
+												'2.',
+												'Name and address of the Property Manager (if any)',
+												hasManager
+													? `${application.manager_name}, ${application.manager_address || ''}`
+													: '',
+											],
+											[
+												'3.',
+												'Name(s) and address of the tenant, including email and contact details',
+												application.tenant_name
+													? `${application.tenant_name}, ${application.tenant_address || ''}, Email: ${application.tenant_email || ''}, Phone: ${application.tenant_phone || ''}`
+													: '',
+											],
+											[
+												'4.',
+												'Description of previous tenancy, if any',
+												application.tenant_previous_tenancy || '',
+											],
+											[
+												'5.',
+												'Description of premises let to the tenant including appurtenant land, if any',
+												application.property_premises_description || '',
+											],
+											[
+												'6.',
+												'Date from which possession is given to the tenant',
+												formatDate(application.property_possession_date) ||
+													application.property_possession_date ||
+													'',
+											],
+											[
+												'7.',
+												'Rent payable as in section 8',
+												application.property_rent_payable
+													? `₹${application.property_rent_payable}`
+													: '',
+											],
+											[
+												'8.',
+												'Furniture and other equipment provided to the tenant',
+												application.property_furniture_description || '',
+											],
+										].map(([sl, label, value]) => (
+											<div className="preview-list-item admin-tenancy-doc__row" key={sl}>
+												<div className="admin-tenancy-doc__sl">{sl}</div>
+												<div className="admin-tenancy-doc__label">{label}</div>
+												<div className="admin-tenancy-doc__value">: {value}</div>
+											</div>
+										))}
+
+										<div className="preview-list-item admin-tenancy-doc__row">
+											<div className="admin-tenancy-doc__sl">9.</div>
+											<div className="admin-tenancy-doc__label">
+												Other charges payable
+												<br />
+												(a) Electricity
+												<br />
+												(b) Water
+												<br />
+												(c) Extra furnishing, fittings and fixtures
+												<br />
+												(d) Other services
+											</div>
+											<div className="admin-tenancy-doc__value admin-tenancy-doc__value--stack">
+												<div>&nbsp;</div>
+												<div>: {application.property_charge_electricity || ''}</div>
+												<div>: {application.property_charge_water || ''}</div>
+												<div>: {application.property_charge_furnishing || ''}</div>
+												<div>: {application.property_charge_other_services || ''}</div>
+											</div>
+										</div>
+
+										{[
+											[
+												'10.',
+												'Attach rent or lease or tenancy agreement',
+												application.agreement_pdf_path ? 'Attached' : 'Not attached',
+											],
+											[
+												'11.',
+												'Duration of tenancy (Period for which let)',
+												`${application.property_tenancy_duration || ''}${
+													application.property_tenancy_end_date
+														? ` (Till ${formatDate(application.property_tenancy_end_date)})`
+														: ''
+												}`,
+											],
+											[
+												'12.',
+												'Permanent Account Number (PAN) of landlord',
+												application.landlord_pan || '',
+											],
+											[
+												'13.',
+												'Aadhaar number of landlord',
+												application.landlord_aadhar || '',
+											],
+											[
+												'14.',
+												'Mobile Number and E-mail id of landlord (if available)',
+												[application.landlord_phone, application.landlord_email]
+													.filter(Boolean)
+													.join(', '),
+											],
+											[
+												'15.',
+												'Permanent Account Number (PAN) of tenant',
+												application.tenant_pan || '',
+											],
+											[
+												'16.',
+												'Aadhaar number of tenant',
+												application.tenant_aadhar || '',
+											],
+											[
+												'17.',
+												'Mobile Number and E-mail id of tenant',
+												[application.tenant_phone, application.tenant_email]
+													.filter(Boolean)
+													.join(', '),
+											],
+											[
+												'18.',
+												'Permanent Account Number (PAN) of Property Manager (if any)',
+												hasManager &&
+												application.manager_pan &&
+												String(application.manager_pan).toUpperCase() !== 'NA'
+													? application.manager_pan
+													: '',
+											],
+											[
+												'19.',
+												'Aadhaar number of Property Manager (if any)',
+												hasManager ? application.manager_aadhar || '' : '',
+											],
+											[
+												'20.',
+												'Mobile Number and E-mail id of Property Manager (if any)',
+												hasManager &&
+												application.manager_phone &&
+												String(application.manager_phone).toUpperCase() !== 'NA'
+													? [
+															application.manager_phone,
+															application.manager_email &&
+															application.manager_email !== 'noemail@noemail.com'
+																? application.manager_email
+																: null,
+														]
+															.filter(Boolean)
+															.join(', ')
+													: '',
+											],
+										].map(([sl, label, value]) => (
+											<div className="preview-list-item admin-tenancy-doc__row" key={sl}>
+												<div className="admin-tenancy-doc__sl">{sl}</div>
+												<div className="admin-tenancy-doc__label">{label}</div>
+												<div className="admin-tenancy-doc__value">: {value}</div>
+											</div>
+										))}
+									</div>
+
+									<div className="admin-tenancy-doc__signatures">
+										<div className="admin-tenancy-doc__sign-block">
+											<div className="admin-tenancy-doc__sign-caption">
+												Name and signature of landlord
+											</div>
+											<div className="admin-tenancy-doc__photo-box">
+												{application.landlord_photo_path ? (
+													<img
+														src={storageUrl(application.landlord_photo_path)}
+														alt="Landlord photograph"
+													/>
+												) : (
+													<span>
+														Photograph
+														<br />
+														of
+														<br />
+														Landlord
+													</span>
+												)}
+											</div>
+											<div className="admin-tenancy-doc__sign-line">
+												{application.landlord_signature_path ? (
+													<img
+														src={storageUrl(application.landlord_signature_path)}
+														alt="Landlord signature"
+													/>
+												) : null}
+											</div>
+										</div>
+										<div className="admin-tenancy-doc__sign-block">
+											<div className="admin-tenancy-doc__sign-caption">
+												Name and signature of tenant
+											</div>
+											<div className="admin-tenancy-doc__photo-box">
+												{application.tenant_photo_path ? (
+													<img
+														src={storageUrl(application.tenant_photo_path)}
+														alt="Tenant photograph"
+													/>
+												) : (
+													<span>
+														Photograph
+														<br />
+														of
+														<br />
+														Tenant
+													</span>
+												)}
+											</div>
+											<div className="admin-tenancy-doc__sign-line">
+												{application.tenant_signature_path ? (
+													<img
+														src={storageUrl(application.tenant_signature_path)}
+														alt="Tenant signature"
+													/>
+												) : null}
+											</div>
+										</div>
+									</div>
+
+									<div className="admin-tenancy-doc__enclosed">
+										<strong>Enclosed:</strong>
+										<ol>
+											<li>Tenancy Agreement.</li>
+											<li>Self-attested copies of PAN and Aadhaar of landlord.</li>
+											<li>Self-attested copies of PAN and Aadhaar of tenant.</li>
+										</ol>
+									</div>
+								</article>
 							</div>
 						</div>
-						<button
-							type="button"
-							className="ws-btn ws-btn--primary"
-							onClick={handleSuperAdminMove}
-							disabled={actionLoading}
-						>
-							Force Move Application
-						</button>
-					</section>
-				)
-			})()}
+					</div>
 
-			{(ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED) ||
-			(PRINCIPAL_ROLES.includes(user?.role) && (application.status === STATUS.IN_REVIEW || (user?.role === ROLES.RENT_AUTHORITY && application.status === STATUS.VALUER_REPORT_SUBMITTED))) ? (
-				<footer className="admin-app-details__actions">
-					{ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED && (
-						<>
-							<button
-								type="button"
-								className="ws-btn ws-btn--primary"
-								onClick={() => openWorkflowModal('forward')}
-								disabled={actionLoading}
-							>
-								Move to review
-							</button>
-							<button
-								type="button"
-								className="ws-btn ws-btn--danger"
-								onClick={() => openWorkflowModal('reject')}
-								disabled={actionLoading}
-							>
-								Reject
-							</button>
-						</>
-					)}
+					{workflowFields.length > 0 ? (
+						<section className="admin-tenancy-doc__workflow no-print">
+							<h2 className="admin-tenancy-doc__workflow-title">Workflow record</h2>
+							<dl className="admin-app-details__grid">
+								{workflowFields.map(([key, value]) => (
+									<div className="admin-app-details__field" key={key}>
+										<dt>{labelize(key)}</dt>
+										<dd>{renderValue(key, value)}</dd>
+									</div>
+								))}
+							</dl>
+						</section>
+					) : null}
+				</div>
+			) : !editing && isServiceViewOnly ? (
+				<div className="admin-tenancy-doc__preview">
+					<aside className="admin-tenancy-doc__registry no-print">
+						<div className="admin-tenancy-doc__registry-item">
+							<span>Application no.</span>
+							<strong>{application.application_no}</strong>
+						</div>
+						<div className="admin-tenancy-doc__registry-item">
+							<span>Form</span>
+							<strong>{serviceFormDoc?.formName || formLabel}</strong>
+						</div>
+						<div className="admin-tenancy-doc__registry-item">
+							<span>Status</span>
+							<span className={statusClass}>{statusText}</span>
+						</div>
+						<div className="admin-tenancy-doc__registry-item">
+							<span>Submitted on</span>
+							<strong>{formatDate(application.created_at)}</strong>
+						</div>
+						{application.district?.name ? (
+							<div className="admin-tenancy-doc__registry-item">
+								<span>District</span>
+								<strong>{application.district.name}</strong>
+							</div>
+						) : null}
+						{getUinValue(application) ? (
+							<div className="admin-tenancy-doc__registry-item">
+								<span>UIN</span>
+								<strong>{getUinValue(application)}</strong>
+							</div>
+						) : null}
+					</aside>
 
-					{(PRINCIPAL_ROLES.includes(user?.role) && (application.status === STATUS.IN_REVIEW || (user?.role === ROLES.RENT_AUTHORITY && application.status === STATUS.VALUER_REPORT_SUBMITTED))) && (
-						<>
-							<button
-								type="button"
-								className="ws-btn ws-btn--primary"
-								onClick={() => openWorkflowModal('approve')}
-								disabled={actionLoading}
+					<div className="admin-tenancy-doc__viewer">
+						<div className="admin-tenancy-doc__viewer-bar no-print">
+							<span className="admin-tenancy-doc__viewer-label">
+								{serviceFormDoc?.viewerLabel || 'Submitted form'}
+							</span>
+							<div className="admin-tenancy-doc__zoom" role="group" aria-label="Zoom controls">
+								<button
+									type="button"
+									className="admin-tenancy-doc__zoom-btn"
+									onClick={() => zoomBy(-0.1)}
+									disabled={viewerScale <= 0.4}
+									aria-label="Zoom out"
+								>
+									−
+								</button>
+								<span className="admin-tenancy-doc__zoom-value" aria-live="polite">
+									{Math.round(viewerScale * 100)}%
+								</span>
+								<button
+									type="button"
+									className="admin-tenancy-doc__zoom-btn"
+									onClick={() => zoomBy(0.1)}
+									disabled={viewerScale >= 2}
+									aria-label="Zoom in"
+								>
+									+
+								</button>
+								<button
+									type="button"
+									className={`admin-tenancy-doc__zoom-action${
+										viewerMode === 'manual' && viewerScale === 1 ? ' is-active' : ''
+									}`}
+									onClick={zoomToActual}
+								>
+									100%
+								</button>
+								<button
+									type="button"
+									className={`admin-tenancy-doc__zoom-action${
+										viewerMode === 'fit' ? ' is-active' : ''
+									}`}
+									onClick={fitViewerToWidth}
+								>
+									Fit width
+								</button>
+							</div>
+						</div>
+						<div className="admin-tenancy-doc__viewer-stage" ref={viewerStageRef}>
+							<div
+								className="admin-tenancy-doc__paper-frame"
+								style={{
+									width: `${794 * viewerScale}px`,
+									height: `${paperHeight * viewerScale}px`,
+								}}
 							>
-								Approve
-							</button>
-							<button
-								type="button"
-								className="ws-btn ws-btn--danger"
-								onClick={() => openWorkflowModal('reject')}
-								disabled={actionLoading}
+								<article
+									className="govt-form-document admin-tenancy-doc__paper admin-service-doc__paper"
+									ref={paperRef}
+									style={{
+										transform: `scale(${viewerScale})`,
+									}}
+								>
+									<div className="govt-form-watermark">SUBMITTED</div>
+
+									<header className="govt-form-header">
+										<div className="admin-tenancy-doc__schedule">
+											{serviceFormDoc?.formName || 'SERVICE FORM'}
+										</div>
+										{serviceFormDoc?.scheduleRef ? (
+											<div className="admin-tenancy-doc__section-ref">
+												{serviceFormDoc.scheduleRef}
+											</div>
+										) : null}
+										<div className="admin-tenancy-doc__form-title">
+											{serviceFormDoc?.formTitle || formLabel}
+										</div>
+									</header>
+
+									{serviceFormDoc?.addressee?.length ? (
+										<div className="admin-tenancy-doc__addressee">
+											{serviceFormDoc.addressee.map((line, index) => (
+												<div key={`${index}-${line}`}>{line}</div>
+											))}
+										</div>
+									) : null}
+
+									<div className="preview-list-container">
+										{(serviceFormDoc?.rows || []).map((item) => (
+											<div
+												className="preview-list-item admin-tenancy-doc__row"
+												key={`${item.sl}-${item.label}`}
+											>
+												<div className="admin-tenancy-doc__sl">{item.sl}</div>
+												<div className="admin-tenancy-doc__label">{item.label}</div>
+												<div
+													className={`admin-tenancy-doc__value${
+														item.value && item.value.length > 120
+															? ' admin-tenancy-doc__value--stack'
+															: ''
+													}`}
+												>
+													: {item.value || '________________________'}
+												</div>
+											</div>
+										))}
+									</div>
+
+									{serviceFormDoc?.signature ? (
+										<div className="admin-service-doc__signature">
+											<div className="admin-service-doc__signature-meta">
+												{serviceFormDoc.signature.signedBy ? (
+													<div>
+														Signed by:{' '}
+														<strong>
+															{labelize(String(serviceFormDoc.signature.signedBy))}
+														</strong>
+													</div>
+												) : null}
+												{serviceFormDoc.signature.name ? (
+													<div>
+														Name: <strong>{serviceFormDoc.signature.name}</strong>
+													</div>
+												) : null}
+												{serviceFormDoc.submittedOn ? (
+													<div>Date: {serviceFormDoc.submittedOn}</div>
+												) : null}
+											</div>
+											<div className="admin-tenancy-doc__sign-block">
+												<div className="admin-tenancy-doc__sign-caption">
+													{serviceFormDoc.signature.caption}
+												</div>
+												<div className="admin-tenancy-doc__sign-line">
+													{serviceFormDoc.signature.imagePath ? (
+														<img
+															src={storageUrl(serviceFormDoc.signature.imagePath)}
+															alt="Applicant signature"
+														/>
+													) : (
+														<span className="admin-service-doc__sign-placeholder">
+															________________________
+														</span>
+													)}
+												</div>
+											</div>
+										</div>
+									) : null}
+								</article>
+							</div>
+						</div>
+					</div>
+
+					{application.valuer_report || application.assigned_valuer?.name ? (
+						<section className="admin-tenancy-doc__workflow no-print">
+							<h2 className="admin-tenancy-doc__workflow-title">Valuer record</h2>
+							<dl className="admin-app-details__grid">
+								{application.assigned_valuer?.name ? (
+									<div className="admin-app-details__field">
+										<dt>Assigned valuer</dt>
+										<dd>{application.assigned_valuer.name}</dd>
+									</div>
+								) : null}
+								{application.valuer_report ? (
+									<div className="admin-app-details__field">
+										<dt>Valuer report</dt>
+										<dd style={{ whiteSpace: 'pre-wrap' }}>{application.valuer_report}</dd>
+									</div>
+								) : null}
+							</dl>
+						</section>
+					) : null}
+
+					{workflowFields.length > 0 ? (
+						<section className="admin-tenancy-doc__workflow no-print">
+							<h2 className="admin-tenancy-doc__workflow-title">Workflow record</h2>
+							<dl className="admin-app-details__grid">
+								{workflowFields.map(([key, value]) => (
+									<div className="admin-app-details__field" key={key}>
+										<dt>{labelize(key)}</dt>
+										<dd>{renderValue(key, value)}</dd>
+									</div>
+								))}
+							</dl>
+						</section>
+					) : null}
+				</div>
+			) : !editing ? (
+				<>
+					<header className="admin-app-details__hero ws-card">
+						<div className="admin-app-details__hero-main">
+							<p className="admin-app-details__eyebrow">{formLabel}</p>
+							<div className="admin-app-details__hero-row">
+								<h2 className="admin-app-details__ref">{application.application_no}</h2>
+								<span className={statusClass}>{statusText}</span>
+							</div>
+							<div className="admin-app-details__chips">
+								{getUinValue(application) ? (
+									<span className="admin-app-details__chip admin-app-details__chip--uin">
+										UIN {getUinValue(application)}
+									</span>
+								) : null}
+								{application.district?.name ? (
+									<span className="admin-app-details__chip">{application.district.name}</span>
+								) : null}
+								{application.area_type ? (
+									<span className="admin-app-details__chip">{application.area_type}</span>
+								) : null}
+								{application.local_body ? (
+									<span className="admin-app-details__chip">{application.local_body}</span>
+								) : null}
+								{application.village_ward?.name ? (
+									<span className="admin-app-details__chip">
+										{application.village_ward.name}
+									</span>
+								) : null}
+								{application.village_name ? (
+									<span className="admin-app-details__chip">{application.village_name}</span>
+								) : null}
+								<span className="admin-app-details__chip">
+									Submitted {formatDate(application.created_at)}
+								</span>
+							</div>
+						</div>
+					</header>
+
+					{(application.user || isTenancy || workflowFields.length > 0) && !editing ? (
+						<div className="admin-app-details__meta-row">
+							{application.user ? (
+								<div className="admin-app-details__contact">
+									<div className="admin-app-details__contact-icon" aria-hidden>
+										<Icon name="user" />
+									</div>
+									<div className="admin-app-details__contact-body">
+										<span className="admin-app-details__contact-name">
+											{application.user.name || 'Applicant'}
+										</span>
+										<span className="admin-app-details__contact-meta">
+											{[application.user.email, application.user.phone]
+												.filter(Boolean)
+												.join(' · ')}
+										</span>
+									</div>
+								</div>
+							) : null}
+							{isTenancy && !application.user ? (
+								<>
+									{hasDisplayValue(application.landlord_name) ? (
+										<div className="admin-app-details__contact">
+											<div className="admin-app-details__contact-icon" aria-hidden>
+												<Icon name="user" />
+											</div>
+											<div className="admin-app-details__contact-body">
+												<span className="admin-app-details__contact-name">
+													Landlord: {application.landlord_name}
+												</span>
+												<span className="admin-app-details__contact-meta">
+													{[application.landlord_email, application.landlord_phone]
+														.filter(Boolean)
+														.join(' · ')}
+												</span>
+											</div>
+										</div>
+									) : null}
+									{hasDisplayValue(application.tenant_name) ? (
+										<div className="admin-app-details__contact">
+											<div className="admin-app-details__contact-icon" aria-hidden>
+												<Icon name="user" />
+											</div>
+											<div className="admin-app-details__contact-body">
+												<span className="admin-app-details__contact-name">
+													Tenant: {application.tenant_name}
+												</span>
+												<span className="admin-app-details__contact-meta">
+													{[application.tenant_email, application.tenant_phone]
+														.filter(Boolean)
+														.join(' · ')}
+												</span>
+											</div>
+										</div>
+									) : null}
+								</>
+							) : null}
+							{workflowFields.map(([key, value]) =>
+								renderStat(labelize(key), renderValue(key, value))
+							)}
+						</div>
+					) : null}
+
+					{detailSections.map((section) => {
+						if (section.fields.length === 0) return null
+
+						return (
+							<section className="admin-app-details__card ws-card" key={section.title}>
+								<h3 className="admin-app-details__section-title">{section.title}</h3>
+								{renderFieldGrid(section.fields, false, true)}
+							</section>
+						)
+					})}
+
+					{renderValuerSections()}
+
+					{user?.role === 'super_admin' && application.form_type && (() => {
+						const transitions = getValidTransitions(application.form_type)
+						if (!transitions) return null
+						return (
+							<section
+								className="admin-app-details__card admin-app-details__superadmin-card"
+								style={{
+									border: '2px solid var(--clr-primary-500)',
+									backgroundColor: 'var(--clr-primary-50)',
+								}}
 							>
-								Reject
-							</button>
-						</>
-					)}
-				</footer>
+								<h3
+									className="admin-app-details__section-title"
+									style={{ color: 'var(--clr-primary-700)' }}
+								>
+									Superadmin Workflow Override
+								</h3>
+								<div className="admin-app-details__grid" style={{ marginBottom: '1rem' }}>
+									<div className="admin-app-details__field">
+										<label
+											style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}
+										>
+											Move To
+										</label>
+										<select
+											className="ws-input"
+											value={`${superAdminControls.assigned_to_role}|${superAdminControls.status}`}
+											onChange={(e) => {
+												const [role, status] = e.target.value.split('|')
+												setSuperAdminControls({ assigned_to_role: role, status })
+											}}
+										>
+											{transitions.map(({ role, status, label }) => (
+												<option key={`${role}|${status}`} value={`${role}|${status}`}>
+													{label}
+												</option>
+											))}
+										</select>
+									</div>
+								</div>
+								<button
+									type="button"
+									className="ws-btn ws-btn--primary"
+									onClick={handleSuperAdminMove}
+									disabled={actionLoading}
+								>
+									Force Move Application
+								</button>
+							</section>
+						)
+					})()}
+
+					{(ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED) ||
+					(PRINCIPAL_ROLES.includes(user?.role) &&
+						(application.status === STATUS.IN_REVIEW ||
+							(user?.role === ROLES.RENT_AUTHORITY &&
+								application.status === STATUS.VALUER_REPORT_SUBMITTED))) ? (
+						<footer className="admin-app-details__actions">
+							{ASSISTANT_ROLES.includes(user?.role) &&
+								application.status === STATUS.SUBMITTED && (
+									<>
+										<button
+											type="button"
+											className="ws-btn ws-btn--primary"
+											onClick={() => openWorkflowModal('forward')}
+											disabled={actionLoading}
+										>
+											Move to review
+										</button>
+										<button
+											type="button"
+											className="ws-btn ws-btn--danger"
+											onClick={() => openWorkflowModal('reject')}
+											disabled={actionLoading}
+										>
+											Reject
+										</button>
+									</>
+								)}
+
+							{PRINCIPAL_ROLES.includes(user?.role) &&
+								(application.status === STATUS.IN_REVIEW ||
+									(user?.role === ROLES.RENT_AUTHORITY &&
+										application.status === STATUS.VALUER_REPORT_SUBMITTED)) && (
+									<>
+										<button
+											type="button"
+											className="ws-btn ws-btn--primary"
+											onClick={() => openWorkflowModal('approve')}
+											disabled={actionLoading}
+										>
+											Approve
+										</button>
+										<button
+											type="button"
+											className="ws-btn ws-btn--danger"
+											onClick={() => openWorkflowModal('reject')}
+											disabled={actionLoading}
+										>
+											Reject
+										</button>
+									</>
+								)}
+						</footer>
+					) : null}
+				</>
+			) : null}
+
+			{/* Staff workflow actions under the government form paper */}
+			{!editing && application ? (
+				<div className="admin-app-details__staff-panel no-print">
+					{renderEditHistory()}
+					{renderValuerSections()}
+
+					{(ASSISTANT_ROLES.includes(user?.role) && application.status === STATUS.SUBMITTED) ||
+					(PRINCIPAL_ROLES.includes(user?.role) &&
+						(application.status === STATUS.IN_REVIEW ||
+							(user?.role === ROLES.RENT_AUTHORITY &&
+								application.status === STATUS.VALUER_REPORT_SUBMITTED))) ? (
+						<footer className="admin-app-details__actions">
+							{ASSISTANT_ROLES.includes(user?.role) &&
+								application.status === STATUS.SUBMITTED && (
+									<>
+										<button
+											type="button"
+											className="ws-btn ws-btn--primary"
+											onClick={() => openWorkflowModal('forward')}
+											disabled={actionLoading}
+										>
+											Move to review
+										</button>
+										<button
+											type="button"
+											className="ws-btn ws-btn--danger"
+											onClick={() => openWorkflowModal('reject')}
+											disabled={actionLoading}
+										>
+											Reject
+										</button>
+									</>
+								)}
+
+							{PRINCIPAL_ROLES.includes(user?.role) &&
+								(application.status === STATUS.IN_REVIEW ||
+									(user?.role === ROLES.RENT_AUTHORITY &&
+										application.status === STATUS.VALUER_REPORT_SUBMITTED)) && (
+									<>
+										<button
+											type="button"
+											className="ws-btn ws-btn--primary"
+											onClick={() => openWorkflowModal('approve')}
+											disabled={actionLoading}
+										>
+											Approve
+										</button>
+										<button
+											type="button"
+											className="ws-btn ws-btn--danger"
+											onClick={() => openWorkflowModal('reject')}
+											disabled={actionLoading}
+										>
+											Reject
+										</button>
+									</>
+								)}
+						</footer>
+					) : null}
+				</div>
 			) : null}
 
 			<WorkflowConfirmModal
@@ -1085,7 +2237,68 @@ const AdminApplicationDetails = () => {
 				primaryLabel="OK"
 				secondaryLabel="Close"
 				onPrimary={() => setSuccessModal(null)}
-			/>
+			>
+				{Array.isArray(successModal?.changes) && successModal.changes.length > 0 ? (
+					<div className="admin-edit-changes">
+						<p className="admin-edit-changes__label">Changes made</p>
+						<ul className="admin-edit-changes__list">
+							{successModal.changes.map((change) => (
+								<li key={change.field}>
+									<span className="admin-edit-changes__field">
+										{labelize(change.field)}
+									</span>
+									<span className="admin-edit-changes__diff">
+										<span className="admin-edit-changes__from">
+											{formatEditValue(change.from)}
+										</span>
+										<span aria-hidden> → </span>
+										<span className="admin-edit-changes__to">
+											{formatEditValue(change.to)}
+										</span>
+									</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				) : null}
+			</WorkflowConfirmModal>
+
+			{docPreview ? (
+				<div
+					className="tenancy-doc-preview-overlay"
+					role="presentation"
+					onClick={closeDocPreview}
+				>
+					<div
+						className="tenancy-doc-preview-modal"
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="admin-tenancy-agreement-title"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<header className="tenancy-doc-preview-modal__header">
+							<h2 id="admin-tenancy-agreement-title">{docPreview.title}</h2>
+							<button
+								type="button"
+								className="tenancy-doc-preview-modal__close"
+								onClick={closeDocPreview}
+								aria-label="Close preview"
+							>
+								×
+							</button>
+						</header>
+						<div className="tenancy-doc-preview-modal__body">
+							<iframe
+								title={docPreview.title}
+								src={docPreview.url}
+								className={`tenancy-doc-preview-modal__iframe${
+									docPreview.isPdf ? '' : ' tenancy-doc-preview-modal__iframe--html'
+								}`}
+							/>
+						</div>
+					</div>
+				</div>
+			) : null}
 		</div>
 	)
 }

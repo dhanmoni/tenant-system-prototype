@@ -13,6 +13,7 @@ class TenancyApplication extends Model
 
     protected $casts = [
         'movement_history' => 'array',
+        'edit_history' => 'array',
         'initiator_completed' => 'boolean',
         'second_party_completed' => 'boolean',
     ];

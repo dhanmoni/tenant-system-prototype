@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react'
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const WEEKDAYS = [
+	{ key: 'sun', short: 'S', label: 'Sun' },
+	{ key: 'mon', short: 'M', label: 'Mon' },
+	{ key: 'tue', short: 'T', label: 'Tue' },
+	{ key: 'wed', short: 'W', label: 'Wed' },
+	{ key: 'thu', short: 'T', label: 'Thu' },
+	{ key: 'fri', short: 'F', label: 'Fri' },
+	{ key: 'sat', short: 'S', label: 'Sat' },
+]
 
 function toDateKey(date) {
 	const y = date.getFullYear()
@@ -19,6 +27,7 @@ function DistrictActivityCalendar({
 	selectedDate,
 	onSelectDate,
 	embedded = false,
+	statsMode = false,
 }) {
 	const activityMap = useMemo(() => {
 		const map = new Map()
@@ -110,9 +119,12 @@ function DistrictActivityCalendar({
 			</div>
 
 			<div className="ws-da-calendar-weekdays">
-				{WEEKDAYS.map((label) => (
-					<span key={label} className="ws-da-calendar-weekday">
-						{label}
+				{WEEKDAYS.map((day) => (
+					<span key={day.key} className="ws-da-calendar-weekday" title={day.label}>
+						<span className="ws-da-calendar-weekday__full">{day.label}</span>
+						<span className="ws-da-calendar-weekday__short" aria-hidden>
+							{day.short}
+						</span>
 					</span>
 				))}
 			</div>
@@ -169,9 +181,11 @@ function DistrictActivityCalendar({
 				</p>
 			) : (
 				<p className="ws-da-calendar-filter ws-da-calendar-filter--muted">
-					{embedded
-						? 'Click a date to filter the applications list.'
-						: 'Click a date to filter the daily applications table.'}
+					{statsMode
+						? 'Click a date to view that day’s submission stats.'
+						: embedded
+							? 'Click a date to filter the applications list.'
+							: 'Click a date to filter the daily applications table.'}
 				</p>
 			)}
 		</div>

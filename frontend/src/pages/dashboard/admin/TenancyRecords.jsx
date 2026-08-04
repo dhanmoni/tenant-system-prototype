@@ -1,163 +1,297 @@
-import { useNavigate } from 'react-router-dom';
-import api from '../../../api';
-import DataTable from '../../../components/dashboard/DataTable';
-import { Icon } from '../../../components/dashboard/Icons';
-import { useCallback, useEffect, useState } from 'react';
-import { formatDate } from '../../../utils/formatters';
-import { ADMIN_ROLES, ROLES } from '../../../constants/roles';
-import { STATUS_LABELS } from '../../../constants/status';
-import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge';
-import './ApplicationList.css';
+import { useNavigate } from 'react-router-dom'
+import api from '../../../api'
+import DataTable from '../../../components/dashboard/DataTable'
+import { Icon } from '../../../components/dashboard/Icons'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { formatDate } from '../../../utils/formatters'
+import { APPLICATION_TYPES } from '../../../constants/application'
+import { ADMIN_ROLES, ROLES } from '../../../constants/roles'
+import { STATUS, STATUS_LABELS } from '../../../constants/status'
+import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
+import './TenancyRecords.css'
+
+const STATUS_PILLS = [
+	{ value: '', label: 'All' },
+	{ value: STATUS.APPROVED, label: 'Approved' },
+	{ value: STATUS.REJECTED, label: 'Rejected' },
+	{ value: STATUS.IN_REVIEW, label: 'In review' },
+]
+
+const SORT_OPTIONS = [
+	{ key: 'created_at', label: 'Date' },
+	{ key: 'application_no', label: 'Application no.' },
+	{ key: 'uid', label: 'UIN' },
+	{ key: 'applicant', label: 'Applicant' },
+	{ key: 'district', label: 'District' },
+	{ key: 'status', label: 'Status' },
+]
 
 const TenancyRecords = ({ user }) => {
-	const navigate = useNavigate();
-	const [records, setRecords] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
-	const [page, setPage] = useState(1);
-	const [paginationInfo, setPaginationInfo] = useState(null);
-	const [districts, setDistricts] = useState([]);
+	const navigate = useNavigate()
+	const [records, setRecords] = useState([])
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState('')
+	const [page, setPage] = useState(1)
+	const [paginationInfo, setPaginationInfo] = useState(null)
+	const [districts, setDistricts] = useState([])
 	const [filters, setFilters] = useState({
 		search: '',
 		status: '',
 		district_id: '',
-	});
-	const [searchInput, setSearchInput] = useState('');
+	})
+	const [searchInput, setSearchInput] = useState('')
+	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
 
 	useEffect(() => {
 		if (!ADMIN_ROLES.includes(user?.role)) {
-			navigate('/dashboard');
-			return;
+			navigate('/dashboard')
 		}
-	}, [user?.role, navigate]);
+	}, [user?.role, navigate])
 
 	useEffect(() => {
 		if (user?.role === ROLES.SUPER_ADMIN) {
 			api.get('/api/districts', { params: { all: true } })
 				.then(({ data }) => setDistricts(Array.isArray(data) ? data : data.data || []))
-				.catch(() => setDistricts([]));
+				.catch(() => setDistricts([]))
 		}
-	}, [user?.role]);
+	}, [user?.role])
 
 	const fetchRecords = useCallback(async () => {
-		setLoading(true);
-		setError('');
+		setLoading(true)
+		setError('')
 		try {
-			const params = { page, per_page: 15 };
-			if (filters.search) params.search = filters.search;
-			if (filters.status) params.status = filters.status;
-			if (filters.district_id) params.district_id = filters.district_id;
+			const params = { page, per_page: 15 }
+			if (filters.search) params.search = filters.search
+			if (filters.status) params.status = filters.status
+			if (filters.district_id) params.district_id = filters.district_id
 
-			const { data } = await api.get('/api/admin/tenancy-records', { params });
-			setRecords(data.records || []);
-			setPaginationInfo(data.pagination || null);
+			const { data } = await api.get('/api/admin/tenancy-records', { params })
+			// Tenancy / UIN page — never show service form applications
+			const uinOnly = (data.records || [])
+				.map((row) => ({
+					...row,
+					form_type: row.form_type || APPLICATION_TYPES.TENANCY_CERTIFICATE,
+				}))
+				.filter((row) => row.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE)
+			setRecords(uinOnly)
+			setPaginationInfo(data.pagination || null)
 		} catch {
-			setError('Failed to load tenancy applications');
+			setError('Failed to load tenancy applications')
 		} finally {
-			setLoading(false);
+			setLoading(false)
 		}
-	}, [page, filters]);
+	}, [page, filters])
 
 	useEffect(() => {
 		if (ADMIN_ROLES.includes(user?.role)) {
-			fetchRecords();
+			fetchRecords()
 		}
-	}, [fetchRecords, user?.role]);
+	}, [fetchRecords, user?.role])
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
-			const trimmed = searchInput.trim();
+			const trimmed = searchInput.trim()
 			setFilters((prev) => {
-				if (prev.search === trimmed) return prev;
-				setPage(1);
-				return { ...prev, search: trimmed };
-			});
-		}, 350);
-		return () => clearTimeout(timer);
-	}, [searchInput]);
+				if (prev.search === trimmed) return prev
+				setPage(1)
+				return { ...prev, search: trimmed }
+			})
+		}, 350)
+		return () => clearTimeout(timer)
+	}, [searchInput])
 
 	const handleFilterChange = (key, value) => {
-		setFilters((prev) => ({ ...prev, [key]: value }));
-		setPage(1);
-	};
+		setFilters((prev) => ({ ...prev, [key]: value }))
+		setPage(1)
+	}
 
 	const clearFilters = () => {
-		setSearchInput('');
-		setFilters({ search: '', status: '', district_id: '' });
-		setPage(1);
-	};
+		setSearchInput('')
+		setFilters({ search: '', status: '', district_id: '' })
+		setPage(1)
+	}
 
-	const hasActiveFilters = Boolean(filters.search || filters.status || filters.district_id);
+	const hasActiveFilters = Boolean(filters.search || filters.status || filters.district_id)
+
+	const handleSort = (key) => {
+		setSortConfig((prev) => {
+			if (prev.key === key) {
+				return {
+					key,
+					direction: prev.direction === 'asc' ? 'desc' : 'asc',
+				}
+			}
+			return {
+				key,
+				direction: key === 'created_at' ? 'desc' : 'asc',
+			}
+		})
+	}
+
+	const sortedRecords = useMemo(() => {
+		const { key, direction } = sortConfig
+		const dir = direction === 'desc' ? -1 : 1
+		const list = [...records]
+
+		const getValue = (row) => {
+			switch (key) {
+				case 'district':
+					return row?.district?.name || ''
+				case 'applicant':
+					return row?.landlord_name || row?.tenant_name || ''
+				case 'uid':
+					return row?.uid || ''
+				case 'created_at':
+					return row?.created_at ? new Date(row.created_at).getTime() : 0
+				default:
+					return row?.[key] ?? ''
+			}
+		}
+
+		list.sort((a, b) => {
+			const av = getValue(a)
+			const bv = getValue(b)
+			let cmp = 0
+			if (typeof av === 'number' && typeof bv === 'number') {
+				cmp = av - bv
+			} else {
+				cmp = String(av).localeCompare(String(bv), undefined, {
+					numeric: true,
+					sensitivity: 'base',
+				})
+			}
+			if (cmp === 0) {
+				cmp = String(a?.application_no || '').localeCompare(
+					String(b?.application_no || ''),
+					undefined,
+					{ sensitivity: 'base' },
+				)
+			}
+			return cmp * dir
+		})
+
+		return list
+	}, [records, sortConfig])
 
 	const openDetails = (record) => {
-		navigate(`/dashboard/admin/applications/${record.application_no}`, {
+		navigate(`/dashboard/admin/tenancy/${encodeURIComponent(record.application_no)}`, {
 			state: { from: 'tenancy' },
-		});
-	};
+		})
+	}
+
+	const statusFilterLabel = filters.status
+		? STATUS_LABELS[filters.status] || filters.status
+		: 'All'
 
 	const filterToolbar = (
-		<div className="ws-status-section-toolbar admin-app-toolbar">
-			<div className="ws-status-section-controls">
-				<label className="ws-status-section-search admin-app-search">
-					<span className="ws-status-search-label">Application number</span>
-					<div className="admin-app-search__field">
-						<Icon name="search" className="admin-app-search__icon" />
+		<div className="admin-tenancy-panel">
+			<div className="admin-tenancy-panel__top">
+				<label className="admin-tenancy-panel__search">
+					<span className="admin-tenancy-panel__label">Search UIN applications</span>
+					<div className="admin-tenancy-panel__search-field">
+						<Icon name="search" className="admin-tenancy-panel__search-icon" />
 						<input
 							id="tenancy-search"
+							className="admin-tenancy-panel__input"
 							type="search"
 							value={searchInput}
 							onChange={(e) => setSearchInput(e.target.value)}
-							placeholder="e.g. APP-TC-202603-000001"
+							placeholder="Application number, e.g. APP-…"
 							autoComplete="off"
 							spellCheck={false}
 						/>
 					</div>
 				</label>
+			</div>
 
-				<label className="ws-status-section-sort">
-					<span className="ws-status-search-label">Status</span>
-					<select
-						id="tenancy-status"
-						value={filters.status}
-						onChange={(e) => handleFilterChange('status', e.target.value)}
-					>
-						<option value="">All statuses</option>
-						{Object.entries(STATUS_LABELS).map(([val, label]) => (
-							<option key={val} value={val}>{label}</option>
+			<div className="admin-tenancy-panel__filters">
+				<div className="admin-tenancy-panel__status" role="group" aria-label="Filter by status">
+					<span className="admin-tenancy-panel__label">Status</span>
+					<div className="admin-tenancy-panel__status-pills">
+						{STATUS_PILLS.map((pill) => (
+							<button
+								key={pill.value || 'all'}
+								type="button"
+								className={`ws-admin-tenancy-pill${
+									filters.status === pill.value ? ' is-active' : ''
+								}${pill.value === STATUS.APPROVED ? ' ws-admin-tenancy-pill--ok' : ''}${
+									pill.value === STATUS.REJECTED ? ' ws-admin-tenancy-pill--bad' : ''
+								}${pill.value === STATUS.IN_REVIEW ? ' ws-admin-tenancy-pill--review' : ''}`}
+								onClick={() => handleFilterChange('status', pill.value)}
+							>
+								{pill.label}
+							</button>
 						))}
-					</select>
-				</label>
+					</div>
+				</div>
 
 				{user?.role === ROLES.SUPER_ADMIN ? (
-					<label className="ws-status-section-sort">
-						<span className="ws-status-search-label">District</span>
+					<label className="admin-tenancy-panel__field">
+						<span className="admin-tenancy-panel__label">District</span>
 						<select
 							id="tenancy-district"
+							className="admin-tenancy-panel__select"
 							value={filters.district_id}
 							onChange={(e) => handleFilterChange('district_id', e.target.value)}
 						>
 							<option value="">All districts</option>
 							{districts.map((d) => (
-								<option key={d.id} value={d.id}>{d.name}</option>
+								<option key={d.id} value={d.id}>
+									{d.name}
+								</option>
 							))}
 						</select>
 					</label>
 				) : null}
 
+				<label className="admin-tenancy-panel__field">
+					<span className="admin-tenancy-panel__label">Sort by</span>
+					<select
+						id="tenancy-sort-by"
+						className="admin-tenancy-panel__select"
+						value={sortConfig.key}
+						onChange={(e) =>
+							setSortConfig((prev) => ({
+								...prev,
+								key: e.target.value,
+								direction: e.target.value === 'created_at' ? 'desc' : 'asc',
+							}))
+						}
+					>
+						{SORT_OPTIONS.map((opt) => (
+							<option key={opt.key} value={opt.key}>
+								{opt.label}
+							</option>
+						))}
+					</select>
+				</label>
+			</div>
+
+			<div className="admin-tenancy-panel__meta">
+				<p className="admin-tenancy-panel__summary">
+					Showing <strong>{sortedRecords.length}</strong> UIN application
+					{sortedRecords.length === 1 ? '' : 's'}
+					{filters.status ? (
+						<>
+							{' '}
+							· Status: <strong>{statusFilterLabel}</strong>
+						</>
+					) : null}
+					<span className="admin-tenancy-panel__note"> · Service forms are listed separately</span>
+				</p>
+
 				{hasActiveFilters ? (
-					<div className="admin-app-toolbar__clear">
-						<button
-							type="button"
-							className="ws-btn ws-btn--outline ws-btn--sm"
-							onClick={clearFilters}
-						>
-							Clear filters
-						</button>
-					</div>
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm admin-tenancy-panel__clear"
+						onClick={clearFilters}
+					>
+						Clear filters
+					</button>
 				) : null}
 			</div>
 		</div>
-	);
+	)
 
 	return (
 		<>
@@ -171,36 +305,44 @@ const TenancyRecords = ({ user }) => {
 				title="Tenancy applications (UIN)"
 				accent="uin"
 				loading={loading}
-				data={records}
+				data={sortedRecords}
 				totalCount={paginationInfo?.total}
 				toolbar={filterToolbar}
+				className="admin-tenancy-table"
 				onRowClick={openDetails}
+				onSort={handleSort}
+				sortKey={sortConfig.key}
+				sortDirection={sortConfig.direction}
 				columns={[
 					{
 						key: 'application_no',
 						label: 'Application no.',
 						mono: true,
+						sortable: true,
 					},
 					{
 						key: 'uid',
 						label: 'UIN',
 						mono: true,
+						sortable: true,
 						render: (val) => val || '—',
 					},
 					{
-						key: 'landlord_name',
+						key: 'applicant',
 						label: 'Applicant',
-						render: (_, row) =>
-							row.landlord_name || row.tenant_name || '—',
+						sortable: true,
+						render: (_, row) => row.landlord_name || row.tenant_name || '—',
 					},
 					{
 						key: 'district',
 						label: 'District',
+						sortable: true,
 						render: (val) => val?.name || '—',
 					},
 					{
 						key: 'status',
 						label: 'Status',
+						sortable: true,
 						render: (val) => (
 							<span className={adminStatusBadgeClass(val)}>
 								{adminStatusLabel(val)}
@@ -210,6 +352,7 @@ const TenancyRecords = ({ user }) => {
 					{
 						key: 'created_at',
 						label: 'Date',
+						sortable: true,
 						render: (val) => formatDate(val),
 					},
 				]}
@@ -218,13 +361,18 @@ const TenancyRecords = ({ user }) => {
 						type="button"
 						className="ws-status-action-btn ws-status-action-btn--view"
 						title="View details"
-						onClick={() => openDetails(record)}
+						aria-label={`View ${record.application_no || 'application'}`}
+						onClick={(e) => {
+							e.preventDefault()
+							e.stopPropagation()
+							openDetails(record)
+						}}
 					>
 						<Icon name="eye" />
 						<span>View</span>
 					</button>
 				)}
-				emptyMessage="No tenancy applications found."
+				emptyMessage="No UIN tenancy applications found."
 				pagination={
 					paginationInfo
 						? {
@@ -236,7 +384,7 @@ const TenancyRecords = ({ user }) => {
 				}
 			/>
 		</>
-	);
-};
+	)
+}
 
-export default TenancyRecords;
+export default TenancyRecords

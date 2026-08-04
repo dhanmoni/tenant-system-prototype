@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
+import ContactMap from '../components/landing/ContactMap'
 import { useLanguage } from '../i18n'
 
 function Contact() {
@@ -66,15 +67,7 @@ function Contact() {
 				<section className="gov-plain-page__map" aria-labelledby="contact-map-heading">
 					<h2 id="contact-map-heading">{t('contact.mapTitle')}</h2>
 					<p>{t('contact.mapAddress')}</p>
-					<div className="gov-plain-page__map-frame">
-						<iframe
-							title={t('contact.mapIframe')}
-							className="gov-plain-page__map-embed"
-							loading="lazy"
-							referrerPolicy="no-referrer-when-downgrade"
-							src="https://www.google.com/maps?q=Directorate%20of%20Town%20and%20Country%20Planning%2C%20Assam&output=embed"
-						/>
-					</div>
+					<ContactMap />
 					<p className="gov-plain-page__map-note">
 						<a
 							href="https://www.google.com/maps/search/?api=1&query=Directorate+of+Town+and+Country+Planning+Assam+Dispur"

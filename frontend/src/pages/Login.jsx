@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api, { csrf } from '../api'
 import { AuthPanelNavigationContext } from '../context/AuthPanelNavigationContext'
@@ -49,6 +49,8 @@ function Login({ onLogin }) {
 	const [regPendingPhone, setRegPendingPhone] = useState('')
 	const [regOtpMessage, setRegOtpMessage] = useState('')
 	const [districts, setDistricts] = useState([])
+	const landingBootstrapped = useRef(false)
+	const suppressAuthHashScroll = useRef(true)
 
 	useEffect(() => {
 		if (resendTimer > 0) {
@@ -86,19 +88,59 @@ function Login({ onLogin }) {
 
 	const sanitizeMobileInput = (value) => value.replace(/\D/g, '').slice(0, 10)
 
+	const clearLoginMessages = () => {
+		setLoginError('')
+		setOtpMessage('')
+	}
+
+	const clearRegMessages = () => {
+		setRegError('')
+		setRegOtpMessage('')
+	}
+
+	const resetLoginOtpFlow = () => {
+		setOtpSent(false)
+		setOtpMessage('')
+		setLoginError('')
+		setLoginForm((prev) => ({ ...prev, otp: '' }))
+		setResendTimer(0)
+	}
+
+	const resetRegOtpFlow = () => {
+		setRegStep('details')
+		setRegOtpSent(false)
+		setRegOtp('')
+		setRegPendingPhone('')
+		setRegOtpMessage('')
+		setRegError('')
+		setResendTimer(0)
+	}
+
 	const handleLoginChange = (e) => {
 		const { name, value } = e.target
 		const nextValue = name === 'phone' ? sanitizeMobileInput(value) : value
-		setLoginForm((prev) => ({ ...prev, [name]: nextValue }))
+
 		if (name === 'phone') {
-			setOtpSent(false)
-			setOtpMessage('')
+			setLoginForm((prev) => ({ ...prev, phone: nextValue, otp: '' }))
+			if (otpSent) {
+				setOtpSent(false)
+				setResendTimer(0)
+			}
+			clearLoginMessages()
+			return
 		}
+
+		setLoginForm((prev) => ({ ...prev, [name]: nextValue }))
+		// Keep "OTP sent" success visible while the user types the code
+		if (name === 'otp') {
+			setLoginError('')
+			return
+		}
+		clearLoginMessages()
 	}
 
 	const handleSendOtp = () => {
-		setLoginError('')
-		setOtpMessage('')
+		clearLoginMessages()
 		if (!/^\d{10}$/.test(loginForm.phone)) {
 			setLoginError(t('auth.invalidPhone'))
 			return
@@ -110,15 +152,12 @@ function Login({ onLogin }) {
 	}
 
 	const handleEditPhone = () => {
-		setOtpSent(false)
-		setOtpMessage('')
-		setResendTimer(0)
+		resetLoginOtpFlow()
 	}
 
 	const handleLoginSubmit = async (e) => {
 		e.preventDefault()
-		setLoginError('')
-		setOtpMessage('')
+		clearLoginMessages()
 		if (!otpSent) {
 			handleSendOtp()
 			return
@@ -146,7 +185,7 @@ function Login({ onLogin }) {
 			}
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
-			setLoginError(formatApiErrors(err, t('auth.loginFailed')))
+			setLoginError(formatApiErrors(err, t('auth.loginFailed'), t))
 		} finally {
 			setLoginLoading(false)
 		}
@@ -156,11 +195,11 @@ function Login({ onLogin }) {
 		const { name, value } = e.target
 		const nextValue = name === 'phone' ? sanitizeMobileInput(value) : value
 		setRegForm((prev) => ({ ...prev, [name]: nextValue }))
+		clearRegMessages()
 	}
 
 	const handleRegSendOtp = () => {
-		setRegError('')
-		setRegOtpMessage('')
+		clearRegMessages()
 		if (!regPendingPhone?.trim()) {
 			setRegError(t('auth.phoneMissing'))
 			return
@@ -173,8 +212,7 @@ function Login({ onLogin }) {
 
 	const handleRegVerifyOtp = async (e) => {
 		e.preventDefault()
-		setRegError('')
-		setRegOtpMessage('')
+		clearRegMessages()
 
 		if (!regOtpSent) {
 			setRegError(t('auth.sendOtpFirst'))
@@ -204,7 +242,7 @@ function Login({ onLogin }) {
 			}
 			navigate(finalTarget, { replace: true })
 		} catch (err) {
-			setRegError(err?.response?.data?.message || t('auth.otpVerifyFailed'))
+			setRegError(formatApiErrors(err, t('auth.otpVerifyFailed'), t))
 		} finally {
 			setRegLoading(false)
 		}
@@ -222,13 +260,13 @@ function Login({ onLogin }) {
 		const dob = new Date(regForm.date_of_birth)
 		const minAgeDate = new Date()
 		minAgeDate.setFullYear(minAgeDate.getFullYear() - 18)
-		if (dob > minAgeDate) return 'You must be at least 18 years old to register.'
+		if (dob > minAgeDate) return t('auth.minAgeError')
 		return null
 	}
 
 	const handleRegSubmit = async (e) => {
 		e.preventDefault()
-		setRegError('')
+		clearRegMessages()
 
 		const validationMessage = validateRegForm()
 		if (validationMessage) {
@@ -252,25 +290,38 @@ function Login({ onLogin }) {
 			setRegOtpSent(true)
 			setResendTimer(60)
 			setRegOtp('')
+			setRegError('')
 			setRegOtpMessage(t('auth.accountCreatedOtp'))
 		} catch (err) {
-			setRegError(formatApiErrors(err, t('auth.registrationFailed')))
+			setRegError(formatApiErrors(err, t('auth.registrationFailed'), t))
 		} finally {
 			setRegLoading(false)
 		}
 	}
 
-	const switchMode = (newMode) => {
-		setLoginError('')
+	const handleSetRegOtp = (next) => {
+		setRegOtp(next)
+		// Keep "OTP sent" success visible while the user types the code
 		setRegError('')
+	}
+
+	const handleSetRegStep = (step) => {
+		if (step === 'details') {
+			resetRegOtpFlow()
+			return
+		}
+		setRegStep(step)
+		clearRegMessages()
+	}
+
+	const switchMode = (newMode) => {
+		clearLoginMessages()
+		clearRegMessages()
 		setOtpSent(false)
-		setOtpMessage('')
 		setLoginForm({ phone: '', otp: '' })
-		setRegStep('details')
-		setRegOtpSent(false)
-		setRegOtp('')
-		setRegPendingPhone('')
-		setRegOtpMessage('')
+		setLoginLoading(false)
+		setRegLoading(false)
+		resetRegOtpFlow()
 		setResendTimer(0)
 		setMode(newMode)
 	}
@@ -293,15 +344,39 @@ function Login({ onLogin }) {
 		}
 	}, [])
 
+	// Refresh / first paint: always land on home (top) with a clean URL
 	useEffect(() => {
-		if (!modeFromHash(location.hash)) {
-			window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+		if (landingBootstrapped.current) return
+		landingBootstrapped.current = true
+
+		const targetMode = modeFromHash(location.hash)
+		if (targetMode) switchMode(targetMode)
+
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+
+		if (location.hash) {
+			suppressAuthHashScroll.current = true
+			navigate(
+				{ pathname: location.pathname, search: location.search, hash: '' },
+				{ replace: true, state: location.state },
+			)
+		} else {
+			suppressAuthHashScroll.current = false
 		}
-	}, [location.pathname, location.hash])
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
+	}, [])
 
 	useEffect(() => {
+		if (suppressAuthHashScroll.current) {
+			if (!location.hash || location.hash === '#') {
+				suppressAuthHashScroll.current = false
+			}
+			return
+		}
+
 		const targetMode = modeFromHash(location.hash)
 		if (!targetMode) return
+
 		switchMode(targetMode)
 		scrollToAuthPanel()
 		requestAnimationFrame(() => {
@@ -340,8 +415,8 @@ function Login({ onLogin }) {
 		onRegVerifyOtp: handleRegVerifyOtp,
 		onRegSendOtp: handleRegSendOtp,
 		onSwitchMode: switchMode,
-		onSetRegStep: setRegStep,
-		onSetRegOtp: setRegOtp,
+		onSetRegStep: handleSetRegStep,
+		onSetRegOtp: handleSetRegOtp,
 	}
 
 	return (

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
+import { STATUS_LABELS } from '../../../constants/status'
 import {
 	STATUS_CHART_COLORS,
 	STATUS_CHART_LABELS,
@@ -8,6 +9,7 @@ import {
 } from './chartConfig'
 
 const DEFAULT_KEYS = ['SUBMITTED', 'IN_REVIEW', 'REJECTED', 'COMPLETED', 'OTHER']
+const FALLBACK_COLORS = ['#2563eb', '#d97706', '#dc2626', '#16a34a', '#7c3aed', '#0891b2', '#94a3b8']
 
 function StatusBarChart({
 	breakdown = {},
@@ -21,12 +23,14 @@ function StatusBarChart({
 		return {
 			hasData,
 			data: {
-				labels: keys.map((k) => STATUS_CHART_LABELS[k] || k),
+				labels: keys.map((k) => STATUS_CHART_LABELS[k] || STATUS_LABELS[k] || k),
 				datasets: [
 					{
 						label: 'Applications',
 						data: values,
-						backgroundColor: keys.map((k) => STATUS_CHART_COLORS[k] || '#94a3b8'),
+						backgroundColor: keys.map(
+							(k, i) => STATUS_CHART_COLORS[k] || FALLBACK_COLORS[i % FALLBACK_COLORS.length]
+						),
 						borderRadius: 6,
 						borderSkipped: false,
 					},

@@ -1,7 +1,7 @@
 import { ChevronUp } from 'lucide-react'
 import { useLanguage } from '../../i18n'
 
-/** Back-to-top only; accessibility uses {@link AccessibilityWidget} in App. */
+/** Back-to-top only; accessibility uses the official UX4G widget. */
 function LandingFab({ showBackToTop, onBackToTop }) {
 	const { t } = useLanguage()
 	if (!showBackToTop) return null

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import ProfileCompletionModal from '../../components/dashboard/ProfileCompletionModal'
@@ -75,6 +75,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	})
 	const [notifications, setNotifications] = useState(DEMO_NOTIFICATIONS)
 	const notifRef = useRef(null)
+	const topbarRef = useRef(null)
 	const [profiles, setProfiles] = useState([])
 	const [isSwitching, setIsSwitching] = useState(false)
 	const [profilePickerOpen, setProfilePickerOpen] = useState(false)
@@ -95,6 +96,32 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	}
 	const currentRoleLabel = translateRole(user?.role)
 	const unreadCount = notifications.filter((n) => n.unread).length
+
+	const syncTopbarPanels = useCallback(() => {
+		const topbar = topbarRef.current
+		if (!topbar) return
+		const rect = topbar.getBoundingClientRect()
+		topbar.style.setProperty('--ws-topbar-offset', `${topbar.offsetHeight}px`)
+		topbar.style.setProperty('--ws-topbar-bottom', `${rect.bottom}px`)
+	}, [])
+
+	// Keep dropdown panels aligned below the topbar (accounts for accessibility bar above)
+	useEffect(() => {
+		const topbar = topbarRef.current
+		if (!topbar) return undefined
+
+		syncTopbarPanels()
+		const observer = new ResizeObserver(syncTopbarPanels)
+		observer.observe(topbar)
+		window.addEventListener('resize', syncTopbarPanels)
+		window.addEventListener('scroll', syncTopbarPanels, true)
+
+		return () => {
+			observer.disconnect()
+			window.removeEventListener('resize', syncTopbarPanels)
+			window.removeEventListener('scroll', syncTopbarPanels, true)
+		}
+	}, [syncTopbarPanels])
 
 	// Close mobile drawer / pickers on route change
 	useEffect(() => {
@@ -265,138 +292,140 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 					onToggleCollapse={toggleSidebarCollapsed}
 				/>
 				<div className="ws-main-column">
-					<header className="ws-topbar">
-						<div className="ws-topbar-left">
-							<button
-								type="button"
-								className="ws-mobile-menu-btn"
-								aria-label={navOpen ? t('ws.nav.closeMenu') : t('ws.nav.openMenu')}
-								aria-expanded={navOpen}
-								aria-controls="workspace-primary-nav"
-								onClick={() => setNavOpen((open) => !open)}
-							>
-								{navOpen ? (
-									<span className="ws-mobile-menu-close" aria-hidden>×</span>
-								) : (
-									<Icon name="menu" className="ws-mobile-menu-icon" />
-								)}
-							</button>
-							<div className="ws-topbar-brand">
-								<span className="ws-topbar-logo" aria-hidden>ATS</span>
-								<span className="ws-topbar-title">{t('ws.brand.short')}</span>
-							</div>
-						</div>
-						<div className="ws-topbar-right">
-							<div className="ws-topbar-notif" ref={notifRef}>
+					<header className="ws-topbar" ref={topbarRef}>
+						<div className="ws-topbar-primary">
+							<div className="ws-topbar-left">
 								<button
 									type="button"
-									className={`ws-topbar-btn ws-topbar-btn--icon${notifOpen ? ' is-open' : ''}`}
-									aria-label={
-										unreadCount
-											? t('ws.top.notificationsUnread', { count: unreadCount })
-											: t('ws.top.notifications')
+									className="ws-mobile-menu-btn"
+									aria-label={navOpen ? t('ws.nav.closeMenu') : t('ws.nav.openMenu')}
+									aria-expanded={navOpen}
+									aria-controls="workspace-primary-nav"
+									onClick={() => setNavOpen((open) => !open)}
+								>
+									{navOpen ? (
+										<span className="ws-mobile-menu-close" aria-hidden>×</span>
+									) : (
+										<Icon name="menu" className="ws-mobile-menu-icon" />
+									)}
+								</button>
+							</div>
+							<div className="ws-topbar-right">
+								<div className="ws-topbar-search-row">
+							<WorkspacePageSearch user={user} onPanelOpen={syncTopbarPanels} />
+						</div>
+
+								<div className="ws-topbar-notif" ref={notifRef}>
+									<button
+										type="button"
+										className={`ws-topbar-btn ws-topbar-btn--icon${notifOpen ? ' is-open' : ''}`}
+										aria-label={
+											unreadCount
+												? t('ws.top.notificationsUnread', { count: unreadCount })
+												: t('ws.top.notifications')
+										}
+										aria-expanded={notifOpen}
+										aria-haspopup="true"
+										onClick={() => {
+											setProfilePickerOpen(false)
+											syncTopbarPanels()
+											setNotifOpen((open) => !open)
+										}}
+									>
+										<Icon name="bell" className="ws-topbar-btn-icon" />
+										{unreadCount > 0 ? (
+											<span className="ws-topbar-notif-badge" aria-hidden>
+												{unreadCount > 9 ? '9+' : unreadCount}
+											</span>
+										) : null}
+									</button>
+									{notifOpen ? (
+										<div className="ws-topbar-notif-panel" role="menu" aria-label={t('ws.top.notifications')}>
+											<div className="ws-topbar-notif-head">
+												<strong>{t('ws.top.notifications')}</strong>
+												{unreadCount > 0 ? (
+													<button
+														type="button"
+														className="ws-topbar-notif-mark"
+														onClick={markAllNotificationsRead}
+													>
+														{t('ws.top.markAllRead')}
+													</button>
+												) : null}
+											</div>
+											<ul className="ws-topbar-notif-list">
+												{notifications.map((item) => (
+													<li
+														key={item.id}
+														className={`ws-topbar-notif-item${item.unread ? ' is-unread' : ''}`}
+													>
+														<div className="ws-topbar-notif-item-title">{item.title}</div>
+														<p className="ws-topbar-notif-item-body">{item.body}</p>
+														<span className="ws-topbar-notif-item-time">{item.time}</span>
+													</li>
+												))}
+											</ul>
+											<p className="ws-topbar-notif-foot">{t('ws.top.notifDemo')}</p>
+										</div>
+									) : null}
+								</div>
+
+								<button
+									type="button"
+									className={`ws-topbar-btn ws-topbar-btn--profile${profilePickerOpen ? ' is-open' : ''}`}
+									aria-label={`${topbarName}, ${currentRoleLabel}`}
+									aria-haspopup={profiles.length > 1 ? 'dialog' : undefined}
+									aria-expanded={profiles.length > 1 ? profilePickerOpen : undefined}
+									disabled={isSwitching}
+									title={
+										profiles.length > 1
+											? `${topbarName} — ${t('ws.top.switchProfile')}`
+											: `${topbarName} — ${t('ws.top.openProfile')}`
 									}
-									aria-expanded={notifOpen}
-									aria-haspopup="true"
 									onClick={() => {
-										setProfilePickerOpen(false)
-										setNotifOpen((open) => !open)
+										setNotifOpen(false)
+										if (profiles.length > 1) {
+											setProfilePickerOpen(true)
+										} else {
+											navigate('/dashboard/profile')
+										}
 									}}
 								>
-									<Icon name="bell" className="ws-topbar-btn-icon" />
-									{unreadCount > 0 ? (
-										<span className="ws-topbar-notif-badge" aria-hidden>
-											{unreadCount > 9 ? '9+' : unreadCount}
+									<span
+										className={`ws-topbar-profile-avatar${topbarAvatarUrl ? ' has-photo' : ''}`}
+										aria-hidden
+									>
+										{topbarAvatarUrl ? (
+											<img
+												src={topbarAvatarUrl}
+												alt=""
+												className="ws-topbar-profile-avatar-img"
+											/>
+										) : (
+											(topbarName || 'U').charAt(0).toUpperCase()
+										)}
+									</span>
+									<span className="ws-topbar-profile-text">
+										<span className="ws-topbar-profile-name">{topbarName}</span>
+										<span className="ws-topbar-profile-role">
+											{currentRoleLabel}
+											{profiles.length > 1 ? ` · ${t('ws.top.switch')}` : ''}
 										</span>
+									</span>
+									{profiles.length > 1 ? (
+										<Icon name="chevron" className="ws-topbar-profile-chevron" />
 									) : null}
 								</button>
-								{notifOpen ? (
-									<div className="ws-topbar-notif-panel" role="menu" aria-label={t('ws.top.notifications')}>
-										<div className="ws-topbar-notif-head">
-											<strong>{t('ws.top.notifications')}</strong>
-											{unreadCount > 0 ? (
-												<button
-													type="button"
-													className="ws-topbar-notif-mark"
-													onClick={markAllNotificationsRead}
-												>
-													{t('ws.top.markAllRead')}
-												</button>
-											) : null}
-										</div>
-										<ul className="ws-topbar-notif-list">
-											{notifications.map((item) => (
-												<li
-													key={item.id}
-													className={`ws-topbar-notif-item${item.unread ? ' is-unread' : ''}`}
-												>
-													<div className="ws-topbar-notif-item-title">{item.title}</div>
-													<p className="ws-topbar-notif-item-body">{item.body}</p>
-													<span className="ws-topbar-notif-item-time">{item.time}</span>
-												</li>
-											))}
-										</ul>
-										<p className="ws-topbar-notif-foot">{t('ws.top.notifDemo')}</p>
-									</div>
-								) : null}
-							</div>
 
-							<WorkspacePageSearch user={user} />
-
-							<button
-								type="button"
-								className={`ws-topbar-btn ws-topbar-btn--profile${profilePickerOpen ? ' is-open' : ''}`}
-								aria-haspopup={profiles.length > 1 ? 'dialog' : undefined}
-								aria-expanded={profiles.length > 1 ? profilePickerOpen : undefined}
-								disabled={isSwitching}
-								title={
-									profiles.length > 1
-										? t('ws.top.switchProfile')
-										: t('ws.top.openProfile')
-								}
-								onClick={() => {
-									setNotifOpen(false)
-									if (profiles.length > 1) {
-										setProfilePickerOpen(true)
-									} else {
-										navigate('/dashboard/profile')
-									}
-								}}
-							>
-								<span
-									className={`ws-topbar-profile-avatar${topbarAvatarUrl ? ' has-photo' : ''}`}
-									aria-hidden
+								<button
+									type="button"
+									className="ws-topbar-btn ws-topbar-btn--logout"
+									onClick={onLogout}
 								>
-									{topbarAvatarUrl ? (
-										<img
-											src={topbarAvatarUrl}
-											alt=""
-											className="ws-topbar-profile-avatar-img"
-										/>
-									) : (
-										(topbarName || 'U').charAt(0).toUpperCase()
-									)}
-								</span>
-								<span className="ws-topbar-profile-text">
-									<span className="ws-topbar-profile-name">{topbarName}</span>
-									<span className="ws-topbar-profile-role">
-										{currentRoleLabel}
-										{profiles.length > 1 ? ` · ${t('ws.top.switch')}` : ''}
-									</span>
-								</span>
-								{profiles.length > 1 ? (
-									<Icon name="chevron" className="ws-topbar-profile-chevron" />
-								) : null}
-							</button>
-
-							<button
-								type="button"
-								className="ws-topbar-btn ws-topbar-btn--logout"
-								onClick={onLogout}
-							>
-								<Icon name="logout" className="ws-topbar-btn-icon" />
-								<span>{t('ws.top.signOut')}</span>
-							</button>
+									<Icon name="logout" className="ws-topbar-btn-icon" />
+									<span>{t('ws.top.signOut')}</span>
+								</button>
+							</div>
 						</div>
 					</header>
 					<div

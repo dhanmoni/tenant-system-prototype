@@ -1,65 +1,95 @@
-import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import LandingSectionIntro from './LandingSectionIntro'
+import { useMemo, useRef } from 'react'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import {
-	ArrowRight,
-	Clock,
-	FileText,
-	LogIn,
-	Mail,
-	ShieldCheck,
+	Briefcase,
+	ClipboardList,
+	Handshake,
+	Laptop,
 	UserPlus,
+	Users,
 } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
 import { useLanguage } from '../../i18n'
+import {
+	guideAccessVariants,
+	guideIntroVariants,
+	guideSectionVariants,
+	guideStepCopyVariants,
+	guideStepNumVariants,
+	guideStepsVariants,
+	guideStepVariants,
+	guideTitleAccentVariants,
+	guideTitleWordVariants,
+	introLeadVariants,
+} from '../../utils/landingMotion'
 
-function GuideServiceAction({ service, index }) {
-	const Icon = service.icon
-	const className = `portal-guide-access-action${
-		service.featured ? ' portal-guide-access-action--featured' : ''
-	}`
+const GUIDE_FLOAT_MOTIFS = [
+	{ Icon: Users, x: '5%', y: '12%', size: 'lg', delay: '0s', drift: 'a' },
+	{ Icon: UserPlus, x: '12%', y: '48%', size: 'md', delay: '1.2s', drift: 'b' },
+	{ Icon: ClipboardList, x: '4%', y: '78%', size: 'sm', delay: '0.5s', drift: 'c' },
+	{ Icon: Briefcase, x: '16%', y: '22%', size: 'sm', delay: '2s', drift: 'a' },
+	{ Icon: Handshake, x: '90%', y: '16%', size: 'md', delay: '0.4s', drift: 'b' },
+	{ Icon: Laptop, x: '94%', y: '46%', size: 'lg', delay: '1.5s', drift: 'c' },
+	{ Icon: Users, x: '84%', y: '72%', size: 'sm', delay: '0.9s', drift: 'a' },
+	{ Icon: ClipboardList, x: '92%', y: '88%', size: 'md', delay: '2.3s', drift: 'b' },
+]
 
-	const content = (
-		<>
-			<span className="portal-guide-access-action__icon" aria-hidden>
-				<Icon className="h-5 w-5" strokeWidth={2.25} />
-			</span>
-			<span className="portal-guide-access-action__body">
-				<span className="portal-guide-access-action__title-row">
-					<span className="portal-guide-access-action__title">{service.title}</span>
-					{service.badge ? (
-						<span className="portal-guide-access-action__badge">{service.badge}</span>
-					) : null}
+function GuideFloatMotifs({ reduceMotion }) {
+	return (
+		<div className="portal-guide-float" aria-hidden>
+			{GUIDE_FLOAT_MOTIFS.map(({ Icon, x, y, size, delay, drift }, i) => (
+				<span
+					key={`${x}-${y}-${i}`}
+					className={`portal-guide-float__item portal-guide-float__item--${size}${
+						reduceMotion ? '' : ` portal-guide-float__item--drift-${drift}`
+					}`}
+					style={{ left: x, top: y, animationDelay: delay }}
+				>
+					<Icon strokeWidth={1.5} aria-hidden />
 				</span>
-				<span className="portal-guide-access-action__desc">{service.description}</span>
-			</span>
-			<ArrowRight className="portal-guide-access-action__arrow" aria-hidden strokeWidth={2.25} />
-		</>
+			))}
+		</div>
 	)
+}
+
+function GuideAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMotion }) {
+	const leadWords = leadText.trim().split(/\s+/).filter(Boolean)
 
 	return (
-		<motion.li
-			initial={{ opacity: 0, x: 12 }}
-			whileInView={{ opacity: 1, x: 0 }}
-			viewport={{ once: true, margin: '-40px' }}
-			transition={{ duration: 0.35, delay: index * 0.06 }}
+		<motion.h2
+			id={titleId}
+			className="landing-section-title landing-section-title--playful"
+			aria-label={fullTitle}
 		>
-			{service.authMode ? (
-				<AuthNavLink mode={service.authMode} className={className}>
-					{content}
-				</AuthNavLink>
-			) : (
-				<Link to={service.to} className={className}>
-					{content}
-				</Link>
-			)}
-		</motion.li>
+			{leadWords.map((word) => (
+				<motion.span
+					key={word}
+					className="landing-section-title__word"
+					variants={reduceMotion ? undefined : guideTitleWordVariants}
+				>
+					{word}
+				</motion.span>
+			))}
+			<motion.span
+				className="landing-section-title__word landing-section-title__word--accent"
+				variants={reduceMotion ? undefined : guideTitleAccentVariants}
+			>
+				{accentText}
+			</motion.span>
+		</motion.h2>
 	)
 }
 
 function PortalGuideSection() {
 	const { t } = useLanguage()
+	const sectionRef = useRef(null)
+	const reduceMotion = useReducedMotion()
+	const inView = useInView(sectionRef, {
+		once: true,
+		amount: 0.2,
+		margin: '0px 0px -8% 0px',
+	})
+	const reveal = Boolean(reduceMotion) || inView
 
 	const steps = useMemo(
 		() => [
@@ -82,147 +112,77 @@ function PortalGuideSection() {
 		[t],
 	)
 
-	const highlights = useMemo(
-		() => [
-			t('home.guide.highlight1'),
-			t('home.guide.highlight2'),
-			t('home.guide.highlight3'),
-		],
-		[t],
-	)
-
-	const services = useMemo(
-		() => [
-			{
-				title: t('home.guide.svc.register.title'),
-				description: t('home.guide.svc.register.desc'),
-				authMode: 'register',
-				icon: UserPlus,
-			},
-			{
-				title: t('home.guide.svc.login.title'),
-				description: t('home.guide.svc.login.desc'),
-				authMode: 'login',
-				icon: LogIn,
-			},
-			{
-				title: t('home.guide.svc.uin.title'),
-				description: t('home.guide.svc.uin.desc'),
-				authMode: 'login',
-				icon: FileText,
-			},
-			{
-				title: t('home.guide.svc.contact.title'),
-				description: t('home.guide.svc.contact.desc'),
-				to: '/contact',
-				icon: Mail,
-			},
-		],
-		[t],
-	)
-
 	return (
 		<section
 			id="portal-guide"
-			className="portal-guide-section landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 py-12 sm:py-16 lg:py-24"
+			className="portal-guide-section landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 pt-12 sm:pt-16 lg:pt-24 pb-7 sm:pb-9 lg:pb-12"
 			aria-labelledby="portal-guide-heading"
 		>
 			<div id="how-to-apply" className="scroll-mt-28" tabIndex={-1} aria-hidden />
 
-			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				<LandingSectionIntro
-					className="mx-auto max-w-2xl"
-					align="center"
-					title={t('home.guide.title')}
-					lead={t('home.guide.lead')}
-					titleId="portal-guide-heading"
-				/>
-
-				<ol className="portal-guide-steps">
-					{steps.map((step, index) => (
-						<motion.li
-							key={step.num}
-							custom={index}
-							initial={{ opacity: 0, y: 20, scale: 0.96 }}
-							whileInView={{ opacity: 1, y: 0, scale: 1 }}
-							viewport={{ once: true, margin: '-40px' }}
-							transition={{
-								type: 'spring',
-								stiffness: 360,
-								damping: 22,
-								delay: index * 0.09,
-							}}
-							className="portal-guide-step"
-						>
-							<span className="portal-guide-step__num" aria-hidden>
-								{step.num}
-							</span>
-							<div>
-								<h3 className="portal-guide-step__title">{step.title}</h3>
-								<p className="portal-guide-step__text">{step.text}</p>
-							</div>
-						</motion.li>
-					))}
-				</ol>
-
-				<div className="portal-guide-access-layout">
-					<motion.aside
-						initial={{ opacity: 0, y: 20 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						viewport={{ once: true }}
-						transition={{ duration: 0.45 }}
-						className="portal-guide-access-aside"
-						aria-label={t('home.guide.overview')}
+			<div ref={sectionRef} className="portal-guide-section__inner mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+				<GuideFloatMotifs reduceMotion={reduceMotion} />
+				<motion.div
+					initial={reduceMotion ? false : 'hidden'}
+					animate={reveal ? 'visible' : 'hidden'}
+					variants={reduceMotion ? undefined : guideSectionVariants}
+				>
+					<motion.header
+						className="landing-section-intro-block landing-section-intro-block--center mx-auto max-w-2xl"
+						variants={reduceMotion ? undefined : guideIntroVariants}
 					>
-						<div className="portal-guide-access-aside__header">
-							<ShieldCheck className="h-5 w-5 shrink-0" aria-hidden strokeWidth={2.25} />
-							<p>{t('home.guide.quickAccess')}</p>
-						</div>
-						<div className="portal-guide-access-aside__body">
-							<h3 className="portal-guide-access-aside__title">
-								{t('home.guide.asideTitle')}
-							</h3>
-							<ul className="portal-guide-access-aside__list">
-								{highlights.map((item) => (
-									<li key={item}>{item}</li>
-								))}
-							</ul>
-							<p className="portal-guide-access-aside__hours">
-								<Clock className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
-								<span>{t('home.guide.hours')}</span>
-							</p>
-							<div className="portal-guide-access-aside__actions">
-								<AuthNavLink
-									mode="register"
-									className="portal-guide-access-aside__btn-primary"
+						<GuideAnimatedTitle
+							titleId="portal-guide-heading"
+							leadText={t('home.guide.titleLead')}
+							accentText={t('home.guide.titleAccent')}
+							fullTitle={t('home.guide.title')}
+							reduceMotion={reduceMotion}
+						/>
+						<motion.p
+							className="landing-section-lead landing-section-intro-lead"
+							variants={reduceMotion ? undefined : introLeadVariants}
+						>
+							{t('home.guide.lead')}
+						</motion.p>
+					</motion.header>
+
+					<motion.ol
+						className="portal-guide-steps"
+						variants={reduceMotion ? undefined : guideStepsVariants}
+					>
+						{steps.map((step) => (
+							<motion.li
+								key={step.num}
+								className="portal-guide-step"
+								variants={reduceMotion ? undefined : guideStepVariants}
+							>
+								<motion.span
+									className="portal-guide-step__num"
+									aria-hidden
+									variants={reduceMotion ? undefined : guideStepNumVariants}
 								>
-									{t('home.guide.createAccount')}
-								</AuthNavLink>
-								<a href="#services" className="portal-guide-access-aside__btn-secondary">
-									{t('home.guide.viewServices')}
-								</a>
-							</div>
-						</div>
-					</motion.aside>
+									{step.num}
+								</motion.span>
+								<motion.div variants={reduceMotion ? undefined : guideStepCopyVariants}>
+									<h3 className="portal-guide-step__title">{step.title}</h3>
+									<p className="portal-guide-step__text">{step.text}</p>
+								</motion.div>
+							</motion.li>
+						))}
+					</motion.ol>
 
 					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						whileInView={{ opacity: 1, y: 0 }}
-						viewport={{ once: true }}
-						transition={{ duration: 0.45, delay: 0.08 }}
-						className="portal-guide-access-panel"
+						className="portal-guide-cta"
+						variants={reduceMotion ? undefined : guideAccessVariants}
 					>
-						<div className="portal-guide-access-panel__header">
-							<p className="portal-guide-access-panel__label">{t('home.guide.chooseService')}</p>
-							<p className="portal-guide-access-panel__hint">{t('home.guide.tapHint')}</p>
-						</div>
-						<ul className="portal-guide-access-panel__list">
-							{services.map((service, index) => (
-								<GuideServiceAction key={service.title} service={service} index={index} />
-							))}
-						</ul>
+						<AuthNavLink mode="register" className="portal-guide-cta__primary">
+							{t('home.guide.createAccount')}
+						</AuthNavLink>
+						<a href="#services" className="portal-guide-cta__secondary">
+							{t('home.guide.viewServices')}
+						</a>
 					</motion.div>
-				</div>
+				</motion.div>
 			</div>
 		</section>
 	)
