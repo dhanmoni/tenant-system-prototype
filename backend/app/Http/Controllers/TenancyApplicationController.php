@@ -461,20 +461,20 @@ class TenancyApplicationController extends Controller
             $uid = null;
             $status = Status::PARTIAL;
             if ($application->initiator_completed) {
-                // Pass the villageWard to get the correct state code for the UID
-                $uid = TenancyApplication::generateUid($application->district_id, $application->office_id);
-                $status = Status::COMPLETED;
-                $updateData['uid'] = $uid;
+                $status = Status::SUBMITTED;
                 $updateData['status'] = $status;
-                $updateData['current_with'] = Roles::RENT_AUTHORITY;
+                $updateData['current_with'] = Roles::RA_ASSISTANT;
+                $updateData['assigned_to_role'] = Roles::RA_ASSISTANT;
             }
 
             $movement = $application->movement_history ?? [];
             $movement[] = [
                 'status' => $status,
-                'current_with' => $status === Status::COMPLETED ? Roles::RENT_AUTHORITY : null,
+                'current_with' => $status === Status::SUBMITTED ? Roles::RA_ASSISTANT : null,
                 'moved_at' => $now->toDateTimeString(),
-                'action' => 'Second party (' . $secondPartyRole . ') joined',
+                'action' => $status === Status::SUBMITTED
+                    ? 'Second party (' . $secondPartyRole . ') submitted. Submitted for verification to Rent Authority Assistant.'
+                    : 'Second party (' . $secondPartyRole . ') joined',
             ];
             $updateData['movement_history'] = $movement;
 
@@ -490,8 +490,8 @@ class TenancyApplicationController extends Controller
         $status = $transactionResult['status'];
 
         return response()->json([
-            'message' => $status === Status::COMPLETED
-                ? 'Application completed successfully. Both parties have submitted their details.'
+            'message' => $status === Status::SUBMITTED
+                ? 'Application submitted successfully to Rent Authority Assistant for verification. Both parties have submitted their details.'
                 : 'Your details have been submitted. Waiting for the other party.',
             'application_no' => $application->application_no,
             'ref_code' => $application->ref_code,

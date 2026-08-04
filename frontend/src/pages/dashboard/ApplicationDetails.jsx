@@ -55,6 +55,20 @@ function ApplicationDetails() {
 
 	const baseUrl = (api.defaults.baseURL || 'http://localhost:8000').replace(/\/$/, '')
 	
+	const handleWithdraw = async () => {
+		if (!window.confirm('Are you sure you want to withdraw this application? This action cannot be undone.')) {
+			return
+		}
+		
+		try {
+			await api.post(`/api/tenant-forms/${type}/${application.id}/withdraw`)
+			alert('Application withdrawn successfully')
+			loadApplication()
+		} catch (err) {
+			alert(err?.response?.data?.message || 'Failed to withdraw application')
+		}
+	}
+
 	const renderTenancyDetails = () => (
 		<div className="tenancy-preview-container">
 			<div className="form-actions no-print application-details-actions">
@@ -62,6 +76,9 @@ function ApplicationDetails() {
 				<button type="button" className="ws-btn ws-btn--primary" onClick={() => window.print()}>Print / Save PDF</button>
 				{application.agreement_pdf_path && (
 					<button type="button" className="ws-btn ws-btn--primary" onClick={() => window.open(`${baseUrl}/storage/${application.agreement_pdf_path}`, '_blank')}>View Agreement</button>
+				)}
+				{application.status === 'SUBMITTED' && (
+					<button type="button" className="ws-btn" style={{ backgroundColor: '#dc3545', color: '#fff', borderColor: '#dc3545' }} onClick={handleWithdraw}>Withdraw</button>
 				)}
 			</div>
 
@@ -261,6 +278,9 @@ function ApplicationDetails() {
 				)}
 				<div className="form-actions" style={{ marginTop: '2rem' }}>
 					<button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate(-1)}>Back</button>
+					{application.status === 'SUBMITTED' && (
+						<button type="button" className="ws-btn" style={{ backgroundColor: '#dc3545', color: '#fff', borderColor: '#dc3545' }} onClick={handleWithdraw}>Withdraw Application</button>
+					)}
 				</div>
 			</div>
 		)

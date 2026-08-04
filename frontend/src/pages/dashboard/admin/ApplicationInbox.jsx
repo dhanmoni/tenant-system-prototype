@@ -23,6 +23,10 @@ function resolveApplicantName(row) {
 		case APPLICATION_TYPES.RENT_COURT_FILING:
 		case APPLICATION_TYPES.RENT_AUTHORITY_FILING:
 			return row.applicant_name
+		case APPLICATION_TYPES.TENANCY_CERTIFICATE:
+			return row.landlord_name && row.tenant_name
+				? `${row.landlord_name} / ${row.tenant_name}`
+				: row.landlord_name || row.tenant_name || row.user?.name || '—'
 		case APPLICATION_TYPES.RENT_COURT_APPEAL:
 		case APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL:
 			return row.appellant_name

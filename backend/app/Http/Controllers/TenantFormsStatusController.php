@@ -13,7 +13,8 @@ use App\Models\RentCourtAppealApplication;
 use App\Models\RentTribunalAppealApplication;
 use Illuminate\Http\Request;
 use App\Constants\ApplicationTypes;
-
+use App\Constants\Status;
+use Carbon\Carbon;
 
 class TenantFormsStatusController extends Controller
 {
@@ -108,7 +109,14 @@ class TenantFormsStatusController extends Controller
                 'status' => $app->status,
                 'application_type' => $app->application_type ?: 'Tenancy Certificate',
                 'apply_type' => $app->apply_type ?? null,
-                'current_with' => $app->current_with ?? '-',
+                'current_with' => $app->current_with ?: ($app->assigned_to_role ?? '-'),
+                'assigned_to_role' => $app->assigned_to_role ?? null,
+                'forwarded_at' => optional($app->forwarded_at)->toDateTimeString(),
+                'approved_at' => optional($app->approved_at)->toDateTimeString(),
+                'rejected_at' => optional($app->rejected_at)->toDateTimeString(),
+                'rejection_message' => $app->rejection_message ?? null,
+                'approval_message' => $app->approval_message ?? null,
+                'forward_remarks' => $app->forward_remarks ?? null,
                 'initiator_role' => $app->initiator_role ?? null,
                 'initiator_completed' => (bool) $app->initiator_completed,
                 'second_party_completed' => (bool) $app->second_party_completed,
@@ -283,6 +291,68 @@ class TenantFormsStatusController extends Controller
             'pending' => in_array($normalized, ['PENDING', 'DRAFT', 'PARTIAL'], true),
             default => true,
         };
+    }
+
+    public function withdraw(Request $request, string $type, string $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $modelClass = match ($type) {
+            ApplicationTypes::TENANCY_CERTIFICATE => TenancyApplication::class,
+            ApplicationTypes::RENT_REVISION => RentRevisionApplication::class,
+            ApplicationTypes::OTHER_CHARGES_REVISION => OtherChargesRevisionApplication::class,
+            ApplicationTypes::VALUER_APPOINTMENT => ValuerAppointmentApplication::class,
+            ApplicationTypes::RENT_COURT_POSSESSION => RentCourtPossessionApplication::class,
+            ApplicationTypes::RENT_COURT_FILING => RentCourtFilingApplication::class,
+            ApplicationTypes::RENT_AUTHORITY_FILING => RentAuthorityFilingApplication::class,
+            ApplicationTypes::RENT_COURT_APPEAL => RentCourtAppealApplication::class,
+            ApplicationTypes::RENT_TRIBUNAL_APPEAL => RentTribunalAppealApplication::class,
+            default => null,
+        };
+
+        if (!$modelClass) {
+            return response()->json(['message' => 'Invalid form type'], 400);
+        }
+
+        $application = $modelClass::find($id);
+        if (!$application) {
+            return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        // Check ownership
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            if ($application->user_id !== $user->id && $application->landlord_user_id !== $user->id && $application->tenant_user_id !== $user->id && $application->landlord_phone !== $user->phone && $application->tenant_phone !== $user->phone) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+        } else {
+            if ($application->user_id !== $user->id) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+        }
+
+        if ($application->status !== Status::SUBMITTED) {
+            return response()->json(['message' => 'Application cannot be withdrawn at this stage.'], 409);
+        }
+
+        $movement = $application->movement_history ?? [];
+        $movement[] = [
+            'status' => Status::WITHDRAWN,
+            'current_with' => null,
+            'moved_at' => Carbon::now()->toDateTimeString(),
+            'action' => 'Application withdrawn by user.',
+        ];
+
+        $application->update([
+            'status' => Status::WITHDRAWN,
+            'movement_history' => $movement,
+            'assigned_to_role' => null,
+            'current_with' => null,
+        ]);
+
+        return response()->json(['message' => 'Application withdrawn successfully', 'application' => $application]);
     }
 }
 
