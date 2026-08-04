@@ -51,7 +51,7 @@ class ApplicationWorkflowController extends Controller
     protected function getQueueTypesForUser($user)
     {
         return match ($user->role) {
-            Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
+            Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
             Roles::RC_ASSISTANT, Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
             Roles::RT_ASSISTANT, Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
             Roles::VALUER => [ApplicationTypes::VALUER_APPOINTMENT],
@@ -130,7 +130,7 @@ class ApplicationWorkflowController extends Controller
 
         // Filter types based on role
         $types = match ($targetRole) {
-            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
+            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
             Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
             Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
             default => [],
@@ -208,13 +208,25 @@ class ApplicationWorkflowController extends Controller
             default => null,
         };
 
-        $application->update([
+        $updateData = [
             'status' => Status::IN_REVIEW,
             'forwarded_at' => Carbon::now(),
             'forwarded_by_user_id' => $user->id,
             'assigned_to_role' => $targetRole,
             'forward_remarks' => $data['remarks'] ?? null,
-        ]);
+        ];
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $updateData['current_with'] = $targetRole;
+            $movement = $application->movement_history ?? [];
+            $movement[] = [
+                'status' => Status::IN_REVIEW,
+                'current_with' => $targetRole,
+                'moved_at' => Carbon::now()->toDateTimeString(),
+                'action' => 'Verified by Rent Authority Assistant. Forwarded to Rent Authority.',
+            ];
+            $updateData['movement_history'] = $movement;
+        }
+        $application->update($updateData);
 
         return response()->json(['message' => 'Application moved to review successfully', 'application' => $application]);
     }
@@ -253,13 +265,25 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
-        $application->update([
+        $updateData = [
             'status' => Status::REJECTED,
             'rejected_at' => Carbon::now(),
             'rejected_by_user_id' => $user->id,
             'rejection_message' => $request->message,
             'assigned_to_role' => null,
-        ]);
+        ];
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $updateData['current_with'] = null;
+            $movement = $application->movement_history ?? [];
+            $movement[] = [
+                'status' => Status::REJECTED,
+                'current_with' => null,
+                'moved_at' => Carbon::now()->toDateTimeString(),
+                'action' => 'Application rejected: ' . $request->message,
+            ];
+            $updateData['movement_history'] = $movement;
+        }
+        $application->update($updateData);
 
         return response()->json(['message' => 'Application rejected successfully', 'application' => $application]);
     }
@@ -293,13 +317,27 @@ class ApplicationWorkflowController extends Controller
             ], 409);
         }
 
-        $application->update([
+        $updateData = [
             'status' => Status::COMPLETED,
             'approved_at' => Carbon::now(),
             'approved_by_user_id' => $user->id,
             'approval_message' => $data['message'],
             'assigned_to_role' => null,
-        ]);
+        ];
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $uid = \App\Models\TenancyApplication::generateUid($application->district_id, $application->office_id);
+            $updateData['uid'] = $uid;
+            $updateData['current_with'] = null;
+            $movement = $application->movement_history ?? [];
+            $movement[] = [
+                'status' => Status::COMPLETED,
+                'current_with' => null,
+                'moved_at' => Carbon::now()->toDateTimeString(),
+                'action' => 'Approved by Rent Authority. Certificate completed and UIN generated.',
+            ];
+            $updateData['movement_history'] = $movement;
+        }
+        $application->update($updateData);
 
         return response()->json(['message' => 'Application approved successfully', 'application' => $application]);
     }
@@ -317,7 +355,7 @@ class ApplicationWorkflowController extends Controller
 
         $districtId = $user->district_id;
         $types = match ($user->role) {
-            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
+            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
             Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
             Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
             default => [],
@@ -375,7 +413,7 @@ class ApplicationWorkflowController extends Controller
         $districtFilter = $request->input('district_id');
 
         $districtId = $user->district_id;
-        $types = ApplicationTypes::serviceForms();
+        $types = ApplicationTypes::all();
         if ($formTypeFilter && in_array($formTypeFilter, $types, true)) {
             $types = [$formTypeFilter];
         }
@@ -384,10 +422,7 @@ class ApplicationWorkflowController extends Controller
         foreach ($types as $type) {
             $modelClass = $this->getModel($type);
             if ($modelClass) {
-                $relations = ['district'];
-                if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
-                    $relations = ['user', 'forwardedBy', 'district'];
-                }
+                $relations = ['user', 'forwardedBy', 'district'];
                 $query = $modelClass::with($relations)->where('status', '!=', Status::DRAFT);
                 if ($user->role === Roles::DISTRICT_ADMIN) {
                     $query->where('district_id', $districtId);
@@ -489,10 +524,7 @@ class ApplicationWorkflowController extends Controller
         $data = $request->only($editable);
         $application->update($data);
 
-        $relations = ['district'];
-        if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
-            $relations = ['user', 'forwardedBy', 'district'];
-        }
+        $relations = ['user', 'forwardedBy', 'district'];
         $application->load($relations);
         $application->form_type = $type;
 
@@ -536,10 +568,7 @@ class ApplicationWorkflowController extends Controller
         foreach ($types as $type) {
             $modelClass = $this->getModel($type);
             if ($modelClass) {
-                $relations = ['district'];
-                if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
-                    $relations = ['user', 'forwardedBy', 'district'];
-                }
+                $relations = ['user', 'forwardedBy', 'district'];
                 if ($type === ApplicationTypes::VALUER_APPOINTMENT) {
                     $relations[] = 'assignedValuer';
                 }
@@ -796,6 +825,7 @@ class ApplicationWorkflowController extends Controller
             ApplicationTypes::OTHER_CHARGES_REVISION,
             ApplicationTypes::VALUER_APPOINTMENT,
             ApplicationTypes::RENT_AUTHORITY_FILING,
+            ApplicationTypes::TENANCY_CERTIFICATE,
         ];
 
         // Rent Court forms

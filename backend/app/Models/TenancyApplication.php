@@ -80,6 +80,16 @@ class TenancyApplication extends Model
         'manager_pan_path',
         'uid',
         'district_id',
+        'assigned_to_role',
+        'forwarded_at',
+        'forwarded_by_user_id',
+        'rejected_at',
+        'rejected_by_user_id',
+        'rejection_message',
+        'approved_at',
+        'approved_by_user_id',
+        'approval_message',
+        'forward_remarks',
     ];
 
     public function district()
@@ -97,6 +107,11 @@ class TenancyApplication extends Model
         return $this->belongsTo(VillageWard::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function landlordUser()
     {
         return $this->belongsTo(User::class, 'landlord_user_id');
@@ -105,6 +120,21 @@ class TenancyApplication extends Model
     public function tenantUser()
     {
         return $this->belongsTo(User::class, 'tenant_user_id');
+    }
+
+    public function forwardedBy()
+    {
+        return $this->belongsTo(User::class, 'forwarded_by_user_id');
+    }
+
+    public function rejectedBy()
+    {
+        return $this->belongsTo(User::class, 'rejected_by_user_id');
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by_user_id');
     }
 
     public function isFullyCompleted(): bool

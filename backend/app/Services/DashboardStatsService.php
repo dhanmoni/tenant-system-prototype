@@ -51,6 +51,7 @@ class DashboardStatsService
             RentAuthorityFilingApplication::class => ApplicationTypes::RENT_AUTHORITY_FILING,
             RentCourtAppealApplication::class => ApplicationTypes::RENT_COURT_APPEAL,
             RentTribunalAppealApplication::class => ApplicationTypes::RENT_TRIBUNAL_APPEAL,
+            \App\Models\TenancyApplication::class => ApplicationTypes::TENANCY_CERTIFICATE,
             default => 'service_application',
         };
     }
@@ -63,6 +64,7 @@ class DashboardStatsService
             RentRevisionApplication::class,
             OtherChargesRevisionApplication::class,
             ValuerAppointmentApplication::class,
+            \App\Models\TenancyApplication::class,
         ];
     }
 
@@ -182,11 +184,15 @@ class DashboardStatsService
             }
 
             foreach ($query->limit($limit)->get() as $app) {
+                $applicantName = $modelClass === \App\Models\TenancyApplication::class
+                    ? ($app->landlord_name && $app->tenant_name ? "{$app->landlord_name} / {$app->tenant_name}" : ($app->landlord_name ?: $app->tenant_name ?: $app->manager_name ?: $app->user?->name))
+                    : $app->user?->name;
+
                 $items->push([
                     'application_no' => $app->application_no,
                     'status' => $app->status,
                     'application_type' => $this->applicationTypeForModel($modelClass),
-                    'applicant_name' => $app->user?->name,
+                    'applicant_name' => $applicantName,
                     'created_at' => $app->created_at?->toIso8601String(),
                 ]);
             }

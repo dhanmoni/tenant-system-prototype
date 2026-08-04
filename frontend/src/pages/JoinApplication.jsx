@@ -368,6 +368,7 @@ function JoinApplication() {
 
 	if (joinResult) {
 		const isCompleted = String(joinResult.status || '').toUpperCase() === 'COMPLETED'
+		const isSubmitted = String(joinResult.status || '').toUpperCase() === 'SUBMITTED'
 		return (
 			<div className="ws-page ws-uin-apply tenancy-certificate-page">
 				<div className="uin-confirm">
@@ -376,7 +377,7 @@ function JoinApplication() {
 						<h1 className="uin-confirm-title">
 							{isCompleted
 								? t('ws.join.success.completed')
-								: t('ws.join.success.detailsSubmitted')}
+								: (isSubmitted ? 'Submitted for verification' : t('ws.join.success.detailsSubmitted'))}
 						</h1>
 						<p className="uin-confirm-lead">
 							{joinResult.message || t('ws.join.success.lodged')}
@@ -395,9 +396,14 @@ function JoinApplication() {
 							) : null}
 						</dl>
 
-						{!isCompleted ? (
+						{!isCompleted && !isSubmitted ? (
 							<p className="uin-confirm-joint-note">
 								{t('ws.join.success.jointNote')}
+							</p>
+						) : null}
+						{isSubmitted ? (
+							<p className="uin-confirm-joint-note">
+								Both parties have submitted their details. Your application has been sent to the Rent Authority Assistant for verification and approval.
 							</p>
 						) : null}
 

@@ -67,6 +67,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     // Tenant Forms (Assam Tenancy Rules draft) - user only
     Route::middleware('role:user')->group(function () {
         Route::get('/tenant-forms/my', [TenantFormsStatusController::class, 'my']);
+        Route::post('/tenant-forms/{type}/{id}/withdraw', [TenantFormsStatusController::class, 'withdraw']);
         Route::post('/rent-revision-applications', [RentRevisionApplicationController::class, 'store']);
         Route::get('/rent-revision-applications/{application}', [RentRevisionApplicationController::class, 'show']);
         Route::post('/other-charges-revision-applications', [OtherChargesRevisionApplicationController::class, 'store']);
