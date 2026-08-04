@@ -192,7 +192,8 @@ const ApplicationList = ({ user }) => {
 		</div>
 	) : null;
 
-	const queueNotice = isQueueRole ? (
+	const enableFifo = import.meta.env.VITE_ENABLE_FIFO === 'true';
+	const queueNotice = (isQueueRole && enableFifo) ? (
 		<div className="app-queue-notice">
 			<Icon name="lock" className="app-queue-notice__icon" />
 			<span>

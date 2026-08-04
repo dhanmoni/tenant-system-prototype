@@ -97,6 +97,10 @@ class ApplicationWorkflowController extends Controller
     // FIFO lock: an action is only allowed on the head of the queue.
     protected function isQueueHead($user, $status, $type, $id)
     {
+        if (!config('app.enable_fifo', false)) {
+            return true;
+        }
+
         $oldest = $this->getOldestPending($user, $status);
         return $oldest && $oldest['type'] === $type && (int) $oldest['id'] === (int) $id;
     }
@@ -793,16 +797,18 @@ class ApplicationWorkflowController extends Controller
         }
 
         // FIFO: valuer must act on the oldest assigned application first
-        $oldest = $modelClass::where('assigned_valuer_id', $user->id)
-            ->where('status', Status::VALUER_ASSIGNED)
-            ->orderBy('created_at', 'asc')
-            ->orderBy('application_no', 'asc')
-            ->first();
+        if (config('app.enable_fifo', false)) {
+            $oldest = $modelClass::where('assigned_valuer_id', $user->id)
+                ->where('status', Status::VALUER_ASSIGNED)
+                ->orderBy('created_at', 'asc')
+                ->orderBy('application_no', 'asc')
+                ->first();
 
-        if ($oldest && (int) $oldest->id !== (int) $id) {
-            return response()->json([
-                'message' => 'Please process the oldest pending application in your queue first.',
-            ], 409);
+            if ($oldest && (int) $oldest->id !== (int) $id) {
+                return response()->json([
+                    'message' => 'Please process the oldest pending application in your queue first.',
+                ], 409);
+            }
         }
 
         $application->update([
