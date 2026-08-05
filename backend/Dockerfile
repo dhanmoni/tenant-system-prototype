@@ -22,9 +22,11 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Set Apache to listen on port 8000 (standard for PaaS platforms)
-RUN sed -i 's/80/8000/g' /etc/apache2/ports.conf
-RUN sed -i 's/:80/:8000/g' /etc/apache2/sites-available/000-default.conf
+# Configure Apache to listen on the port specified by the $PORT environment variable (default 8000)
+# This is specifically required for Render.com and other PaaS providers
+ENV PORT=8000
+RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
+RUN sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:${PORT}>/g' /etc/apache2/sites-available/000-default.conf
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -42,5 +44,9 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose port 8000
+# We don't strictly need EXPOSE since Render dynamically provides the PORT env var
+# but we can leave it for local testing documentation.
 EXPOSE 8000
+
+# Start Apache in the foreground
+CMD ["apache2-foreground"]
