@@ -20,7 +20,7 @@ use App\Constants\ApplicationTypes;
 
 class ApplicationWorkflowController extends Controller
 {
-    protected function getModel($type)
+    public function getModel($type)
     {
         return match ($type) {
             ApplicationTypes::RENT_REVISION => RentRevisionApplication::class,
@@ -405,7 +405,7 @@ class ApplicationWorkflowController extends Controller
     public function allApplications(Request $request)
     {
         $user = $request->user();
-        if (!in_array($user->role, [Roles::SUPER_ADMIN, Roles::DISTRICT_ADMIN])) {
+        if (!in_array($user->role, array_merge(Roles::allAdmin(), Roles::allStaff()))) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -434,13 +434,23 @@ class ApplicationWorkflowController extends Controller
             $types = [$formTypeFilter];
         }
 
+        if ($user->isAssistant() || in_array($user->role, Roles::principals())) {
+            $allowedTypes = match ($user->role) {
+                Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
+                Roles::RC_ASSISTANT, Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
+                Roles::RT_ASSISTANT, Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
+                default => [],
+            };
+            $types = array_intersect($types, $allowedTypes);
+        }
+
         $allApplications = [];
         foreach ($types as $type) {
             $modelClass = $this->getModel($type);
             if ($modelClass) {
                 $relations = ['user', 'forwardedBy', 'district'];
                 $query = $modelClass::with($relations)->where('status', '!=', Status::DRAFT);
-                if ($user->role === Roles::DISTRICT_ADMIN) {
+                if ($user->role !== Roles::SUPER_ADMIN) {
                     $query->where('district_id', $districtId);
                 } elseif ($districtFilter) {
                     $query->where('district_id', (int) $districtFilter);
