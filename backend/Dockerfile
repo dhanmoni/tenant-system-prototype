@@ -37,6 +37,12 @@ WORKDIR /var/www/html
 # Copy the application code
 COPY . .
 
+# Ensure Laravel storage and cache directories exist before composer install
+RUN mkdir -p /var/www/html/storage/framework/cache/data \
+    && mkdir -p /var/www/html/storage/framework/views \
+    && mkdir -p /var/www/html/storage/framework/sessions \
+    && mkdir -p /var/www/html/bootstrap/cache
+
 # Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
