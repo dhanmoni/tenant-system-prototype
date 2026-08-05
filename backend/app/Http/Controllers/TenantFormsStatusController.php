@@ -324,11 +324,11 @@ class TenantFormsStatusController extends Controller
 
         // Check ownership
         if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
-            if ($application->user_id !== $user->id && $application->landlord_user_id !== $user->id && $application->tenant_user_id !== $user->id && $application->landlord_phone !== $user->phone && $application->tenant_phone !== $user->phone) {
+            if ($application->user_id != $user->id && $application->landlord_user_id != $user->id && $application->tenant_user_id != $user->id && $application->landlord_phone !== $user->phone && $application->tenant_phone !== $user->phone) {
                 return response()->json(['message' => 'Forbidden'], 403);
             }
         } else {
-            if ($application->user_id !== $user->id) {
+            if ($application->user_id != $user->id) {
                 return response()->json(['message' => 'Forbidden'], 403);
             }
         }

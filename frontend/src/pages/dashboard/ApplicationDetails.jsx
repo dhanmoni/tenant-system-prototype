@@ -3,6 +3,7 @@ import { useOutletContext, useParams, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import { formatDateTime, formatDate } from '../../utils/formatters'
 import { APPLICATION_TYPES } from '../../constants/application'
+import NoticeDocumentViewer from '../../components/dashboard/NoticeDocumentViewer'
 
 import emblemDark from '../../assets/img/emblem-dark.png'
 
@@ -14,6 +15,10 @@ function ApplicationDetails() {
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
+
+	const [proceedings, setProceedings] = useState([])
+	const [proceedingsLoading, setProceedingsLoading] = useState(false)
+	const [viewProceedingDoc, setViewProceedingDoc] = useState(null)
 
 	const formKeyToEndpoint = {
 		[APPLICATION_TYPES.RENT_REVISION]: '/api/rent-revision-applications',
@@ -49,6 +54,25 @@ function ApplicationDetails() {
 		}
 	}
 
+	useEffect(() => {
+		if (application && type !== 'tenancy') {
+			fetchProceedings(application)
+		}
+	}, [application])
+
+	const fetchProceedings = async (app) => {
+		const formType = app.form_type || type;
+		try {
+			setProceedingsLoading(true)
+			const res = await api.get(`/api/tenant-forms/${formType}/${app.id}/proceedings`)
+			setProceedings(res.data.proceedings || [])
+		} catch (err) {
+			console.error('Failed to fetch proceedings', err)
+		} finally {
+			setProceedingsLoading(false)
+		}
+	}
+
 	if (loading) return <div className="auth-card dashboard-card"><p>Loading application details...</p></div>
 	if (error) return <div className="auth-card dashboard-card"><p className="error">{error}</p><button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate(-1)}>Back</button></div>
 	if (!application) return <div className="auth-card dashboard-card"><p>No application data found.</p><button type="button" className="ws-btn ws-btn--outline" onClick={() => navigate(-1)}>Back</button></div>
@@ -67,6 +91,40 @@ function ApplicationDetails() {
 		} catch (err) {
 			alert(err?.response?.data?.message || 'Failed to withdraw application')
 		}
+	}
+
+	const renderProceedings = () => {
+		if (type === 'tenancy') return null
+
+		return (
+			<section className="admin-app-details__card ws-card" style={{ marginTop: '2rem' }}>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+					<h3 className="admin-app-details__section-title" style={{ margin: 0, fontSize: '1.2rem' }}>Case Proceedings & Notices</h3>
+				</div>
+				{proceedingsLoading ? (
+					<p>Loading proceedings...</p>
+				) : proceedings.length === 0 ? (
+					<p>No proceedings found.</p>
+				) : (
+					<div className="admin-app-details__grid" style={{ gap: '1rem', display: 'flex', flexDirection: 'column' }}>
+						{proceedings.map((p) => (
+							<div key={p.id} className="admin-app-details__field" style={{ border: '1px solid var(--clr-neutral-200)', padding: '1rem', borderRadius: '4px' }}>
+								<div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+									{new Date(p.created_at).toLocaleDateString()} - {p.notice_type.replace(/_/g, ' ').toUpperCase()}
+								</div>
+								{p.hearing_date && <div>Hearing: {p.hearing_date} {p.hearing_time}</div>}
+								<small>Sent by: {p.sent_by?.name || 'Unknown'}</small>
+								<div style={{ marginTop: '0.5rem' }}>
+									<button type="button" className="ws-btn ws-btn--secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setViewProceedingDoc(p)}>
+										View Document
+									</button>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+			</section>
+		)
 	}
 
 	const renderTenancyDetails = () => (
@@ -282,6 +340,7 @@ function ApplicationDetails() {
 						<button type="button" className="ws-btn" style={{ backgroundColor: '#dc3545', color: '#fff', borderColor: '#dc3545' }} onClick={handleWithdraw}>Withdraw Application</button>
 					)}
 				</div>
+				{renderProceedings()}
 			</div>
 		)
 	}
@@ -295,6 +354,15 @@ function ApplicationDetails() {
 					</div>
 					{renderFormDetails()}
 				</div>
+			)}
+			
+			{viewProceedingDoc && (
+				<NoticeDocumentViewer
+					open={true}
+					onClose={() => setViewProceedingDoc(null)}
+					proceeding={viewProceedingDoc}
+					application={{ ...application, form_type: type }}
+				/>
 			)}
 		</div>
 	)

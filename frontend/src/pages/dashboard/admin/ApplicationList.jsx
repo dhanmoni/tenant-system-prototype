@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
@@ -63,11 +63,16 @@ const ApplicationList = ({ user }) => {
 	const [searchInput, setSearchInput] = useState('')
 	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
 
-	const showFilters = ADMIN_ROLES.includes(user?.role)
+	const location = useLocation()
+	const isInboxPage = location.pathname.includes('/admin/inbox')
+
+	const showFilters = ADMIN_ROLES.includes(user?.role) || (!isInboxPage && ASSISTANT_ROLES.includes(user?.role))
 	const isQueueRole =
-		ASSISTANT_ROLES.includes(user?.role) ||
-		PRINCIPAL_ROLES.includes(user?.role) ||
-		user?.role === ROLES.VALUER
+		isInboxPage && (
+			ASSISTANT_ROLES.includes(user?.role) ||
+			PRINCIPAL_ROLES.includes(user?.role) ||
+			user?.role === ROLES.VALUER
+		)
 
 	useEffect(() => {
 		if (user?.role === ROLES.SUPER_ADMIN) {
@@ -81,12 +86,14 @@ const ApplicationList = ({ user }) => {
 		setLoading(true)
 		try {
 			let endpoint = '/api/admin/applications/all'
-			if (ASSISTANT_ROLES.includes(user?.role)) {
-				endpoint = '/api/admin/applications/inbox'
-			} else if (PRINCIPAL_ROLES.includes(user?.role)) {
-				endpoint = '/api/admin/applications/principal-inbox'
-			} else if (user?.role === ROLES.VALUER) {
-				endpoint = '/api/admin/applications/valuer-inbox'
+			if (isInboxPage) {
+				if (ASSISTANT_ROLES.includes(user?.role)) {
+					endpoint = '/api/admin/applications/inbox'
+				} else if (PRINCIPAL_ROLES.includes(user?.role)) {
+					endpoint = '/api/admin/applications/principal-inbox'
+				} else if (user?.role === ROLES.VALUER) {
+					endpoint = '/api/admin/applications/valuer-inbox'
+				}
 			}
 
 			const params = { page, per_page: 15 }
@@ -207,11 +214,11 @@ const ApplicationList = ({ user }) => {
 	}
 
 	const tableTitle = (() => {
-		if (ASSISTANT_ROLES.includes(user?.role)) return 'Pending applications'
-		if (PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review'
+		if (isInboxPage && ASSISTANT_ROLES.includes(user?.role)) return 'Pending applications'
+		if (isInboxPage && PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review'
 		if (user?.role === ROLES.SUPER_ADMIN) return 'Service applications'
 		if (user?.role === ROLES.DISTRICT_ADMIN) return 'Service applications'
-		return 'Applications'
+		return 'Service applications'
 	})()
 
 	const statusFilterLabel = filters.status

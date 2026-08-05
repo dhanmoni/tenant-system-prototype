@@ -60,7 +60,7 @@ export function getWorkspaceNavigation(user) {
 		})
 	}
 
-	if ([...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN].includes(user.role)) {
+	if ([...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN, ROLES.RT_ASSISTANT].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/applications',
 			labelKey: 'ws.nav.serviceApplications',
