@@ -97,16 +97,7 @@ class DashboardStatsService
 
     public function countServiceApplications(?int $districtId = null, ?array $modelClasses = null): int
     {
-        $total = 0;
-        foreach ($modelClasses ?? $this->allServiceModels() as $modelClass) {
-            $query = $modelClass::query()->where('status', '!=', Status::DRAFT);
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-            $total += $query->count();
-        }
-
-        return $total;
+        return $this->getCombinedServiceQuery($districtId, $modelClasses, ['id'])->count();
     }
 
     public function countTenancyApplications(?int $districtId = null): int
@@ -115,11 +106,64 @@ class DashboardStatsService
         if ($districtId) {
             $query->where('district_id', $districtId);
         }
-
         return $query->count();
     }
 
-  /**
+    /**
+     * Helper to construct a single UNION ALL query for service applications.
+     */
+    protected function getCombinedServiceQuery(?int $districtId, ?array $modelClasses, array $columns = ['status', 'district_id']): \Illuminate\Database\Query\Builder
+    {
+        $models = $modelClasses ?? $this->allServiceModels();
+        if (empty($models)) {
+            // Return an empty query builder if no models
+            return DB::table(TenancyApplication::query()->getModel()->getTable())->whereRaw('1 = 0');
+        }
+
+        $selects = [];
+        $bindings = [];
+
+        foreach ($models as $modelClass) {
+            $model = new $modelClass;
+            $table = $model->getTable();
+            
+            $cols = [];
+            foreach ($columns as $col) {
+                if ($col === 'form_type') {
+                    $formType = $this->applicationTypeForModel($modelClass);
+                    $cols[] = "? as form_type";
+                    $bindings[] = $formType;
+                } elseif ($col === 'created_at_date') {
+                    $dateExpr = DB::connection()->getDriverName() === 'pgsql'
+                        ? 'created_at::date'
+                        : 'DATE(created_at)';
+                    $cols[] = "$dateExpr as created_at_date";
+                } else {
+                    $cols[] = $col;
+                }
+            }
+            
+            $selectSql = implode(', ', $cols);
+            $query = "SELECT $selectSql FROM $table WHERE status != ?";
+            $bindings[] = Status::DRAFT;
+            
+            if ($districtId) {
+                $query .= " AND district_id = ?";
+                $bindings[] = $districtId;
+            }
+            
+            $selects[] = $query;
+        }
+
+        $unionSql = implode(' UNION ALL ', $selects);
+        
+        // Return a query builder wrapping the union
+        return DB::query()
+            ->fromSub($unionSql, 'combined')
+            ->setBindings($bindings);
+    }
+
+    /**
      * @param  class-string[]|null  $modelClasses
      * @return array<string, int>
      */
@@ -135,23 +179,16 @@ class DashboardStatsService
 
         $trackedStatuses = [Status::SUBMITTED, Status::IN_REVIEW, Status::REJECTED, Status::COMPLETED];
 
-        foreach ($modelClasses ?? $this->allServiceModels() as $modelClass) {
-            $query = $modelClass::query()
-                ->selectRaw('status, count(*) as count')
-                ->where('status', '!=', Status::DRAFT);
+        $counts = $this->getCombinedServiceQuery($districtId, $modelClasses, ['status'])
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
 
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-
-            $counts = $query->groupBy('status')->pluck('count', 'status');
-
-            foreach ($counts as $status => $count) {
-                if (in_array($status, $trackedStatuses, true)) {
-                    $breakdown[$status] += $count;
-                } else {
-                    $breakdown['OTHER'] += $count;
-                }
+        foreach ($counts as $status => $count) {
+            if (in_array($status, $trackedStatuses, true)) {
+                $breakdown[$status] += (int) $count;
+            } else {
+                $breakdown['OTHER'] += (int) $count;
             }
         }
 
@@ -163,16 +200,9 @@ class DashboardStatsService
      */
     public function countServiceByStatus(string $status, ?int $districtId = null, ?array $modelClasses = null): int
     {
-        $total = 0;
-        foreach ($modelClasses ?? $this->allServiceModels() as $modelClass) {
-            $query = $modelClass::query()->where('status', $status);
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-            $total += $query->count();
-        }
-
-        return $total;
+        return $this->getCombinedServiceQuery($districtId, $modelClasses, ['status'])
+            ->where('status', $status)
+            ->count();
     }
 
     /**
@@ -301,21 +331,17 @@ class DashboardStatsService
             }
         }
 
-        foreach ($this->allServiceModels() as $modelClass) {
-            $query = $modelClass::query()
-                ->selectRaw("{$dateExpr} as day, COUNT(*) as cnt")
-                ->where('status', '!=', Status::DRAFT)
-                ->whereBetween('created_at', [$start, $end])
-                ->groupBy('day');
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-            foreach ($query->get() as $row) {
-                $key = (string) $row->day;
-                if (isset($buckets[$key])) {
-                    $buckets[$key]['forms'] += (int) $row->cnt;
-                    $buckets[$key]['total'] += (int) $row->cnt;
-                }
+        $counts = $this->getCombinedServiceQuery($districtId, $this->allServiceModels(), ['created_at_date', 'created_at'])
+            ->selectRaw('created_at_date as day, count(*) as cnt')
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('day')
+            ->get();
+
+        foreach ($counts as $row) {
+            $key = (string) $row->day;
+            if (isset($buckets[$key])) {
+                $buckets[$key]['forms'] += (int) $row->cnt;
+                $buckets[$key]['total'] += (int) $row->cnt;
             }
         }
 
@@ -336,15 +362,10 @@ class DashboardStatsService
         }
         $total += $tenancyQuery->count();
 
-        foreach ($this->allServiceModels() as $modelClass) {
-            $query = $modelClass::query()
-                ->where('status', '!=', Status::DRAFT)
-                ->whereBetween('created_at', [$start, $end]);
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-            $total += $query->count();
-        }
+        $serviceCount = $this->getCombinedServiceQuery($districtId, $this->allServiceModels(), ['id', 'created_at'])
+            ->whereBetween('created_at', [$start, $end])
+            ->count();
+        $total += $serviceCount;
 
         return $total;
     }
@@ -387,20 +408,10 @@ class DashboardStatsService
             ->groupBy('district_id')
             ->pluck('count', 'district_id');
 
-        $districtServiceCounts = collect();
-        foreach ($modelsToCount as $modelClass) {
-            $counts = $modelClass::query()
-                ->selectRaw('district_id, count(*) as count')
-                ->where('status', '!=', Status::DRAFT)
-                ->when($onlyDistrictId, fn($q) => $q->where('district_id', $onlyDistrictId))
-                ->groupBy('district_id')
-                ->pluck('count', 'district_id');
-
-            foreach ($counts as $distId => $count) {
-                $current = $districtServiceCounts->get($distId, 0);
-                $districtServiceCounts->put($distId, $current + $count);
-            }
-        }
+        $districtServiceCounts = $this->getCombinedServiceQuery($onlyDistrictId, $modelsToCount, ['district_id'])
+            ->selectRaw('district_id, count(*) as count')
+            ->groupBy('district_id')
+            ->pluck('count', 'district_id');
 
         return $query->get()->map(function (District $district) use ($districtTenancyCounts, $districtServiceCounts) {
             $tenancy = $districtTenancyCounts->get($district->id, 0);
@@ -459,25 +470,37 @@ class DashboardStatsService
      */
     public function formTypeBreakdown(?int $districtId = null, array $modelClasses = []): array
     {
+        $counts = $this->getCombinedServiceQuery($districtId, $modelClasses, ['form_type'])
+            ->selectRaw('form_type, count(*) as count')
+            ->groupBy('form_type')
+            ->pluck('count', 'form_type');
+
         $items = [];
-        foreach ($modelClasses as $modelClass) {
-            $query = $modelClass::query()->where('status', '!=', Status::DRAFT);
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-            $count = $query->count();
-            if ($count === 0) {
-                continue;
-            }
+        foreach ($counts as $formKey => $count) {
+            if ((int)$count === 0) continue;
+            
+            // Map form_type to label by instantiating or matching
+            $label = match ($formKey) {
+                ApplicationTypes::RENT_REVISION => 'Form I — Rent revision',
+                ApplicationTypes::OTHER_CHARGES_REVISION => 'Form I-A — Other charges revision',
+                ApplicationTypes::VALUER_APPOINTMENT => 'Form I-B — Valuer appointment',
+                ApplicationTypes::RENT_COURT_POSSESSION => 'Form II — Recovery of possession',
+                ApplicationTypes::RENT_COURT_FILING => 'Form III — Application to Rent Court',
+                ApplicationTypes::RENT_AUTHORITY_FILING => 'Form IV — Application to Rent Authority',
+                ApplicationTypes::RENT_COURT_APPEAL => 'Form V — Appeal to Rent Court',
+                ApplicationTypes::RENT_TRIBUNAL_APPEAL => 'Form VI — Appeal to Rent Tribunal',
+                ApplicationTypes::TENANCY_CERTIFICATE => 'UIN / Tenancy Certificate',
+                default => 'Unknown Form'
+            };
+
             $items[] = [
-                'form_key' => $this->applicationTypeForModel($modelClass),
-                'label' => $this->formLabelForModel($modelClass),
-                'count' => $count,
+                'form_key' => $formKey,
+                'label' => $label,
+                'count' => (int) $count,
             ];
         }
 
         usort($items, fn ($a, $b) => $b['count'] <=> $a['count']);
-
         return $items;
     }
 
