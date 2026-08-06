@@ -50,82 +50,85 @@ class TenantFormsStatusController extends Controller
         $tenancyMax = 200;
         $formsMax = 200;
 
-        // Tenancy certificate applications
-        $tenancyQuery = TenancyApplication::query()
-            ->where(function ($q) use ($user) {
-                $q->where('landlord_user_id', $user->id)
-                    ->orWhere('tenant_user_id', $user->id)
-                    ->orWhere('user_id', $user->id)
-                    ->orWhere('landlord_phone', $user->phone)
-                    ->orWhere('tenant_phone', $user->phone);
-
-                if ($user->email) {
-                    $q->orWhere('landlord_email', $user->email)
-                        ->orWhere('tenant_email', $user->email);
-                }
-            });
-
-        if (!empty($applicationNo)) {
-            $tenancyQuery->where('application_no', 'like', '%' . $applicationNo . '%');
-        }
-
-        if (!empty($uid)) {
-            $tenancyQuery->where('uid', 'like', '%' . $uid . '%');
-        }
-
-        $tenancyApps = $tenancyQuery
-            ->orderByDesc('created_at')
-            ->limit($tenancyMax)
-            ->get([
-                'id',
-                'application_no',
-                'ref_code',
-                'application_type',
-                'apply_type',
-                'created_at',
-                'updated_at',
-                'status',
-                'current_with',
-                'initiator_role',
-                'initiator_completed',
-                'second_party_completed',
-                'uid',
-                'wizard_step',
-                'movement_history',
-                'landlord_phone',
-                'tenant_phone',
-            ]);
-
         $items = [];
-        foreach ($tenancyApps as $app) {
-            $items[] = [
-                'id' => $app->id,
-                'source_type' => 'tenancy',
-                'row_key' => 'tenancy-' . $app->id,
-                'application_no' => $app->application_no,
-                'uid' => $app->uid ?? '-',
-                'created_at' => optional($app->created_at)->toDateTimeString(),
-                'updated_at' => optional($app->updated_at)->toDateTimeString(),
-                'status' => $app->status,
-                'application_type' => $app->application_type ?: 'Tenancy Certificate',
-                'apply_type' => $app->apply_type ?? null,
-                'current_with' => $app->current_with ?: ($app->assigned_to_role ?? '-'),
-                'assigned_to_role' => $app->assigned_to_role ?? null,
-                'forwarded_at' => optional($app->forwarded_at)->toDateTimeString(),
-                'approved_at' => optional($app->approved_at)->toDateTimeString(),
-                'rejected_at' => optional($app->rejected_at)->toDateTimeString(),
-                'rejection_message' => $app->rejection_message ?? null,
-                'approval_message' => $app->approval_message ?? null,
-                'forward_remarks' => $app->forward_remarks ?? null,
-                'initiator_role' => $app->initiator_role ?? null,
-                'initiator_completed' => (bool) $app->initiator_completed,
-                'second_party_completed' => (bool) $app->second_party_completed,
-                'wizard_step' => $app->wizard_step ?? null,
-                'movement_history' => $app->movement_history ?? [],
-                'ref_code' => $app->ref_code ?? null,
-                'landlord_phone' => $app->landlord_phone ?? null,
-                'tenant_phone' => $app->tenant_phone ?? null,
-            ];
+        
+        if (in_array($typeFilter, ['all', 'tenancy'])) {
+            // Tenancy certificate applications
+            $tenancyQuery = TenancyApplication::query()
+                ->where(function ($q) use ($user) {
+                    $q->where('landlord_user_id', $user->id)
+                        ->orWhere('tenant_user_id', $user->id)
+                        ->orWhere('user_id', $user->id)
+                        ->orWhere('landlord_phone', $user->phone)
+                        ->orWhere('tenant_phone', $user->phone);
+
+                    if ($user->email) {
+                        $q->orWhere('landlord_email', $user->email)
+                            ->orWhere('tenant_email', $user->email);
+                    }
+                });
+
+            if (!empty($applicationNo)) {
+                $tenancyQuery->where('application_no', 'like', '%' . $applicationNo . '%');
+            }
+
+            if (!empty($uid)) {
+                $tenancyQuery->where('uid', 'like', '%' . $uid . '%');
+            }
+
+            $tenancyApps = $tenancyQuery
+                ->orderByDesc('created_at')
+                ->limit($tenancyMax)
+                ->get([
+                    'id',
+                    'application_no',
+                    'ref_code',
+                    'application_type',
+                    'apply_type',
+                    'created_at',
+                    'updated_at',
+                    'status',
+                    'current_with',
+                    'initiator_role',
+                    'initiator_completed',
+                    'second_party_completed',
+                    'uid',
+                    'wizard_step',
+                    'movement_history',
+                    'landlord_phone',
+                    'tenant_phone',
+                ]);
+
+            foreach ($tenancyApps as $app) {
+                $items[] = [
+                    'id' => $app->id,
+                    'source_type' => 'tenancy',
+                    'row_key' => 'tenancy-' . $app->id,
+                    'application_no' => $app->application_no,
+                    'uid' => $app->uid ?? '-',
+                    'created_at' => optional($app->created_at)->toDateTimeString(),
+                    'updated_at' => optional($app->updated_at)->toDateTimeString(),
+                    'status' => $app->status,
+                    'application_type' => $app->application_type ?: 'Tenancy Certificate',
+                    'apply_type' => $app->apply_type ?? null,
+                    'current_with' => $app->current_with ?: ($app->assigned_to_role ?? '-'),
+                    'assigned_to_role' => $app->assigned_to_role ?? null,
+                    'forwarded_at' => optional($app->forwarded_at)->toDateTimeString(),
+                    'approved_at' => optional($app->approved_at)->toDateTimeString(),
+                    'rejected_at' => optional($app->rejected_at)->toDateTimeString(),
+                    'rejection_message' => $app->rejection_message ?? null,
+                    'approval_message' => $app->approval_message ?? null,
+                    'forward_remarks' => $app->forward_remarks ?? null,
+                    'initiator_role' => $app->initiator_role ?? null,
+                    'initiator_completed' => (bool) $app->initiator_completed,
+                    'second_party_completed' => (bool) $app->second_party_completed,
+                    'wizard_step' => $app->wizard_step ?? null,
+                    'movement_history' => $app->movement_history ?? [],
+                    'ref_code' => $app->ref_code ?? null,
+                    'landlord_phone' => $app->landlord_phone ?? null,
+                    'tenant_phone' => $app->tenant_phone ?? null,
+                ];
+            }
         }
 
         // Other Assam Tenancy Rules draft forms (user only)
@@ -164,70 +167,63 @@ class TenantFormsStatusController extends Controller
             ],
         ];
 
-        foreach ($formTables as $key => $meta) {
-            /** @var \Illuminate\Database\Eloquent\Model $model */
-            $model = $meta['model'];
+        if (in_array($typeFilter, ['all', 'service'])) {
+            foreach ($formTables as $key => $meta) {
+                /** @var \Illuminate\Database\Eloquent\Model $model */
+                $model = $meta['model'];
 
-            $query = $model::query()
-                ->where('user_id', $user->id);
+                $query = $model::query()
+                    ->where('user_id', $user->id);
 
-            if (!empty($applicationNo)) {
-                $query->where('application_no', 'like', '%' . $applicationNo . '%');
+                if (!empty($applicationNo)) {
+                    $query->where('application_no', 'like', '%' . $applicationNo . '%');
+                }
+
+                $records = $query
+                    ->orderByDesc('created_at')
+                    ->limit($formsMax)
+                    ->get([
+                        'id',
+                        'application_no',
+                        'created_at',
+                        'updated_at',
+                        'status',
+                        'tenancy_uin',
+                        'assigned_to_role',
+                        'forwarded_at',
+                        'approved_at',
+                        'rejected_at',
+                        'rejection_message',
+                        'approval_message',
+                    ]);
+
+                foreach ($records as $record) {
+                    $items[] = [
+                        'id' => $record->id,
+                        'source_type' => 'form',
+                        'form_key' => $key,
+                        'form_type' => $key,
+                        'row_key' => 'form-' . $key . '-' . $record->id,
+                        'application_no' => $record->application_no,
+                        'uid' => $record->tenancy_uin ?? '-',
+                        'created_at' => optional($record->created_at)->toDateTimeString(),
+                        'updated_at' => optional($record->updated_at)->toDateTimeString(),
+                        'status' => $record->status,
+                        'application_type' => $meta['label'],
+                        'current_with' => $record->assigned_to_role ?? '-',
+                        'assigned_to_role' => $record->assigned_to_role ?? null,
+                        'forwarded_at' => optional($record->forwarded_at)->toDateTimeString(),
+                        'approved_at' => optional($record->approved_at)->toDateTimeString(),
+                        'rejected_at' => optional($record->rejected_at)->toDateTimeString(),
+                        'rejection_message' => $record->rejection_message ?? null,
+                        'approval_message' => $record->approval_message ?? null,
+                        'initiator_role' => null,
+                        // Frontend uses tenancy completion logic; these are just safe defaults.
+                        'initiator_completed' => true,
+                        'second_party_completed' => true,
+                    ];
+                }
             }
-
-            $records = $query
-                ->orderByDesc('created_at')
-                ->limit($formsMax)
-                ->get([
-                    'id',
-                    'application_no',
-                    'created_at',
-                    'updated_at',
-                    'status',
-                    'tenancy_uin',
-                    'assigned_to_role',
-                    'forwarded_at',
-                    'approved_at',
-                    'rejected_at',
-                    'rejection_message',
-                    'approval_message',
-                ]);
-
-            foreach ($records as $record) {
-                $items[] = [
-                    'id' => $record->id,
-                    'source_type' => 'form',
-                    'form_key' => $key,
-                    'form_type' => $key,
-                    'row_key' => 'form-' . $key . '-' . $record->id,
-                    'application_no' => $record->application_no,
-                    'uid' => $record->tenancy_uin ?? '-',
-                    'created_at' => optional($record->created_at)->toDateTimeString(),
-                    'updated_at' => optional($record->updated_at)->toDateTimeString(),
-                    'status' => $record->status,
-                    'application_type' => $meta['label'],
-                    'current_with' => $record->assigned_to_role ?? '-',
-                    'assigned_to_role' => $record->assigned_to_role ?? null,
-                    'forwarded_at' => optional($record->forwarded_at)->toDateTimeString(),
-                    'approved_at' => optional($record->approved_at)->toDateTimeString(),
-                    'rejected_at' => optional($record->rejected_at)->toDateTimeString(),
-                    'rejection_message' => $record->rejection_message ?? null,
-                    'approval_message' => $record->approval_message ?? null,
-                    'initiator_role' => null,
-                    // Frontend uses tenancy completion logic; these are just safe defaults.
-                    'initiator_completed' => true,
-                    'second_party_completed' => true,
-                ];
-            }
-        }
-
-        $tenancyTotal = count(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'tenancy'));
-        $serviceTotal = count(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'form'));
-
-        if ($typeFilter === 'tenancy') {
-            $items = array_values(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'tenancy'));
-        } elseif ($typeFilter === 'service') {
-            $items = array_values(array_filter($items, fn ($i) => ($i['source_type'] ?? '') === 'form'));
         }
 
         if ($statusFilter !== '' && $statusFilter !== 'all') {
@@ -268,11 +264,6 @@ class TenantFormsStatusController extends Controller
             'current_page' => $page,
             'last_page' => $lastPage,
             'total' => $total,
-            'counts' => [
-                'tenancy' => $tenancyTotal,
-                'service' => $serviceTotal,
-                'all' => $tenancyTotal + $serviceTotal,
-            ],
         ]);
     }
 
