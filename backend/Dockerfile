@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libpq-dev \
     zip \
     unzip \
     git \
@@ -12,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    && docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip
 
 # Enable Apache mod_rewrite for Laravel routing
 RUN a2enmod rewrite
@@ -54,5 +55,5 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 # but we can leave it for local testing documentation.
 EXPOSE 8000
 
-# Start Apache in the foreground
-CMD ["apache2-foreground"]
+# Start Apache in the foreground, but run migrations first!
+CMD php artisan migrate --force && apache2-foreground
