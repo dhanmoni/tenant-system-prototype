@@ -112,7 +112,13 @@ class DashboardStatsService
     /**
      * Helper to construct a single UNION ALL query for service applications.
      */
-    protected function getCombinedServiceQuery(?int $districtId, ?array $modelClasses, array $columns = ['status', 'district_id']): \Illuminate\Database\Query\Builder
+    protected function getCombinedServiceQuery(
+        ?int $districtId, 
+        ?array $modelClasses, 
+        array $columns = ['status', 'district_id'],
+        ?string $extraWhereSql = null,
+        array $extraWhereBindings = []
+    ): \Illuminate\Database\Query\Builder
     {
         $models = $modelClasses ?? $this->allServiceModels();
         if (empty($models)) {
@@ -150,6 +156,11 @@ class DashboardStatsService
             if ($districtId) {
                 $query .= " AND district_id = ?";
                 $bindings[] = $districtId;
+            }
+            
+            if ($extraWhereSql) {
+                $query .= " AND $extraWhereSql";
+                $bindings = array_merge($bindings, $extraWhereBindings);
             }
             
             $selects[] = $query;
@@ -200,9 +211,13 @@ class DashboardStatsService
      */
     public function countServiceByStatus(string $status, ?int $districtId = null, ?array $modelClasses = null): int
     {
-        return $this->getCombinedServiceQuery($districtId, $modelClasses, ['status'])
-            ->where('status', $status)
-            ->count();
+        return $this->getCombinedServiceQuery(
+            $districtId, 
+            $modelClasses, 
+            ['id'],
+            'status = ?',
+            [$status]
+        )->count();
     }
 
     /**
@@ -324,9 +339,14 @@ class DashboardStatsService
             }
         }
 
-        $counts = $this->getCombinedServiceQuery($districtId, $this->allServiceModels(), ['created_at_date', 'created_at'])
+        $counts = $this->getCombinedServiceQuery(
+            $districtId, 
+            $this->allServiceModels(), 
+            ['created_at_date'],
+            'created_at BETWEEN ? AND ?',
+            [$start, $end]
+        )
             ->selectRaw('created_at_date as day, count(*) as cnt')
-            ->whereBetween('created_at', [$start, $end])
             ->groupBy('day')
             ->get();
 
@@ -355,9 +375,13 @@ class DashboardStatsService
         }
         $total += $tenancyQuery->count();
 
-        $serviceCount = $this->getCombinedServiceQuery($districtId, $this->allServiceModels(), ['id', 'created_at'])
-            ->whereBetween('created_at', [$start, $end])
-            ->count();
+        $serviceCount = $this->getCombinedServiceQuery(
+            $districtId, 
+            $this->allServiceModels(), 
+            ['id'],
+            'created_at BETWEEN ? AND ?',
+            [$start, $end]
+        )->count();
         $total += $serviceCount;
 
         return $total;
