@@ -211,34 +211,27 @@ class DashboardStatsService
      */
     public function recentServiceApplications(array $modelClasses, ?int $districtId, int $limit = 6): array
     {
-        $items = collect();
-
-        foreach ($modelClasses as $modelClass) {
-            $query = $modelClass::query()->with('user')->where('status', '!=', Status::DRAFT)->latest();
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-
-            foreach ($query->limit($limit)->get() as $app) {
-                $applicantName = $modelClass === \App\Models\TenancyApplication::class
-                    ? ($app->landlord_name && $app->tenant_name ? "{$app->landlord_name} / {$app->tenant_name}" : ($app->landlord_name ?: $app->tenant_name ?: $app->manager_name ?: $app->user?->name))
-                    : $app->user?->name;
-
-                $items->push([
-                    'application_no' => $app->application_no,
-                    'status' => $app->status,
-                    'application_type' => $this->applicationTypeForModel($modelClass),
-                    'applicant_name' => $applicantName,
-                    'created_at' => $app->created_at?->toIso8601String(),
-                ]);
-            }
+        if (empty($modelClasses)) {
+            return [];
         }
+        
+        $records = $this->getCombinedServiceQuery($districtId, $modelClasses, ['application_no', 'status', 'form_type', 'user_id', 'created_at'])
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
 
-        return $items
-            ->sortByDesc('created_at')
-            ->take($limit)
-            ->values()
-            ->all();
+        $userIds = $records->pluck('user_id')->filter()->unique();
+        $users = User::whereIn('id', $userIds)->pluck('name', 'id');
+
+        return $records->map(function ($app) use ($users) {
+            return [
+                'application_no' => $app->application_no,
+                'status' => $app->status,
+                'application_type' => $app->form_type,
+                'applicant_name' => $users->get($app->user_id),
+                'created_at' => \Carbon\Carbon::parse($app->created_at)->toIso8601String(),
+            ];
+        })->all();
     }
 
     /**
@@ -256,6 +249,7 @@ class DashboardStatsService
         if ($districtId) {
             $tenancyQuery->where('district_id', $districtId);
         }
+        
         foreach ($tenancyQuery->limit($limit)->get() as $app) {
             $items->push([
                 'application_no' => $app->application_no,
@@ -267,24 +261,23 @@ class DashboardStatsService
             ]);
         }
 
-        foreach ($this->allServiceModels() as $modelClass) {
-            $query = $modelClass::query()
-                ->with('user')
-                ->where('status', '!=', Status::DRAFT)
-                ->latest();
-            if ($districtId) {
-                $query->where('district_id', $districtId);
-            }
-            foreach ($query->limit($limit)->get() as $app) {
-                $items->push([
-                    'application_no' => $app->application_no,
-                    'status' => $app->status,
-                    'application_type' => $this->applicationTypeForModel($modelClass),
-                    'category' => 'form',
-                    'applicant_name' => $app->user?->name,
-                    'created_at' => $app->created_at?->toIso8601String(),
-                ]);
-            }
+        $serviceRecords = $this->getCombinedServiceQuery($districtId, $this->allServiceModels(), ['application_no', 'status', 'form_type', 'user_id', 'created_at'])
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
+
+        $userIds = $serviceRecords->pluck('user_id')->filter()->unique();
+        $users = User::whereIn('id', $userIds)->pluck('name', 'id');
+
+        foreach ($serviceRecords as $app) {
+            $items->push([
+                'application_no' => $app->application_no,
+                'status' => $app->status,
+                'application_type' => $app->form_type,
+                'category' => 'form',
+                'applicant_name' => $users->get($app->user_id),
+                'created_at' => \Carbon\Carbon::parse($app->created_at)->toIso8601String(),
+            ]);
         }
 
         return $items
@@ -435,9 +428,9 @@ class DashboardStatsService
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function statesOverview(): array
+    public function statesOverview(?array $districtsBreakdown = null): array
     {
-        $districts = collect($this->districtBreakdown());
+        $districts = collect($districtsBreakdown ?? $this->districtBreakdown());
 
         return State::query()
             ->withCount('districts')
@@ -527,6 +520,8 @@ class DashboardStatsService
         $statusBreakdown = $this->serviceStatusBreakdown();
         $allModels = $this->allServiceModels();
 
+        $districtBreakdown = $this->districtBreakdown();
+
         return [
             'districts_count' => District::count(),
             'states_count' => State::count(),
@@ -545,8 +540,8 @@ class DashboardStatsService
             'pending_review' => $this->countServiceByStatus(Status::SUBMITTED),
             'in_review' => $this->countServiceByStatus(Status::IN_REVIEW),
             'form_type_breakdown' => $this->formTypeBreakdown(null, $allModels),
-            'district_breakdown' => $this->districtBreakdown(),
-            'states_overview' => $this->statesOverview(),
+            'district_breakdown' => $districtBreakdown,
+            'states_overview' => $this->statesOverview($districtBreakdown),
             'recent_applications' => collect($this->recentTenancyApplications(null, 4))
                 ->merge($this->recentServiceApplications($allModels, null, 4))
                 ->sortByDesc('created_at')
@@ -714,7 +709,7 @@ class DashboardStatsService
             $user->role === Roles::DISTRICT_ADMIN ? null : $scopedModels
         );
         if ($user->role === Roles::DISTRICT_ADMIN || $user->role === Roles::SUPER_ADMIN) {
-            $stats['states_overview'] = $this->statesOverview();
+            $stats['states_overview'] = $this->statesOverview($stats['district_breakdown']);
         }
 
         return $stats;
