@@ -37,13 +37,30 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::table('application_tables', function (Blueprint $table) {
-            //
+        $serviceTables = [
+            'rent_authority_form_i_applications',
+            'rent_authority_form_ia_applications',
+            'rent_authority_form_ib_applications',
+            'rent_court_form_4_applications',
+            'rent_court_form_5_applications',
+            'rent_authority_form_6_applications',
+            'rent_court_form_7_applications',
+            'rent_tribunal_form_8_applications',
+        ];
+
+        foreach ($serviceTables as $table) {
+            Schema::table($table, function (Blueprint $tableBlueprint) {
+                $tableBlueprint->dropIndex(['user_id']);
+            });
+        }
+
+        Schema::table('tenancy_applications', function (Blueprint $table) {
+            $table->dropIndex(['user_id']);
+            $table->dropIndex(['landlord_user_id']);
+            $table->dropIndex(['tenant_user_id']);
         });
     }
-}
+};
