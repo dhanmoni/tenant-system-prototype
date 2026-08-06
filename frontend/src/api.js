@@ -19,6 +19,7 @@ const api = axios.create({
   },
 })
 
+// TODO: PROD - Revert this to `api.get('/sanctum/csrf-cookie')` when frontend and backend share the same custom domain
 export const csrf = () => Promise.resolve()
 
 api.interceptors.request.use((config) => {

@@ -843,13 +843,13 @@ class TenancyApplicationController extends Controller
     public function adminIndex(Request $request)
     {
         $user = $request->user();
-        if (!in_array($user->role, [Roles::SUPER_ADMIN, Roles::DISTRICT_ADMIN])) {
+        if (!in_array($user->role, [Roles::SUPER_ADMIN, Roles::DISTRICT_ADMIN, Roles::RENT_AUTHORITY, Roles::RA_ASSISTANT])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $query = TenancyApplication::with('district')->where('status', '!=', Status::DRAFT);
 
-        if ($user->role === Roles::DISTRICT_ADMIN) {
+        if (in_array($user->role, [Roles::DISTRICT_ADMIN, Roles::RENT_AUTHORITY, Roles::RA_ASSISTANT])) {
             $query->where('district_id', $user->district_id);
         } elseif ($request->filled('district_id')) {
             $query->where('district_id', (int) $request->input('district_id'));

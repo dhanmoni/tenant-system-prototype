@@ -196,6 +196,7 @@ return [
     |
     */
 
+    // TODO: PROD - Revert `same_site` to 'lax' when frontend and backend share the same custom domain
     'same_site' => env('SESSION_SAME_SITE', 'lax'),
 
 ];

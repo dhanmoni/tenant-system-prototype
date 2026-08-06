@@ -30,6 +30,7 @@ $principalRoles = implode(',', Roles::principals());
 $adminRoles = implode(',', Roles::allAdmin());
 $managementRoles = implode(',', Roles::allManagement());
 $allAdminStaffRoles = implode(',', array_merge(Roles::allAdmin(), Roles::allStaff()));
+$tenancyViewerRoles = implode(',', array_merge(Roles::allAdmin(), [Roles::RENT_AUTHORITY, Roles::RA_ASSISTANT]));
 
 /*
 |--------------------------------------------------------------------------
@@ -46,7 +47,7 @@ Route::get('/public/village-wards', [VillageWardController::class, 'publicIndex'
 Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplicationController::class, 'receipt']);
 Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
 
-Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles) {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles, $tenancyViewerRoles) {
     // Joint tenancy routes — literal paths must stay before {tenancyApplication}
     Route::get('/tenancy-applications/lookup', [TenancyApplicationController::class, 'lookupByRefCode']);
     Route::get('/tenancy-applications/lookup-by-uin', [TenancyApplicationController::class, 'lookupByUid']);
@@ -95,14 +96,17 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 
-    Route::middleware("role:$adminRoles")->group(function () {
+    // Service Application Workflow
+    Route::middleware("role:$tenancyViewerRoles")->group(function () {
         Route::get('/admin/tenancy-records', [TenancyApplicationController::class, 'adminIndex']);
+    });
+
+    Route::middleware("role:$adminRoles")->group(function () {
+        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
         Route::put('/admin/applications/{type}/{id}', [ApplicationWorkflowController::class, 'update']);
     });
 
-    // Service Application Workflow
     Route::middleware("role:$allAdminStaffRoles")->group(function () {
-        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
         Route::get('/admin/applications/inbox', [ApplicationWorkflowController::class, 'inbox']);
         Route::get('/admin/applications/principal-inbox', [ApplicationWorkflowController::class, 'principalInbox']);
         Route::get('/admin/applications/valuer-inbox', [ApplicationWorkflowController::class, 'valuerInbox']);

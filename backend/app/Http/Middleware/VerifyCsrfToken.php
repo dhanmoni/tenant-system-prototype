@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
+        // TODO: PROD - Revert this when frontend and backend share the same custom domain to re-enable CSRF protection
         'api/*',
         'sanctum/csrf-cookie'
     ];

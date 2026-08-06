@@ -43,7 +43,7 @@ const TenancyRecords = ({ user }) => {
 	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
 
 	useEffect(() => {
-		if (!ADMIN_ROLES.includes(user?.role)) {
+		if (![...ADMIN_ROLES, ROLES.RENT_AUTHORITY, ROLES.RA_ASSISTANT].includes(user?.role)) {
 			navigate('/dashboard')
 		}
 	}, [user?.role, navigate])
@@ -83,7 +83,7 @@ const TenancyRecords = ({ user }) => {
 	}, [page, filters])
 
 	useEffect(() => {
-		if (ADMIN_ROLES.includes(user?.role)) {
+		if ([...ADMIN_ROLES, ROLES.RENT_AUTHORITY, ROLES.RA_ASSISTANT].includes(user?.role)) {
 			fetchRecords()
 		}
 	}, [fetchRecords, user?.role])
