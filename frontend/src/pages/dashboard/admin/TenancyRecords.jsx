@@ -2,7 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useDistricts } from '../../../hooks/useDistricts'
 import { formatDate } from '../../../utils/formatters'
 import { APPLICATION_TYPES } from '../../../constants/application'
 import { ADMIN_ROLES, ROLES } from '../../../constants/roles'
@@ -33,7 +34,10 @@ const TenancyRecords = ({ user }) => {
 	const [error, setError] = useState('')
 	const [page, setPage] = useState(1)
 	const [paginationInfo, setPaginationInfo] = useState(null)
-	const [districts, setDistricts] = useState([])
+	
+	const shouldFetchDistricts = user?.role === ROLES.SUPER_ADMIN
+	const { districts } = useDistricts(shouldFetchDistricts)
+	
 	const [filters, setFilters] = useState({
 		search: '',
 		status: '',
@@ -48,13 +52,7 @@ const TenancyRecords = ({ user }) => {
 		}
 	}, [user?.role, navigate])
 
-	useEffect(() => {
-		if (user?.role === ROLES.SUPER_ADMIN) {
-			api.get('/api/districts', { params: { all: true } })
-				.then(({ data }) => setDistricts(Array.isArray(data) ? data : data.data || []))
-				.catch(() => setDistricts([]))
-		}
-	}, [user?.role])
+
 
 	const fetchRecords = useCallback(async () => {
 		setLoading(true)

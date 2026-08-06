@@ -102,11 +102,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     });
 
     Route::middleware("role:$adminRoles")->group(function () {
-        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
         Route::put('/admin/applications/{type}/{id}', [ApplicationWorkflowController::class, 'update']);
     });
 
     Route::middleware("role:$allAdminStaffRoles")->group(function () {
+        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
         Route::get('/admin/applications/inbox', [ApplicationWorkflowController::class, 'inbox']);
         Route::get('/admin/applications/principal-inbox', [ApplicationWorkflowController::class, 'principalInbox']);
         Route::get('/admin/applications/valuer-inbox', [ApplicationWorkflowController::class, 'valuerInbox']);

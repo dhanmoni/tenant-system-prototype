@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import { useDistricts } from '../../../hooks/useDistricts'
 import { createPortal } from 'react-dom'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import api from '../../../api'
@@ -39,7 +40,10 @@ function UserManagement({ user: currentUser }) {
 	const [successModal, setSuccessModal] = useState(null)
 	const [statusReason, setStatusReason] = useState('')
 	const [statusLoading, setStatusLoading] = useState(false)
-	const [districts, setDistricts] = useState([])
+	
+	const shouldFetchDistricts = currentUser?.role === ROLES.SUPER_ADMIN
+	const { districts } = useDistricts(shouldFetchDistricts)
+	
 	const [filters, setFilters] = useState({ search: '', role: '', district_id: '', status: '' })
 	const [searchInput, setSearchInput] = useState('')
 	const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' })
@@ -88,13 +92,7 @@ function UserManagement({ user: currentUser }) {
 		loadUsers()
 	}, [mode, currentUser.role, navigate])
 
-	useEffect(() => {
-		if (currentUser?.role === ROLES.SUPER_ADMIN) {
-			api.get('/api/districts', { params: { all: true } })
-				.then(({ data }) => setDistricts(Array.isArray(data) ? data : data.data || []))
-				.catch(() => setDistricts([]))
-		}
-	}, [currentUser?.role])
+
 
 	const loadUsers = async () => {
 		setLoading(true)

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import api, { csrf } from '../../../api'
+import { useDistricts } from '../../../hooks/useDistricts'
 
 function OfficeManagement() {
 	const [offices, setOffices] = useState([])
-	const [districts, setDistricts] = useState([])
+	const { districts } = useDistricts(true)
 	const [officePage, setOfficePage] = useState(1)
 	const [officeTotalPages, setOfficeTotalPages] = useState(1)
 	
@@ -16,7 +17,6 @@ function OfficeManagement() {
 
 	useEffect(() => {
 		loadOffices(1)
-		loadMetadata()
 	}, [])
 
 	const loadOffices = async (page = 1) => {
@@ -28,12 +28,6 @@ function OfficeManagement() {
 		} catch (err) { setError('Failed to load offices') }
 	}
 
-	const loadMetadata = async () => {
-		try {
-			const { data } = await api.get('/api/districts', { params: { all: true } })
-			setDistricts(data.data || data || [])
-		} catch (err) { }
-	}
 
 	const handleAddOffice = async (e) => {
 		e.preventDefault()

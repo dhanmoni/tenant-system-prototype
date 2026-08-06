@@ -105,6 +105,147 @@ class ApplicationWorkflowController extends Controller
         return $oldest && $oldest['type'] === $type && (int) $oldest['id'] === (int) $id;
     }
 
+    protected function getPaginatedApplications(array $types, int $perPage, int $page, ?int $districtId = null, $statuses = null, ?string $search = null, string $sortOrder = 'asc')
+    {
+        $queries = [];
+        $baseColumns = [
+            'id',
+            'application_no',
+            'status',
+            'created_at',
+            'updated_at',
+            'district_id',
+            'user_id',
+            'forwarded_by_user_id',
+            'rejected_by_user_id',
+            'approved_by_user_id',
+            'assigned_to_role'
+        ];
+
+        foreach ($types as $type) {
+            $modelClass = $this->getModel($type);
+            if (!$modelClass) continue;
+            
+            $tableName = (new $modelClass)->getTable();
+            $query = \Illuminate\Support\Facades\DB::table($tableName)
+                ->select(array_merge($baseColumns, [\Illuminate\Support\Facades\DB::raw("'$type' as form_type")]))
+                ->where('status', '!=', Status::DRAFT)
+                ->whereNull('deleted_at');
+            
+            if ($districtId) {
+                $query->where('district_id', $districtId);
+            }
+            
+            if ($statuses) {
+                if (is_array($statuses)) {
+                    $query->whereIn('status', $statuses);
+                } else {
+                    $query->where('status', $statuses);
+                }
+            }
+
+            if ($search) {
+                $query->where('application_no', 'like', "%{$search}%");
+            }
+            
+            $queries[] = $query;
+        }
+
+        if (empty($queries)) {
+            return [
+                'applications' => [],
+                'pagination' => [
+                    'current_page' => $page,
+                    'last_page' => 1,
+                    'per_page' => $perPage,
+                    'total' => 0,
+                ],
+            ];
+        }
+
+        $unionQuery = array_shift($queries);
+        foreach ($queries as $query) {
+            $unionQuery->unionAll($query);
+        }
+
+        // It is better to use a subquery to count and paginate correctly across unions
+        $querySql = $unionQuery->toSql();
+        $bindings = $unionQuery->getBindings();
+
+        $countQuery = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$querySql}) as sub"))
+            ->setBindings($bindings);
+            
+        $total = $countQuery->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $lastPage));
+        $offset = ($page - 1) * $perPage;
+
+        $results = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$querySql}) as sub"))
+            ->setBindings($bindings)
+            ->orderBy('created_at', $sortOrder)
+            ->orderBy('application_no', $sortOrder)
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+            
+        $applications = [];
+        $groupedByType = $results->groupBy('form_type');
+        foreach ($groupedByType as $type => $items) {
+            $modelClass = $this->getModel($type);
+            $ids = $items->pluck('id')->toArray();
+            
+            $relations = ['user', 'forwardedBy', 'district'];
+            if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+                $relations = ['district', 'office', 'villageWard'];
+            }
+            if ($type === ApplicationTypes::VALUER_APPOINTMENT) {
+                $relations[] = 'assignedValuer';
+            }
+            
+            $models = $modelClass::with($relations)->whereIn('id', $ids)->get()->keyBy('id');
+            foreach ($items as $item) {
+                if (isset($models[$item->id])) {
+                    $model = $models[$item->id];
+                    $model->form_type = $type;
+                    
+                    // Prevent sensitive data leak in list views
+                    if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+                        $model->offsetUnset('landlord_pan');
+                        $model->offsetUnset('landlord_aadhar');
+                        $model->offsetUnset('tenant_pan');
+                        $model->offsetUnset('tenant_aadhar');
+                        $model->offsetUnset('manager_pan');
+                        $model->offsetUnset('manager_aadhar');
+                    }
+                    
+                    $applications[] = $model;
+                }
+            }
+        }
+        
+        // Final memory sort of the small paginated set just to be absolutely precise
+        usort($applications, function ($a, $b) use ($sortOrder) {
+            $timeDiff = strtotime($a['created_at'] ?? 0) - strtotime($b['created_at'] ?? 0);
+            if ($timeDiff === 0) {
+                return strcmp($a['application_no'] ?? '', $b['application_no'] ?? '');
+            }
+            return $sortOrder === 'asc' ? $timeDiff : -$timeDiff;
+        });
+        
+        // This prevents the ApplicationResource from sending all the raw table attributes!
+        $resourceArray = ApplicationResource::collection($applications)->resolve();
+
+        return [
+            'applications' => $resourceArray,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => $total,
+            ],
+        ];
+    }
+
     public function inbox(Request $request)
     {
         $user = $request->user();
@@ -140,41 +281,7 @@ class ApplicationWorkflowController extends Controller
             default => [],
         };
 
-        $allApplications = [];
-        foreach ($types as $type) {
-            $modelClass = $this->getModel($type);
-            if ($modelClass) {
-                $apps = $modelClass::where('district_id', $districtId)
-                    ->where('status', Status::SUBMITTED)
-                    ->with(['user', 'district'])
-                    ->get()
-                    ->map(function ($app) use ($type) {
-                        $app->form_type = $type;
-                        return $app;
-                    });
-                $resourceArray = ApplicationResource::collection($apps)->toArray($request);
-                $allApplications = array_merge($allApplications, $resourceArray);
-            }
-        }
-
-        // FIFO: oldest submitted application first, so officers clear the queue in order.
-        usort($allApplications, [self::class, 'compareFifo']);
-
-        $total = count($allApplications);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = max(1, min($page, $lastPage));
-        $offset = ($page - 1) * $perPage;
-        $paginatedItems = array_slice($allApplications, $offset, $perPage);
-
-        return response()->json([
-            'applications' => $paginatedItems,
-            'pagination' => [
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
-                'total' => $total,
-            ],
-        ]);
+        return response()->json($this->getPaginatedApplications($types, $perPage, $page, $districtId, Status::SUBMITTED, null, 'asc'));
     }
 
     public function forward(Request $request, $type, $id)
@@ -365,41 +472,7 @@ class ApplicationWorkflowController extends Controller
             default => [],
         };
 
-        $allApplications = [];
-        foreach ($types as $type) {
-            $modelClass = $this->getModel($type);
-            if ($modelClass) {
-                $apps = $modelClass::where('district_id', $districtId)
-                    ->whereIn('status', [Status::IN_REVIEW, Status::VALUER_REPORT_SUBMITTED, Status::VALUER_ASSIGNED])
-                    ->with(['user', 'forwardedBy', 'district'])
-                    ->get()
-                    ->map(function ($app) use ($type) {
-                        $app->form_type = $type;
-                        return $app;
-                    });
-                $resourceArray = ApplicationResource::collection($apps)->toArray($request);
-                $allApplications = array_merge($allApplications, $resourceArray);
-            }
-        }
-
-        // FIFO: oldest application awaiting review first.
-        usort($allApplications, [self::class, 'compareFifo']);
-
-        $total = count($allApplications);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = max(1, min($page, $lastPage));
-        $offset = ($page - 1) * $perPage;
-        $paginatedItems = array_slice($allApplications, $offset, $perPage);
-
-        return response()->json([
-            'applications' => $paginatedItems,
-            'pagination' => [
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
-                'total' => $total,
-            ],
-        ]);
+        return response()->json($this->getPaginatedApplications($types, $perPage, $page, $districtId, [Status::IN_REVIEW, Status::VALUER_REPORT_SUBMITTED, Status::VALUER_ASSIGNED], null, 'asc'));
     }
 
     public function allApplications(Request $request)
@@ -444,55 +517,9 @@ class ApplicationWorkflowController extends Controller
             $types = array_intersect($types, $allowedTypes);
         }
 
-        $allApplications = [];
-        foreach ($types as $type) {
-            $modelClass = $this->getModel($type);
-            if ($modelClass) {
-                $relations = ['user', 'forwardedBy', 'district'];
-                $query = $modelClass::with($relations)->where('status', '!=', Status::DRAFT);
-                if ($user->role !== Roles::SUPER_ADMIN) {
-                    $query->where('district_id', $districtId);
-                } elseif ($districtFilter) {
-                    $query->where('district_id', (int) $districtFilter);
-                }
-                if ($statusFilter) {
-                    $query->where('status', $statusFilter);
-                }
-                if ($search !== '') {
-                    $query->where('application_no', 'like', '%' . $search . '%');
-                }
-                $apps = $query->get()->map(function ($app) use ($type) {
-                    $app->form_type = $type;
-                    return $app;
-                });
-                $resourceArray = ApplicationResource::collection($apps)->toArray($request);
-                $allApplications = array_merge($allApplications, $resourceArray);
-            }
-        }
+        $queryDistrictId = $user->role !== Roles::SUPER_ADMIN ? $districtId : ($districtFilter ? (int)$districtFilter : null);
 
-        usort($allApplications, function ($a, $b) {
-            $timeDiff = strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
-            if ($timeDiff === 0) {
-                return strcmp($b['application_no'] ?? '', $a['application_no'] ?? '');
-            }
-            return $timeDiff;
-        });
-
-        $total = count($allApplications);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = max(1, min($page, $lastPage));
-        $offset = ($page - 1) * $perPage;
-        $paginatedItems = array_slice($allApplications, $offset, $perPage);
-
-        return response()->json([
-            'applications' => $paginatedItems,
-            'pagination' => [
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
-                'total' => $total,
-            ],
-        ]);
+        return response()->json($this->getPaginatedApplications($types, $perPage, $page, $queryDistrictId, $statusFilter, $search, 'desc'));
     }
 
     public function update(Request $request, $type, $id)

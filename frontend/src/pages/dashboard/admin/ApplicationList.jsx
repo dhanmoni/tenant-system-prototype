@@ -3,7 +3,8 @@ import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useDistricts } from '../../../hooks/useDistricts'
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES, ADMIN_ROLES } from '../../../constants/roles'
 import { APPLICATION_LABELS, APPLICATION_TYPES, SERVICE_APPLICATION_TYPES } from '../../../constants/application'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
@@ -53,7 +54,10 @@ const ApplicationList = ({ user }) => {
 	const [loading, setLoading] = useState(true)
 	const [page, setPage] = useState(1)
 	const [paginationInfo, setPaginationInfo] = useState(null)
-	const [districts, setDistricts] = useState([])
+	
+	const shouldFetchDistricts = user?.role === ROLES.SUPER_ADMIN
+	const { districts, loading: districtsLoading } = useDistricts(shouldFetchDistricts)
+	
 	const [filters, setFilters] = useState({
 		search: '',
 		status: '',
@@ -74,13 +78,7 @@ const ApplicationList = ({ user }) => {
 			user?.role === ROLES.VALUER
 		)
 
-	useEffect(() => {
-		if (user?.role === ROLES.SUPER_ADMIN) {
-			api.get('/api/districts', { params: { all: true } })
-				.then(({ data }) => setDistricts(Array.isArray(data) ? data : data.data || []))
-				.catch(() => setDistricts([]))
-		}
-	}, [user?.role])
+
 
 	const fetchApplications = useCallback(async () => {
 		setLoading(true)
