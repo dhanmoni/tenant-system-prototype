@@ -19,7 +19,7 @@ const api = axios.create({
   },
 })
 
-export const csrf = () => api.get('/sanctum/csrf-cookie')
+export const csrf = () => Promise.resolve()
 
 api.interceptors.request.use((config) => {
   const method = (config.method || 'get').toLowerCase()
