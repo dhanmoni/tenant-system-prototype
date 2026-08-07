@@ -11,6 +11,8 @@ import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminSta
 import { formatDate, formatDateTime } from '../../../utils/formatters'
 import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress'
 import { buildServiceFormDocument } from '../../../utils/buildServiceFormDocument'
+import ProceedingModal from '../../../components/dashboard/ProceedingModal'
+import NoticeDocumentViewer from '../../../components/dashboard/NoticeDocumentViewer'
 import './ApplicationDetails.css'
 
 const EXCLUDED_FIELDS = new Set([
@@ -181,6 +183,7 @@ function getValidTransitions(formType) {
 		APPLICATION_TYPES.OTHER_CHARGES_REVISION,
 		APPLICATION_TYPES.VALUER_APPOINTMENT,
 		APPLICATION_TYPES.RENT_AUTHORITY_FILING,
+		APPLICATION_TYPES.TENANCY_CERTIFICATE,
 	]
 	const RC_TYPES = [
 		APPLICATION_TYPES.RENT_COURT_POSSESSION,
@@ -334,6 +337,14 @@ const AdminApplicationDetails = () => {
 	const [viewerScale, setViewerScale] = useState(1)
 	const [viewerMode, setViewerMode] = useState('fit')
 	const [paperHeight, setPaperHeight] = useState(1100)
+	
+	// Case Proceedings State
+	const [proceedings, setProceedings] = useState([])
+	const [proceedingsLoading, setProceedingsLoading] = useState(false)
+	const [showProceedingModal, setShowProceedingModal] = useState(false)
+	const [proceedingSubmitting, setProceedingSubmitting] = useState(false)
+	const [viewProceedingDoc, setViewProceedingDoc] = useState(null)
+
 	const viewerStageRef = useRef(null)
 	const paperRef = useRef(null)
 	const viewerModeRef = useRef('fit')
@@ -452,9 +463,91 @@ const AdminApplicationDetails = () => {
 		}
 	}
 
+	const fetchProceedings = async (app) => {
+		if (!app) return
+		const formType = app.form_type || APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL;
+		try {
+			setProceedingsLoading(true)
+			const res = await api.get(`/api/admin/applications/${formType}/${app.id}/proceedings`)
+			setProceedings(res.data.proceedings || [])
+		} catch (err) {
+			console.error('Failed to fetch proceedings', err)
+		} finally {
+			setProceedingsLoading(false)
+		}
+	}
+
+	const handleProceedingSubmit = async (formData) => {
+		try {
+			setProceedingSubmitting(true)
+			const formType = application.form_type || APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL;
+			const res = await api.post(`/api/admin/applications/${formType}/${application.id}/proceedings`, formData)
+			setProceedings([res.data.proceeding, ...proceedings])
+			setShowProceedingModal(false)
+		} catch (err) {
+			alert(err?.response?.data?.message || 'Failed to save proceeding')
+		} finally {
+			setProceedingSubmitting(false)
+		}
+	}
+
 	useEffect(() => {
 		fetchDetails()
 	}, [applicationNo])
+
+	useEffect(() => {
+		if (application) {
+			fetchProceedings(application)
+		}
+	}, [application?.id])
+
+	const renderProceedings = () => {
+		if (!application) return null
+
+		const isRtAppeal =
+			application.form_type === APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL ||
+			user?.role === ROLES.RT_ASSISTANT ||
+			user?.role === ROLES.RENT_TRIBUNAL;
+
+		if (!isRtAppeal) {
+			return null
+		}
+
+		return (
+			<section className="admin-app-details__card ws-card">
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+					<h3 className="admin-app-details__section-title" style={{ margin: 0 }}>Case Proceedings & Notices</h3>
+					{(user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL) && (
+						<button className="ws-btn ws-btn--primary ws-btn--sm" type="button" onClick={() => setShowProceedingModal(true)}>
+							Add Proceeding
+						</button>
+					)}
+				</div>
+				{proceedingsLoading ? (
+					<p>Loading proceedings...</p>
+				) : proceedings.length === 0 ? (
+					<p>No proceedings found.</p>
+				) : (
+					<div className="admin-app-details__grid" style={{ gap: '1rem' }}>
+						{proceedings.map((p) => (
+							<div key={p.id} className="admin-app-details__field" style={{ border: '1px solid var(--clr-neutral-200)', padding: '1rem', borderRadius: '4px' }}>
+								<div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
+									{new Date(p.created_at).toLocaleDateString()} - {p.notice_type.replace('_', ' ').toUpperCase()}
+								</div>
+								{p.hearing_date && <div>Hearing: {p.hearing_date} {p.hearing_time}</div>}
+								<small>Sent by: {p.sent_by?.name || 'Unknown'}</small>
+								<div style={{ marginTop: '0.5rem' }}>
+									<button type="button" className="ws-btn ws-btn--secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setViewProceedingDoc(p)}>
+										View Document
+									</button>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+			</section>
+		)
+	}
 
 	useEffect(() => {
 		if (!docPreview) return undefined
@@ -2042,6 +2135,7 @@ const AdminApplicationDetails = () => {
 					) : null}
 
 					{renderWorkflowRecord()}
+					{renderProceedings()}
 				</div>
 			) : !editing ? (
 				<>
@@ -2154,6 +2248,8 @@ const AdminApplicationDetails = () => {
 							</section>
 						)
 					})}
+
+					{renderProceedings()}
 
 					{renderValuerSections()}
 
@@ -2463,6 +2559,19 @@ const AdminApplicationDetails = () => {
 					</div>
 				</div>
 			) : null}
+			<ProceedingModal
+				open={showProceedingModal}
+				onClose={() => setShowProceedingModal(false)}
+				onSubmit={handleProceedingSubmit}
+				isSubmitting={proceedingSubmitting}
+			/>
+
+			<NoticeDocumentViewer
+				open={!!viewProceedingDoc}
+				onClose={() => setViewProceedingDoc(null)}
+				proceeding={viewProceedingDoc}
+				application={application}
+			/>
 		</div>
 	)
 }

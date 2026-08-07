@@ -85,8 +85,8 @@ function SuperAdminAttentionPanel({ stats }) {
 			<h3 className="ws-sa-panel-title">Needs your review</h3>
 			<p className="ws-sa-panel-desc">Jump to the areas super admins monitor most often.</p>
 			<ul className="ws-sa-attention-list">
-				{items.map((item) => (
-					<AttentionItem key={item.key} {...item} />
+				{items.map(({ key, ...item }) => (
+					<AttentionItem key={key} {...item} />
 				))}
 			</ul>
 		</div>

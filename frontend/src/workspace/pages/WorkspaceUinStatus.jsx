@@ -408,7 +408,7 @@ function WorkspaceUinStatus() {
 	const { t } = useLanguage()
 
 	const [applications, setApplications] = useState([])
-	const [tabCounts, setTabCounts] = useState({ tenancy: 0, service: 0, all: 0 })
+
 	const [loading, setLoading] = useState(false)
 	const [page, setPage] = useState(1)
 	const [totalPages, setTotalPages] = useState(1)
@@ -460,13 +460,6 @@ function WorkspaceUinStatus() {
 				setPage(Number(data?.current_page) || 1)
 				setTotalPages(Number(data?.last_page) || 1)
 				setTotalResults(Number(data?.total) || list.length)
-				if (data?.counts) {
-					setTabCounts({
-						tenancy: Number(data.counts.tenancy) || 0,
-						service: Number(data.counts.service) || 0,
-						all: Number(data.counts.all) || 0,
-					})
-				}
 			} catch (err) {
 				setError(err?.response?.data?.message || t('ws.uinStatus.error.load'))
 				setApplications([])
@@ -626,7 +619,7 @@ function WorkspaceUinStatus() {
 						onClick={() => handleTabChange(TAB_TENANCY)}
 					>
 						<span>{t('ws.uinStatus.tab.tenancy')}</span>
-						<span className="ws-status-tab-count">{tabCounts.tenancy}</span>
+
 					</button>
 					<button
 						type="button"
@@ -638,7 +631,7 @@ function WorkspaceUinStatus() {
 						onClick={() => handleTabChange(TAB_SERVICE)}
 					>
 						<span>{t('ws.uinStatus.tab.service')}</span>
-						<span className="ws-status-tab-count">{tabCounts.service}</span>
+
 					</button>
 				</div>
 

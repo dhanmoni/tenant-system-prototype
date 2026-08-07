@@ -13,6 +13,7 @@ class Status
     public const PARTIAL = 'PARTIAL';
     public const PENDING = 'PENDING';
     public const DRAFT = 'DRAFT';
+    public const WITHDRAWN = 'WITHDRAWN';
     public const VALUER_ASSIGNED = 'VALUER_ASSIGNED';
     public const VALUER_REPORT_SUBMITTED = 'VALUER_REPORT_SUBMITTED';
 
@@ -31,6 +32,7 @@ class Status
             self::PARTIAL,
             self::PENDING,
             self::DRAFT,
+            self::WITHDRAWN,
             self::VALUER_ASSIGNED,
             self::VALUER_REPORT_SUBMITTED,
         ];

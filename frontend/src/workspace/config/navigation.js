@@ -52,7 +52,7 @@ export function getWorkspaceNavigation(user) {
 		})
 	}
 
-	if (ADMIN_ROLES.includes(user.role)) {
+	if ([...ADMIN_ROLES, ROLES.RENT_AUTHORITY, ROLES.RA_ASSISTANT].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/tenancy',
 			labelKey: 'ws.nav.tenancyApplications',
@@ -60,7 +60,7 @@ export function getWorkspaceNavigation(user) {
 		})
 	}
 
-	if ([...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN].includes(user.role)) {
+	if ([...PRINCIPAL_ROLES, ROLES.DISTRICT_ADMIN, ROLES.RT_ASSISTANT].includes(user.role)) {
 		items.push({
 			to: '/dashboard/admin/applications',
 			labelKey: 'ws.nav.serviceApplications',

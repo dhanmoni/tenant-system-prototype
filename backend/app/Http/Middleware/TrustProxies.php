@@ -12,7 +12,8 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    // TODO: PROD - Restrict this to your actual Load Balancer IPs or trust all if using a managed PaaS like Render
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.

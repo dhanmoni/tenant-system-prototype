@@ -20,7 +20,7 @@ use App\Constants\ApplicationTypes;
 
 class ApplicationWorkflowController extends Controller
 {
-    protected function getModel($type)
+    public function getModel($type)
     {
         return match ($type) {
             ApplicationTypes::RENT_REVISION => RentRevisionApplication::class,
@@ -51,7 +51,7 @@ class ApplicationWorkflowController extends Controller
     protected function getQueueTypesForUser($user)
     {
         return match ($user->role) {
-            Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
+            Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
             Roles::RC_ASSISTANT, Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
             Roles::RT_ASSISTANT, Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
             Roles::VALUER => [ApplicationTypes::VALUER_APPOINTMENT],
@@ -97,8 +97,153 @@ class ApplicationWorkflowController extends Controller
     // FIFO lock: an action is only allowed on the head of the queue.
     protected function isQueueHead($user, $status, $type, $id)
     {
+        if (!config('app.enable_fifo', false)) {
+            return true;
+        }
+
         $oldest = $this->getOldestPending($user, $status);
         return $oldest && $oldest['type'] === $type && (int) $oldest['id'] === (int) $id;
+    }
+
+    protected function getPaginatedApplications(array $types, int $perPage, int $page, ?int $districtId = null, $statuses = null, ?string $search = null, string $sortOrder = 'asc')
+    {
+        $queries = [];
+        $baseColumns = [
+            'id',
+            'application_no',
+            'status',
+            'created_at',
+            'updated_at',
+            'district_id',
+            'user_id',
+            'forwarded_by_user_id',
+            'rejected_by_user_id',
+            'approved_by_user_id',
+            'assigned_to_role'
+        ];
+
+        foreach ($types as $type) {
+            $modelClass = $this->getModel($type);
+            if (!$modelClass) continue;
+            
+            $tableName = (new $modelClass)->getTable();
+            $query = \Illuminate\Support\Facades\DB::table($tableName)
+                ->select(array_merge($baseColumns, [\Illuminate\Support\Facades\DB::raw("'$type' as form_type")]))
+                ->where('status', '!=', Status::DRAFT)
+                ->whereNull('deleted_at');
+            
+            if ($districtId) {
+                $query->where('district_id', $districtId);
+            }
+            
+            if ($statuses) {
+                if (is_array($statuses)) {
+                    $query->whereIn('status', $statuses);
+                } else {
+                    $query->where('status', $statuses);
+                }
+            }
+
+            if ($search) {
+                $query->where('application_no', 'like', "%{$search}%");
+            }
+            
+            $queries[] = $query;
+        }
+
+        if (empty($queries)) {
+            return [
+                'applications' => [],
+                'pagination' => [
+                    'current_page' => $page,
+                    'last_page' => 1,
+                    'per_page' => $perPage,
+                    'total' => 0,
+                ],
+            ];
+        }
+
+        $unionQuery = array_shift($queries);
+        foreach ($queries as $query) {
+            $unionQuery->unionAll($query);
+        }
+
+        // It is better to use a subquery to count and paginate correctly across unions
+        $querySql = $unionQuery->toSql();
+        $bindings = $unionQuery->getBindings();
+
+        $countQuery = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$querySql}) as sub"))
+            ->setBindings($bindings);
+            
+        $total = $countQuery->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $lastPage));
+        $offset = ($page - 1) * $perPage;
+
+        $results = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$querySql}) as sub"))
+            ->setBindings($bindings)
+            ->orderBy('created_at', $sortOrder)
+            ->orderBy('application_no', $sortOrder)
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+            
+        $applications = [];
+        $groupedByType = $results->groupBy('form_type');
+        foreach ($groupedByType as $type => $items) {
+            $modelClass = $this->getModel($type);
+            $ids = $items->pluck('id')->toArray();
+            
+            $relations = ['user', 'forwardedBy', 'district'];
+            if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+                $relations = ['district', 'office', 'villageWard'];
+            }
+            if ($type === ApplicationTypes::VALUER_APPOINTMENT) {
+                $relations[] = 'assignedValuer';
+            }
+            
+            $models = $modelClass::with($relations)->whereIn('id', $ids)->get()->keyBy('id');
+            foreach ($items as $item) {
+                if (isset($models[$item->id])) {
+                    $model = $models[$item->id];
+                    $model->form_type = $type;
+                    
+                    // Prevent sensitive data leak in list views
+                    if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+                        $model->offsetUnset('landlord_pan');
+                        $model->offsetUnset('landlord_aadhar');
+                        $model->offsetUnset('tenant_pan');
+                        $model->offsetUnset('tenant_aadhar');
+                        $model->offsetUnset('manager_pan');
+                        $model->offsetUnset('manager_aadhar');
+                    }
+                    
+                    $applications[] = $model;
+                }
+            }
+        }
+        
+        // Final memory sort of the small paginated set just to be absolutely precise
+        usort($applications, function ($a, $b) use ($sortOrder) {
+            $timeDiff = strtotime($a['created_at'] ?? 0) - strtotime($b['created_at'] ?? 0);
+            if ($timeDiff === 0) {
+                return strcmp($a['application_no'] ?? '', $b['application_no'] ?? '');
+            }
+            return $sortOrder === 'asc' ? $timeDiff : -$timeDiff;
+        });
+        
+        // This prevents the ApplicationResource from sending all the raw table attributes!
+        $resourceArray = ApplicationResource::collection($applications)->resolve();
+
+        return [
+            'applications' => $resourceArray,
+            'pagination' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => $total,
+            ],
+        ];
     }
 
     public function inbox(Request $request)
@@ -130,47 +275,13 @@ class ApplicationWorkflowController extends Controller
 
         // Filter types based on role
         $types = match ($targetRole) {
-            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
+            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
             Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
             Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
             default => [],
         };
 
-        $allApplications = [];
-        foreach ($types as $type) {
-            $modelClass = $this->getModel($type);
-            if ($modelClass) {
-                $apps = $modelClass::where('district_id', $districtId)
-                    ->where('status', Status::SUBMITTED)
-                    ->with(['user', 'district'])
-                    ->get()
-                    ->map(function ($app) use ($type) {
-                        $app->form_type = $type;
-                        return $app;
-                    });
-                $resourceArray = ApplicationResource::collection($apps)->toArray($request);
-                $allApplications = array_merge($allApplications, $resourceArray);
-            }
-        }
-
-        // FIFO: oldest submitted application first, so officers clear the queue in order.
-        usort($allApplications, [self::class, 'compareFifo']);
-
-        $total = count($allApplications);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = max(1, min($page, $lastPage));
-        $offset = ($page - 1) * $perPage;
-        $paginatedItems = array_slice($allApplications, $offset, $perPage);
-
-        return response()->json([
-            'applications' => $paginatedItems,
-            'pagination' => [
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
-                'total' => $total,
-            ],
-        ]);
+        return response()->json($this->getPaginatedApplications($types, $perPage, $page, $districtId, Status::SUBMITTED, null, 'asc'));
     }
 
     public function forward(Request $request, $type, $id)
@@ -208,13 +319,25 @@ class ApplicationWorkflowController extends Controller
             default => null,
         };
 
-        $application->update([
+        $updateData = [
             'status' => Status::IN_REVIEW,
             'forwarded_at' => Carbon::now(),
             'forwarded_by_user_id' => $user->id,
             'assigned_to_role' => $targetRole,
             'forward_remarks' => $data['remarks'] ?? null,
-        ]);
+        ];
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $updateData['current_with'] = $targetRole;
+            $movement = $application->movement_history ?? [];
+            $movement[] = [
+                'status' => Status::IN_REVIEW,
+                'current_with' => $targetRole,
+                'moved_at' => Carbon::now()->toDateTimeString(),
+                'action' => 'Verified by Rent Authority Assistant. Forwarded to Rent Authority.',
+            ];
+            $updateData['movement_history'] = $movement;
+        }
+        $application->update($updateData);
 
         return response()->json(['message' => 'Application moved to review successfully', 'application' => $application]);
     }
@@ -253,13 +376,25 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
-        $application->update([
+        $updateData = [
             'status' => Status::REJECTED,
             'rejected_at' => Carbon::now(),
             'rejected_by_user_id' => $user->id,
             'rejection_message' => $request->message,
             'assigned_to_role' => null,
-        ]);
+        ];
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $updateData['current_with'] = null;
+            $movement = $application->movement_history ?? [];
+            $movement[] = [
+                'status' => Status::REJECTED,
+                'current_with' => null,
+                'moved_at' => Carbon::now()->toDateTimeString(),
+                'action' => 'Application rejected: ' . $request->message,
+            ];
+            $updateData['movement_history'] = $movement;
+        }
+        $application->update($updateData);
 
         return response()->json(['message' => 'Application rejected successfully', 'application' => $application]);
     }
@@ -293,13 +428,27 @@ class ApplicationWorkflowController extends Controller
             ], 409);
         }
 
-        $application->update([
+        $updateData = [
             'status' => Status::COMPLETED,
             'approved_at' => Carbon::now(),
             'approved_by_user_id' => $user->id,
             'approval_message' => $data['message'],
             'assigned_to_role' => null,
-        ]);
+        ];
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $uid = \App\Models\TenancyApplication::generateUid($application->district_id, $application->office_id);
+            $updateData['uid'] = $uid;
+            $updateData['current_with'] = null;
+            $movement = $application->movement_history ?? [];
+            $movement[] = [
+                'status' => Status::COMPLETED,
+                'current_with' => null,
+                'moved_at' => Carbon::now()->toDateTimeString(),
+                'action' => 'Approved by Rent Authority. Certificate completed and UIN generated.',
+            ];
+            $updateData['movement_history'] = $movement;
+        }
+        $application->update($updateData);
 
         return response()->json(['message' => 'Application approved successfully', 'application' => $application]);
     }
@@ -317,53 +466,19 @@ class ApplicationWorkflowController extends Controller
 
         $districtId = $user->district_id;
         $types = match ($user->role) {
-            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT],
+            Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
             Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
             Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
             default => [],
         };
 
-        $allApplications = [];
-        foreach ($types as $type) {
-            $modelClass = $this->getModel($type);
-            if ($modelClass) {
-                $apps = $modelClass::where('district_id', $districtId)
-                    ->whereIn('status', [Status::IN_REVIEW, Status::VALUER_REPORT_SUBMITTED, Status::VALUER_ASSIGNED])
-                    ->with(['user', 'forwardedBy', 'district'])
-                    ->get()
-                    ->map(function ($app) use ($type) {
-                        $app->form_type = $type;
-                        return $app;
-                    });
-                $resourceArray = ApplicationResource::collection($apps)->toArray($request);
-                $allApplications = array_merge($allApplications, $resourceArray);
-            }
-        }
-
-        // FIFO: oldest application awaiting review first.
-        usort($allApplications, [self::class, 'compareFifo']);
-
-        $total = count($allApplications);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = max(1, min($page, $lastPage));
-        $offset = ($page - 1) * $perPage;
-        $paginatedItems = array_slice($allApplications, $offset, $perPage);
-
-        return response()->json([
-            'applications' => $paginatedItems,
-            'pagination' => [
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
-                'total' => $total,
-            ],
-        ]);
+        return response()->json($this->getPaginatedApplications($types, $perPage, $page, $districtId, [Status::IN_REVIEW, Status::VALUER_REPORT_SUBMITTED, Status::VALUER_ASSIGNED], null, 'asc'));
     }
 
     public function allApplications(Request $request)
     {
         $user = $request->user();
-        if (!in_array($user->role, [Roles::SUPER_ADMIN, Roles::DISTRICT_ADMIN])) {
+        if (!in_array($user->role, array_merge(Roles::allAdmin(), Roles::allStaff()))) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -392,58 +507,19 @@ class ApplicationWorkflowController extends Controller
             $types = [$formTypeFilter];
         }
 
-        $allApplications = [];
-        foreach ($types as $type) {
-            $modelClass = $this->getModel($type);
-            if ($modelClass) {
-                $relations = ['district'];
-                if ($type !== ApplicationTypes::TENANCY_CERTIFICATE) {
-                    $relations = ['user', 'forwardedBy', 'district'];
-                }
-                $query = $modelClass::with($relations)->where('status', '!=', Status::DRAFT);
-                if ($user->role === Roles::DISTRICT_ADMIN) {
-                    $query->where('district_id', $districtId);
-                } elseif ($districtFilter) {
-                    $query->where('district_id', (int) $districtFilter);
-                }
-                if ($statusFilter) {
-                    $query->where('status', $statusFilter);
-                }
-                if ($search !== '') {
-                    $query->where('application_no', 'like', '%' . $search . '%');
-                }
-                $apps = $query->get()->map(function ($app) use ($type) {
-                    $app->form_type = $type;
-                    return $app;
-                });
-                $resourceArray = ApplicationResource::collection($apps)->toArray($request);
-                $allApplications = array_merge($allApplications, $resourceArray);
-            }
+        if ($user->isAssistant() || in_array($user->role, Roles::principals())) {
+            $allowedTypes = match ($user->role) {
+                Roles::RA_ASSISTANT, Roles::RENT_AUTHORITY => [ApplicationTypes::RENT_AUTHORITY_FILING, ApplicationTypes::RENT_REVISION, ApplicationTypes::OTHER_CHARGES_REVISION, ApplicationTypes::VALUER_APPOINTMENT, ApplicationTypes::TENANCY_CERTIFICATE],
+                Roles::RC_ASSISTANT, Roles::RENT_COURT => [ApplicationTypes::RENT_COURT_FILING, ApplicationTypes::RENT_COURT_POSSESSION, ApplicationTypes::RENT_COURT_APPEAL],
+                Roles::RT_ASSISTANT, Roles::RENT_TRIBUNAL => [ApplicationTypes::RENT_TRIBUNAL_APPEAL],
+                default => [],
+            };
+            $types = array_intersect($types, $allowedTypes);
         }
 
-        usort($allApplications, function ($a, $b) {
-            $timeDiff = strtotime($b['created_at'] ?? 0) - strtotime($a['created_at'] ?? 0);
-            if ($timeDiff === 0) {
-                return strcmp($b['application_no'] ?? '', $a['application_no'] ?? '');
-            }
-            return $timeDiff;
-        });
+        $queryDistrictId = $user->role !== Roles::SUPER_ADMIN ? $districtId : ($districtFilter ? (int)$districtFilter : null);
 
-        $total = count($allApplications);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = max(1, min($page, $lastPage));
-        $offset = ($page - 1) * $perPage;
-        $paginatedItems = array_slice($allApplications, $offset, $perPage);
-
-        return response()->json([
-            'applications' => $paginatedItems,
-            'pagination' => [
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
-                'total' => $total,
-            ],
-        ]);
+        return response()->json($this->getPaginatedApplications($types, $perPage, $page, $queryDistrictId, $statusFilter, $search, 'desc'));
     }
 
     public function update(Request $request, $type, $id)
@@ -845,16 +921,18 @@ class ApplicationWorkflowController extends Controller
         }
 
         // FIFO: valuer must act on the oldest assigned application first
-        $oldest = $modelClass::where('assigned_valuer_id', $user->id)
-            ->where('status', Status::VALUER_ASSIGNED)
-            ->orderBy('created_at', 'asc')
-            ->orderBy('application_no', 'asc')
-            ->first();
+        if (config('app.enable_fifo', false)) {
+            $oldest = $modelClass::where('assigned_valuer_id', $user->id)
+                ->where('status', Status::VALUER_ASSIGNED)
+                ->orderBy('created_at', 'asc')
+                ->orderBy('application_no', 'asc')
+                ->first();
 
-        if ($oldest && (int) $oldest->id !== (int) $id) {
-            return response()->json([
-                'message' => 'Please process the oldest pending application in your queue first.',
-            ], 409);
+            if ($oldest && (int) $oldest->id !== (int) $id) {
+                return response()->json([
+                    'message' => 'Please process the oldest pending application in your queue first.',
+                ], 409);
+            }
         }
 
         $application->update([
@@ -877,6 +955,7 @@ class ApplicationWorkflowController extends Controller
             ApplicationTypes::OTHER_CHARGES_REVISION,
             ApplicationTypes::VALUER_APPOINTMENT,
             ApplicationTypes::RENT_AUTHORITY_FILING,
+            ApplicationTypes::TENANCY_CERTIFICATE,
         ];
 
         // Rent Court forms

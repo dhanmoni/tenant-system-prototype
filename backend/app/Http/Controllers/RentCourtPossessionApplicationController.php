@@ -88,7 +88,7 @@ class RentCourtPossessionApplicationController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        if ($application->user_id !== $user->id) {
+        if ($application->user_id != $user->id) {
             return response()->json(['message' => 'Not Found'], 404);
         }
 

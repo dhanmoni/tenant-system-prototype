@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import { useDistricts } from '../../../hooks/useDistricts'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
@@ -19,12 +20,11 @@ const STATUS_PILLS = [
 
 function DistrictManagement({ user }) {
 	const navigate = useNavigate()
-	const [districts, setDistricts] = useState([])
+	const { districts, loading, refetch: loadDistricts } = useDistricts(user?.role === ROLES.SUPER_ADMIN)
 	const [districtName, setDistrictName] = useState('')
 	const [error, setError] = useState('')
 	const [formError, setFormError] = useState('')
 	const [successModal, setSuccessModal] = useState(null)
-	const [loading, setLoading] = useState(true)
 	const [page, setPage] = useState(1)
 	const [searchInput, setSearchInput] = useState('')
 	const [filters, setFilters] = useState({ search: '', status: '' })
@@ -39,7 +39,6 @@ function DistrictManagement({ user }) {
 			navigate('/dashboard')
 			return
 		}
-		loadDistricts()
 	}, [user?.role, navigate])
 
 	useEffect(() => {
@@ -75,18 +74,6 @@ function DistrictManagement({ user }) {
 		setFormError('')
 	}
 
-	const loadDistricts = async () => {
-		setLoading(true)
-		setError('')
-		try {
-			const { data } = await api.get('/api/districts', { params: { all: true } })
-			setDistricts(Array.isArray(data) ? data : data.data || [])
-		} catch {
-			setError('Failed to load districts')
-		} finally {
-			setLoading(false)
-		}
-	}
 
 	const handleFilterChange = (key, value) => {
 		setFilters((prev) => ({ ...prev, [key]: value }))

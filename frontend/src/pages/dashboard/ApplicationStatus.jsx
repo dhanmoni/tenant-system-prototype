@@ -76,6 +76,22 @@ function ApplicationStatus() {
 		setStatusSortOrder(newOrder)
 	}
 
+	const handleWithdraw = async (app) => {
+		if (!window.confirm('Are you sure you want to withdraw this application? This action cannot be undone.')) {
+			return
+		}
+		
+		try {
+			const isTenancy = app.application_type?.toLowerCase().includes('tenancy certificate')
+			const type = isTenancy ? 'tenancy' : (app.form_key || 'form')
+			await api.post(`/api/tenant-forms/${type}/${app.id}/withdraw`)
+			setSuccess('Application withdrawn successfully')
+			loadStatusApplications(statusPage)
+		} catch (err) {
+			setError(err?.response?.data?.message || 'Failed to withdraw application')
+		}
+	}
+
 	const startResizing = (id, e) => {
 		e.preventDefault()
 		const header = e.target.parentElement
@@ -365,6 +381,16 @@ function ApplicationStatus() {
 																</button>
 															)}
 														</>
+													)}
+													{app.status === 'SUBMITTED' && (
+														<button
+															type="button"
+															className="action-icon-btn danger"
+															title="Withdraw Application"
+															onClick={() => handleWithdraw(app)}
+														>
+															<Icon name="x" className="btn-icon-svg" />
+														</button>
 													)}
 												</td>
 											</tr>

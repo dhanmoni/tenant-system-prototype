@@ -30,6 +30,7 @@ $principalRoles = implode(',', Roles::principals());
 $adminRoles = implode(',', Roles::allAdmin());
 $managementRoles = implode(',', Roles::allManagement());
 $allAdminStaffRoles = implode(',', array_merge(Roles::allAdmin(), Roles::allStaff()));
+$tenancyViewerRoles = implode(',', array_merge(Roles::allAdmin(), [Roles::RENT_AUTHORITY, Roles::RA_ASSISTANT]));
 
 /*
 |--------------------------------------------------------------------------
@@ -46,7 +47,7 @@ Route::get('/public/village-wards', [VillageWardController::class, 'publicIndex'
 Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplicationController::class, 'receipt']);
 Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
 
-Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles) {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles, $tenancyViewerRoles) {
     // Joint tenancy routes — literal paths must stay before {tenancyApplication}
     Route::get('/tenancy-applications/lookup', [TenancyApplicationController::class, 'lookupByRefCode']);
     Route::get('/tenancy-applications/lookup-by-uin', [TenancyApplicationController::class, 'lookupByUid']);
@@ -68,6 +69,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     // Tenant Forms (Assam Tenancy Rules draft) - user only
     Route::middleware('role:user')->group(function () {
         Route::get('/tenant-forms/my', [TenantFormsStatusController::class, 'my']);
+        Route::post('/tenant-forms/{type}/{id}/withdraw', [TenantFormsStatusController::class, 'withdraw']);
+        Route::get('/tenant-forms/{type}/{id}/proceedings', [\App\Http\Controllers\CaseProceedingController::class, 'citizenIndex']);
         Route::post('/rent-revision-applications', [RentRevisionApplicationController::class, 'store']);
         Route::get('/rent-revision-applications/{application}', [RentRevisionApplicationController::class, 'show']);
         Route::post('/other-charges-revision-applications', [OtherChargesRevisionApplicationController::class, 'store']);
@@ -93,14 +96,17 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
 
-    Route::middleware("role:$adminRoles")->group(function () {
+    // Service Application Workflow
+    Route::middleware("role:$tenancyViewerRoles")->group(function () {
         Route::get('/admin/tenancy-records', [TenancyApplicationController::class, 'adminIndex']);
-        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
+    });
+
+    Route::middleware("role:$adminRoles")->group(function () {
         Route::put('/admin/applications/{type}/{id}', [ApplicationWorkflowController::class, 'update']);
     });
 
-    // Service Application Workflow
     Route::middleware("role:$allAdminStaffRoles")->group(function () {
+        Route::get('/admin/applications/all', [ApplicationWorkflowController::class, 'allApplications']);
         Route::get('/admin/applications/inbox', [ApplicationWorkflowController::class, 'inbox']);
         Route::get('/admin/applications/principal-inbox', [ApplicationWorkflowController::class, 'principalInbox']);
         Route::get('/admin/applications/valuer-inbox', [ApplicationWorkflowController::class, 'valuerInbox']);
@@ -112,6 +118,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
         Route::post('/admin/applications/{id}/assign-valuer', [ApplicationWorkflowController::class, 'assignValuer']);
         Route::post('/admin/applications/{id}/remove-valuer', [ApplicationWorkflowController::class, 'removeValuer']);
         Route::post('/admin/applications/{id}/submit-valuer-report', [ApplicationWorkflowController::class, 'submitValuerReport']);
+        
+        // Case Proceedings
+        Route::get('/admin/applications/{type}/{id}/proceedings', [\App\Http\Controllers\CaseProceedingController::class, 'index']);
+        Route::post('/admin/applications/{type}/{id}/proceedings', [\App\Http\Controllers\CaseProceedingController::class, 'store']);
     });
 
     // Admin user management

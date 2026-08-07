@@ -1,9 +1,10 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useDistricts } from '../../../hooks/useDistricts'
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES, ADMIN_ROLES } from '../../../constants/roles'
 import { APPLICATION_LABELS, APPLICATION_TYPES, SERVICE_APPLICATION_TYPES } from '../../../constants/application'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
@@ -53,7 +54,10 @@ const ApplicationList = ({ user }) => {
 	const [loading, setLoading] = useState(true)
 	const [page, setPage] = useState(1)
 	const [paginationInfo, setPaginationInfo] = useState(null)
-	const [districts, setDistricts] = useState([])
+	
+	const shouldFetchDistricts = user?.role === ROLES.SUPER_ADMIN
+	const { districts, loading: districtsLoading } = useDistricts(shouldFetchDistricts)
+	
 	const [filters, setFilters] = useState({
 		search: '',
 		status: '',
@@ -63,30 +67,31 @@ const ApplicationList = ({ user }) => {
 	const [searchInput, setSearchInput] = useState('')
 	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
 
-	const showFilters = ADMIN_ROLES.includes(user?.role)
-	const isQueueRole =
-		ASSISTANT_ROLES.includes(user?.role) ||
-		PRINCIPAL_ROLES.includes(user?.role) ||
-		user?.role === ROLES.VALUER
+	const location = useLocation()
+	const isInboxPage = location.pathname.includes('/admin/inbox')
 
-	useEffect(() => {
-		if (user?.role === ROLES.SUPER_ADMIN) {
-			api.get('/api/districts', { params: { all: true } })
-				.then(({ data }) => setDistricts(Array.isArray(data) ? data : data.data || []))
-				.catch(() => setDistricts([]))
-		}
-	}, [user?.role])
+	const showFilters = ADMIN_ROLES.includes(user?.role) || (!isInboxPage && ASSISTANT_ROLES.includes(user?.role))
+	const isQueueRole =
+		isInboxPage && (
+			ASSISTANT_ROLES.includes(user?.role) ||
+			PRINCIPAL_ROLES.includes(user?.role) ||
+			user?.role === ROLES.VALUER
+		)
+
+
 
 	const fetchApplications = useCallback(async () => {
 		setLoading(true)
 		try {
 			let endpoint = '/api/admin/applications/all'
-			if (ASSISTANT_ROLES.includes(user?.role)) {
-				endpoint = '/api/admin/applications/inbox'
-			} else if (PRINCIPAL_ROLES.includes(user?.role)) {
-				endpoint = '/api/admin/applications/principal-inbox'
-			} else if (user?.role === ROLES.VALUER) {
-				endpoint = '/api/admin/applications/valuer-inbox'
+			if (isInboxPage) {
+				if (ASSISTANT_ROLES.includes(user?.role)) {
+					endpoint = '/api/admin/applications/inbox'
+				} else if (PRINCIPAL_ROLES.includes(user?.role)) {
+					endpoint = '/api/admin/applications/principal-inbox'
+				} else if (user?.role === ROLES.VALUER) {
+					endpoint = '/api/admin/applications/valuer-inbox'
+				}
 			}
 
 			const params = { page, per_page: 15 }
@@ -207,11 +212,11 @@ const ApplicationList = ({ user }) => {
 	}
 
 	const tableTitle = (() => {
-		if (ASSISTANT_ROLES.includes(user?.role)) return 'Pending applications'
-		if (PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review'
+		if (isInboxPage && ASSISTANT_ROLES.includes(user?.role)) return 'Pending applications'
+		if (isInboxPage && PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review'
 		if (user?.role === ROLES.SUPER_ADMIN) return 'Service applications'
 		if (user?.role === ROLES.DISTRICT_ADMIN) return 'Service applications'
-		return 'Applications'
+		return 'Service applications'
 	})()
 
 	const statusFilterLabel = filters.status
@@ -360,7 +365,8 @@ const ApplicationList = ({ user }) => {
 		</div>
 	) : null
 
-	const queueNotice = isQueueRole ? (
+	const enableFifo = import.meta.env.VITE_ENABLE_FIFO === 'true';
+	const queueNotice = (isQueueRole && enableFifo) ? (
 		<div className="app-queue-notice">
 			<Icon name="lock" className="app-queue-notice__icon" />
 			<span>

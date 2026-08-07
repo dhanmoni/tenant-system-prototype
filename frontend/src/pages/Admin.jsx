@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api, { csrf } from '../api'
+import { invalidateDistrictsCache } from '../hooks/useDistricts'
 import { ROLES, PRINCIPAL_ROLES } from '../constants/roles'
 
 const roleOptions = [
@@ -97,6 +98,7 @@ function Admin({ user }) {
         assistant_director_id: '',
         district_head_id: '',
       })
+      invalidateDistrictsCache()
       setSuccess('District created.')
       setTimeout(() => setSuccess(''), 3000)
       await loadAll()

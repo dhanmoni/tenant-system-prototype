@@ -2,46 +2,44 @@ import './App.css'
 import './styles/service-forms.css'
 import './styles/a11y-dark-mode.css'
 import './workspace/styles/workspace.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import bannerImage from './assets/img/banner.png'
 import welcomeImage from './assets/img/img1.png'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
 import { PROFILE_REMINDER_DISMISSED_KEY } from './utils/profileCompleteness'
-import {
-	WorkspaceLayout,
-	WorkspaceHome,
-	WorkspaceProfile,
-	WorkspaceLegacyFrame,
-	WorkspaceServices,
-	WorkspaceUinStatus,
-} from './workspace'
-import ApplicationDetails from './pages/dashboard/ApplicationDetails'
-import TenancyCertificate from './pages/dashboard/TenancyCertificate'
-import FormPortal from './pages/dashboard/FormPortal'
-// import StateManagement from './pages/dashboard/admin/StateManagement'
-import DistrictManagement from './pages/dashboard/admin/DistrictManagement'
-import OfficeManagement from './pages/dashboard/admin/OfficeManagement'
-import UserManagement from './pages/dashboard/admin/UserManagement'
-import RoleManagement from './pages/dashboard/admin/RoleManagement'
-import DesignationManagement from './pages/dashboard/admin/DesignationManagement'
-import ActivityLog from './pages/dashboard/admin/ActivityLog'
-import ApplicationList from './pages/dashboard/admin/ApplicationList'
-import AdminApplicationDetailsPage from './pages/dashboard/admin/AdminApplicationDetailsPage'
-import TenancyRecords from './pages/dashboard/admin/TenancyRecords'
+import WorkspaceLayout from './workspace/layout/WorkspaceLayout'
+import WorkspaceLegacyFrame from './workspace/pages/WorkspaceLegacyFrame'
 
-import Login from './pages/Login'
-import Register from './pages/Register'
-import UserDetail from './pages/UserDetail'
-import JoinApplication from './pages/JoinApplication'
-import Policies from './pages/Policies'
-import Contact from './pages/Contact'
-import About from './pages/About'
-import Resources from './pages/Resources'
-import Services from './pages/Services'
-import PublicDashboard from './pages/PublicDashboard'
-import Sitemap from './pages/Sitemap'
-import Admin from './pages/Admin'
+const WorkspaceHome = lazy(() => import('./workspace/pages/WorkspaceHome'))
+const WorkspaceProfile = lazy(() => import('./workspace/pages/WorkspaceProfile'))
+const WorkspaceServices = lazy(() => import('./workspace/pages/WorkspaceServices'))
+const WorkspaceUinStatus = lazy(() => import('./workspace/pages/WorkspaceUinStatus'))
+const ApplicationDetails = lazy(() => import('./pages/dashboard/ApplicationDetails'))
+const TenancyCertificate = lazy(() => import('./pages/dashboard/TenancyCertificate'))
+const FormPortal = lazy(() => import('./pages/dashboard/FormPortal'))
+const DistrictManagement = lazy(() => import('./pages/dashboard/admin/DistrictManagement'))
+const OfficeManagement = lazy(() => import('./pages/dashboard/admin/OfficeManagement'))
+const UserManagement = lazy(() => import('./pages/dashboard/admin/UserManagement'))
+const RoleManagement = lazy(() => import('./pages/dashboard/admin/RoleManagement'))
+const DesignationManagement = lazy(() => import('./pages/dashboard/admin/DesignationManagement'))
+const ActivityLog = lazy(() => import('./pages/dashboard/admin/ActivityLog'))
+const ApplicationList = lazy(() => import('./pages/dashboard/admin/ApplicationList'))
+const AdminApplicationDetailsPage = lazy(() => import('./pages/dashboard/admin/AdminApplicationDetailsPage'))
+const TenancyRecords = lazy(() => import('./pages/dashboard/admin/TenancyRecords'))
+
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const UserDetail = lazy(() => import('./pages/UserDetail'))
+const JoinApplication = lazy(() => import('./pages/JoinApplication'))
+const Policies = lazy(() => import('./pages/Policies'))
+const Contact = lazy(() => import('./pages/Contact'))
+const About = lazy(() => import('./pages/About'))
+const Resources = lazy(() => import('./pages/Resources'))
+const Services = lazy(() => import('./pages/Services'))
+const PublicDashboard = lazy(() => import('./pages/PublicDashboard'))
+const Sitemap = lazy(() => import('./pages/Sitemap'))
+const Admin = lazy(() => import('./pages/Admin'))
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthSessionProvider } from './context/AuthSessionContext'
 
@@ -404,127 +402,129 @@ function App() {
 				</section>
 			) : null}
 			<main id="main-content">
-				<Routes>
-					<Route
-						path="/"
-						element={
-							user ? <Navigate to={finalTarget} replace /> : <Login onLogin={handleUserLogin} />
-						}
-					/>
-					<Route
-						path="/login"
-						element={
-							user ? <Navigate to={finalTarget} replace /> : <Login onLogin={handleUserLogin} />
-						}
-					/>
-					<Route path="/register" element={<Navigate to="/login" replace />} />
-					<Route path="/policies" element={<Policies />} />
-					<Route path="/resources" element={<Resources />} />
-					<Route path="/about" element={<About />} />
-					<Route path="/services" element={<Services />} />
-					<Route path="/public-dashboard" element={<PublicDashboard />} />
-					<Route path="/contact" element={<Contact />} />
-					<Route path="/sitemap" element={<Sitemap />} />
-					<Route
-						path="/admin"
-						element={
-							<ProtectedRoute user={user}>
-								<Admin user={user} />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/dashboard"
-						element={
-							<ProtectedRoute user={user}>
-								<WorkspaceLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
-							</ProtectedRoute>
-						}
-					>
-						<Route index element={<WorkspaceHome />} />
-						<Route path="profile" element={<WorkspaceProfile />} />
-						<Route path="tenancy-certificate" element={<TenancyCertificate />} />
-						<Route path="status" element={<WorkspaceUinStatus />} />
+				<Suspense fallback={<PortalLoadingScreen title={t('loading.loadingPortal') || "Loading..."} subtitle={t('loading.sessionSub') || "Please wait"} />}>
+					<Routes>
 						<Route
-							path="status/:type/:applicationNo"
+							path="/"
 							element={
-								<WorkspaceLegacyFrame title="Application details" subtitle="View submission">
-									<ApplicationDetails />
-								</WorkspaceLegacyFrame>
-							}
-						/>
-						<Route path="services" element={<WorkspaceServices />} />
-						<Route
-							path=":formType"
-							element={
-								<WorkspaceLegacyFrame title="Application form" subtitle="Complete and submit">
-									<FormPortal />
-								</WorkspaceLegacyFrame>
+								user ? <Navigate to={finalTarget} replace /> : <Login onLogin={handleUserLogin} />
 							}
 						/>
 						<Route
-							path="admin/users"
+							path="/login"
 							element={
-								<WorkspaceLegacyFrame title="Users" subtitle="Staff and user management">
-									<UserManagement user={user} />
-								</WorkspaceLegacyFrame>
+								user ? <Navigate to={finalTarget} replace /> : <Login onLogin={handleUserLogin} />
+							}
+						/>
+						<Route path="/register" element={<Navigate to="/login" replace />} />
+						<Route path="/policies" element={<Policies />} />
+						<Route path="/resources" element={<Resources />} />
+						<Route path="/about" element={<About />} />
+						<Route path="/services" element={<Services />} />
+						<Route path="/public-dashboard" element={<PublicDashboard />} />
+						<Route path="/contact" element={<Contact />} />
+						<Route path="/sitemap" element={<Sitemap />} />
+						<Route
+							path="/admin"
+							element={
+								<ProtectedRoute user={user}>
+									<Admin user={user} />
+								</ProtectedRoute>
 							}
 						/>
 						<Route
-							path="admin/inbox"
+							path="/dashboard"
 							element={
-								<WorkspaceLegacyFrame title="Application inbox" subtitle="Verify and forward service applications">
-									<ApplicationList user={user} />
-								</WorkspaceLegacyFrame>
+								<ProtectedRoute user={user}>
+									<WorkspaceLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
+								</ProtectedRoute>
+							}
+						>
+							<Route index element={<WorkspaceHome />} />
+							<Route path="profile" element={<WorkspaceProfile />} />
+							<Route path="tenancy-certificate" element={<TenancyCertificate />} />
+							<Route path="status" element={<WorkspaceUinStatus />} />
+							<Route
+								path="status/:type/:applicationNo"
+								element={
+									<WorkspaceLegacyFrame title="Application details" subtitle="View submission">
+										<ApplicationDetails />
+									</WorkspaceLegacyFrame>
+								}
+							/>
+							<Route path="services" element={<WorkspaceServices />} />
+							<Route
+								path=":formType"
+								element={
+									<WorkspaceLegacyFrame title="Application form" subtitle="Complete and submit">
+										<FormPortal />
+									</WorkspaceLegacyFrame>
+								}
+							/>
+							<Route
+								path="admin/users"
+								element={
+									<WorkspaceLegacyFrame title="Users" subtitle="Staff and user management">
+										<UserManagement user={user} />
+									</WorkspaceLegacyFrame>
+								}
+							/>
+							<Route
+								path="admin/inbox"
+								element={
+									<WorkspaceLegacyFrame title="Application inbox" subtitle="Verify and forward service applications">
+										<ApplicationList user={user} />
+									</WorkspaceLegacyFrame>
+								}
+							/>
+							<Route
+								path="admin/applications"
+								element={
+									<WorkspaceLegacyFrame title="Service applications" subtitle="Rent Authority, Court, and Tribunal forms">
+										<ApplicationList user={user} />
+									</WorkspaceLegacyFrame>
+								}
+							/>
+							<Route
+								path="admin/applications/:applicationNo"
+								element={<AdminApplicationDetailsPage />}
+							/>
+							<Route
+								path="admin/tenancy"
+								element={
+									<WorkspaceLegacyFrame title="Tenancy applications" subtitle="UIN applications">
+										<TenancyRecords user={user} />
+									</WorkspaceLegacyFrame>
+								}
+							/>
+							<Route
+								path="admin/tenancy/:applicationNo"
+								element={<AdminApplicationDetailsPage />}
+							/>
+							<Route
+								path="admin/districts"
+								element={
+									<WorkspaceLegacyFrame title="Districts" subtitle="Manage district master data">
+										<DistrictManagement user={user} />
+									</WorkspaceLegacyFrame>
+								}
+							/>
+							<Route
+								path="join"
+								element={<JoinApplication user={user} />}
+							/>
+						</Route>
+						<Route path="/join" element={<JoinEntryRedirect user={user} />} />
+						<Route
+							path="/users/:id"
+							element={
+								<ProtectedRoute user={user}>
+									<UserDetail user={user} />
+								</ProtectedRoute>
 							}
 						/>
-						<Route
-							path="admin/applications"
-							element={
-								<WorkspaceLegacyFrame title="Service applications" subtitle="Rent Authority, Court, and Tribunal forms">
-									<ApplicationList user={user} />
-								</WorkspaceLegacyFrame>
-							}
-						/>
-						<Route
-							path="admin/applications/:applicationNo"
-							element={<AdminApplicationDetailsPage />}
-						/>
-						<Route
-							path="admin/tenancy"
-							element={
-								<WorkspaceLegacyFrame title="Tenancy applications" subtitle="UIN applications">
-									<TenancyRecords user={user} />
-								</WorkspaceLegacyFrame>
-							}
-						/>
-						<Route
-							path="admin/tenancy/:applicationNo"
-							element={<AdminApplicationDetailsPage />}
-						/>
-						<Route
-							path="admin/districts"
-							element={
-								<WorkspaceLegacyFrame title="Districts" subtitle="Manage district master data">
-									<DistrictManagement user={user} />
-								</WorkspaceLegacyFrame>
-							}
-						/>
-						<Route
-							path="join"
-							element={<JoinApplication user={user} />}
-						/>
-					</Route>
-					<Route path="/join" element={<JoinEntryRedirect user={user} />} />
-					<Route
-						path="/users/:id"
-						element={
-							<ProtectedRoute user={user}>
-								<UserDetail user={user} />
-							</ProtectedRoute>
-						}
-					/>
-				</Routes>
+					</Routes>
+				</Suspense>
 			</main>
 
 			{/* Footer – hidden on dashboard */}

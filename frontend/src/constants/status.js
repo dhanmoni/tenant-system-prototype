@@ -14,6 +14,7 @@ export const STATUS = {
 	PARTIAL: 'PARTIAL',
 	VALUER_ASSIGNED: 'VALUER_ASSIGNED',
 	VALUER_REPORT_SUBMITTED: 'VALUER_REPORT_SUBMITTED',
+	WITHDRAWN: 'WITHDRAWN',
 }
 
 export const STATUS_LABELS = {
@@ -28,6 +29,7 @@ export const STATUS_LABELS = {
 	[STATUS.PARTIAL]: 'Awaiting second party',
 	[STATUS.VALUER_ASSIGNED]: 'Assigned to Valuer',
 	[STATUS.VALUER_REPORT_SUBMITTED]: 'Valuer Report Submitted',
+	[STATUS.WITHDRAWN]: 'Withdrawn',
 }
 
 export const STATUS_COLORS = {
@@ -40,4 +42,5 @@ export const STATUS_COLORS = {
 	[STATUS.UNDER_PROCESS]: 'info',
 	[STATUS.VALUER_ASSIGNED]: 'info',
 	[STATUS.VALUER_REPORT_SUBMITTED]: 'warning',
+	[STATUS.WITHDRAWN]: 'secondary',
 }
