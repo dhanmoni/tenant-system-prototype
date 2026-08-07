@@ -18,6 +18,7 @@ import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
 import WorkspacePageSearch from '../components/WorkspacePageSearch'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import '../styles/workspace.css'
+import '../../styles/service-forms.css'
 
 const DEMO_NOTIFICATIONS = [
 	{

@@ -1,7 +1,6 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import PortalFaqVector from './PortalFaqVector'
 import { useLanguage } from '../../i18n'
 import {
 	faqIntroVariants,
@@ -162,7 +161,7 @@ function PortalFaqSection() {
 						</motion.p>
 					</motion.header>
 
-					<div className="landing-faq__body">
+					<div className="landing-faq__body landing-faq__body--solo">
 						<motion.div
 							className="landing-faq__list"
 							variants={reduceMotion ? undefined : faqListVariants}
@@ -182,27 +181,6 @@ function PortalFaqSection() {
 								</motion.div>
 							))}
 						</motion.div>
-
-						<motion.aside
-							className="landing-faq__visual"
-							aria-hidden
-							initial={reduceMotion ? false : { opacity: 0, x: 28, scale: 0.94, rotate: 2 }}
-							animate={
-								reveal
-									? { opacity: 1, x: 0, scale: 1, rotate: 0 }
-									: { opacity: 0, x: 28, scale: 0.94, rotate: 2 }
-							}
-							transition={
-								reduceMotion
-									? { duration: 0 }
-									: { type: 'spring', stiffness: 180, damping: 18, delay: 0.16 }
-							}
-						>
-							<div className="landing-faq__visual-glow" />
-							<div className="landing-faq__visual-frame">
-								<PortalFaqVector className="landing-faq__vector" />
-							</div>
-						</motion.aside>
 					</div>
 				</motion.div>
 			</div>

@@ -1,4 +1,4 @@
-import { WorkspaceLegacyFrame } from '../../../workspace'
+import WorkspaceLegacyFrame from '../../../workspace/pages/WorkspaceLegacyFrame'
 import AdminApplicationDetails from './AdminApplicationDetails'
 
 function AdminApplicationDetailsPage() {

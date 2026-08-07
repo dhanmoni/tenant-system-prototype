@@ -15,11 +15,10 @@ export const scrollSectionVariants = {
 }
 
 export const scrollHeaderVariants = {
-	hidden: { opacity: 0, y: 36, filter: 'blur(5px)' },
+	hidden: { opacity: 0, y: 36 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		filter: 'blur(0px)',
 		transition: {
 			duration: 0.58,
 			ease: easeOutExpo,
@@ -126,13 +125,11 @@ export const servicesCardVariants = {
 		opacity: 0,
 		y: 64 + (3 - i) * 36,
 		scale: 0.9,
-		filter: 'blur(8px)',
 	}),
 	visible: {
 		opacity: 1,
 		y: 0,
 		scale: 1,
-		filter: 'blur(0px)',
 		transition: {
 			type: 'spring',
 			stiffness: 240,
@@ -170,14 +167,12 @@ export const benefitsModernCardVariants = {
 		x: 48,
 		y: 32 + i * 12,
 		scale: 0.92,
-		filter: 'blur(7px)',
 	}),
 	visible: {
 		opacity: 1,
 		x: 0,
 		y: 0,
 		scale: 1,
-		filter: 'blur(0px)',
 		transition: {
 			type: 'spring',
 			stiffness: 220,
@@ -199,11 +194,10 @@ export const benefitsModernCardTap = {
 }
 
 export const benefitsIntroVariants = {
-	hidden: { opacity: 0, y: 36, filter: 'blur(6px)' },
+	hidden: { opacity: 0, y: 36 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		filter: 'blur(0px)',
 		transition: {
 			duration: 0.6,
 			ease: easeOutExpo,
@@ -258,11 +252,10 @@ export const guideSectionVariants = {
 }
 
 export const guideIntroVariants = {
-	hidden: { opacity: 0, y: 36, filter: 'blur(6px)' },
+	hidden: { opacity: 0, y: 36 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		filter: 'blur(0px)',
 		transition: {
 			duration: 0.62,
 			ease: easeOutExpo,
@@ -321,14 +314,12 @@ export const guideStepVariants = {
 		x: -42,
 		y: 18,
 		scale: 0.96,
-		filter: 'blur(5px)',
 	},
 	visible: {
 		opacity: 1,
 		x: 0,
 		y: 0,
 		scale: 1,
-		filter: 'blur(0px)',
 		transition: {
 			type: 'spring',
 			stiffness: 240,
@@ -436,11 +427,10 @@ export const faqSectionVariants = {
 }
 
 export const faqIntroVariants = {
-	hidden: { opacity: 0, y: 34, filter: 'blur(6px)' },
+	hidden: { opacity: 0, y: 34 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		filter: 'blur(0px)',
 		transition: {
 			duration: 0.58,
 			ease: easeOutExpo,
@@ -497,13 +487,11 @@ export const faqItemVariants = {
 		opacity: 0,
 		y: -36,
 		scale: 0.96,
-		filter: 'blur(5px)',
 	},
 	visible: {
 		opacity: 1,
 		y: 0,
 		scale: 1,
-		filter: 'blur(0px)',
 		transition: {
 			type: 'spring',
 			stiffness: 280,
@@ -514,11 +502,10 @@ export const faqItemVariants = {
 }
 
 export const scrollStatRailVariants = {
-	hidden: { opacity: 0, y: 36, filter: 'blur(4px)' },
+	hidden: { opacity: 0, y: 36 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		filter: 'blur(0px)',
 		transition: {
 			duration: 0.52,
 			ease: easeOutExpo,

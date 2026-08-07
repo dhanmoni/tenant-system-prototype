@@ -5,7 +5,6 @@ import { authHashForMode } from '../../utils/authPanelNav'
 function AuthNavLink({ mode, className, children, ...rest }) {
 	const authNav = useAuthPanelNavigation()
 	const hash = authHashForMode(mode)
-	const to = `/${hash}`
 
 	if (authNav) {
 		const open = mode === 'register' ? authNav.openRegister : authNav.openLogin
@@ -27,7 +26,12 @@ function AuthNavLink({ mode, className, children, ...rest }) {
 	}
 
 	return (
-		<Link to={to} className={className} {...rest}>
+		<Link
+			to={{ pathname: '/', hash }}
+			state={{ openAuth: mode }}
+			className={className}
+			{...rest}
+		>
 			{children}
 		</Link>
 	)

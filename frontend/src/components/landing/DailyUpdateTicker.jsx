@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { useLanguage } from '../../i18n'
+import { useOffscreenPause } from '../../hooks/useOffscreenPause'
 
 function NoticeItem({ text }) {
 	return (
@@ -16,6 +17,7 @@ function NoticeItem({ text }) {
 function DailyUpdateTicker() {
 	const { t } = useLanguage()
 	const reduceMotion = useReducedMotion()
+	const { ref, offscreen } = useOffscreenPause()
 
 	const updates = useMemo(
 		() => [
@@ -28,7 +30,8 @@ function DailyUpdateTicker() {
 
 	return (
 		<section
-			className="daily-update-ticker"
+			ref={ref}
+			className={`daily-update-ticker${offscreen ? ' is-offscreen' : ''}`}
 			aria-label={t('home.notices')}
 			aria-live={reduceMotion ? 'polite' : 'off'}
 		>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import api, { csrf } from '../api'
 import { AuthPanelNavigationContext } from '../context/AuthPanelNavigationContext'
 import { authHashForMode, modeFromHash, scrollToAuthPanel } from '../utils/authPanelNav'
@@ -18,10 +18,12 @@ import GovernmentLogosCarousel from '../components/landing/GovernmentLogosCarous
 import LandingFooter from '../components/landing/LandingFooter'
 import LandingFab from '../components/landing/LandingFab'
 import { useLanguage } from '../i18n'
+import { restoreNativeLandingScroll } from '../utils/restoreNativeLandingScroll'
 
 function Login({ onLogin }) {
 	const navigate = useNavigate()
 	const location = useLocation()
+	const navigationType = useNavigationType()
 	const { t } = useLanguage()
 
 	const [mode, setMode] = useState('login')
@@ -51,6 +53,11 @@ function Login({ onLogin }) {
 	const [districts, setDistricts] = useState([])
 	const landingBootstrapped = useRef(false)
 	const suppressAuthHashScroll = useRef(true)
+
+	useEffect(() => {
+		restoreNativeLandingScroll()
+		return () => restoreNativeLandingScroll()
+	}, [])
 
 	useEffect(() => {
 		if (resendTimer > 0) {
@@ -344,12 +351,44 @@ function Login({ onLogin }) {
 		}
 	}, [])
 
-	// Refresh / first paint: always land on home (top) with a clean URL
+	// Refresh / cold load: stay at top with a clean URL.
+	// Nav clicks from other pages (PUSH/REPLACE or openAuth state): open the auth section.
 	useEffect(() => {
 		if (landingBootstrapped.current) return
 		landingBootstrapped.current = true
 
-		const targetMode = modeFromHash(location.hash)
+		const stateMode =
+			location.state?.openAuth === 'register' || location.state?.openAuth === 'login'
+				? location.state.openAuth
+				: null
+		const targetMode = modeFromHash(location.hash) || stateMode
+		const openFromNav =
+			Boolean(targetMode) &&
+			(navigationType === 'PUSH' ||
+				navigationType === 'REPLACE' ||
+				Boolean(stateMode))
+
+		if (openFromNav) {
+			suppressAuthHashScroll.current = false
+			switchMode(targetMode)
+			scrollToAuthPanel()
+			requestAnimationFrame(() => {
+				const focusId = targetMode === 'register' ? 'register-phone' : 'login-phone'
+				document.getElementById(focusId)?.focus({ preventScroll: true })
+			})
+			if (!location.hash || location.hash === '#') {
+				navigate(
+					{
+						pathname: location.pathname,
+						search: location.search,
+						hash: authHashForMode(targetMode),
+					},
+					{ replace: true, state: location.state },
+				)
+			}
+			return
+		}
+
 		if (targetMode) switchMode(targetMode)
 
 		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })

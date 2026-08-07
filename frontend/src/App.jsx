@@ -1,16 +1,33 @@
 import './App.css'
-import './styles/service-forms.css'
 import './styles/a11y-dark-mode.css'
-import './workspace/styles/workspace.css'
 import { useEffect, useState, lazy, Suspense } from 'react'
-import bannerImage from './assets/img/banner.png'
-import welcomeImage from './assets/img/img1.png'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
 import { PROFILE_REMINDER_DISMISSED_KEY } from './utils/profileCompleteness'
-import WorkspaceLayout from './workspace/layout/WorkspaceLayout'
-import WorkspaceLegacyFrame from './workspace/pages/WorkspaceLegacyFrame'
+import Login from './pages/Login'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Services from './pages/Services'
+import Resources from './pages/Resources'
+import Policies from './pages/Policies'
+import Sitemap from './pages/Sitemap'
+import ProtectedRoute from './components/ProtectedRoute'
+import { AuthSessionProvider } from './context/AuthSessionContext'
+import PortalLoadingScreen from './components/PortalLoadingScreen'
+import Ux4gTopbar from './components/a11y/Ux4gTopbar'
+import {
+	getMainContentTargetId,
+	handleSkipLinkClick,
+	isPublicMarketingPath,
+} from './utils/skipNavigation'
+import { useLanguage } from './i18n'
+import tcpLogo from './assets/img/TCP logo.png'
+import nicLogo from './assets/img/NIC.png'
+import digitalIndiaLogo from './assets/img/digital-india.png'
 
+/* Dashboard / heavy pages — not needed to paint the landing shell */
+const WorkspaceLayout = lazy(() => import('./workspace/layout/WorkspaceLayout'))
+const WorkspaceLegacyFrame = lazy(() => import('./workspace/pages/WorkspaceLegacyFrame'))
 const WorkspaceHome = lazy(() => import('./workspace/pages/WorkspaceHome'))
 const WorkspaceProfile = lazy(() => import('./workspace/pages/WorkspaceProfile'))
 const WorkspaceServices = lazy(() => import('./workspace/pages/WorkspaceServices'))
@@ -18,30 +35,17 @@ const WorkspaceUinStatus = lazy(() => import('./workspace/pages/WorkspaceUinStat
 const ApplicationDetails = lazy(() => import('./pages/dashboard/ApplicationDetails'))
 const TenancyCertificate = lazy(() => import('./pages/dashboard/TenancyCertificate'))
 const FormPortal = lazy(() => import('./pages/dashboard/FormPortal'))
-const DistrictManagement = lazy(() => import('./pages/dashboard/admin/DistrictManagement'))
-const OfficeManagement = lazy(() => import('./pages/dashboard/admin/OfficeManagement'))
+const DistrictManagement = lazy(() => import('./workspace/pages/admin/WorkspaceDistricts'))
 const UserManagement = lazy(() => import('./pages/dashboard/admin/UserManagement'))
-const RoleManagement = lazy(() => import('./pages/dashboard/admin/RoleManagement'))
-const DesignationManagement = lazy(() => import('./pages/dashboard/admin/DesignationManagement'))
-const ActivityLog = lazy(() => import('./pages/dashboard/admin/ActivityLog'))
 const ApplicationList = lazy(() => import('./pages/dashboard/admin/ApplicationList'))
-const AdminApplicationDetailsPage = lazy(() => import('./pages/dashboard/admin/AdminApplicationDetailsPage'))
+const WorkspaceAdminApplicationDetails = lazy(
+	() => import('./workspace/pages/admin/WorkspaceAdminApplicationDetails'),
+)
 const TenancyRecords = lazy(() => import('./pages/dashboard/admin/TenancyRecords'))
-
-const Login = lazy(() => import('./pages/Login'))
-const Register = lazy(() => import('./pages/Register'))
 const UserDetail = lazy(() => import('./pages/UserDetail'))
 const JoinApplication = lazy(() => import('./pages/JoinApplication'))
-const Policies = lazy(() => import('./pages/Policies'))
-const Contact = lazy(() => import('./pages/Contact'))
-const About = lazy(() => import('./pages/About'))
-const Resources = lazy(() => import('./pages/Resources'))
-const Services = lazy(() => import('./pages/Services'))
 const PublicDashboard = lazy(() => import('./pages/PublicDashboard'))
-const Sitemap = lazy(() => import('./pages/Sitemap'))
 const Admin = lazy(() => import('./pages/Admin'))
-import ProtectedRoute from './components/ProtectedRoute'
-import { AuthSessionProvider } from './context/AuthSessionContext'
 
 /** Invite links: logged-in users → join form; others → new login (no legacy carousel flash). */
 function JoinEntryRedirect({ user }) {
@@ -58,17 +62,6 @@ function JoinEntryRedirect({ user }) {
 		/>
 	)
 }
-import PortalLoadingScreen from './components/PortalLoadingScreen'
-import Ux4gTopbar from './components/a11y/Ux4gTopbar'
-import {
-	getMainContentTargetId,
-	handleSkipLinkClick,
-	isPublicMarketingPath,
-} from './utils/skipNavigation'
-import { useLanguage } from './i18n'
-import tcpLogo from './assets/img/TCP logo.png'
-import nicLogo from './assets/img/NIC.png'
-import digitalIndiaLogo from './assets/img/digital-india.png'
 
 function App() {
 	const { t } = useLanguage()
@@ -78,35 +71,14 @@ function App() {
 	const [loggingOut, setLoggingOut] = useState(false)
 	const navigate = useNavigate()
 	const [fontScale, setFontScale] = useState('normal')
-	const slides = [
-		{
-			titleKey: 'carousel.slide1Title',
-			subtitleKey: 'carousel.slide1Subtitle',
-			image: bannerImage,
-		},
-		{
-			titleKey: 'carousel.slide2Title',
-			subtitleKey: 'carousel.slide2Subtitle',
-			image: welcomeImage,
-		},
-		{
-			titleKey: 'carousel.slide3Title',
-			subtitleKey: 'carousel.slide3Subtitle',
-			image: '/TCP-Images/TCP-Office2.jpg',
-		},
-		{
-			titleKey: 'carousel.slide4Title',
-			subtitleKey: 'carousel.slide4Subtitle',
-			image: '/TCP-Images/TCP-Office3.jpg',
-		},
-	]
+	const [legacySlideImages, setLegacySlideImages] = useState(null)
 	const [slideIndex, setSlideIndex] = useState(0)
 
 	useEffect(() => {
 		let active = true
 		const loadUser = async () => {
 			try {
-				const { data } = await api.get('/api/user')
+				const { data } = await api.get('/api/user', { skipAuthRedirect: true })
 				if (active) setUser(data.user)
 			} catch {
 				if (active) setUser(null)
@@ -119,14 +91,6 @@ function App() {
 			active = false
 		}
 	}, [])
-
-	useEffect(() => {
-		if (!slides.length) return undefined
-		const timer = setInterval(() => {
-			setSlideIndex((prev) => (prev + 1) % slides.length)
-		}, 5000)
-		return () => clearInterval(timer)
-	}, [slides.length])
 
 	const location = useLocation()
 	const fromPath = location.state?.from?.pathname || ''
@@ -176,6 +140,60 @@ function App() {
 		!isDashboardRoute &&
 		!loggingOut &&
 		!isJoinEntry
+
+	const slides = legacySlideImages
+		? [
+				{
+					titleKey: 'carousel.slide1Title',
+					subtitleKey: 'carousel.slide1Subtitle',
+					image: legacySlideImages.banner,
+				},
+				{
+					titleKey: 'carousel.slide2Title',
+					subtitleKey: 'carousel.slide2Subtitle',
+					image: legacySlideImages.welcome,
+				},
+				{
+					titleKey: 'carousel.slide3Title',
+					subtitleKey: 'carousel.slide3Subtitle',
+					image: '/TCP-Images/TCP-Office2.jpg',
+				},
+				{
+					titleKey: 'carousel.slide4Title',
+					subtitleKey: 'carousel.slide4Subtitle',
+					image: '/TCP-Images/TCP-Office3.jpg',
+				},
+			]
+		: []
+
+	useEffect(() => {
+		if (!showLegacyPublicChrome) {
+			setLegacySlideImages(null)
+			return undefined
+		}
+		let cancelled = false
+		Promise.all([
+			import('./assets/img/banner.png'),
+			import('./assets/img/img1.png'),
+		]).then(([bannerMod, welcomeMod]) => {
+			if (cancelled) return
+			setLegacySlideImages({
+				banner: bannerMod.default,
+				welcome: welcomeMod.default,
+			})
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [showLegacyPublicChrome])
+
+	useEffect(() => {
+		if (!showLegacyPublicChrome || slides.length === 0) return undefined
+		const timer = setInterval(() => {
+			setSlideIndex((prev) => (prev + 1) % slides.length)
+		}, 5000)
+		return () => clearInterval(timer)
+	}, [showLegacyPublicChrome, slides.length])
 
 	useEffect(() => {
 		try {
@@ -239,6 +257,17 @@ function App() {
 		const handleUnauthorized = () => {
 			sessionStorage.removeItem(PROFILE_REMINDER_DISMISSED_KEY)
 			setUser(null)
+			const path = window.location.pathname || ''
+			/* Stay put on public marketing / auth pages — a guest session probe must not bounce About → home */
+			if (
+				path === '/' ||
+				path === '/login' ||
+				path === '/join' ||
+				path === '/register' ||
+				isPublicMarketingPath(path)
+			) {
+				return
+			}
 			navigate('/login', { replace: true })
 		}
 		window.addEventListener('auth:unauthorized', handleUnauthorized)
@@ -263,9 +292,29 @@ function App() {
 		return () => clearTimeout(timer)
 	}, [portalEntering, location.pathname])
 
-	if ((loading && !skipSessionBootLoader) || portalEntering || loggingOut) {
+	const showPortalBootLoader =
+		(loading && !skipSessionBootLoader) || portalEntering || loggingOut
+
+	useEffect(() => {
+		const root = document.documentElement
+		root.classList.toggle('portal-boot-loading', showPortalBootLoader)
+		document.body.classList.toggle('portal-boot-loading', showPortalBootLoader)
+		/* Reveal a11y chrome with the page — not from the CDN widget / alone first */
+		if (showPortalBootLoader) {
+			root.classList.remove('app-shell-ready')
+		} else {
+			root.classList.add('app-shell-ready')
+		}
+		return () => {
+			root.classList.remove('portal-boot-loading')
+			document.body.classList.remove('portal-boot-loading')
+		}
+	}, [showPortalBootLoader])
+
+	if (showPortalBootLoader) {
 		return (
 			<PortalLoadingScreen
+				overlay
 				title={
 					loggingOut
 						? t('loading.signingOut')
@@ -402,7 +451,8 @@ function App() {
 				</section>
 			) : null}
 			<main id="main-content">
-				<Suspense fallback={<PortalLoadingScreen title={t('loading.loadingPortal') || "Loading..."} subtitle={t('loading.sessionSub') || "Please wait"} />}>
+				{/* fallback={null}: never show the branded boot screen on route chunks */}
+				<Suspense fallback={null}>
 					<Routes>
 						<Route
 							path="/"
@@ -487,7 +537,7 @@ function App() {
 							/>
 							<Route
 								path="admin/applications/:applicationNo"
-								element={<AdminApplicationDetailsPage />}
+								element={<WorkspaceAdminApplicationDetails />}
 							/>
 							<Route
 								path="admin/tenancy"
@@ -499,15 +549,11 @@ function App() {
 							/>
 							<Route
 								path="admin/tenancy/:applicationNo"
-								element={<AdminApplicationDetailsPage />}
+								element={<WorkspaceAdminApplicationDetails />}
 							/>
 							<Route
 								path="admin/districts"
-								element={
-									<WorkspaceLegacyFrame title="Districts" subtitle="Manage district master data">
-										<DistrictManagement user={user} />
-									</WorkspaceLegacyFrame>
-								}
+								element={<DistrictManagement />}
 							/>
 							<Route
 								path="join"

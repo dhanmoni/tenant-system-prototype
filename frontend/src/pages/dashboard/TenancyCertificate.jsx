@@ -353,16 +353,18 @@ function TenancyCertificate() {
 		setInitiatorRole('LANDLORD')
 
 		if (user?.district_id) {
-			const dId = String(user.district_id)
-			setTenancyDistrictId(dId)
-			loadTenancyVillageWards(dId)
+			const dId = Number(user.district_id)
+			if (Number.isFinite(dId) && dId > 0) {
+				setTenancyDistrictId(String(dId))
+				loadTenancyVillageWards(dId)
 
-			if (user.office_id) {
-				setTenancyOfficeId(String(user.office_id))
-			} else if (tenancyOffices.length > 0) {
-				const officesInDistrict = tenancyOffices.filter(o => String(o.district_id) === dId)
-				if (officesInDistrict.length === 1) {
-					setTenancyOfficeId(String(officesInDistrict[0].id))
+				if (user.office_id) {
+					setTenancyOfficeId(String(user.office_id))
+				} else if (tenancyOffices.length > 0) {
+					const officesInDistrict = tenancyOffices.filter((o) => Number(o.district_id) === dId)
+					if (officesInDistrict.length === 1) {
+						setTenancyOfficeId(String(officesInDistrict[0].id))
+					}
 				}
 			}
 		}
@@ -398,9 +400,9 @@ function TenancyCertificate() {
 	useEffect(() => {
 		if (!draftLoaded || tenancyDistrictId || !tenancyOfficeId || !tenancyOffices.length) return
 		const office = tenancyOffices.find((o) => String(o.id) === String(tenancyOfficeId))
-		if (!office?.district_id) return
-		const districtId = String(office.district_id)
-		setTenancyDistrictId(districtId)
+		const districtId = Number(office?.district_id)
+		if (!Number.isFinite(districtId) || districtId <= 0) return
+		setTenancyDistrictId(String(districtId))
 		loadTenancyVillageWards(districtId)
 	}, [draftLoaded, tenancyDistrictId, tenancyOfficeId, tenancyOffices])
 
@@ -440,13 +442,30 @@ function TenancyCertificate() {
 	}
 
 	const loadTenancyVillageWards = async (districtId) => {
-		if (!districtId) return setTenancyVillageWards([])
+		const id = Number(districtId)
+		if (!Number.isFinite(id) || id <= 0) {
+			setTenancyVillageWards([])
+			return
+		}
 		setTenancyVillageWardsLoading(true)
 		try {
-			const { data } = await api.get('/api/public/village-wards', { params: { district_id: districtId, t: new Date().getTime() } })
+			const { data } = await api.get('/api/public/village-wards', {
+				params: { district_id: id, t: Date.now() },
+			})
 			setTenancyVillageWards(Array.isArray(data) ? data : data.data || [])
-		} catch (err) { setError('Failed to load village/wards') }
-		finally { setTenancyVillageWardsLoading(false) }
+			setError((prev) => (prev === 'Failed to load village/wards' ? '' : prev))
+		} catch (err) {
+			const status = err?.response?.status
+			const detail =
+				err?.response?.data?.message ||
+				(status ? `Request failed (${status})` : err?.message) ||
+				'Network error'
+			console.error('Village/wards load failed', { districtId: id, detail, err })
+			setError(`Failed to load village/wards — ${detail}`)
+			setTenancyVillageWards([])
+		} finally {
+			setTenancyVillageWardsLoading(false)
+		}
 	}
 
 	useEffect(() => {
@@ -1563,7 +1582,8 @@ function TenancyCertificate() {
 									setTenancyVillageWardId('');
 									setTenancyVillageWards([]);
 									setTenancyVillageName('');
-									loadTenancyVillageWards(dId);
+									setTenancyLocalBody('');
+									if (dId) loadTenancyVillageWards(dId);
 									const officesInDistrict = tenancyOffices.filter(o => String(o.district_id) === dId);
 									if (officesInDistrict.length === 1) {
 										setTenancyOfficeId(String(officesInDistrict[0].id));

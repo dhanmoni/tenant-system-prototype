@@ -4,12 +4,15 @@ function PortalLoadingScreen({
 	title = 'Loading portal',
 	subtitle = 'Please wait while we prepare your workspace.',
 	compact = false,
-	overlay = false,
+	overlay = true,
 }) {
 	return (
 		<div
-			className={`${overlay ? 'portal-loading-overlay' : 'page page-center'} landing-wallpaper-bg landing-wallpaper-bg--cream portal-loading-screen`}
+			className={`portal-loading-screen landing-wallpaper-bg landing-wallpaper-bg--cream${
+				overlay ? ' portal-loading-overlay' : ' page page-center'
+			}`}
 			role="presentation"
+			aria-busy="true"
 		>
 			<div className="full-page-loader">
 				<PortalLoader title={title} subtitle={subtitle} compact={compact} />

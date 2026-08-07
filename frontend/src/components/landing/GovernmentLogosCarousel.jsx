@@ -2,6 +2,7 @@ import { useReducedMotion } from 'framer-motion'
 import { ExternalLink } from 'lucide-react'
 import { governmentPortalLogos } from '../../data/governmentPortalLogos'
 import { useLanguage } from '../../i18n'
+import { useOffscreenPause } from '../../hooks/useOffscreenPause'
 
 function LogoCard({ portal, opensNewLabel }) {
 	return (
@@ -18,6 +19,7 @@ function LogoCard({ portal, opensNewLabel }) {
 					alt={portal.alt}
 					className={`gov-logos-carousel__img${portal.imgClass ? ` ${portal.imgClass}` : ''}`}
 					loading="lazy"
+					decoding="async"
 				/>
 			) : (
 				<span className="gov-logos-carousel__label">{portal.label ?? portal.name}</span>
@@ -30,10 +32,15 @@ function LogoCard({ portal, opensNewLabel }) {
 function GovernmentLogosCarousel() {
 	const { t } = useLanguage()
 	const reduceMotion = useReducedMotion()
+	const { ref, offscreen } = useOffscreenPause('120px 0px')
 	const items = [...governmentPortalLogos, ...governmentPortalLogos]
 
 	return (
-		<section className="gov-logos-carousel" aria-label={t('home.logos.aria')}>
+		<section
+			ref={ref}
+			className={`gov-logos-carousel${offscreen ? ' is-offscreen' : ''}`}
+			aria-label={t('home.logos.aria')}
+		>
 			<div className="gov-logos-carousel__inner">
 				<p className="gov-logos-carousel__sr-only">{t('home.logos.srOnly')}</p>
 

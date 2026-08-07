@@ -270,12 +270,16 @@ export function applyDraftToForm(draft, setters, { loadVillageWards, profile } =
 		draft.village_ward?.district_id ||
 		draft.district_id ||
 		null
-	if (districtId) {
-		setTenancyDistrictId(String(districtId))
-		loadVillageWards?.(String(districtId))
-	} else if (draft.office_id && draft.office?.district?.id) {
-		setTenancyDistrictId(String(draft.office.district.id))
-		loadVillageWards?.(String(draft.office.district.id))
+	const resolvedDistrictId = Number(districtId)
+	if (Number.isFinite(resolvedDistrictId) && resolvedDistrictId > 0) {
+		setTenancyDistrictId(String(resolvedDistrictId))
+		loadVillageWards?.(String(resolvedDistrictId))
+	} else {
+		const nestedId = Number(draft.office?.district?.id)
+		if (Number.isFinite(nestedId) && nestedId > 0) {
+			setTenancyDistrictId(String(nestedId))
+			loadVillageWards?.(String(nestedId))
+		}
 	}
 
 	if (draft.area_type === 'Rural') {

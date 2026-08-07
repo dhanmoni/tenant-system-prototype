@@ -3,14 +3,11 @@ import { Link } from 'react-router-dom'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import {
 	ArrowRight,
-	BadgeCheck,
 	Building2,
 	FileCheck,
 	FileText,
-	FolderOpen,
 	Gavel,
 	Landmark,
-	ScrollText,
 	Stamp,
 } from 'lucide-react'
 import { portalServiceHighlights } from '../../data/portalServices'
@@ -33,16 +30,10 @@ import { useLanguage } from '../../i18n'
 const SERVICE_ORDER = ['uin', 'rent-authority', 'rent-court', 'rent-tribunal']
 
 const FLOAT_MOTIFS = [
-	{ Icon: FileText, side: 'left', x: '6%', y: '8%', size: 'lg', delay: '0s', drift: 'a' },
-	{ Icon: Stamp, side: 'left', x: '14%', y: '42%', size: 'md', delay: '1.1s', drift: 'b' },
-	{ Icon: FolderOpen, side: 'left', x: '3%', y: '68%', size: 'sm', delay: '0.45s', drift: 'c' },
-	{ Icon: BadgeCheck, side: 'left', x: '18%', y: '18%', size: 'sm', delay: '1.8s', drift: 'a' },
-	{ Icon: ScrollText, side: 'left', x: '9%', y: '88%', size: 'md', delay: '2.4s', drift: 'b' },
-	{ Icon: Gavel, side: 'right', x: '88%', y: '12%', size: 'md', delay: '0.35s', drift: 'b' },
-	{ Icon: Landmark, side: 'right', x: '94%', y: '38%', size: 'lg', delay: '1.4s', drift: 'c' },
-	{ Icon: Building2, side: 'right', x: '82%', y: '62%', size: 'sm', delay: '0.9s', drift: 'a' },
-	{ Icon: FileCheck, side: 'right', x: '91%', y: '82%', size: 'md', delay: '2s', drift: 'b' },
-	{ Icon: FileText, side: 'right', x: '78%', y: '28%', size: 'sm', delay: '2.6s', drift: 'c' },
+	{ Icon: FileText, side: 'left', x: '6%', y: '18%', size: 'lg', delay: '0s', drift: 'a' },
+	{ Icon: Stamp, side: 'left', x: '12%', y: '72%', size: 'md', delay: '1.1s', drift: 'b' },
+	{ Icon: Gavel, side: 'right', x: '90%', y: '16%', size: 'md', delay: '0.35s', drift: 'b' },
+	{ Icon: Landmark, side: 'right', x: '86%', y: '68%', size: 'lg', delay: '1.4s', drift: 'c' },
 ]
 
 function ServicesFloatMotifs({ reduceMotion }) {

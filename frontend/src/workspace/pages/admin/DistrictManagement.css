@@ -1,0 +1,476 @@
+/* District master data — workspace-native (ws-district-*) */
+
+.ws-districts .ws-district-toolbar {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	padding: 0.9rem 1rem 0.95rem;
+	border-bottom: 1px solid var(--ws-border, #e2e8f0);
+	background: #f8fafc;
+}
+
+.ws-districts .ws-district-toolbar label {
+	display: block;
+	margin: 0;
+	padding: 0;
+	font-weight: inherit;
+	color: inherit;
+}
+
+.ws-district-toolbar__top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.65rem 0.75rem;
+}
+
+.ws-district-toolbar__search {
+	flex: 1 1 16rem;
+	min-width: 0;
+}
+
+.ws-districts .ws-district-toolbar__search-field {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.ws-districts .ws-district-toolbar__search-icon {
+	position: absolute;
+	left: 0.85rem;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 1.05rem;
+	height: 1.05rem;
+	color: #94a3b8;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.ws-district-toolbar__label {
+	display: block;
+	margin: 0 0 0.3rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: #64748b;
+}
+
+/* Beat App.css global `input:not(...)` padding (0,4,1) so icon doesn't overlap text */
+.page.page-dashboard .ws-root .ws-districts input.ws-district-toolbar__input,
+.page.page-dashboard .ws-root .ws-districts input.ws-district-toolbar__input[type='search'] {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.7rem 0.9rem 0.7rem 2.85rem !important;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	border-radius: 8px;
+	background: #fff;
+	font-size: 0.875rem;
+	font-family: inherit;
+	line-height: 1.35;
+	color: var(--ws-text, #0f172a);
+	box-sizing: border-box;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.page.page-dashboard .ws-root .ws-districts input.ws-district-toolbar__input[type='search']::-webkit-search-decoration,
+.page.page-dashboard .ws-root .ws-districts input.ws-district-toolbar__input[type='search']::-webkit-search-cancel-button {
+	-webkit-appearance: none;
+	display: none;
+}
+
+.page.page-dashboard .ws-root .ws-districts .ws-district-toolbar__input:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+}
+
+.ws-district-toolbar__add {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.ws-district-toolbar__filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.75rem 0.85rem;
+}
+
+.ws-district-toolbar__status-pills {
+	display: inline-flex;
+	flex-wrap: nowrap;
+	overflow: hidden;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	border-radius: 8px;
+	background: #fff;
+}
+
+.ws-districts button.ws-district-pill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0;
+	min-height: 2.15rem;
+	padding: 0.4rem 0.85rem;
+	border: none;
+	border-right: 1px solid #e2e8f0;
+	border-radius: 0;
+	background: #fff;
+	color: #475569;
+	font-size: 0.75rem;
+	font-weight: 600;
+	font-family: inherit;
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.ws-districts button.ws-district-pill:last-child {
+	border-right: none;
+}
+
+.ws-districts button.ws-district-pill:hover:not(:disabled):not(.is-active) {
+	background: #f8fafc;
+	color: #0f172a;
+}
+
+.ws-districts button.ws-district-pill.is-active {
+	background: #0d47a1;
+	color: #fff;
+}
+
+.ws-districts button.ws-district-pill--active.is-active {
+	background: #15803d;
+	color: #fff;
+}
+
+.ws-districts button.ws-district-pill--inactive.is-active {
+	background: #b91c1c;
+	color: #fff;
+}
+
+.ws-districts button.ws-district-pill:focus-visible {
+	outline: 2px solid #0d47a1;
+	outline-offset: -2px;
+	z-index: 1;
+}
+
+.ws-district-toolbar__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem 0.85rem;
+}
+
+.ws-district-toolbar__summary {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: #64748b;
+}
+
+.ws-district-toolbar__summary strong {
+	color: #0f172a;
+	font-weight: 700;
+}
+
+.ws-district-table .ws-status-table .ws-status-row {
+	cursor: default;
+}
+
+.ws-district-table .ws-table {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.ws-district-table .ws-table th:first-child,
+.ws-district-table .ws-table td:first-child {
+	width: 72px;
+	text-align: center;
+}
+
+.ws-district-table .ws-table th:nth-child(3),
+.ws-district-table .ws-table td:nth-child(3) {
+	width: 120px;
+}
+
+.ws-district-table .ws-status-th-actions,
+.ws-district-table .ws-status-actions {
+	width: 150px;
+	min-width: 150px;
+	text-align: right;
+}
+
+.ws-district-name {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	min-width: 0;
+}
+
+.ws-district-name__text {
+	font-weight: 600;
+	color: var(--ws-text, #0f172a);
+	word-break: break-word;
+}
+
+.ws-district-name__reason {
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: #b91c1c;
+	line-height: 1.35;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.ws-district-status {
+	display: inline-block;
+	padding: 0.2rem 0.6rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.ws-district-status--active {
+	color: #15803d;
+	background: #dcfce7;
+	border: 1px solid #bbf7d0;
+}
+
+.ws-district-status--inactive {
+	color: #b91c1c;
+	background: #fee2e2;
+	border: 1px solid #fecaca;
+}
+
+/* Modal (portaled to body) */
+.ws-district-modal-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 2200;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+	background: rgba(15, 23, 42, 0.45);
+}
+
+.ws-district-modal {
+	width: min(420px, calc(100vw - 2rem));
+	max-height: min(90vh, 560px);
+	overflow: auto;
+	padding: 1.35rem 1.5rem 1.4rem;
+	background: #fff;
+	border-radius: 12px;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+	box-sizing: border-box;
+}
+
+.ws-district-modal__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.ws-district-modal__header h3 {
+	margin: 0 0 0.3rem;
+	font-size: 1.125rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+}
+
+.ws-district-modal__hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+.ws-district-modal__close {
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 8px;
+	background: #f1f5f9;
+	color: #475569;
+	font-size: 1.35rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.ws-district-modal__close:hover:not(:disabled) {
+	background: #e2e8f0;
+	color: #0f172a;
+}
+
+.ws-district-modal__close:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.ws-district-modal__error {
+	margin: 0 0 0.85rem;
+	padding: 0.65rem 0.8rem;
+	border-radius: 8px;
+	border: 1px solid #fecaca;
+	background: #fef2f2;
+	color: #b91c1c;
+	font-size: 0.8125rem;
+}
+
+.ws-district-modal__form {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+}
+
+.ws-district-modal__field {
+	margin: 0 0 0.9rem;
+}
+
+.ws-district-modal__field label {
+	display: block;
+	margin: 0 0 0.35rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ws-text, #334155);
+}
+
+.ws-district-modal__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 1rem;
+}
+
+/* Modal is portaled to body (outside .ws-root) — style buttons + fields here */
+.ws-district-modal__actions button.ws-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin: 0;
+	min-height: 2.5rem;
+	padding: 0.55rem 1.1rem;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	font-family: inherit;
+	line-height: 1.25;
+	cursor: pointer;
+	border: 1px solid transparent;
+	appearance: none;
+	-webkit-appearance: none;
+	box-sizing: border-box;
+	text-decoration: none;
+	white-space: nowrap;
+	box-shadow: none;
+	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.ws-district-modal__actions button.ws-btn--primary {
+	background: var(--ws-accent, #0d47a1);
+	color: #fff;
+	border-color: var(--ws-accent, #0d47a1);
+}
+
+.ws-district-modal__actions button.ws-btn--primary:hover:not(:disabled) {
+	background: var(--ws-accent-hover, #1565c0);
+	border-color: var(--ws-accent-hover, #1565c0);
+	color: #fff;
+	box-shadow: 0 2px 8px rgba(13, 71, 161, 0.25);
+}
+
+.ws-district-modal__actions button.ws-btn--outline {
+	background: #fff;
+	color: var(--ws-text, #0f172a);
+	border-color: var(--ws-border-strong, #cbd5e1);
+}
+
+.ws-district-modal__actions button.ws-btn--outline:hover:not(:disabled) {
+	background: #f8fafc;
+	border-color: #94a3b8;
+	color: var(--ws-accent, #0d47a1);
+}
+
+.ws-district-modal__actions button.ws-btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.ws-district-modal__actions button.ws-btn:focus-visible {
+	outline: 2px solid var(--ws-accent, #0d47a1);
+	outline-offset: 2px;
+}
+
+.ws-district-modal__field input {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.6rem 0.75rem !important;
+	border-radius: 8px;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	background: #fff;
+	font-size: 0.875rem;
+	font-family: inherit;
+	font-weight: 400;
+	color: #0f172a;
+	box-sizing: border-box;
+}
+
+.ws-district-modal__field input:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+}
+
+.ws-district-modal__field input:disabled {
+	background: #f8fafc;
+	color: #64748b;
+	cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+	.ws-district-toolbar__add {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.ws-district-toolbar__status {
+		width: 100%;
+	}
+
+	.ws-district-toolbar__status-pills {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		width: 100%;
+	}
+
+	.ws-districts button.ws-district-pill {
+		width: 100%;
+	}
+
+	.ws-district-table .ws-status-table-wrap {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.ws-district-table .ws-table {
+		min-width: 32rem;
+	}
+}

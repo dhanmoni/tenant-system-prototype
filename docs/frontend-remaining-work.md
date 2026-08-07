@@ -4,7 +4,7 @@
 
 **Audience:** NIC dev team, reviewers, future maintainers.
 
-**Last reviewed:** 2026-07-28
+**Last reviewed:** 2026-07-30
 
 **Related docs:**
 
@@ -20,29 +20,30 @@
 ## Highest priority
 
 1. Ship or remove **Resources**; replace demo public stats/contacts with live data (or clearly gate them).
-2. Wire or delete unrouted admin master-data pages; fix approve/block if those UI actions stay.
+2. Wire or delete unrouted admin master-data pages (`OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog` — imports removed, files kept); fix approve/block if those UI actions stay.
 3. Complete **GIGW** public pages (accessibility statement, feedback, fuller policies); add skip-to-nav.
 4. Replace admin `alert()` UX; i18n admin + leftover English; Assamese linguistic review.
-5. Finish workspace migration (delete orphans, drop `WorkspaceLegacyFrame`) and add smoke/E2E tests.
+5. Finish workspace migration (drop `WorkspaceLegacyFrame`) and add smoke/E2E tests.
+6. Continue CSS cleanup carefully: keep landing in `App.css` for now; only extract landing again with a selector-safe approach after visual QA; namespace `.tenancy-*` conflicts.
 
 ---
 
 ## Landing / public site
 
+- [x] Clean up **orphan landing components** not used by current `Login.jsx` (CitizenServicesSection, HowToApply, TenancyAuthoritiesSection, AboutSection, NotificationsSection, PortalInfoSection, LandingSectionIntro, HeroRotatingLead)
+- [x] Clean leftover **legacy public chrome** / commented footer block in `App.jsx`
 - [ ] Finish **Resources** (`/resources` is still “coming soon”; `frontend/src/data/resourceDrafts.js` exists but is unused)
 - [ ] Replace **demo homepage / public dashboard stats** with a live API — or clearly mark/gate as prototype (`portalPublicStats.js`, `publicDashboardData.js`)
 - [ ] Replace **demo footer visitor counter** (`LandingFooter.jsx` / `footer.visitors`)
 - [ ] Replace **placeholder helpdesk** contacts and hours (`Contact.jsx`, support contact copy)
 - [ ] Add missing **GIGW pages**: Feedback, Accessibility Statement, Guidelines / Help Centre; expand Policies beyond thin Terms + Privacy
-- [ ] Clean up **orphan landing components** not used by current `Login.jsx` (e.g. `CitizenServicesSection`, `HowToApply`, `TenancyAuthoritiesSection`)
-- [ ] Clean leftover **legacy public chrome** / commented footer block in `App.jsx`
 - [ ] Remove or wire unused **`frontend/public/DemoUploads/`** assets
 
 ---
 
 ## Auth / login
 
-- [ ] Remove dead **`Register.jsx`** (Lorem ipsum; `/register` only redirects to `/login`)
+- [x] Remove dead **`Register.jsx`** (`/register` only redirects to `/login`)
 - [ ] Show a user-facing error when **districts** fail to load (not only `console.error` in `Login.jsx`)
 - [ ] Production auth readiness: real OTP / CAPTCHA (still demo/prototype auth — see credentials & GIGW docs)
 
@@ -50,9 +51,12 @@
 
 ## Dashboard / workspace
 
-- [ ] Finish **workspace migration** — drop `WorkspaceLegacyFrame`, reduce dual CSS (`App.css` + `workspace.css`)
+- [x] Delete orphan duplicate pages (`DashboardHome`, `DashboardLayout`, `OfficialDashboard`, old `Sidebar`, `ApplicationStatus`, `TenantServices`, legacy `Profile`, `ApplicationInbox`, `StateManagement`)
+- [x] Move admin list/detail **routes** into `workspace/pages/admin/*` (Districts, Users, Tenancy, Service applications, Admin details) — bodies still legacy until rewritten
+- [x] Move form + citizen application-detail **routes** into `WorkspaceFormPortal` / `WorkspaceApplicationDetails` — `WorkspaceLegacyFrame` unused by routes
+- [x] **Districts** body moved to `workspace/pages/admin/` with `ws-district-*` classes (no `ws-legacy-page`)
+- [ ] Finish **workspace migration** — rewrite remaining legacy bodies (Users, Tenancy, ApplicationList, forms, details) to `ws-*`; drop `ws-legacy-page` per page
 - [ ] Replace **demo notifications** (`DEMO_NOTIFICATIONS` in `WorkspaceLayout.jsx`) with API data
-- [ ] Delete or re-route **orphan duplicate pages** (e.g. `DashboardHome`, `DashboardLayout`, `OfficialDashboard`, old `Sidebar`, `ApplicationStatus`, `TenantServices`, legacy `Profile` / inbox duplicates)
 - [ ] Harden large forms (especially **`TenancyCertificate.jsx`**) and catch-all `:formType` service routes
 - [ ] Give `/users/:id` consistent **workspace chrome** (currently outside the shell)
 - [ ] Update **Assam map GeoJSON** for newer districts (`frontend/public/geo/README.md`)
@@ -92,11 +96,13 @@
 
 ## Tech debt / quality
 
+- [ ] Extract `styles/landing.css` / `styles/auth.css` only with selector-safe tooling + visual QA (naive split broke cascade; styles re-merged into `App.css`)
 - [ ] Add **automated frontend tests** (no test script / no `*.test` files today)
-- [ ] Remove **dead imports** in `App.jsx` (`OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog`, `Register`, etc.)
+- [ ] Wire or delete kept admin master-data files (`OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog`)
 - [ ] Replace Vite template **`frontend/README.md`** with project-specific frontend notes
 - [ ] Consider a shared API / data layer (roadmap Phase 4 — React Query or services modules)
 - [ ] Normalize error handling (fewer `console.error` + `alert` paths; prefer inline/toast UX)
+- [ ] Delete remaining dead topbar / legacy hero CSS in `App.css`; namespace `.tenancy-*` conflicts
 
 ---
 
