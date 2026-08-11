@@ -147,6 +147,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
         Route::post('/admin/applications/{type}/{id}/superadmin-move', [ApplicationWorkflowController::class, 'superadminMove']);
     });
 
+    // Map district counts with optional date range (super admin statewide, district admin scoped)
+    Route::middleware('role:super_admin,district_admin')->group(function () {
+        Route::get('/dashboard-stats/district-breakdown', [DashboardController::class, 'districtBreakdown']);
+    });
+
     // Staff dashboard statistics (officials, assistants, district admin)
     Route::middleware("role:$allAdminStaffRoles")->group(function () {
         Route::get('/staff-dashboard-stats', [DashboardController::class, 'staffStats']);

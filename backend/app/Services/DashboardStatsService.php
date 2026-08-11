@@ -407,10 +407,16 @@ class DashboardStatsService
     }
 
     /**
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
      * @return array<int, array<string, mixed>>
      */
-    public function districtBreakdown(?int $onlyDistrictId = null, ?array $modelClasses = null): array
-    {
+    public function districtBreakdown(
+        ?int $onlyDistrictId = null,
+        ?array $modelClasses = null,
+        $from = null,
+        $to = null
+    ): array {
         $query = District::query()->with('state:id,name')->withCount(['users', 'offices'])->orderBy('name');
         if ($onlyDistrictId) {
             $query->where('id', $onlyDistrictId);
@@ -418,15 +424,30 @@ class DashboardStatsService
 
         $circleCatalog = $this->assamCircleCatalog();
         $modelsToCount = $modelClasses ?? $this->allServiceModels();
+        [$rangeStart, $rangeEnd] = $this->normalizeCreatedAtRange($from, $to);
 
         $districtTenancyCounts = TenancyApplication::query()
             ->selectRaw('district_id, count(*) as count')
             ->where('status', '!=', Status::DRAFT)
             ->when($onlyDistrictId, fn ($q) => $q->where('district_id', $onlyDistrictId))
+            ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
             ->groupBy('district_id')
             ->pluck('count', 'district_id');
 
-        $districtServiceCounts = $this->getCombinedServiceQuery($onlyDistrictId, $modelsToCount, ['district_id'])
+        $serviceExtraSql = null;
+        $serviceExtraBindings = [];
+        if ($rangeStart && $rangeEnd) {
+            $serviceExtraSql = 'created_at BETWEEN ? AND ?';
+            $serviceExtraBindings = [$rangeStart, $rangeEnd];
+        }
+
+        $districtServiceCounts = $this->getCombinedServiceQuery(
+            $onlyDistrictId,
+            $modelsToCount,
+            ['district_id'],
+            $serviceExtraSql,
+            $serviceExtraBindings
+        )
             ->selectRaw('district_id, count(*) as count')
             ->groupBy('district_id')
             ->pluck('count', 'district_id');
@@ -435,7 +456,9 @@ class DashboardStatsService
             $districtTenancyCounts,
             $districtServiceCounts,
             $circleCatalog,
-            $modelClasses
+            $modelClasses,
+            $rangeStart,
+            $rangeEnd
         ) {
             $tenancy = $districtTenancyCounts->get($district->id, 0);
             $service = $districtServiceCounts->get($district->id, 0);
@@ -454,10 +477,37 @@ class DashboardStatsService
                 'subdivisions' => $this->subdivisionBreakdownForDistrict(
                     $district,
                     $circleCatalog,
-                    $modelClasses
+                    $modelClasses,
+                    $rangeStart,
+                    $rangeEnd
                 ),
             ];
         })->values()->all();
+    }
+
+    /**
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
+     * @return array{0: ?\Carbon\Carbon, 1: ?\Carbon\Carbon}
+     */
+    private function normalizeCreatedAtRange($from, $to): array
+    {
+        if (!$from && !$to) {
+            return [null, null];
+        }
+
+        $start = $from
+            ? \Carbon\Carbon::parse($from)->startOfDay()
+            : \Carbon\Carbon::parse($to)->startOfDay();
+        $end = $to
+            ? \Carbon\Carbon::parse($to)->endOfDay()
+            : \Carbon\Carbon::parse($from)->endOfDay();
+
+        if ($start->gt($end)) {
+            [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
+        return [$start, $end];
     }
 
     /**
@@ -467,16 +517,21 @@ class DashboardStatsService
      *
      * @param  array<string, array<int, string>>|null  $circleCatalog
      * @param  class-string[]|null  $modelClasses
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
      * @return array<int, array<string, mixed>>
      */
     public function subdivisionBreakdownForDistrict(
         District $district,
         ?array $circleCatalog = null,
-        ?array $modelClasses = null
+        ?array $modelClasses = null,
+        $from = null,
+        $to = null
     ): array {
         $circleCatalog ??= $this->assamCircleCatalog();
         $circleNames = $circleCatalog[$this->normalizeNameKey($district->name)]
             ?? $this->findCirclesForDistrictName($district->name, $circleCatalog);
+        [$rangeStart, $rangeEnd] = $this->normalizeCreatedAtRange($from, $to);
 
         $offices = Office::query()
             ->where('district_id', $district->id)
@@ -488,10 +543,16 @@ class DashboardStatsService
             ->where('district_id', $district->id)
             ->where('status', '!=', Status::DRAFT)
             ->whereNotNull('office_id')
+            ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
             ->groupBy('office_id')
             ->pluck('aggregate', 'office_id');
 
-        $serviceByOffice = $this->serviceApplicationsByOffice($district->id, $modelClasses);
+        $serviceByOffice = $this->serviceApplicationsByOffice(
+            $district->id,
+            $modelClasses,
+            $rangeStart,
+            $rangeEnd
+        );
 
         $buildRow = function (?Office $office, string $name) use ($tenancyByOffice, $serviceByOffice) {
             $tenancy = $office ? (int) ($tenancyByOffice[$office->id] ?? 0) : 0;
@@ -530,10 +591,16 @@ class DashboardStatsService
      * Count non-draft service forms per circle office, via linked tenancy UIN.
      *
      * @param  class-string[]|null  $modelClasses
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
      * @return array<int, int> office_id => count
      */
-    private function serviceApplicationsByOffice(?int $districtId, ?array $modelClasses = null): array
-    {
+    private function serviceApplicationsByOffice(
+        ?int $districtId,
+        ?array $modelClasses = null,
+        $from = null,
+        $to = null
+    ): array {
         $uinToOffice = TenancyApplication::query()
             ->when($districtId, fn ($q) => $q->where('district_id', $districtId))
             ->whereNotNull('uid')
@@ -545,6 +612,8 @@ class DashboardStatsService
             return [];
         }
 
+        [$rangeStart, $rangeEnd] = $this->normalizeCreatedAtRange($from, $to);
+
         $counts = [];
         foreach ($modelClasses ?? $this->allServiceModels() as $modelClass) {
             $query = $modelClass::query()
@@ -552,6 +621,9 @@ class DashboardStatsService
                 ->whereNotNull('tenancy_uin');
             if ($districtId) {
                 $query->where('district_id', $districtId);
+            }
+            if ($rangeStart && $rangeEnd) {
+                $query->whereBetween('created_at', [$rangeStart, $rangeEnd]);
             }
 
             foreach ($query->pluck('tenancy_uin') as $uin) {

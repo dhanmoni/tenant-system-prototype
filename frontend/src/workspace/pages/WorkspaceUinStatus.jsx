@@ -326,13 +326,11 @@ function ApplicationsTable({
 										</button>
 									) : (
 										<>
-											{!isTenancy ? (
-												<StatusProgressViewButton
-													application={app}
-													variant="workspace"
-													title={t('ws.uinStatus.action.progressTitle')}
-												/>
-											) : null}
+											<StatusProgressViewButton
+												application={app}
+												variant="workspace"
+												title={t('ws.uinStatus.action.progressTitle')}
+											/>
 											<button
 												type="button"
 												className="ws-status-action-btn ws-status-action-btn--view"

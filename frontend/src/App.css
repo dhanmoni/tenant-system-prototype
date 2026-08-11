@@ -12876,10 +12876,36 @@ main.main-fluid {
 	color: #1e293b;
 }
 
+/* Completed stages: green success look — never strike-through (that reads as cancelled) */
+.status-progress__title.is-done {
+	color: #166534;
+	text-decoration: none;
+	font-weight: 700;
+}
+
 .status-progress__title.is-muted {
-	color: #94a3b8;
-	text-decoration: line-through;
-	text-decoration-color: rgba(148, 163, 184, 0.65);
+	color: #64748b;
+	text-decoration: none;
+}
+
+.status-progress__step--completed .status-progress__line {
+	background: #86efac;
+}
+
+.status-progress__step--in_progress .status-progress__line {
+	background: #93c5fd;
+}
+
+.status-progress__step--pending .status-progress__line {
+	background: #e2e8f0;
+}
+
+.status-progress__step--warning .status-progress__line {
+	background: #fcd34d;
+}
+
+.status-progress__step--completed .status-progress__desc {
+	color: #3f6212;
 }
 
 .status-progress__badge {

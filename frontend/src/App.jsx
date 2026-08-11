@@ -517,7 +517,18 @@ function App() {
 							<Route
 								path="admin/inbox"
 								element={
-									<WorkspaceLegacyFrame title="Application inbox" subtitle="Verify and forward service applications">
+									<WorkspaceLegacyFrame
+										title={
+											user?.role === 'valuer'
+												? 'Valuation inbox'
+												: 'Service Applications'
+										}
+										subtitle={
+											user?.role === 'valuer'
+												? 'Form I-B files assigned to you'
+												: 'Verify and forward service applications for your office'
+										}
+									>
 										<ApplicationList user={user} />
 									</WorkspaceLegacyFrame>
 								}
@@ -525,7 +536,10 @@ function App() {
 							<Route
 								path="admin/applications"
 								element={
-									<WorkspaceLegacyFrame title="Service applications" subtitle="Rent Authority, Court, and Tribunal forms">
+									<WorkspaceLegacyFrame
+										title="Service Applications"
+										subtitle="Rent Authority, Court, and Tribunal forms"
+									>
 										<ApplicationList user={user} />
 									</WorkspaceLegacyFrame>
 								}
@@ -537,7 +551,10 @@ function App() {
 							<Route
 								path="admin/tenancy"
 								element={
-									<WorkspaceLegacyFrame title="Tenancy applications" subtitle="UIN applications">
+									<WorkspaceLegacyFrame
+										title="Tenancy Applications"
+										subtitle="UIN / tenancy certificate applications"
+									>
 										<TenancyRecords user={user} />
 									</WorkspaceLegacyFrame>
 								}

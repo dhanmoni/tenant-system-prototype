@@ -45,7 +45,11 @@ function SortButton({ label, sortKey, activeKey, direction, onSort }) {
 	)
 }
 
-function DistrictApplicationsTable({ applications = [], selectedDate = null }) {
+function DistrictApplicationsTable({
+	applications = [],
+	selectedDate = null,
+	viewerRole,
+}) {
 	const navigate = useNavigate()
 	const [sortKey, setSortKey] = useState('date')
 	const [sortDir, setSortDir] = useState('desc')
@@ -266,7 +270,11 @@ function DistrictApplicationsTable({ applications = [], selectedDate = null }) {
 										</span>
 									</td>
 									<td className="ws-table-actions-cell" onClick={(e) => e.stopPropagation()}>
-										<StatusProgressViewButton application={app} variant="admin" />
+										<StatusProgressViewButton
+											application={app}
+											variant="admin"
+											viewerRole={viewerRole}
+										/>
 									</td>
 								</tr>
 							))}

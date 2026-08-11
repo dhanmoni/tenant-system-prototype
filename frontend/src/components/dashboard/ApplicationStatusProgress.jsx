@@ -59,7 +59,7 @@ function badgeLabel(badge) {
 }
 
 function ProgressStep({ step, isLast }) {
-	const muted = step.state === 'completed'
+	const isDone = step.state === 'completed'
 	const label = badgeLabel(step.badge || step.state)
 
 	return (
@@ -70,7 +70,7 @@ function ProgressStep({ step, isLast }) {
 			</div>
 			<div className="status-progress__content">
 				<div className="status-progress__row">
-					<p className={`status-progress__title${muted ? ' is-muted' : ''}`}>{step.title}</p>
+					<p className={`status-progress__title${isDone ? ' is-done' : ''}`}>{step.title}</p>
 					{label ? (
 						<span className={`status-progress__badge status-progress__badge--${step.badge || step.state}`}>
 							{label}

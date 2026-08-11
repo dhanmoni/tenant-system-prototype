@@ -244,6 +244,7 @@ function StaffOfficeDashboard({ user, stats, loading, error }) {
 								<RecentApplicationsTable
 									applications={s.recent_applications}
 									showProgress
+									viewerRole={user?.role}
 								/>
 							</section>
 

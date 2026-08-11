@@ -21,7 +21,12 @@ function statusClass(status) {
 	return 'ws-badge ws-badge--pending'
 }
 
-function RecentApplicationsTable({ applications = [], onRowClick, showProgress = true }) {
+function RecentApplicationsTable({
+	applications = [],
+	onRowClick,
+	showProgress = true,
+	viewerRole,
+}) {
 	const navigate = useNavigate()
 
 	const handleRow = (app) => {
@@ -77,7 +82,11 @@ function RecentApplicationsTable({ applications = [], onRowClick, showProgress =
 							<td>{formatDate(app.created_at)}</td>
 							{showProgress ? (
 								<td className="ws-table-actions-cell" onClick={(e) => e.stopPropagation()}>
-									<StatusProgressViewButton application={app} variant="admin" />
+									<StatusProgressViewButton
+										application={app}
+										variant="admin"
+										viewerRole={viewerRole}
+									/>
 								</td>
 							) : null}
 						</tr>

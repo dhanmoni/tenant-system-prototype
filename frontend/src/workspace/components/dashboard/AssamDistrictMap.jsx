@@ -666,9 +666,9 @@ function AssamDistrictMap({
 			setViewMode('state')
 			setZoomTarget(null)
 			setSelected(null)
-			setActiveSubdistrict(null)
 		}
-		// Always re-fit to the default size (undoes manual +/- zoom)
+		// Always clear sub-division hatch / dropdown selection and re-fit zoom
+		setActiveSubdistrict(null)
 		setFitNonce((n) => n + 1)
 	}
 
@@ -912,7 +912,7 @@ function AssamDistrictMap({
 							type="button"
 							className="ws-btn ws-btn--sm ws-btn--outline"
 							onClick={resetMapView}
-							title="Return map to the default size"
+							title="Reset zoom and clear sub-division selection"
 						>
 							Reset view
 						</button>
@@ -970,7 +970,7 @@ function AssamDistrictMap({
 							type="button"
 							className="ws-btn ws-btn--sm ws-btn--outline"
 							onClick={resetMapView}
-							title="Return map to the default size"
+							title="Reset zoom and clear sub-division selection"
 						>
 							Reset view
 						</button>

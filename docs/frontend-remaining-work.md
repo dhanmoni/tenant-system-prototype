@@ -9,6 +9,7 @@
 **Related docs:**
 
 - [frontend-modernization-roadmap.md](./frontend-modernization-roadmap.md) — migration plan and system ratings
+- [app-routes.md](./app-routes.md) — full route list, wrong pages, nesting issues
 - [gigw-compliance-snapshot.md](./gigw-compliance-snapshot.md) — GIGW / a11y public-site gaps
 - [legacy-code-map.md](./legacy-code-map.md) — where legacy dashboard code still lives
 - [accessibility-ux4g-plan.md](./accessibility-ux4g-plan.md) — UX4G accessibility plan

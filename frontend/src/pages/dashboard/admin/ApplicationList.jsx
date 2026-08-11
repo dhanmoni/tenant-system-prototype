@@ -215,11 +215,11 @@ const ApplicationList = ({ user }) => {
 
 	const tableTitle = (() => {
 		if (isInboxPage && user?.role === ROLES.VALUER) return 'Valuation inbox'
-		if (isInboxPage && ASSISTANT_ROLES.includes(user?.role)) return 'Pending applications'
+		if (isInboxPage && ASSISTANT_ROLES.includes(user?.role)) return 'Service Applications'
 		if (isInboxPage && PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review'
-		if (user?.role === ROLES.SUPER_ADMIN) return 'Service applications'
-		if (user?.role === ROLES.DISTRICT_ADMIN) return 'Service applications'
-		return 'Service applications'
+		if (user?.role === ROLES.SUPER_ADMIN) return 'Service Applications'
+		if (user?.role === ROLES.DISTRICT_ADMIN) return 'Service Applications'
+		return 'Service Applications'
 	})()
 
 	const statusFilterLabel = filters.status

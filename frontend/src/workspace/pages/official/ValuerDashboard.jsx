@@ -42,7 +42,7 @@ function ValuerDashboard({ user, stats, loading, error }) {
 				value: assignedCount,
 				hint: 'Form I-B awaiting your report',
 				icon: 'clock',
-				tone: assignedCount > 0 ? 'warning' : 'success',
+				tone: assignedCount > 0 ? 'teal' : 'success',
 			},
 			{
 				label: 'Reports submitted',

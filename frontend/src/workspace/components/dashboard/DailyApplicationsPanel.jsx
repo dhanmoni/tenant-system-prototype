@@ -7,12 +7,14 @@ import StatusBarChart from './StatusBarChart'
 import { STATUS_LABELS } from '../../../constants/status'
 import './chartConfig'
 
-const PERIOD_OPTIONS = [
+export const DAILY_PERIOD_OPTIONS = [
 	{ value: 7, label: '7 days' },
 	{ value: 14, label: '14 days' },
 	{ value: 30, label: '30 days' },
-	{ value: 0, label: 'All available' },
+	{ value: 0, label: 'All time' },
 ]
+
+const PERIOD_OPTIONS = DAILY_PERIOD_OPTIONS
 
 function formatSelectedDate(dateKey) {
 	if (!dateKey) return ''
@@ -53,8 +55,38 @@ function dateKeyToLocalDate(dateKey) {
 
 function periodLabel(periodDays) {
 	const option = PERIOD_OPTIONS.find((item) => item.value === periodDays)
-	if (option?.value === 0) return 'All available days'
+	if (option?.value === 0) return 'All time'
 	return option ? `Last ${option.label}` : 'Selected period'
+}
+
+function toDateKey(date) {
+	const y = date.getFullYear()
+	const m = String(date.getMonth() + 1).padStart(2, '0')
+	const d = String(date.getDate()).padStart(2, '0')
+	return `${y}-${m}-${d}`
+}
+
+/** Resolve API from/to for map + shared period controls. */
+export function resolveActivityDateRange(selectedDate, periodDays) {
+	if (selectedDate) {
+		return {
+			from: selectedDate,
+			to: selectedDate,
+			label: formatSelectedDate(selectedDate),
+		}
+	}
+	if (!periodDays) {
+		return { from: null, to: null, label: 'All time' }
+	}
+	const end = new Date()
+	end.setHours(0, 0, 0, 0)
+	const start = new Date(end)
+	start.setDate(start.getDate() - (periodDays - 1))
+	return {
+		from: toDateKey(start),
+		to: toDateKey(end),
+		label: `Last ${periodDays} days`,
+	}
 }
 
 /**
@@ -66,13 +98,18 @@ function DailyApplicationsPanel({
 	applications = [],
 	selectedDate,
 	onSelectDate,
+	periodDays: periodDaysProp,
+	onPeriodChange,
 	fullListPath = '/dashboard/admin/applications',
 	scopeLabel = 'statewide',
 	mode = 'table',
+	viewerRole,
 }) {
 	const navigate = useNavigate()
 	const isStatsMode = mode === 'stats'
-	const [periodDays, setPeriodDays] = useState(7)
+	const [periodDaysInternal, setPeriodDaysInternal] = useState(7)
+	const periodDays = periodDaysProp ?? periodDaysInternal
+	const setPeriodDays = onPeriodChange ?? setPeriodDaysInternal
 
 	const activityByDate = useMemo(() => {
 		const map = new Map()
@@ -157,7 +194,7 @@ function DailyApplicationsPanel({
 					</h2>
 					<p className="ws-daily-panel-desc">
 						{isStatsMode
-							? `Pick a day on the calendar or choose a period (${scopeLabel}).`
+							? `Pick a day on the calendar or choose a period (${scopeLabel}). Map counts update with the same selection.`
 							: `Pick a day on the calendar to filter applications (${scopeLabel}). Sort and filter the list beside it.`}
 					</p>
 				</div>
@@ -230,7 +267,7 @@ function DailyApplicationsPanel({
 							{!selectedDate
 								? periodDays
 									? ` in the last ${periodDays} days`
-									: ' in the available period'
+									: ' (all time)'
 								: ''}
 						</p>
 
@@ -316,6 +353,7 @@ function DailyApplicationsPanel({
 						<DistrictApplicationsTable
 							applications={applications}
 							selectedDate={selectedDate}
+							viewerRole={viewerRole}
 						/>
 					</div>
 				)}
