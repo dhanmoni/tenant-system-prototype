@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, Suspense } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import ProfileCompletionModal from '../../components/dashboard/ProfileCompletionModal'
@@ -17,6 +17,7 @@ import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
 import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
 import WorkspacePageSearch from '../components/WorkspacePageSearch'
 import WorkspaceSidebar from './WorkspaceSidebar'
+import { prefetchTenancyGeoLists } from '../../utils/tenancyGeoCache'
 import '../styles/workspace.css'
 import '../../styles/service-forms.css'
 
@@ -123,6 +124,11 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 			window.removeEventListener('scroll', syncTopbarPanels, true)
 		}
 	}, [syncTopbarPanels])
+
+	/* Warm UIN apply district/office lists so Apply UIN opens without an API wait */
+	useEffect(() => {
+		prefetchTenancyGeoLists()
+	}, [])
 
 	// Close mobile drawer / pickers on route change
 	useEffect(() => {
@@ -436,7 +442,10 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 						aria-label="Workspace content"
 					>
 						{routeLoading ? <WorkspaceRouteLoader label={loaderLabel} /> : null}
-						<Outlet context={{ user, onLogout, onUserUpdate }} />
+						{/* Catch page-chunk suspend here so App Suspense cannot unmount sidebar / a11y chrome */}
+						<Suspense fallback={<WorkspaceRouteLoader label={loaderLabel} />}>
+							<Outlet context={{ user, onLogout, onUserUpdate }} />
+						</Suspense>
 					</div>
 				</div>
 			</div>

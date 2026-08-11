@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useDistricts } from '../../../hooks/useDistricts'
 import { formatDate } from '../../../utils/formatters'
 import { APPLICATION_TYPES } from '../../../constants/application'
@@ -45,6 +45,7 @@ const TenancyRecords = ({ user }) => {
 	})
 	const [searchInput, setSearchInput] = useState('')
 	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
+	const recordsRefHasData = useRef(false)
 
 	useEffect(() => {
 		if (![...ADMIN_ROLES, ROLES.RENT_AUTHORITY, ROLES.RA_ASSISTANT].includes(user?.role)) {
@@ -55,7 +56,7 @@ const TenancyRecords = ({ user }) => {
 
 
 	const fetchRecords = useCallback(async () => {
-		setLoading(true)
+		setLoading((prev) => (recordsRefHasData.current ? prev : true))
 		setError('')
 		try {
 			const params = { page, per_page: 15 }
@@ -72,6 +73,7 @@ const TenancyRecords = ({ user }) => {
 				}))
 				.filter((row) => row.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE)
 			setRecords(uinOnly)
+			recordsRefHasData.current = true
 			setPaginationInfo(data.pagination || null)
 		} catch {
 			setError('Failed to load tenancy applications')

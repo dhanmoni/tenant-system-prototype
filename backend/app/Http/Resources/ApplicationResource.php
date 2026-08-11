@@ -97,6 +97,19 @@ class ApplicationResource extends JsonResource
                     'name' => $this->approvedBy->name,
                 ];
             }),
+
+            'assigned_valuer' => $this->whenLoaded('assignedValuer', function () {
+                if (!$this->assignedValuer) {
+                    return null;
+                }
+
+                return [
+                    'id' => $this->assignedValuer->id,
+                    'name' => $this->assignedValuer->name,
+                    'email' => $this->assignedValuer->email,
+                    'phone' => $this->assignedValuer->phone,
+                ];
+            }),
         ], $specificFields);
     }
 }

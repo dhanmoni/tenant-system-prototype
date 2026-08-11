@@ -7,6 +7,12 @@ import { Icon } from '../../components/dashboard/Icons'
 import DocumentUploadSlot from '../../components/forms/DocumentUploadSlot'
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
 import { useLanguage } from '../../i18n'
+import {
+	fetchTenancyDistricts,
+	fetchTenancyOffices,
+	getCachedTenancyDistricts,
+	getCachedTenancyOffices,
+} from '../../utils/tenancyGeoCache'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
@@ -28,8 +34,8 @@ function TenancyCertificate() {
 	const [draftSaving, setDraftSaving] = useState(false)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
-	const [pageReady, setPageReady] = useState(false)
-	const [draftLoaded, setDraftLoaded] = useState(false)
+	const [pageReady, setPageReady] = useState(true)
+	const [draftLoaded, setDraftLoaded] = useState(!draftParam)
 	const [startOverOpen, setStartOverOpen] = useState(false)
 	const [startOverBusy, setStartOverBusy] = useState(false)
 	const [draftsModalOpen, setDraftsModalOpen] = useState(false)
@@ -48,11 +54,11 @@ function TenancyCertificate() {
 	// Step 1: Office/Registration
 	const [tenancyRegistrationDate, setTenancyRegistrationDate] = useState('')
 	const [tenancyOfficeId, setTenancyOfficeId] = useState('')
-	const [tenancyOffices, setTenancyOffices] = useState([])
-	const [tenancyOfficesLoading, setTenancyOfficesLoading] = useState(false)
+	const [tenancyOffices, setTenancyOffices] = useState(() => getCachedTenancyOffices() || [])
+	const [tenancyOfficesLoading, setTenancyOfficesLoading] = useState(() => !getCachedTenancyOffices())
 	const [tenancyDistrictId, setTenancyDistrictId] = useState('')
-	const [tenancyDistricts, setTenancyDistricts] = useState([])
-	const [tenancyDistrictsLoading, setTenancyDistrictsLoading] = useState(false)
+	const [tenancyDistricts, setTenancyDistricts] = useState(() => getCachedTenancyDistricts() || [])
+	const [tenancyDistrictsLoading, setTenancyDistrictsLoading] = useState(() => !getCachedTenancyDistricts())
 	const [tenancyAreaType, setTenancyAreaType] = useState('')
 	const [tenancyLocalBody, setTenancyLocalBody] = useState('')
 	const [tenancyVillageWardId, setTenancyVillageWardId] = useState('')
@@ -423,22 +429,45 @@ function TenancyCertificate() {
 	}, [propertyPossessionDate, propertyTenancyEndDate])
 
 	const loadTenancyOffices = async () => {
+		const cached = getCachedTenancyOffices()
+		if (cached) {
+			setTenancyOffices(cached)
+			setTenancyOfficesLoading(false)
+			return cached
+		}
 		setTenancyOfficesLoading(true)
 		try {
-			const { data } = await api.get('/api/public/offices')
-			const items = Array.isArray(data) ? data : (data.data || data.offices || [])
+			const items = await fetchTenancyOffices()
 			setTenancyOffices(items)
-		} catch (err) { setError('Failed to load offices') }
-		finally { setTenancyOfficesLoading(false) }
+			return items
+		} catch {
+			setError('Failed to load offices')
+			setTenancyOffices([])
+			return []
+		} finally {
+			setTenancyOfficesLoading(false)
+		}
 	}
 
 	const loadTenancyDistricts = async () => {
+		const cached = getCachedTenancyDistricts()
+		if (cached) {
+			setTenancyDistricts(cached)
+			setTenancyDistrictsLoading(false)
+			return cached
+		}
 		setTenancyDistrictsLoading(true)
 		try {
-			const { data } = await api.get('/api/public/districts')
-			setTenancyDistricts(Array.isArray(data) ? data : (data.districts || data.data || []))
-		} catch (err) { setError('Failed to load districts') }
-		finally { setTenancyDistrictsLoading(false) }
+			const items = await fetchTenancyDistricts()
+			setTenancyDistricts(items)
+			return items
+		} catch {
+			setError('Failed to load districts')
+			setTenancyDistricts([])
+			return []
+		} finally {
+			setTenancyDistrictsLoading(false)
+		}
 	}
 
 	const loadTenancyVillageWards = async (districtId) => {
@@ -473,15 +502,13 @@ function TenancyCertificate() {
 	}, [user, applyProfileUser])
 
 	useEffect(() => {
-		const init = async () => {
-			await Promise.all([
-				loadProfile(),
-				loadTenancyDistricts(),
-				loadTenancyOffices(),
-			])
-			setPageReady(true)
-		}
-		init()
+		/* Paint form immediately; hydrate lists/profile in background (cached on revisit). */
+		setPageReady(true)
+		void Promise.all([
+			loadProfile(),
+			loadTenancyDistricts(),
+			loadTenancyOffices(),
+		])
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
@@ -593,11 +620,8 @@ function TenancyCertificate() {
 
 		if (!draftParam) {
 			resetTenancyFormFields()
-			setDraftLoaded(false)
-			void (async () => {
-				await fetchServerDrafts()
-				setDraftLoaded(true)
-			})()
+			setDraftLoaded(true)
+			void fetchServerDrafts()
 			return
 		}
 

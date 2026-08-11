@@ -677,6 +677,13 @@ class ApplicationWorkflowController extends Controller
             }
         }
 
+        if ($user->role === Roles::VALUER) {
+            if ($type !== ApplicationTypes::VALUER_APPOINTMENT
+                || (int) ($application->assigned_valuer_id ?? 0) !== (int) $user->id) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+        }
+
         return response()->json(['application' => new ApplicationResource($application)]);
     }
 
@@ -715,6 +722,14 @@ class ApplicationWorkflowController extends Controller
         // Permissions check (same as in show)
         if (!in_array($user->role, [Roles::SUPER_ADMIN])) {
             if ($user->district_id && $application->district_id !== $user->district_id) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+        }
+
+        // Valuers may only open Form I-B files assigned to them
+        if ($user->role === Roles::VALUER) {
+            if ($foundType !== ApplicationTypes::VALUER_APPOINTMENT
+                || (int) ($application->assigned_valuer_id ?? 0) !== (int) $user->id) {
                 return response()->json(['message' => 'Forbidden'], 403);
             }
         }
@@ -811,18 +826,30 @@ class ApplicationWorkflowController extends Controller
 
         // Verify the assigned user is a valuer in the same district
         $valuer = \App\Models\User::find($request->assigned_valuer_id);
-        if ($valuer->role !== Roles::VALUER || $valuer->district_id !== $user->district_id) {
+        if (!$valuer || $valuer->role !== Roles::VALUER || (int) $valuer->district_id !== (int) $user->district_id) {
             return response()->json(['message' => 'Invalid valuer selected'], 422);
         }
+
+        $hadValuer = !empty($application->assigned_valuer_id);
+        $clearReport = $application->status === Status::VALUER_REPORT_SUBMITTED
+            || ($hadValuer && (int) $application->assigned_valuer_id !== (int) $valuer->id);
 
         $application->update([
             'status' => Status::VALUER_ASSIGNED,
             'assigned_valuer_id' => $valuer->id,
             'valuer_assigned_at' => Carbon::now(),
             'assigned_to_role' => Roles::VALUER,
+            // Reassign / re-open after a report: clear previous report so the assignee starts clean
+            'valuer_report' => $clearReport ? null : $application->valuer_report,
         ]);
 
-        return response()->json(['message' => 'Valuer assigned successfully', 'application' => $application]);
+        $application->load(['user', 'district', 'assignedValuer']);
+        $application->form_type = ApplicationTypes::VALUER_APPOINTMENT;
+
+        return response()->json([
+            'message' => $hadValuer ? 'Valuer reassigned successfully' : 'Valuer assigned successfully',
+            'application' => new ApplicationResource($application),
+        ]);
     }
 
     public function removeValuer(Request $request, $id)
@@ -839,23 +866,30 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Application not found'], 404);
         }
 
-        if ($application->district_id !== $user->district_id) {
+        if ((int) $application->district_id !== (int) $user->district_id) {
             return response()->json(['message' => 'Application outside district'], 403);
         }
 
-        // Must be VALUER_ASSIGNED to remove
-        if ($application->status !== Status::VALUER_ASSIGNED) {
-            return response()->json(['message' => 'Application must be in valuer assigned state to remove valuer'], 422);
+        // Remove while awaiting report, or after a report if RA wants to clear and restart assignment
+        if (!in_array($application->status, [Status::VALUER_ASSIGNED, Status::VALUER_REPORT_SUBMITTED], true)) {
+            return response()->json(['message' => 'Application must have an assigned valuer to remove'], 422);
         }
 
         $application->update([
             'status' => Status::IN_REVIEW,
             'assigned_valuer_id' => null,
             'valuer_assigned_at' => null,
+            'valuer_report' => null,
             'assigned_to_role' => Roles::RENT_AUTHORITY,
         ]);
 
-        return response()->json(['message' => 'Valuer removed successfully', 'application' => $application]);
+        $application->load(['user', 'district', 'assignedValuer']);
+        $application->form_type = ApplicationTypes::VALUER_APPOINTMENT;
+
+        return response()->json([
+            'message' => 'Valuer removed successfully',
+            'application' => new ApplicationResource($application),
+        ]);
     }
 
     public function valuerInbox(Request $request)
@@ -871,14 +905,14 @@ class ApplicationWorkflowController extends Controller
         $modelClass = $this->getModel(ApplicationTypes::VALUER_APPOINTMENT);
         $apps = $modelClass::where('assigned_valuer_id', $user->id)
             ->where('status', Status::VALUER_ASSIGNED)
-            ->with(['user', 'district'])
+            ->with(['user', 'district', 'assignedValuer'])
             ->get()
             ->map(function ($app) {
                 $app->form_type = ApplicationTypes::VALUER_APPOINTMENT;
                 return $app;
             });
 
-        $resourceArray = ApplicationResource::collection($apps)->toArray($request);
+        $resourceArray = ApplicationResource::collection($apps)->resolve();
         usort($resourceArray, [self::class, 'compareFifo']);
 
         $total = count($resourceArray);
@@ -916,8 +950,12 @@ class ApplicationWorkflowController extends Controller
             return response()->json(['message' => 'Application not found'], 404);
         }
 
-        if ($application->assigned_valuer_id !== $user->id) {
+        if ((int) $application->assigned_valuer_id !== (int) $user->id) {
             return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($application->status !== Status::VALUER_ASSIGNED) {
+            return response()->json(['message' => 'Application must be assigned to you for a report'], 422);
         }
 
         // FIFO: valuer must act on the oldest assigned application first
@@ -941,7 +979,13 @@ class ApplicationWorkflowController extends Controller
             'assigned_to_role' => Roles::RENT_AUTHORITY,
         ]);
 
-        return response()->json(['message' => 'Report submitted successfully', 'application' => $application]);
+        $application->load(['user', 'district', 'assignedValuer']);
+        $application->form_type = ApplicationTypes::VALUER_APPOINTMENT;
+
+        return response()->json([
+            'message' => 'Report submitted successfully',
+            'application' => new ApplicationResource($application),
+        ]);
     }
 
     /**

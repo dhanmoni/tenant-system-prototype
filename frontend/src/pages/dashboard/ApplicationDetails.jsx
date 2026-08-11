@@ -4,8 +4,7 @@ import api from '../../api'
 import { formatDateTime, formatDate } from '../../utils/formatters'
 import { APPLICATION_TYPES } from '../../constants/application'
 import NoticeDocumentViewer from '../../components/dashboard/NoticeDocumentViewer'
-
-import emblemDark from '../../assets/img/emblem-dark.png'
+import './admin/ApplicationDetails.css'
 
 function ApplicationDetails() {
 	const { user } = useOutletContext()
@@ -94,35 +93,75 @@ function ApplicationDetails() {
 	}
 
 	const renderProceedings = () => {
-		if (type === 'tenancy') return null
+		if (type !== APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL) return null
+
+		const formatNoticeType = (noticeType) =>
+			String(noticeType || '')
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (c) => c.toUpperCase())
 
 		return (
-			<section className="admin-app-details__card ws-card" style={{ marginTop: '2rem' }}>
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-					<h3 className="admin-app-details__section-title" style={{ margin: 0, fontSize: '1.2rem' }}>Case Proceedings & Notices</h3>
+			<section className="admin-app-details__card admin-app-details__proceedings-card">
+				<div className="admin-app-details__proceedings-head">
+					<div className="admin-app-details__proceedings-head-text">
+						<h3 className="admin-app-details__section-title">Case Proceedings & Notices</h3>
+						<p className="admin-app-details__proceedings-desc">
+							Hearing notices and orders issued for your appeal
+						</p>
+					</div>
 				</div>
-				{proceedingsLoading ? (
-					<p>Loading proceedings...</p>
-				) : proceedings.length === 0 ? (
-					<p>No proceedings found.</p>
-				) : (
-					<div className="admin-app-details__grid" style={{ gap: '1rem', display: 'flex', flexDirection: 'column' }}>
-						{proceedings.map((p) => (
-							<div key={p.id} className="admin-app-details__field" style={{ border: '1px solid var(--clr-neutral-200)', padding: '1rem', borderRadius: '4px' }}>
-								<div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-									{new Date(p.created_at).toLocaleDateString()} - {p.notice_type.replace(/_/g, ' ').toUpperCase()}
-								</div>
-								{p.hearing_date && <div>Hearing: {p.hearing_date} {p.hearing_time}</div>}
-								<small>Sent by: {p.sent_by?.name || 'Unknown'}</small>
-								<div style={{ marginTop: '0.5rem' }}>
-									<button type="button" className="ws-btn ws-btn--secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setViewProceedingDoc(p)}>
+				<div className="admin-app-details__proceedings-body">
+					{proceedingsLoading ? (
+						<p className="admin-app-details__proceedings-empty">Loading proceedings…</p>
+					) : proceedings.length === 0 ? (
+						<p className="admin-app-details__proceedings-empty">
+							No proceedings or notices have been recorded for this appeal yet.
+						</p>
+					) : (
+						<ul className="admin-app-details__proceedings-list">
+							{proceedings.map((p) => (
+								<li key={p.id} className="admin-app-details__proceeding-item">
+									<div className="admin-app-details__proceeding-main">
+										<div className="admin-app-details__proceeding-title-row">
+											<span className="admin-app-details__proceeding-type">
+												{formatNoticeType(p.notice_type)}
+											</span>
+											<span className="admin-app-details__proceeding-date">
+												{p.created_at
+													? new Date(p.created_at).toLocaleDateString('en-IN', {
+															day: '2-digit',
+															month: 'short',
+															year: 'numeric',
+														})
+													: '—'}
+											</span>
+										</div>
+										{p.hearing_date ? (
+											<p className="admin-app-details__proceeding-meta">
+												Hearing:{' '}
+												<strong>
+													{p.hearing_date}
+													{p.hearing_time ? ` · ${p.hearing_time}` : ''}
+												</strong>
+												{p.venue ? ` · ${p.venue}` : ''}
+											</p>
+										) : null}
+										<p className="admin-app-details__proceeding-meta">
+											Sent by: {p.sent_by?.name || 'Unknown'}
+										</p>
+									</div>
+									<button
+										type="button"
+										className="ws-btn ws-btn--outline ws-btn--sm"
+										onClick={() => setViewProceedingDoc(p)}
+									>
 										View Document
 									</button>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
 			</section>
 		)
 	}

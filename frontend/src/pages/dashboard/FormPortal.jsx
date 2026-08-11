@@ -1,16 +1,30 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import FormIRentRevisionPanel from '../../components/FormIRentRevisionPanel'
-import FormIARentRevisionPanel from '../../components/FormIARentRevisionPanel'
-import FormIBValuerAppointmentPanel from '../../components/FormIBValuerAppointmentPanel'
-import Form4RentCourtPossessionPanel from '../../components/Form4RentCourtPossessionPanel'
-import Form5RentCourtFilingPanel from '../../components/Form5RentCourtFilingPanel'
-import Form6RentAuthorityFilingPanel from '../../components/Form6RentAuthorityFilingPanel'
-import Form7RentCourtAppealPanel from '../../components/Form7RentCourtAppealPanel'
-import Form8RentTribunalAppealPanel from '../../components/Form8RentTribunalAppealPanel'
 import { getFormServiceMeta } from '../../data/tenantServices'
 import { APPLICATION_TYPES } from '../../constants/application'
+import WorkspaceRouteLoader from '../../workspace/components/WorkspaceRouteLoader'
 
+const formPanelLoaders = {
+	[APPLICATION_TYPES.RENT_REVISION]: () => import('../../components/FormIRentRevisionPanel'),
+	[APPLICATION_TYPES.OTHER_CHARGES_REVISION]: () => import('../../components/FormIARentRevisionPanel'),
+	[APPLICATION_TYPES.VALUER_APPOINTMENT]: () => import('../../components/FormIBValuerAppointmentPanel'),
+	[APPLICATION_TYPES.RENT_COURT_POSSESSION]: () => import('../../components/Form4RentCourtPossessionPanel'),
+	[APPLICATION_TYPES.RENT_COURT_FILING]: () => import('../../components/Form5RentCourtFilingPanel'),
+	[APPLICATION_TYPES.RENT_AUTHORITY_FILING]: () => import('../../components/Form6RentAuthorityFilingPanel'),
+	[APPLICATION_TYPES.RENT_COURT_APPEAL]: () => import('../../components/Form7RentCourtAppealPanel'),
+	[APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL]: () => import('../../components/Form8RentTribunalAppealPanel'),
+}
+
+const formPanels = Object.fromEntries(
+	Object.entries(formPanelLoaders).map(([type, loader]) => [type, lazy(loader)]),
+)
+
+/** Prefetch all service form chunks when the services catalog is open / hovered. */
+export function prefetchServiceFormPanels() {
+	Object.values(formPanelLoaders).forEach((loader) => {
+		void loader()
+	})
+}
 
 function FormPortal() {
 	const { user } = useOutletContext()
@@ -18,35 +32,21 @@ function FormPortal() {
 	const navigate = useNavigate()
 	const serviceMeta = getFormServiceMeta(formType)
 	const onBack = () => navigate('/dashboard/services')
+	const Panel = formPanels[formType]
 
 	useEffect(() => {
 		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
 	}, [formType])
 
-	const renderForm = () => {
-		switch (formType) {
-			case APPLICATION_TYPES.RENT_REVISION:
-				return <FormIRentRevisionPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			case APPLICATION_TYPES.OTHER_CHARGES_REVISION:
-				return <FormIARentRevisionPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			case APPLICATION_TYPES.VALUER_APPOINTMENT:
-				return <FormIBValuerAppointmentPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			case APPLICATION_TYPES.RENT_COURT_POSSESSION:
-				return <Form4RentCourtPossessionPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			case APPLICATION_TYPES.RENT_COURT_FILING:
-				return <Form5RentCourtFilingPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			case APPLICATION_TYPES.RENT_AUTHORITY_FILING:
-				return <Form6RentAuthorityFilingPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			case APPLICATION_TYPES.RENT_COURT_APPEAL:
-				return <Form7RentCourtAppealPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			case APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL:
-				return <Form8RentTribunalAppealPanel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			default:
-				return <div>Form not found</div>
-		}
+	if (!Panel) {
+		return <div className="ws-dashboard-loading">Form not found</div>
 	}
 
-	return renderForm()
+	return (
+		<Suspense fallback={<WorkspaceRouteLoader label="Opening form…" />}>
+			<Panel user={user} serviceMeta={serviceMeta} onBack={onBack} />
+		</Suspense>
+	)
 }
 
 export default FormPortal

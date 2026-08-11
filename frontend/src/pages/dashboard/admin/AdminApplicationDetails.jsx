@@ -504,47 +504,91 @@ const AdminApplicationDetails = () => {
 	const renderProceedings = () => {
 		if (!application) return null
 
-		const isRtAppeal =
-			application.form_type === APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL ||
-			user?.role === ROLES.RT_ASSISTANT ||
-			user?.role === ROLES.RENT_TRIBUNAL;
+		const isRtAppeal = application.form_type === APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL
+		if (!isRtAppeal) return null
 
-		if (!isRtAppeal) {
-			return null
-		}
+		const canAddProceeding =
+			user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL
+
+		const formatNoticeType = (type) =>
+			String(type || '')
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (c) => c.toUpperCase())
 
 		return (
-			<section className="admin-app-details__card ws-card">
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-					<h3 className="admin-app-details__section-title" style={{ margin: 0 }}>Case Proceedings & Notices</h3>
-					{(user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL) && (
-						<button className="ws-btn ws-btn--primary ws-btn--sm" type="button" onClick={() => setShowProceedingModal(true)}>
+			<section className="admin-app-details__card admin-app-details__proceedings-card no-print">
+				<div className="admin-app-details__proceedings-head">
+					<div className="admin-app-details__proceedings-head-text">
+						<h3 className="admin-app-details__section-title">Case Proceedings & Notices</h3>
+						<p className="admin-app-details__proceedings-desc">
+							Hearing notices, adjournments, and tribunal orders for this appeal
+						</p>
+					</div>
+					{canAddProceeding ? (
+						<button
+							className="ws-btn ws-btn--primary ws-btn--sm"
+							type="button"
+							onClick={() => setShowProceedingModal(true)}
+						>
 							Add Proceeding
 						</button>
-					)}
+					) : null}
 				</div>
-				{proceedingsLoading ? (
-					<p>Loading proceedings...</p>
-				) : proceedings.length === 0 ? (
-					<p>No proceedings found.</p>
-				) : (
-					<div className="admin-app-details__grid" style={{ gap: '1rem' }}>
-						{proceedings.map((p) => (
-							<div key={p.id} className="admin-app-details__field" style={{ border: '1px solid var(--clr-neutral-200)', padding: '1rem', borderRadius: '4px' }}>
-								<div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-									{new Date(p.created_at).toLocaleDateString()} - {p.notice_type.replace('_', ' ').toUpperCase()}
-								</div>
-								{p.hearing_date && <div>Hearing: {p.hearing_date} {p.hearing_time}</div>}
-								<small>Sent by: {p.sent_by?.name || 'Unknown'}</small>
-								<div style={{ marginTop: '0.5rem' }}>
-									<button type="button" className="ws-btn ws-btn--secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setViewProceedingDoc(p)}>
+
+				<div className="admin-app-details__proceedings-body">
+					{proceedingsLoading ? (
+						<p className="admin-app-details__proceedings-empty">Loading proceedings…</p>
+					) : proceedings.length === 0 ? (
+						<p className="admin-app-details__proceedings-empty">
+							{canAddProceeding
+								? 'No proceedings found. Use Add Proceeding to issue a notice or record an order.'
+								: 'No proceedings or notices have been recorded for this appeal yet.'}
+						</p>
+					) : (
+						<ul className="admin-app-details__proceedings-list">
+							{proceedings.map((p) => (
+								<li key={p.id} className="admin-app-details__proceeding-item">
+									<div className="admin-app-details__proceeding-main">
+										<div className="admin-app-details__proceeding-title-row">
+											<span className="admin-app-details__proceeding-type">
+												{formatNoticeType(p.notice_type)}
+											</span>
+											<span className="admin-app-details__proceeding-date">
+												{p.created_at
+													? new Date(p.created_at).toLocaleDateString('en-IN', {
+															day: '2-digit',
+															month: 'short',
+															year: 'numeric',
+														})
+													: '—'}
+											</span>
+										</div>
+										{p.hearing_date ? (
+											<p className="admin-app-details__proceeding-meta">
+												Hearing:{' '}
+												<strong>
+													{p.hearing_date}
+													{p.hearing_time ? ` · ${p.hearing_time}` : ''}
+												</strong>
+												{p.venue ? ` · ${p.venue}` : ''}
+											</p>
+										) : null}
+										<p className="admin-app-details__proceeding-meta">
+											Sent by: {p.sent_by?.name || 'Unknown'}
+										</p>
+									</div>
+									<button
+										type="button"
+										className="ws-btn ws-btn--outline ws-btn--sm"
+										onClick={() => setViewProceedingDoc(p)}
+									>
 										View Document
 									</button>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
 			</section>
 		)
 	}
@@ -651,14 +695,32 @@ const AdminApplicationDetails = () => {
 
 	const handleAssignValuer = async () => {
 		if (!selectedValuerId) return alert('Please select a valuer')
+		const isReassign = Boolean(application?.assigned_valuer_id)
+		const changingPerson =
+			isReassign && String(application.assigned_valuer_id) !== String(selectedValuerId)
+		const hadReport =
+			Boolean(application?.valuer_report) ||
+			application?.status === STATUS.VALUER_REPORT_SUBMITTED
+
+		if (isReassign) {
+			const target =
+				valuers.find((v) => String(v.id) === String(selectedValuerId))?.name || 'this valuer'
+			const confirmMsg = hadReport
+				? `Reassign to ${target}? The previous valuer report will be cleared and the file returned to “Valuer assigned”.`
+				: changingPerson
+					? `Reassign this Form I-B to ${target}?`
+					: `Confirm reassignment to ${target}?`
+			if (!window.confirm(confirmMsg)) return
+		}
+
 		setActionLoading(true)
 		try {
-			await api.post(`/api/admin/applications/${application.id}/assign-valuer`, {
-				assigned_valuer_id: selectedValuerId
+			const { data } = await api.post(`/api/admin/applications/${application.id}/assign-valuer`, {
+				assigned_valuer_id: Number(selectedValuerId),
 			})
-			alert('Valuer assigned successfully')
+			alert(data?.message || (isReassign ? 'Valuer reassigned successfully' : 'Valuer assigned successfully'))
 			setValuerLoadError('')
-			fetchDetails()
+			await fetchDetails({ silent: true })
 		} catch (err) {
 			console.error(err)
 			alert(err.response?.data?.message || 'Failed to assign valuer')
@@ -668,12 +730,19 @@ const AdminApplicationDetails = () => {
 	}
 
 	const handleRemoveValuer = async () => {
-		if (!window.confirm('Are you sure you want to remove the assigned valuer?')) return;
+		const hadReport =
+			Boolean(application?.valuer_report) ||
+			application?.status === STATUS.VALUER_REPORT_SUBMITTED
+		const confirmMsg = hadReport
+			? 'Remove the assigned valuer and clear the submitted report? The file returns to In Review.'
+			: 'Remove the assigned valuer? The file returns to In Review.'
+		if (!window.confirm(confirmMsg)) return
 		setActionLoading(true)
 		try {
-			await api.post(`/api/admin/applications/${application.id}/remove-valuer`)
-			alert('Valuer removed successfully')
-			fetchDetails()
+			const { data } = await api.post(`/api/admin/applications/${application.id}/remove-valuer`)
+			alert(data?.message || 'Valuer removed successfully')
+			setSelectedValuerId('')
+			await fetchDetails({ silent: true })
 		} catch (err) {
 			console.error(err)
 			alert(err.response?.data?.message || 'Failed to remove valuer')
@@ -686,11 +755,12 @@ const AdminApplicationDetails = () => {
 		if (!valuerReport.trim()) return alert('Please enter the report')
 		setActionLoading(true)
 		try {
-			await api.post(`/api/admin/applications/${application.id}/submit-valuer-report`, {
-				valuer_report: valuerReport
+			const { data } = await api.post(`/api/admin/applications/${application.id}/submit-valuer-report`, {
+				valuer_report: valuerReport,
 			})
-			alert('Report submitted successfully')
-			fetchDetails()
+			alert(data?.message || 'Report submitted successfully')
+			setValuerReport('')
+			await fetchDetails({ silent: true })
 		} catch (err) {
 			console.error(err)
 			alert(err.response?.data?.message || 'Failed to submit report')
@@ -1288,97 +1358,128 @@ const AdminApplicationDetails = () => {
 			STATUS.VALUER_ASSIGNED,
 			STATUS.VALUER_REPORT_SUBMITTED,
 		].includes(application.status)
+		const assignedValuerName =
+			application.assigned_valuer?.name ||
+			(application.assigned_valuer_id ? `Valuer #${application.assigned_valuer_id}` : null)
+		const assignmentState =
+			application.status === STATUS.VALUER_REPORT_SUBMITTED
+				? 'report'
+				: application.assigned_valuer_id
+					? 'assigned'
+					: 'unassigned'
+		const isAssignedToMe =
+			user?.role === ROLES.VALUER &&
+			Number(application.assigned_valuer_id) === Number(user?.id)
+		const canComposeReport =
+			isAssignedToMe && application.status === STATUS.VALUER_ASSIGNED
 
 		return (
 			<>
 				{user?.role === ROLES.RENT_AUTHORITY && (
 					<section className="admin-app-details__card admin-app-details__valuer-card admin-app-details__valuer-card--assign">
-						<h3 className="admin-app-details__section-title">Valuer Assignment</h3>
+						<div className="admin-app-details__valuer-head">
+							<h3 className="admin-app-details__section-title">Valuer assignment</h3>
+							<span
+								className={`admin-app-details__valuer-state admin-app-details__valuer-state--${assignmentState}`}
+							>
+								{assignmentState === 'report'
+									? 'Report submitted'
+									: assignmentState === 'assigned'
+										? 'Valuer assigned'
+										: 'Not assigned'}
+							</span>
+						</div>
 						<div className="admin-app-details__valuer-body">
 							{!canManageValuerAssignment ? (
 								<p className="admin-app-details__valuer-note">
 									Valuer can be assigned after this Form I-B reaches <strong>In Review</strong>.
 									Current status: <strong>{adminStatusLabel(application.status)}</strong>.
 								</p>
-							) : null}
+							) : (
+								<p className="admin-app-details__valuer-note admin-app-details__valuer-note--muted">
+									Assign a district valuer for Form I-B. After assignment the case appears on the
+									valuer dashboard and valuation inbox.
+								</p>
+							)}
 
 							{application.assigned_valuer_id ? (
 								<div className="admin-app-details__valuer-stats">
+									{renderStat('Assigned valuer', assignedValuerName || '—')}
 									{renderStat(
-										'Assigned Valuer',
-										application.assigned_valuer?.name ||
-											`Valuer ID: ${application.assigned_valuer_id}`
-									)}
-									{renderStat(
-										'Assigned Date',
+										'Assigned on',
 										application.valuer_assigned_at
 											? new Date(application.valuer_assigned_at).toLocaleString()
 											: '—'
 									)}
 								</div>
-							) : (
+							) : canManageValuerAssignment ? (
 								<p className="admin-app-details__valuer-note admin-app-details__valuer-note--muted">
 									No valuer assigned yet.
 								</p>
-							)}
+							) : null}
 
-							<div className="admin-app-details__valuer-assign">
-								<label
-									className="admin-app-details__valuer-label"
-									htmlFor="admin-valuer-select"
-								>
-									Assign / Reassign Valuer
-								</label>
-								<div className="admin-app-details__valuer-assign-row">
-									<select
-										id="admin-valuer-select"
-										className="ws-input admin-app-details__valuer-select"
-										value={selectedValuerId}
-										onChange={(e) => setSelectedValuerId(e.target.value)}
-										disabled={
-											actionLoading || valuers.length === 0 || !canManageValuerAssignment
-										}
+							{canManageValuerAssignment ? (
+								<div className="admin-app-details__valuer-assign">
+									<label
+										className="admin-app-details__valuer-label"
+										htmlFor="admin-valuer-select"
 									>
-										<option value="">
-											{valuers.length === 0
-												? '-- No valuer available --'
-												: '-- Select a Valuer --'}
-										</option>
-										{valuers.map((v) => (
-											<option key={v.id} value={v.id}>
-												{v.name} ({v.email})
-											</option>
-										))}
-									</select>
-									<div className="admin-app-details__valuer-assign-actions">
-										<button
-											type="button"
-											className="ws-btn ws-btn--primary"
-											onClick={handleAssignValuer}
-											disabled={
-												actionLoading || !selectedValuerId || !canManageValuerAssignment
-											}
+										{application.assigned_valuer_id
+											? 'Reassign to another valuer'
+											: 'Select valuer'}
+									</label>
+									<div className="admin-app-details__valuer-assign-row">
+										<select
+											id="admin-valuer-select"
+											className="ws-input admin-app-details__valuer-select"
+											value={selectedValuerId}
+											onChange={(e) => setSelectedValuerId(e.target.value)}
+											disabled={actionLoading || valuers.length === 0}
 										>
-											{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
-										</button>
-										{application.assigned_valuer_id ? (
+											<option value="">
+												{valuers.length === 0
+													? '-- No valuer available --'
+													: '-- Select a valuer --'}
+											</option>
+											{valuers.map((v) => (
+												<option key={v.id} value={v.id}>
+													{v.name}
+													{v.email ? ` (${v.email})` : ''}
+												</option>
+											))}
+										</select>
+										<div className="admin-app-details__valuer-assign-actions">
 											<button
 												type="button"
-												className="ws-btn ws-btn--danger"
-												onClick={handleRemoveValuer}
-												disabled={actionLoading || !canManageValuerAssignment}
+												className="ws-btn ws-btn--primary"
+												onClick={handleAssignValuer}
+												disabled={actionLoading || !selectedValuerId}
 											>
-												Remove Valuer
+												{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
 											</button>
-										) : null}
+											{application.assigned_valuer_id ? (
+												<button
+													type="button"
+													className="ws-btn ws-btn--danger"
+													onClick={handleRemoveValuer}
+													disabled={actionLoading}
+												>
+													Remove
+												</button>
+											) : null}
+										</div>
 									</div>
+									{valuerLoadError ? (
+										<p className="admin-app-details__valuer-error" role="alert">
+											{valuerLoadError}
+										</p>
+									) : valuers.length === 0 && !valuerLoadError ? (
+										<p className="admin-app-details__valuer-error" role="status">
+											No valuer users found in this district. Create a valuer account first.
+										</p>
+									) : null}
 								</div>
-								{valuerLoadError ? (
-									<p className="admin-app-details__valuer-error" role="alert">
-										{valuerLoadError}
-									</p>
-								) : null}
-							</div>
+							) : null}
 
 							{application.valuer_report
 								? renderValuerReportComment(application.valuer_report)
@@ -1389,13 +1490,30 @@ const AdminApplicationDetails = () => {
 
 				{user?.role === ROLES.VALUER && (
 					<section className="admin-app-details__card admin-app-details__valuer-card admin-app-details__valuer-card--report">
-						<h3 className="admin-app-details__section-title">Submit Valuer Report</h3>
+						<div className="admin-app-details__valuer-head">
+							<h3 className="admin-app-details__section-title">Valuer report</h3>
+							<span
+								className={`admin-app-details__valuer-state admin-app-details__valuer-state--${
+									application.status === STATUS.VALUER_REPORT_SUBMITTED
+										? 'report'
+										: canComposeReport
+											? 'assigned'
+											: 'unassigned'
+								}`}
+							>
+								{application.status === STATUS.VALUER_REPORT_SUBMITTED
+									? 'Submitted'
+									: canComposeReport
+										? 'Awaiting your report'
+										: 'Unavailable'}
+							</span>
+						</div>
 						<div className="admin-app-details__valuer-body">
-							{application.status === STATUS.VALUER_REPORT_SUBMITTED ? (
+							{application.status === STATUS.VALUER_REPORT_SUBMITTED && isAssignedToMe ? (
 								renderValuerReportComment(application.valuer_report, {
 									title: 'Your submitted report',
 								})
-							) : (
+							) : canComposeReport ? (
 								<div className="admin-app-details__valuer-composer">
 									<div
 										className="admin-app-details__valuer-comment-avatar"
@@ -1421,7 +1539,7 @@ const AdminApplicationDetails = () => {
 										/>
 										<div className="admin-app-details__valuer-composer-actions">
 											<span className="admin-app-details__valuer-composer-hint">
-												This will be visible to the Rent Authority as a report comment.
+												Visible to Rent Authority after you post.
 											</span>
 											<button
 												type="button"
@@ -1434,6 +1552,12 @@ const AdminApplicationDetails = () => {
 										</div>
 									</div>
 								</div>
+							) : (
+								<p className="admin-app-details__valuer-note admin-app-details__valuer-note--muted">
+									{isAssignedToMe
+										? `This file is no longer awaiting a report (status: ${adminStatusLabel(application.status)}).`
+										: 'This Form I-B is not assigned to you for valuation.'}
+								</p>
 							)}
 						</div>
 					</section>

@@ -180,6 +180,13 @@ function WorkspaceServices() {
 		}
 	}, [authorityParam])
 
+	useEffect(() => {
+		/* Warm FormPortal + individual form chunks while browsing the catalog */
+		void import('../../pages/dashboard/FormPortal').then((mod) => {
+			mod.prefetchServiceFormPanels?.()
+		})
+	}, [])
+
 	const selectGroup = (groupId) => {
 		setActiveGroup(groupId)
 		if (groupId === 'all') {

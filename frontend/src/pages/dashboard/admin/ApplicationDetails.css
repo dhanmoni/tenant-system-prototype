@@ -715,6 +715,51 @@
 	border-top-color: #0284c7;
 }
 
+.admin-app-details__valuer-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.65rem 1rem;
+	padding: 0.95rem 1.15rem 0;
+}
+
+.admin-app-details__valuer-head .admin-app-details__section-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.admin-app-details__valuer-state {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.28rem 0.65rem;
+	border-radius: 999px;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	line-height: 1.2;
+	border: 1px solid transparent;
+}
+
+.admin-app-details__valuer-state--unassigned {
+	color: #92400e;
+	background: #fffbeb;
+	border-color: #fcd34d;
+}
+
+.admin-app-details__valuer-state--assigned {
+	color: #1d4ed8;
+	background: #eff6ff;
+	border-color: #93c5fd;
+}
+
+.admin-app-details__valuer-state--report {
+	color: #065f46;
+	background: #ecfdf5;
+	border-color: #6ee7b7;
+}
+
 .admin-app-details__valuer-body {
 	display: flex;
 	flex-direction: column;
@@ -743,6 +788,10 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.45rem;
+	padding: 0.9rem 1rem;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 0.65rem;
+	background: #f8fafc;
 }
 
 .admin-app-details__valuer-label {
@@ -776,6 +825,137 @@
 
 .admin-app-details__valuer-assign-actions .ws-btn {
 	min-height: 2.5rem;
+	min-width: 6.5rem;
+}
+
+/* Case Proceedings & Notices (Rent Tribunal Form VI) */
+.admin-app-details__proceedings-card {
+	border-top-color: #7c3aed;
+	margin-top: 1.25rem;
+}
+
+.admin-app-details__proceedings-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem 1rem;
+	padding: 0.95rem 1.15rem;
+	background: var(--ws-surface-muted, #f8fafc);
+	border-bottom: 1px solid var(--ws-border, #e2e8f0);
+}
+
+.admin-app-details__proceedings-head-text {
+	min-width: 0;
+	flex: 1 1 14rem;
+}
+
+.admin-app-details__proceedings-head .admin-app-details__section-title {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-size: 0.95rem;
+}
+
+.admin-app-details__proceedings-desc {
+	margin: 0.3rem 0 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-app-details__proceedings-head .ws-btn {
+	flex-shrink: 0;
+	align-self: center;
+}
+
+.admin-app-details__proceedings-body {
+	padding: 1rem 1.15rem 1.15rem;
+}
+
+.admin-app-details__proceedings-empty {
+	margin: 0;
+	padding: 1.15rem 1rem;
+	border: 1px dashed var(--ws-border-strong, #cbd5e1);
+	border-radius: 10px;
+	background: #fafbfc;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--ws-muted, #64748b);
+	text-align: center;
+}
+
+.admin-app-details__proceedings-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.admin-app-details__proceeding-item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem 1rem;
+	padding: 0.9rem 1rem;
+	border: 1px solid var(--ws-border, #e2e8f0);
+	border-radius: 10px;
+	background: var(--ws-surface, #fff);
+}
+
+.admin-app-details__proceeding-main {
+	min-width: 0;
+	flex: 1 1 14rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.admin-app-details__proceeding-title-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.75rem;
+}
+
+.admin-app-details__proceeding-type {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--ws-text, #0f172a);
+}
+
+.admin-app-details__proceeding-date {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-app-details__proceeding-meta {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: var(--ws-muted, #64748b);
+}
+
+.admin-app-details__proceeding-item .ws-btn {
+	flex-shrink: 0;
+	align-self: center;
+}
+
+@media (max-width: 640px) {
+	.admin-app-details__proceedings-head {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.admin-app-details__proceedings-head .ws-btn,
+	.admin-app-details__proceeding-item .ws-btn {
+		width: 100%;
+	}
 }
 
 .admin-app-details__valuer-error {

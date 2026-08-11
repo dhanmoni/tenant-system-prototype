@@ -7,7 +7,7 @@ import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
-import { getRoleLabel } from '../../../constants/roleLabels'
+import { getRoleLabel, getRoleBadgeClass } from '../../../constants/roleLabels'
 import './UserManagement.css'
 
 const STAFF_ROLE_OPTIONS = [
@@ -713,7 +713,7 @@ function UserManagement({ user: currentUser }) {
 						label: 'Role',
 						sortable: true,
 						render: (val) => (
-							<span className="admin-user-role">{getRoleLabel(val)}</span>
+							<span className={getRoleBadgeClass(val)}>{getRoleLabel(val)}</span>
 						),
 					},
 					{

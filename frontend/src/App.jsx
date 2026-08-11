@@ -4,6 +4,10 @@ import { useEffect, useState, lazy, Suspense } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
 import { PROFILE_REMINDER_DISMISSED_KEY } from './utils/profileCompleteness'
+import WorkspaceLayout from './workspace/layout/WorkspaceLayout'
+import WorkspaceLegacyFrame from './workspace/pages/WorkspaceLegacyFrame'
+import TenancyCertificate from './pages/dashboard/TenancyCertificate'
+import WorkspaceServices from './workspace/pages/WorkspaceServices'
 import Login from './pages/Login'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -11,6 +15,7 @@ import Services from './pages/Services'
 import Resources from './pages/Resources'
 import Policies from './pages/Policies'
 import Sitemap from './pages/Sitemap'
+import PublicDashboard from './pages/PublicDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthSessionProvider } from './context/AuthSessionContext'
 import PortalLoadingScreen from './components/PortalLoadingScreen'
@@ -25,15 +30,11 @@ import tcpLogo from './assets/img/TCP logo.png'
 import nicLogo from './assets/img/NIC.png'
 import digitalIndiaLogo from './assets/img/digital-india.png'
 
-/* Dashboard / heavy pages — not needed to paint the landing shell */
-const WorkspaceLayout = lazy(() => import('./workspace/layout/WorkspaceLayout'))
-const WorkspaceLegacyFrame = lazy(() => import('./workspace/pages/WorkspaceLegacyFrame'))
+/* Heavy dashboard pages — layout/shell stays eager so a11y + sidebar never unmount on nav */
 const WorkspaceHome = lazy(() => import('./workspace/pages/WorkspaceHome'))
 const WorkspaceProfile = lazy(() => import('./workspace/pages/WorkspaceProfile'))
-const WorkspaceServices = lazy(() => import('./workspace/pages/WorkspaceServices'))
 const WorkspaceUinStatus = lazy(() => import('./workspace/pages/WorkspaceUinStatus'))
 const ApplicationDetails = lazy(() => import('./pages/dashboard/ApplicationDetails'))
-const TenancyCertificate = lazy(() => import('./pages/dashboard/TenancyCertificate'))
 const FormPortal = lazy(() => import('./pages/dashboard/FormPortal'))
 const DistrictManagement = lazy(() => import('./workspace/pages/admin/WorkspaceDistricts'))
 const UserManagement = lazy(() => import('./pages/dashboard/admin/UserManagement'))
@@ -44,7 +45,6 @@ const WorkspaceAdminApplicationDetails = lazy(
 const TenancyRecords = lazy(() => import('./pages/dashboard/admin/TenancyRecords'))
 const UserDetail = lazy(() => import('./pages/UserDetail'))
 const JoinApplication = lazy(() => import('./pages/JoinApplication'))
-const PublicDashboard = lazy(() => import('./pages/PublicDashboard'))
 const Admin = lazy(() => import('./pages/Admin'))
 
 /** Invite links: logged-in users → join form; others → new login (no legacy carousel flash). */
@@ -126,13 +126,8 @@ function App() {
 	const isPublicMarketingPage = isPublicMarketingPath(location.pathname)
 	const usesLandingChrome = isLandingHome || isPublicMarketingPage
 	const mainContentTargetId = getMainContentTargetId(location.pathname)
-	/* Show homepage immediately on reload — session check runs in background */
-	const skipSessionBootLoader =
-		loading &&
-		(location.pathname === '/' ||
-			location.pathname === '/login' ||
-			isJoinEntry ||
-			isPublicMarketingPath(location.pathname))
+	/* Marketing pages can paint while session checks; home/login/dashboard wait so logged-in reloads don't flash landing */
+	const skipSessionBootLoader = loading && isPublicMarketingPath(location.pathname)
 	/* Old marketing shell (carousel, topbar) — only on legacy public routes */
 	const showLegacyPublicChrome =
 		!user &&
@@ -477,7 +472,7 @@ function App() {
 						<Route
 							path="/admin"
 							element={
-								<ProtectedRoute user={user}>
+								<ProtectedRoute user={user} authLoading={loading}>
 									<Admin user={user} />
 								</ProtectedRoute>
 							}
@@ -485,7 +480,7 @@ function App() {
 						<Route
 							path="/dashboard"
 							element={
-								<ProtectedRoute user={user}>
+								<ProtectedRoute user={user} authLoading={loading}>
 									<WorkspaceLayout user={user} onLogout={handleLogout} onUserUpdate={setUser} />
 								</ProtectedRoute>
 							}
@@ -564,7 +559,7 @@ function App() {
 						<Route
 							path="/users/:id"
 							element={
-								<ProtectedRoute user={user}>
+								<ProtectedRoute user={user} authLoading={loading}>
 									<UserDetail user={user} />
 								</ProtectedRoute>
 							}

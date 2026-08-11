@@ -488,6 +488,29 @@ body.dark-mode .admin-app-details__valuer-stats .admin-app-details__stat {
 	color: #e8eef6 !important;
 }
 
+body.dark-mode .admin-app-details__valuer-assign {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-state--unassigned {
+	color: #fbbf24 !important;
+	background: rgba(251, 191, 36, 0.12) !important;
+	border-color: #785318 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-state--assigned {
+	color: #7eb8ff !important;
+	background: rgba(126, 184, 255, 0.12) !important;
+	border-color: #3a4656 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-state--report {
+	color: #6ee7b7 !important;
+	background: rgba(110, 231, 183, 0.12) !important;
+	border-color: #2f5b4a !important;
+}
+
 body.dark-mode .admin-app-details__valuer-card .admin-app-details__section-title {
 	background: #151c26 !important;
 	border-color: #2a3544 !important;
@@ -553,6 +576,36 @@ body.dark-mode .admin-app-details__valuer-textarea {
 	color: #e8eef6 !important;
 }
 
+body.dark-mode .admin-app-details__proceedings-card,
+body.dark-mode .admin-app-details__proceeding-item {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-head {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-head .admin-app-details__section-title,
+body.dark-mode .admin-app-details__proceeding-type {
+	color: #e8eef6 !important;
+	background: transparent !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-desc,
+body.dark-mode .admin-app-details__proceeding-date,
+body.dark-mode .admin-app-details__proceeding-meta,
+body.dark-mode .admin-app-details__proceedings-empty {
+	color: #94a3b8 !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-empty {
+	background: #151c26 !important;
+	border-color: #3a4656 !important;
+}
+
 body.dark-mode .admin-app-details__actions {
 	background: #1a222d !important;
 	border-color: #2a3544 !important;
@@ -605,4 +658,51 @@ body.dark-mode .accessibility-directorate {
 
 body.dark-mode .page.page-dashboard > .accessibility-bar {
 	background: #151c26 !important;
+}
+
+/* Staff / user management — colored role badges */
+body.dark-mode .admin-user-role--super-admin {
+	color: #e2e8f0 !important;
+	background: rgba(148, 163, 184, 0.2) !important;
+	border-color: #64748b !important;
+}
+
+body.dark-mode .admin-user-role--district-admin {
+	color: #93c5fd !important;
+	background: rgba(59, 130, 246, 0.18) !important;
+	border-color: #3b82f6 !important;
+}
+
+body.dark-mode .admin-user-role--rent-authority,
+body.dark-mode .admin-user-role--ra-assistant {
+	color: #6ee7b7 !important;
+	background: rgba(16, 185, 129, 0.16) !important;
+	border-color: #059669 !important;
+}
+
+body.dark-mode .admin-user-role--rent-court,
+body.dark-mode .admin-user-role--rc-assistant {
+	color: #fdba74 !important;
+	background: rgba(249, 115, 22, 0.16) !important;
+	border-color: #ea580c !important;
+}
+
+body.dark-mode .admin-user-role--rent-tribunal,
+body.dark-mode .admin-user-role--rt-assistant {
+	color: #c4b5fd !important;
+	background: rgba(139, 92, 246, 0.18) !important;
+	border-color: #7c3aed !important;
+}
+
+body.dark-mode .admin-user-role--valuer {
+	color: #67e8f9 !important;
+	background: rgba(6, 182, 212, 0.16) !important;
+	border-color: #0891b2 !important;
+}
+
+body.dark-mode .admin-user-role--citizen,
+body.dark-mode .admin-user-role--default {
+	color: #cbd5e1 !important;
+	background: rgba(148, 163, 184, 0.12) !important;
+	border-color: #475569 !important;
 }

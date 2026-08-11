@@ -13890,7 +13890,7 @@ main.main-fluid {
 	text-decoration: underline;
 }
 
-/* ΓöÇΓöÇ Dashboard Layout (NIC / Government style) ΓöÇΓöÇ */
+/* Dashboard Layout (NIC / Government style) */
 .dashboard-card {
 	margin-left: 0;
 	width: 100%;
@@ -17069,7 +17069,7 @@ main.main-fluid {
 	margin: 0 0 20px;
 }
 
-/* ΓöÇΓöÇ Form Styles ΓöÇΓöÇ */
+/* Form Styles */
 form {
 	display: grid;
 	gap: 14px;

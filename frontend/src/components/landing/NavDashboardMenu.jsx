@@ -94,6 +94,10 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 		},
 	]
 
+	const prefetchPublicDashboard = () => {
+		void import('../../pages/PublicDashboard')
+	}
+
 	if (variant === 'drawer') {
 		return (
 			<div className="landing-nav-drawer-dropdown">
@@ -103,6 +107,8 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 						key={item.to}
 						to={item.to}
 						onClick={close}
+						onMouseEnter={prefetchPublicDashboard}
+						onFocus={prefetchPublicDashboard}
 						className="landing-nav-drawer-dropdown-link"
 					>
 						<LayoutDashboard className="h-4 w-4 shrink-0" aria-hidden />
@@ -147,6 +153,8 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 											to={item.to}
 											role="menuitem"
 											className="landing-nav-dropdown-item"
+											onMouseEnter={prefetchPublicDashboard}
+											onFocus={prefetchPublicDashboard}
 											onClick={close}
 										>
 											<LayoutDashboard

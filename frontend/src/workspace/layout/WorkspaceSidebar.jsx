@@ -7,6 +7,20 @@ import {
 	WORKSPACE_SUPPORT_CONTACT,
 } from '../config/navigation'
 
+const PREFETCH_BY_PATH = {
+	'/dashboard/services': () =>
+		import('../../pages/dashboard/FormPortal').then((m) => m.prefetchServiceFormPanels?.()),
+	'/dashboard/admin/applications': () => import('../../pages/dashboard/admin/ApplicationList'),
+	'/dashboard/admin/inbox': () => import('../../pages/dashboard/admin/ApplicationList'),
+	'/dashboard/admin/tenancy': () => import('../../pages/dashboard/admin/TenancyRecords'),
+	'/dashboard/status': () => import('../pages/WorkspaceUinStatus'),
+}
+
+function prefetchForPath(to) {
+	const run = PREFETCH_BY_PATH[to]
+	if (run) void run()
+}
+
 function SidebarNavGroup({ group, collapsed, linkClass, onNavClick, t }) {
 	const sectionLabel = t(group.sectionKey)
 	const showSectionLabel = group.sectionKey !== 'ws.nav.workspace'
@@ -26,6 +40,8 @@ function SidebarNavGroup({ group, collapsed, linkClass, onNavClick, t }) {
 						className={linkClass}
 						title={collapsed ? label : undefined}
 						onClick={onNavClick}
+						onMouseEnter={() => prefetchForPath(item.to)}
+						onFocus={() => prefetchForPath(item.to)}
 					>
 						<Icon
 							name={item.icon}

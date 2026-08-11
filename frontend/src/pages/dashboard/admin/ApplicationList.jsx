@@ -3,7 +3,7 @@ import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useDistricts } from '../../../hooks/useDistricts'
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES, ADMIN_ROLES } from '../../../constants/roles'
 import { APPLICATION_LABELS, APPLICATION_TYPES, SERVICE_APPLICATION_TYPES } from '../../../constants/application'
@@ -66,6 +66,7 @@ const ApplicationList = ({ user }) => {
 	})
 	const [searchInput, setSearchInput] = useState('')
 	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
+	const applicationsRefHasData = useRef(false)
 
 	const location = useLocation()
 	const isInboxPage = location.pathname.includes('/admin/inbox')
@@ -81,7 +82,7 @@ const ApplicationList = ({ user }) => {
 
 
 	const fetchApplications = useCallback(async () => {
-		setLoading(true)
+		setLoading((prev) => (applicationsRefHasData.current ? prev : true))
 		try {
 			let endpoint = '/api/admin/applications/all'
 			if (isInboxPage) {
@@ -108,13 +109,14 @@ const ApplicationList = ({ user }) => {
 				SERVICE_APPLICATION_TYPES.includes(row?.form_type)
 			)
 			setApplications(serviceOnly)
+			applicationsRefHasData.current = true
 			setPaginationInfo(data.pagination || null)
 		} catch (error) {
 			console.error('Error fetching applications:', error)
 		} finally {
 			setLoading(false)
 		}
-	}, [user?.role, page, filters, showFilters])
+	}, [user?.role, page, filters, showFilters, isInboxPage])
 
 	useEffect(() => {
 		fetchApplications()
@@ -212,6 +214,7 @@ const ApplicationList = ({ user }) => {
 	}
 
 	const tableTitle = (() => {
+		if (isInboxPage && user?.role === ROLES.VALUER) return 'Valuation inbox'
 		if (isInboxPage && ASSISTANT_ROLES.includes(user?.role)) return 'Pending applications'
 		if (isInboxPage && PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review'
 		if (user?.role === ROLES.SUPER_ADMIN) return 'Service applications'
