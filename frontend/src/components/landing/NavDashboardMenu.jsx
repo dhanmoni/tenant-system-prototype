@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, LayoutDashboard } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { useLanguage } from '../../i18n'
 
 const CLOSE_DELAY_MS = 140
@@ -90,7 +90,6 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 		{
 			to: '/public-dashboard',
 			label: t('nav.publicDashboard'),
-			desc: t('nav.dashboardDesc'),
 		},
 	]
 
@@ -111,11 +110,7 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 						onFocus={prefetchPublicDashboard}
 						className="landing-nav-drawer-dropdown-link"
 					>
-						<LayoutDashboard className="h-4 w-4 shrink-0" aria-hidden />
-						<span>
-							<span className="block font-semibold">{item.label}</span>
-							<span className="block text-xs font-normal opacity-80">{item.desc}</span>
-						</span>
+						{item.label}
 					</Link>
 				))}
 			</div>
@@ -152,19 +147,12 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 											key={item.to}
 											to={item.to}
 											role="menuitem"
-											className="landing-nav-dropdown-item"
+											className="landing-nav-dropdown-item landing-nav-dropdown-item--label-only"
 											onMouseEnter={prefetchPublicDashboard}
 											onFocus={prefetchPublicDashboard}
 											onClick={close}
 										>
-											<LayoutDashboard
-												className="landing-nav-dropdown-item-icon"
-												aria-hidden
-											/>
-											<span className="landing-nav-dropdown-item-copy">
-												<span className="landing-nav-dropdown-item-label">{item.label}</span>
-												<span className="landing-nav-dropdown-item-desc">{item.desc}</span>
-											</span>
+											{item.label}
 										</Link>
 									))}
 								</motion.div>

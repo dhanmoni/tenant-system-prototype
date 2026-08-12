@@ -1113,7 +1113,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 	}
 }
 
-/* Desktop nav ΓÇö iPad Max landscape & large tablets (1024pxΓÇô1366px) */
+/* Desktop nav — iPad Max landscape & large tablets (1024px–1366px) */
 @media (min-width: 1024px) and (max-width: 1366px) {
 	.landing-nav-shell-inner {
 		display: flex;
@@ -1121,7 +1121,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.5rem 0.75rem;
-		padding: 0.55rem 1rem;
+		padding: 0.3rem 1rem;
 	}
 
 	.landing-nav-shell-brand {
@@ -1200,7 +1200,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 
 @media (min-width: 1024px) and (max-width: 1366px) {
 	.landing-nav-shell-inner {
-		padding: 0.6rem 1.35rem;
+		padding: 0.35rem 1.35rem;
 		gap: 0.65rem 1rem;
 	}
 
@@ -1523,12 +1523,12 @@ html.landing-nav-menu-open .daily-update-ticker {
 	width: 100%;
 	max-width: 90rem;
 	margin: 0 auto;
-	padding: 0.55rem 1.2rem;
+	padding: 0.3rem 1.2rem;
 }
 
 @media (min-width: 1024px) {
 	.landing-nav-shell-inner {
-		padding: 0.6rem 1.5rem;
+		padding: 0.35rem 1.5rem;
 		gap: 0.85rem 1.5rem;
 	}
 }
@@ -2403,7 +2403,7 @@ html.landing-nav-menu-open .daily-update-ticker {
 
 }
 
-/* Closing dark band: Need support ΓåÆ Logos ΓåÆ Footer (smooth continuous flow) */
+/* Closing dark band: Need support → Logos → Footer (smooth continuous flow) */
 .landing-need-support,
 .gov-logos-carousel,
 .landing-footer {
@@ -2607,7 +2607,7 @@ body.a11y-contrast-high .landing-need-support::after {
 	}
 }
 
-/* No seam between Need support ΓåÆ logos ΓåÆ footer */
+/* No seam between Need support → logos → footer */
 .landing-need-support + .gov-logos-carousel {
 	padding-top: 0;
 	margin-top: -0.15rem;
@@ -8026,6 +8026,16 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	transition: background-color 0.15s ease;
 }
 
+.landing-nav-dropdown-item--label-only {
+	align-items: center;
+	gap: 0;
+	padding: 0.6rem 0.85rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #1f2937;
+	white-space: nowrap;
+}
+
 .landing-nav-dropdown-item:hover,
 .landing-nav-dropdown-item:focus-visible {
 	background: #f8fafc;
@@ -8079,8 +8089,8 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 
 .landing-nav-drawer-dropdown-link {
 	display: flex;
-	align-items: flex-start;
-	gap: 0.65rem;
+	align-items: center;
+	gap: 0;
 	padding: 0.65rem 0.85rem;
 	border-radius: 0.45rem;
 	font-size: 0.9375rem;
