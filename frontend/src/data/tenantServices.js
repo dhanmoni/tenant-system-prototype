@@ -26,7 +26,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.RENT_REVISION,
 				tableName: 'rent_authority_form_i_applications',
-				to: `/dashboard/${APPLICATION_TYPES.RENT_REVISION}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.RENT_REVISION}`,
 				label: 'Form I — Revision or fixation of rent',
 				formName: 'Form I',
 				matter: 'Revision or fixation of rent',
@@ -35,7 +35,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.OTHER_CHARGES_REVISION,
 				tableName: 'rent_authority_form_ia_applications',
-				to: `/dashboard/${APPLICATION_TYPES.OTHER_CHARGES_REVISION}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.OTHER_CHARGES_REVISION}`,
 				label: 'Form I-A — Revision or fixation of other charges',
 				formName: 'Form I-A',
 				matter: 'Revision or fixation of other charges',
@@ -44,7 +44,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.VALUER_APPOINTMENT,
 				tableName: 'rent_authority_form_ib_applications',
-				to: `/dashboard/${APPLICATION_TYPES.VALUER_APPOINTMENT}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.VALUER_APPOINTMENT}`,
 				label: 'Form I-B — Appointment of valuer',
 				formName: 'Form I-B',
 				matter:
@@ -54,7 +54,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.RENT_AUTHORITY_FILING,
 				tableName: 'rent_authority_form_6_applications',
-				to: `/dashboard/${APPLICATION_TYPES.RENT_AUTHORITY_FILING}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.RENT_AUTHORITY_FILING}`,
 				label: 'Form IV — Matters under Rule 11',
 				formName: 'Form IV',
 				matter:
@@ -72,7 +72,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.RENT_COURT_POSSESSION,
 				tableName: 'rent_court_form_4_applications',
-				to: `/dashboard/${APPLICATION_TYPES.RENT_COURT_POSSESSION}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.RENT_COURT_POSSESSION}`,
 				label: 'Form II — Recovery of possession',
 				formName: 'Form II',
 				matter: 'For recovery of possession of premises from tenant',
@@ -81,7 +81,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.RENT_COURT_FILING,
 				tableName: 'rent_court_form_5_applications',
-				to: `/dashboard/${APPLICATION_TYPES.RENT_COURT_FILING}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.RENT_COURT_FILING}`,
 				label: 'Form III — Eviction and recovery of possession',
 				formName: 'Form III',
 				matter:
@@ -91,7 +91,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.RENT_COURT_APPEAL,
 				tableName: 'rent_court_form_7_applications',
-				to: `/dashboard/${APPLICATION_TYPES.RENT_COURT_APPEAL}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.RENT_COURT_APPEAL}`,
 				label: 'Form V — Appeal against Rent Authority order',
 				formName: 'Form V',
 				matter:
@@ -110,7 +110,7 @@ export const tenantServiceGroups = [
 			{
 				formKey: APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL,
 				tableName: 'rent_tribunal_form_8_applications',
-				to: `/dashboard/${APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL}`,
+				to: `/dashboard/forms/${APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL}`,
 				label: 'Form VI — Appeal against Rent Court order',
 				formName: 'Form VI',
 				matter:

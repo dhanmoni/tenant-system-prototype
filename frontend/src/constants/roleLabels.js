@@ -27,7 +27,12 @@ export const ROLE_BADGE_TONES = {
 	[ROLES.USER]: 'citizen',
 }
 
-export function getRoleLabel(role) {
+export function getRoleLabel(role, t) {
+	if (typeof t === 'function') {
+		const key = `role.${role}`
+		const translated = t(key)
+		if (translated && translated !== key) return translated
+	}
 	return ROLE_LABELS[role] || String(role || '').replace(/_/g, ' ')
 }
 

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
 import { useLanguage } from '../i18n'
 
@@ -21,6 +22,22 @@ function Policies() {
 				<section>
 					<h2>{t('policies.privacy.title')}</h2>
 					<p>{t('policies.privacy.p1')}</p>
+				</section>
+
+				<section>
+					<h2>{t('policies.related.title')}</h2>
+					<p>{t('policies.related.body')}</p>
+					<ul>
+						<li>
+							<Link to="/accessibility">{t('a11yPage.title')}</Link>
+						</li>
+						<li>
+							<Link to="/feedback">{t('feedback.title')}</Link>
+						</li>
+						<li>
+							<Link to="/help-centre">{t('help.title')}</Link>
+						</li>
+					</ul>
 				</section>
 			</div>
 		</PublicPageLayout>

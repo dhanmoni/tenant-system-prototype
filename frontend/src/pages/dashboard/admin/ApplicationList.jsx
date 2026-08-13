@@ -6,29 +6,34 @@ import StatusProgressViewButton from '../../../components/dashboard/StatusProgre
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useDistricts } from '../../../hooks/useDistricts'
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES, ADMIN_ROLES } from '../../../constants/roles'
-import { APPLICATION_LABELS, APPLICATION_TYPES, SERVICE_APPLICATION_TYPES } from '../../../constants/application'
-import { STATUS, STATUS_LABELS } from '../../../constants/status'
+import { APPLICATION_TYPES, SERVICE_APPLICATION_TYPES, getApplicationLabel } from '../../../constants/application'
+import { STATUS } from '../../../constants/status'
 import { formatDate } from '../../../utils/formatters'
 import { getAdminTableAccent } from '../../../utils/adminTableAccent'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
+import { useLanguage } from '../../../i18n'
 import './ApplicationList.css'
 
-const STATUS_PILLS = [
-	{ value: '', label: 'All' },
-	{ value: STATUS.SUBMITTED, label: 'Submitted' },
-	{ value: STATUS.IN_REVIEW, label: 'In review' },
-	{ value: STATUS.APPROVED, label: 'Approved' },
-	{ value: STATUS.REJECTED, label: 'Rejected' },
-]
+function buildStatusPills(t) {
+	return [
+		{ value: '', label: t('ws.users.filter.all') },
+		{ value: STATUS.SUBMITTED, label: t('ws.status.submitted') },
+		{ value: STATUS.IN_REVIEW, label: t('ws.status.inReview') },
+		{ value: STATUS.APPROVED, label: t('ws.status.approved') },
+		{ value: STATUS.REJECTED, label: t('ws.status.rejected') },
+	]
+}
 
-const SORT_OPTIONS = [
-	{ key: 'created_at', label: 'Date' },
-	{ key: 'application_no', label: 'Application no.' },
-	{ key: 'form_type', label: 'Type' },
-	{ key: 'applicant', label: 'Applicant' },
-	{ key: 'district', label: 'District' },
-	{ key: 'status', label: 'Status' },
-]
+function buildSortOptions(t) {
+	return [
+		{ key: 'created_at', label: t('ws.adminApps.col.date') },
+		{ key: 'application_no', label: t('ws.adminApps.col.appNo') },
+		{ key: 'form_type', label: t('ws.adminApps.col.type') },
+		{ key: 'applicant', label: t('ws.adminApps.col.applicant') },
+		{ key: 'district', label: t('ws.users.col.district') },
+		{ key: 'status', label: t('ws.users.col.status') },
+	]
+}
 
 function getApplicantName(row) {
 	switch (row.form_type) {
@@ -49,9 +54,12 @@ function getApplicantName(row) {
 }
 
 const ApplicationList = ({ user }) => {
+	const { t } = useLanguage()
 	const navigate = useNavigate()
 	const [applications, setApplications] = useState([])
 	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState('')
+	const [reloadKey, setReloadKey] = useState(0)
 	const [page, setPage] = useState(1)
 	const [paginationInfo, setPaginationInfo] = useState(null)
 	
@@ -83,6 +91,7 @@ const ApplicationList = ({ user }) => {
 
 	const fetchApplications = useCallback(async () => {
 		setLoading((prev) => (applicationsRefHasData.current ? prev : true))
+		setError('')
 		try {
 			let endpoint = '/api/admin/applications/all'
 			if (isInboxPage) {
@@ -111,12 +120,12 @@ const ApplicationList = ({ user }) => {
 			setApplications(serviceOnly)
 			applicationsRefHasData.current = true
 			setPaginationInfo(data.pagination || null)
-		} catch (error) {
-			console.error('Error fetching applications:', error)
+		} catch {
+			setError(t('ws.adminApps.error'))
 		} finally {
 			setLoading(false)
 		}
-	}, [user?.role, page, filters, showFilters, isInboxPage])
+	}, [user?.role, page, filters, showFilters, isInboxPage, reloadKey, t])
 
 	useEffect(() => {
 		fetchApplications()
@@ -176,7 +185,7 @@ const ApplicationList = ({ user }) => {
 				case 'applicant':
 					return getApplicantName(row) || ''
 				case 'form_type':
-					return APPLICATION_LABELS[row?.form_type] || row?.form_type || ''
+					return getApplicationLabel(row?.form_type, t) || row?.form_type || ''
 				case 'created_at':
 					return row?.created_at ? new Date(row.created_at).getTime() : 0
 				default:
@@ -207,34 +216,37 @@ const ApplicationList = ({ user }) => {
 		})
 
 		return list
-	}, [applications, sortConfig])
+	}, [applications, sortConfig, t])
 
 	const openDetails = (app) => {
-		navigate(`/dashboard/admin/applications/${app.application_no}`)
+		if (!app?.application_no) return
+		navigate(`/dashboard/admin/applications/${encodeURIComponent(app.application_no)}`, {
+			state: { from: isInboxPage ? 'inbox' : 'applications' },
+		})
 	}
 
+	const statusPills = useMemo(() => buildStatusPills(t), [t])
+	const sortOptions = useMemo(() => buildSortOptions(t), [t])
+
 	const tableTitle = (() => {
-		if (isInboxPage && user?.role === ROLES.VALUER) return 'Valuation inbox'
-		if (isInboxPage && ASSISTANT_ROLES.includes(user?.role)) return 'Service Applications'
-		if (isInboxPage && PRINCIPAL_ROLES.includes(user?.role)) return 'Applications in review'
-		if (user?.role === ROLES.SUPER_ADMIN) return 'Service Applications'
-		if (user?.role === ROLES.DISTRICT_ADMIN) return 'Service Applications'
-		return 'Service Applications'
+		if (isInboxPage && user?.role === ROLES.VALUER) return t('ws.adminApps.table.valuer')
+		if (isInboxPage && PRINCIPAL_ROLES.includes(user?.role)) return t('ws.adminApps.table.review')
+		return t('ws.adminApps.table.inbox')
 	})()
 
 	const statusFilterLabel = filters.status
-		? STATUS_LABELS[filters.status] || filters.status
-		: 'All'
+		? adminStatusLabel(filters.status, t)
+		: t('ws.users.filter.all')
 
 	const formTypeLabel = filters.form_type
-		? APPLICATION_LABELS[filters.form_type] || filters.form_type
+		? getApplicationLabel(filters.form_type, t)
 		: null
 
 	const filterToolbar = showFilters ? (
 		<div className="admin-service-panel">
 			<div className="admin-service-panel__top">
 				<label className="admin-service-panel__search">
-					<span className="admin-service-panel__label">Search service applications</span>
+					<span className="admin-service-panel__label">{t('ws.adminApps.search')}</span>
 					<div className="admin-service-panel__search-field">
 						<Icon name="search" className="admin-service-panel__search-icon" />
 						<input
@@ -243,7 +255,7 @@ const ApplicationList = ({ user }) => {
 							type="search"
 							value={searchInput}
 							onChange={(e) => setSearchInput(e.target.value)}
-							placeholder="Application number, e.g. APP-…"
+							placeholder={t('ws.adminApps.searchPh')}
 							autoComplete="off"
 							spellCheck={false}
 						/>
@@ -252,10 +264,10 @@ const ApplicationList = ({ user }) => {
 			</div>
 
 			<div className="admin-service-panel__filters">
-				<div className="admin-service-panel__status" role="group" aria-label="Filter by status">
-					<span className="admin-service-panel__label">Status</span>
+				<div className="admin-service-panel__status" role="group" aria-label={t('ws.adminApps.filter.statusAria')}>
+					<span className="admin-service-panel__label">{t('ws.users.filter.status')}</span>
 					<div className="admin-service-panel__status-pills">
-						{STATUS_PILLS.map((pill) => (
+						{statusPills.map((pill) => (
 							<button
 								key={pill.value || 'all'}
 								type="button"
@@ -275,17 +287,17 @@ const ApplicationList = ({ user }) => {
 				</div>
 
 				<label className="admin-service-panel__field">
-					<span className="admin-service-panel__label">Form type</span>
+					<span className="admin-service-panel__label">{t('ws.adminApps.filter.formType')}</span>
 					<select
 						id="app-type"
 						className="admin-service-panel__select"
 						value={filters.form_type}
 						onChange={(e) => handleFilterChange('form_type', e.target.value)}
 					>
-						<option value="">All types</option>
+						<option value="">{t('ws.adminApps.filter.allTypes')}</option>
 						{SERVICE_APPLICATION_TYPES.map((type) => (
 							<option key={type} value={type}>
-								{APPLICATION_LABELS[type] || type}
+								{getApplicationLabel(type, t)}
 							</option>
 						))}
 					</select>
@@ -293,14 +305,14 @@ const ApplicationList = ({ user }) => {
 
 				{user?.role === ROLES.SUPER_ADMIN ? (
 					<label className="admin-service-panel__field">
-						<span className="admin-service-panel__label">District</span>
+						<span className="admin-service-panel__label">{t('ws.users.filter.district')}</span>
 						<select
 							id="app-district"
 							className="admin-service-panel__select"
 							value={filters.district_id}
 							onChange={(e) => handleFilterChange('district_id', e.target.value)}
 						>
-							<option value="">All districts</option>
+							<option value="">{t('ws.users.filter.allDistricts')}</option>
 							{districts.map((d) => (
 								<option key={d.id} value={d.id}>
 									{d.name}
@@ -311,7 +323,7 @@ const ApplicationList = ({ user }) => {
 				) : null}
 
 				<label className="admin-service-panel__field">
-					<span className="admin-service-panel__label">Sort by</span>
+					<span className="admin-service-panel__label">{t('ws.users.sort.label')}</span>
 					<select
 						id="app-sort-by"
 						className="admin-service-panel__select"
@@ -324,7 +336,7 @@ const ApplicationList = ({ user }) => {
 							}))
 						}
 					>
-						{SORT_OPTIONS.map((opt) => (
+						{sortOptions.map((opt) => (
 							<option key={opt.key} value={opt.key}>
 								{opt.label}
 							</option>
@@ -335,23 +347,27 @@ const ApplicationList = ({ user }) => {
 
 			<div className="admin-service-panel__meta">
 				<p className="admin-service-panel__summary">
-					Showing <strong>{sortedApplications.length}</strong> service application
-					{sortedApplications.length === 1 ? '' : 's'}
+					{t(
+						sortedApplications.length === 1
+							? 'ws.adminApps.summaryOne'
+							: 'ws.adminApps.summary',
+						{ shown: sortedApplications.length },
+					)}
 					{filters.status ? (
 						<>
 							{' '}
-							· Status: <strong>{statusFilterLabel}</strong>
+							· {t('ws.adminApps.summaryStatus', { status: statusFilterLabel })}
 						</>
 					) : null}
 					{formTypeLabel ? (
 						<>
 							{' '}
-							· Type: <strong>{formTypeLabel}</strong>
+							· {t('ws.adminApps.summaryType', { type: formTypeLabel })}
 						</>
 					) : null}
 					<span className="admin-service-panel__note">
 						{' '}
-						· UIN applications are listed separately
+						· {t('ws.adminApps.note')}
 					</span>
 				</p>
 
@@ -361,7 +377,7 @@ const ApplicationList = ({ user }) => {
 						className="ws-btn ws-btn--outline ws-btn--sm admin-service-panel__clear"
 						onClick={clearFilters}
 					>
-						Clear filters
+						{t('ws.users.clearFilters')}
 					</button>
 				) : null}
 			</div>
@@ -372,107 +388,118 @@ const ApplicationList = ({ user }) => {
 	const queueNotice = (isQueueRole && enableFifo) ? (
 		<div className="app-queue-notice">
 			<Icon name="lock" className="app-queue-notice__icon" />
-			<span>
-				Applications are handled oldest-first. Open an application to review, then approve
-				or reject from the view page.
-			</span>
+			<span>{t('ws.adminApps.queueNotice')}</span>
 		</div>
 	) : null
 
 	return (
-		<DataTable
-			title={tableTitle}
-			accent={getAdminTableAccent(user)}
-			loading={loading}
-			data={sortedApplications}
-			totalCount={paginationInfo?.total}
-			toolbar={filterToolbar || queueNotice}
-			className="admin-service-table"
-			onRowClick={openDetails}
-			onSort={showFilters ? handleSort : undefined}
-			sortKey={showFilters ? sortConfig.key : undefined}
-			sortDirection={showFilters ? sortConfig.direction : undefined}
-			columns={[
+		<>
+			{error ? (
+				<div className="ws-profile-alert ws-profile-alert--error admin-service-error" role="alert">
+					<span>{error}</span>
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm"
+						onClick={() => setReloadKey((key) => key + 1)}
+					>
+						{t('ws.adminApps.retry')}
+					</button>
+				</div>
+			) : null}
+
+			<DataTable
+				title={tableTitle}
+				accent={getAdminTableAccent(user)}
+				loading={loading}
+				data={sortedApplications}
+				totalCount={paginationInfo?.total}
+				toolbar={filterToolbar || queueNotice}
+				className="admin-service-table"
+				onRowClick={openDetails}
+				onSort={showFilters ? handleSort : undefined}
+				sortKey={showFilters ? sortConfig.key : undefined}
+				sortDirection={showFilters ? sortConfig.direction : undefined}
+				columns={[
 				{
 					key: 'application_no',
-					label: 'Application no.',
+					label: t('ws.adminApps.col.appNo'),
 					mono: true,
 					sortable: showFilters,
 				},
 				{
 					key: 'form_type',
-					label: 'Type',
+					label: t('ws.adminApps.col.type'),
 					cellClassName: 'ws-status-cell-form',
 					sortable: showFilters,
-					render: (val) =>
-						APPLICATION_LABELS[val] ||
-						val?.replace(/-/g, ' ').toUpperCase() ||
-						'—',
+					render: (val) => getApplicationLabel(val, t) || '—',
 				},
 				{
 					key: 'applicant',
-					label: 'Applicant',
+					label: t('ws.adminApps.col.applicant'),
 					sortable: showFilters,
 					render: (_, row) => getApplicantName(row) || '—',
 				},
 				{
 					key: 'district',
-					label: 'District',
+					label: t('ws.users.col.district'),
 					sortable: showFilters,
 					render: (val) => val?.name || '—',
 				},
 				{
 					key: 'status',
-					label: 'Status',
+					label: t('ws.users.col.status'),
 					sortable: showFilters,
 					render: (val) => (
 						<span className={adminStatusBadgeClass(val)}>
-							{adminStatusLabel(val)}
+							{adminStatusLabel(val, t)}
 						</span>
 					),
 				},
 				{
 					key: 'created_at',
-					label: 'Date',
+					label: t('ws.adminApps.col.date'),
 					sortable: showFilters,
 					render: (val) => formatDate(val),
 				},
-			]}
-			actions={(app) => (
-				<>
-					<StatusProgressViewButton
-						application={app}
-						variant="admin"
-						viewerRole={user?.role}
-						title="View status progress"
-					/>
-					<button
-						type="button"
-						className="ws-status-action-btn ws-status-action-btn--view"
-						title="View details"
-						aria-label={`View ${app.application_no || 'application'}`}
-						onClick={(e) => {
-							e.preventDefault()
-							e.stopPropagation()
-							openDetails(app)
-						}}
-					>
-						<Icon name="eye" />
-						<span>View</span>
-					</button>
-				</>
-			)}
-			emptyMessage="No service applications found."
-			pagination={
-				paginationInfo
-					? {
-							currentPage: paginationInfo.current_page,
-							totalPages: paginationInfo.last_page,
-							onPageChange: (newPage) => setPage(newPage),
-						}
-					: null
-			}
-		/>
+				]}
+				actions={(app) => (
+					<>
+						<StatusProgressViewButton
+							application={app}
+							variant="admin"
+							viewerRole={user?.role}
+							title={t('ws.adminApps.progressTitle')}
+						/>
+						<button
+							type="button"
+							className="ws-status-action-btn ws-status-action-btn--view"
+							title={t('ws.adminApps.viewTitle')}
+							aria-label={t('ws.adminApps.viewAria', {
+								appNo: app.application_no || t('ws.adminApps.col.applicant'),
+							})}
+							onClick={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+								openDetails(app)
+							}}
+						>
+							<Icon name="eye" />
+							<span>{t('ws.users.action.view')}</span>
+						</button>
+					</>
+				)}
+				emptyMessage={t('ws.adminApps.empty')}
+				pagination={
+					paginationInfo
+						? {
+								currentPage: paginationInfo.current_page,
+								totalPages: paginationInfo.last_page,
+								onPageChange: (newPage) => setPage(newPage),
+							}
+						: null
+				}
+			/>
+		</>
 	)
 }
 

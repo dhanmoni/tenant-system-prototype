@@ -1,15 +1,25 @@
-function ServiceFormShell({ serviceMeta, onBack, error, success, children }) {
+import { Link } from 'react-router-dom'
+
+function ServiceFormShell({ serviceMeta, children }) {
 	const groupId = serviceMeta?.groupId || 'rent-authority'
+	const crumbLabel = serviceMeta?.formName || serviceMeta?.label || 'Application'
 
 	return (
 		<div className={`service-form-page service-form-page--${groupId}`}>
+			<p className="ws-breadcrumb">
+				<Link to="/dashboard/services">All services</Link>
+				<span className="ws-breadcrumb-sep" aria-hidden>
+					/
+				</span>
+				<span>{crumbLabel}</span>
+			</p>
+
 			<header className="service-form-header">
-				<button type="button" className="service-form-back" onClick={onBack}>
-					← Back to services
-				</button>
 				<div className="service-form-heading">
 					{serviceMeta?.groupTitle ? (
-						<span className="service-form-kicker">{serviceMeta.groupTitle}</span>
+						<span className={`service-form-kicker ws-services-form-badge ws-services-form-badge--${groupId}`}>
+							{serviceMeta.groupTitle}
+						</span>
 					) : null}
 					<h1 className="service-form-title">
 						{serviceMeta?.label || 'Service application'}
@@ -32,17 +42,6 @@ function ServiceFormShell({ serviceMeta, onBack, error, success, children }) {
 					) : null}
 				</div>
 			</header>
-
-			{error ? (
-				<div className="service-form-alert service-form-alert--error" role="alert">
-					{error}
-				</div>
-			) : null}
-			{success ? (
-				<div className="service-form-alert service-form-alert--success" role="status">
-					{success}
-				</div>
-			) : null}
 
 			{children}
 		</div>

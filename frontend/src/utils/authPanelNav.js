@@ -9,10 +9,23 @@ export function modeFromHash(hash) {
 }
 
 export function scrollToAuthPanel() {
-	requestAnimationFrame(() => {
-		document.getElementById('auth-card-section')?.scrollIntoView({
+	const run = () => {
+		const el = document.getElementById('auth-card-section')
+		if (!el) return false
+		el.scrollIntoView({
 			behavior: 'smooth',
 			block: 'start',
 		})
-	})
+		return true
+	}
+
+	if (run()) return
+
+	let attempts = 0
+	const timer = window.setInterval(() => {
+		attempts += 1
+		if (run() || attempts >= 20) {
+			window.clearInterval(timer)
+		}
+	}, 50)
 }

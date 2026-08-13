@@ -20,6 +20,7 @@
 			pointer-events: none !important;
 		}
 	</style>
+	<link rel="preload" as="image" href="/hero-lcp.webp" type="image/webp" fetchpriority="high" />
 	<link rel="dns-prefetch" href="https://www.google.com" />
 	<link rel="dns-prefetch" href="https://maps.google.com" />
 	<link rel="dns-prefetch" href="https://cdn.ux4g.gov.in" />
@@ -28,7 +29,12 @@
 	<link
 		rel="stylesheet"
 		href="https://cdn.ux4g.gov.in/UX4G@3.0.18/components/accessibility-bar.css"
+		media="print"
+		onload="this.media='all'"
 	/>
+	<noscript>
+		<link rel="stylesheet" href="https://cdn.ux4g.gov.in/UX4G@3.0.18/components/accessibility-bar.css" />
+	</noscript>
 </head>
 
 <body>

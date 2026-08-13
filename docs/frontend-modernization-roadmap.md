@@ -115,7 +115,7 @@ flowchart TB
 
 | Gap | Where | Impact |
 | --- | ----- | ------ |
-| User **approve** / **toggle-block** API not registered | `UserManagementController` exists; routes missing in `api.php` | Super admin UI actions fail |
+| ~~User **approve** / **toggle-block** API not registered~~ | Routes registered; detail page deactivates with reason | — |
 | Demo OTP / password fallback | `AuthController`, `Demo_NIC_Credentials.md` | Not secure for go-live |
 | `Demo_NIC_Credentials.md` lists admin screens not in router | Docs vs `App.jsx` | Wrong stakeholder expectations |
 | No automated E2E / integration tests for role flows | Repo | Regressions during legacy removal |
@@ -216,7 +216,7 @@ frontend/src/
 
 - [ ] Generate **route map**: all `App.jsx` paths → component file → API calls used.
 - [ ] Add **smoke checklist** per role (citizen, each assistant, each principal, DA, super admin) — link from `Demo_NIC_Credentials.md`.
-- [ ] Fix **broken APIs** used by UI (`users/{id}/approve`, `users/{id}/toggle-block`) before large deletes.
+- [x] Fix **broken APIs** used by UI (`users/{id}/approve`, `users/{id}/toggle-block`) before large deletes.
 - [ ] Update `Demo_NIC_Credentials.md` to match routed screens.
 
 **Exit:** Documented parity matrix; critical API routes work.
@@ -238,7 +238,7 @@ Also:
 
 - [ ] Remove dead imports from `App.jsx` (`OfficeManagement`, etc.) **or** wire routes in Phase 3—pick one per item.
 - [ ] Remove commented footer + obsolete `workspace/index.js` “delete workspace” comment (replace with “canonical shell”).
-- [ ] Remove `console.log` from `ApplicationStatus.jsx` if file kept temporarily.
+- [x] Remove `console.log` from `ApplicationStatus.jsx` if file kept temporarily. (file deleted)
 
 **Exit:** Smaller bundle, less confusion; CI/build still green.
 
@@ -333,7 +333,7 @@ For each migration:
 | `DashboardHome.jsx` | Orphan | Phase 1 delete |
 | `OfficialDashboard.jsx` | Orphan | Phase 1 delete |
 | `DashboardLayout.jsx` + `Sidebar.jsx` | Orphan | Phase 1 delete |
-| `ApplicationStatus.jsx` | Orphan (route uses `WorkspaceUinStatus`) | Phase 2 delete |
+| `ApplicationStatus.jsx` | Deleted | Status lives in `WorkspaceUinStatus` |
 | `TenantServices.jsx` | Orphan | Phase 2 delete |
 | `Profile.jsx` (dashboard) | Orphan | Phase 2 delete |
 | `ApplicationInbox.jsx` | Orphan | Phase 1 delete |

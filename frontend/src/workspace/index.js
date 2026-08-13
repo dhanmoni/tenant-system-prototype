@@ -11,7 +11,7 @@ export { default as WorkspaceApplicationDetails } from './pages/WorkspaceApplica
 export { default as WorkspaceFormPortal } from './pages/WorkspaceFormPortal'
 export { default as WorkspaceDistricts } from './pages/admin/WorkspaceDistricts'
 export { default as WorkspaceUsers } from './pages/admin/WorkspaceUsers'
+export { default as WorkspaceUserDetail } from './pages/admin/WorkspaceUserDetail'
 export { default as WorkspaceTenancyRecords } from './pages/admin/WorkspaceTenancyRecords'
 export { default as WorkspaceServiceApplications } from './pages/admin/WorkspaceServiceApplications'
 export { default as WorkspaceAdminApplicationDetails } from './pages/admin/WorkspaceAdminApplicationDetails'
-export { default as WorkspaceLegacyFrame } from './pages/WorkspaceLegacyFrame'

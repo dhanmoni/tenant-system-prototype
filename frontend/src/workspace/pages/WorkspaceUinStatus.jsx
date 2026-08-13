@@ -3,11 +3,13 @@ import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../components/dashboard/StatusProgressViewButton'
+import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
 import { formatDate } from '../../utils/formatters'
 import { STATUS } from '../../constants/status'
 import { APPLICATION_TYPES } from '../../constants/application'
 import { getAllServiceForms, tenantServiceGroups } from '../../data/tenantServices'
 import { useLanguage } from '../../i18n'
+import { useToast } from '../../context/ToastContext'
 
 const TAB_TENANCY = 'tenancy'
 const TAB_SERVICE = 'service'
@@ -21,6 +23,7 @@ function buildTenancyStatusFilters(t) {
 		{ key: 'in_review', label: t('ws.status.inReview') },
 		{ key: 'approved', label: t('ws.status.approved') },
 		{ key: 'rejected', label: t('ws.status.rejected') },
+		{ key: 'withdrawn', label: t('ws.status.withdrawn') },
 	]
 }
 
@@ -32,6 +35,7 @@ function buildServiceStatusFilters(t) {
 		{ key: 'in_review', label: t('ws.status.inReview') },
 		{ key: 'approved', label: t('ws.status.approved') },
 		{ key: 'rejected', label: t('ws.status.rejected') },
+		{ key: 'withdrawn', label: t('ws.status.withdrawn') },
 	]
 }
 
@@ -67,6 +71,7 @@ function formatStatusText(status, applicationType = '', t) {
 	if (normalizedStatus === STATUS.PENDING) return t('ws.status.pending')
 	if (normalizedStatus === STATUS.VALUER_ASSIGNED) return t('ws.status.valuerAssigned')
 	if (normalizedStatus === STATUS.VALUER_REPORT_SUBMITTED) return t('ws.status.valuerReport')
+	if (normalizedStatus === STATUS.WITHDRAWN) return t('ws.status.withdrawn')
 
 	return status || '—'
 }
@@ -77,6 +82,7 @@ function statusBadgeClass(status) {
 		return 'ws-badge ws-badge--success'
 	}
 	if ([STATUS.REJECTED].includes(s)) return 'ws-badge ws-badge--danger'
+	if ([STATUS.WITHDRAWN].includes(s)) return 'ws-badge ws-badge--muted'
 	if ([STATUS.PARTIAL, STATUS.PENDING, STATUS.DRAFT].includes(s)) return 'ws-badge ws-badge--warning'
 	return 'ws-badge ws-badge--pending'
 }
@@ -151,6 +157,15 @@ function getServiceFormFilters(groupId, t) {
 	]
 }
 
+function canWithdrawApp(app) {
+	return String(app.status || '').toUpperCase() === STATUS.SUBMITTED
+}
+
+function getWithdrawType(app) {
+	if (isTenancyApp(app)) return APPLICATION_TYPES.TENANCY_CERTIFICATE
+	return app.form_key || app.form_type || 'form'
+}
+
 function ApplicationsTable({
 	items,
 	isTenancy,
@@ -160,6 +175,9 @@ function ApplicationsTable({
 	onDownloadAck,
 	onJoin,
 	onResumeDraft,
+	onWithdraw,
+	allowWithdraw,
+	withdrawingId,
 	canJoinApp,
 	emptyMessage,
 	t,
@@ -389,6 +407,18 @@ function ApplicationsTable({
 											</button>
 										)
 									) : null}
+									{allowWithdraw && canWithdrawApp(app) ? (
+										<button
+											type="button"
+											className="ws-status-action-btn ws-status-action-btn--reject"
+											title={t('ws.uinStatus.action.withdrawTitle')}
+											disabled={withdrawingId === app.id}
+											onClick={() => onWithdraw?.(app)}
+										>
+											<Icon name="x" />
+											<span>{t('ws.uinStatus.action.withdraw')}</span>
+										</button>
+									) : null}
 								</td>
 							</tr>
 						)
@@ -404,8 +434,11 @@ function WorkspaceUinStatus() {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const { t } = useLanguage()
+	const { showToast } = useToast()
 
 	const [applications, setApplications] = useState([])
+	const [withdrawApp, setWithdrawApp] = useState(null)
+	const [withdrawing, setWithdrawing] = useState(false)
 
 	const [loading, setLoading] = useState(false)
 	const [page, setPage] = useState(1)
@@ -582,6 +615,22 @@ function WorkspaceUinStatus() {
 			printWindow.document.close()
 		} catch (err) {
 			setError(err?.response?.data?.message || t('ws.uinStatus.error.ack'))
+		}
+	}
+
+	const confirmWithdraw = async () => {
+		if (!withdrawApp) return
+		setWithdrawing(true)
+		try {
+			const type = getWithdrawType(withdrawApp)
+			await api.post(`/api/tenant-forms/${type}/${withdrawApp.id}/withdraw`)
+			showToast(t('ws.withdraw.success'), 'success')
+			setWithdrawApp(null)
+			await loadApplications(page)
+		} catch (err) {
+			showToast(err?.response?.data?.message || t('ws.withdraw.error'), 'error')
+		} finally {
+			setWithdrawing(false)
 		}
 	}
 
@@ -818,6 +867,9 @@ function WorkspaceUinStatus() {
 								onDownloadAck={downloadAcknowledgement}
 								onJoin={(ref) => navigate(`/join?ref=${ref}`)}
 								onResumeDraft={resumeDraft}
+								onWithdraw={setWithdrawApp}
+								allowWithdraw={user?.role === 'user'}
+								withdrawingId={withdrawing ? withdrawApp?.id : null}
 								canJoinApp={canJoin}
 								emptyMessage={
 									applications.length === 0
@@ -857,6 +909,21 @@ function WorkspaceUinStatus() {
 					</button>
 				</nav>
 			) : null}
+
+			<WorkflowConfirmModal
+				open={Boolean(withdrawApp)}
+				onClose={() => {
+					if (!withdrawing) setWithdrawApp(null)
+				}}
+				title={t('ws.withdraw.title')}
+				description={t('ws.withdraw.description', {
+					appNo: withdrawApp?.application_no || '',
+				})}
+				primaryLabel={withdrawing ? t('ws.withdraw.working') : t('ws.withdraw.confirm')}
+				primaryVariant="danger"
+				primaryDisabled={withdrawing}
+				onPrimary={confirmWithdraw}
+			/>
 		</div>
 	)
 }

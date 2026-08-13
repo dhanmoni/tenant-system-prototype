@@ -1,107 +1,134 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import WorkflowConfirmModal from './WorkflowConfirmModal'
 
 const noticeTypes = [
-    { value: 'appearance', label: 'Notice for Appearance / Joint Discussion' },
-    { value: 'applicant_absent', label: 'Next Date Notice (Applicant Absent)' },
-    { value: 'respondent_absent', label: 'Next Date Notice (Opposite Party Absent)' },
-    { value: 'adjournment', label: 'Adjournment Order' },
-    { value: 'proceeding_sheet', label: 'Digital Proceeding Sheet' },
-    { value: 'final_order', label: 'Final Order / Judgement' },
-    { value: 'ex_parte', label: 'Ex-Parte Order' }
+	{ value: 'appearance', label: 'Notice for Appearance / Joint Discussion' },
+	{ value: 'applicant_absent', label: 'Next Date Notice (Applicant Absent)' },
+	{ value: 'respondent_absent', label: 'Next Date Notice (Opposite Party Absent)' },
+	{ value: 'adjournment', label: 'Adjournment Order' },
+	{ value: 'proceeding_sheet', label: 'Digital Proceeding Sheet' },
+	{ value: 'final_order', label: 'Final Order / Judgement' },
+	{ value: 'ex_parte', label: 'Ex-Parte Order' },
 ]
 
+const emptyForm = {
+	notice_type: 'appearance',
+	hearing_date: '',
+	hearing_time: '',
+	venue: '',
+	remarks: '',
+}
+
 export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting }) {
-    const [formData, setFormData] = useState({
-        notice_type: 'appearance',
-        hearing_date: '',
-        hearing_time: '',
-        venue: '',
-        remarks: ''
-    })
+	const [formData, setFormData] = useState(emptyForm)
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value })
-    }
+	useEffect(() => {
+		if (open) setFormData(emptyForm)
+	}, [open])
 
-    const handleSubmit = () => {
-        if (!formData.notice_type) return
-        onSubmit(formData)
-    }
+	const handleChange = (e) => {
+		setFormData({ ...formData, [e.target.name]: e.target.value })
+	}
 
-    return (
-        <WorkflowConfirmModal
-            open={open}
-            onClose={onClose}
-            title="Add Proceeding / Notice"
-            primaryLabel={isSubmitting ? 'Saving...' : 'Save Proceeding'}
-            primaryDisabled={isSubmitting}
-            onPrimary={handleSubmit}
-        >
-            <div className="admin-app-details__grid">
-                <div className="admin-app-details__field" style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Notice Type *</label>
-                    <select
-                        className="ws-input"
-                        name="notice_type"
-                        value={formData.notice_type}
-                        onChange={handleChange}
-                        required
-                    >
-                        {noticeTypes.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+	const handleSubmit = () => {
+		if (!formData.notice_type) return
+		onSubmit(formData)
+	}
 
-                <div className="admin-app-details__field">
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Hearing Date</label>
-                    <input
-                        type="date"
-                        className="ws-input"
-                        name="hearing_date"
-                        value={formData.hearing_date}
-                        onChange={handleChange}
-                    />
-                </div>
+	return (
+		<WorkflowConfirmModal
+			open={open}
+			onClose={onClose}
+			title="Add Proceeding / Notice"
+			description="Record a notice, hearing, or order against this application. Fields marked * are required."
+			primaryLabel={isSubmitting ? 'Saving…' : 'Save Proceeding'}
+			primaryDisabled={isSubmitting}
+			onPrimary={handleSubmit}
+			size="wide"
+			bodyClassName="proceeding-modal"
+		>
+			<div className="proceeding-modal__form">
+				<div className="proceeding-modal__field proceeding-modal__field--full">
+					<label className="proceeding-modal__label" htmlFor="proceeding-notice-type">
+						Notice type <span className="proceeding-modal__required">*</span>
+					</label>
+					<select
+						id="proceeding-notice-type"
+						className="proceeding-modal__control"
+						name="notice_type"
+						value={formData.notice_type}
+						onChange={handleChange}
+						required
+					>
+						{noticeTypes.map((option) => (
+							<option key={option.value} value={option.value}>
+								{option.label}
+							</option>
+						))}
+					</select>
+				</div>
 
-                <div className="admin-app-details__field">
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Hearing Time</label>
-                    <input
-                        type="time"
-                        className="ws-input"
-                        name="hearing_time"
-                        value={formData.hearing_time}
-                        onChange={handleChange}
-                    />
-                </div>
+				<div className="proceeding-modal__row">
+					<div className="proceeding-modal__field">
+						<label className="proceeding-modal__label" htmlFor="proceeding-hearing-date">
+							Hearing date
+						</label>
+						<input
+							id="proceeding-hearing-date"
+							type="date"
+							className="proceeding-modal__control"
+							name="hearing_date"
+							value={formData.hearing_date}
+							onChange={handleChange}
+						/>
+					</div>
 
-                <div className="admin-app-details__field" style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Venue</label>
-                    <input
-                        type="text"
-                        className="ws-input"
-                        name="venue"
-                        placeholder="e.g. Office of the Rent Tribunal, District XYZ"
-                        value={formData.venue}
-                        onChange={handleChange}
-                    />
-                </div>
+					<div className="proceeding-modal__field">
+						<label className="proceeding-modal__label" htmlFor="proceeding-hearing-time">
+							Hearing time
+						</label>
+						<input
+							id="proceeding-hearing-time"
+							type="time"
+							className="proceeding-modal__control"
+							name="hearing_time"
+							value={formData.hearing_time}
+							onChange={handleChange}
+						/>
+					</div>
+				</div>
 
-                <div className="admin-app-details__field" style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Remarks / Settlement Terms</label>
-                    <textarea
-                        className="ws-input"
-                        name="remarks"
-                        rows={4}
-                        placeholder="Enter any additional details required for the notice/order..."
-                        value={formData.remarks}
-                        onChange={handleChange}
-                    />
-                </div>
-            </div>
-        </WorkflowConfirmModal>
-    )
+				<div className="proceeding-modal__field proceeding-modal__field--full">
+					<label className="proceeding-modal__label" htmlFor="proceeding-venue">
+						Venue
+					</label>
+					<input
+						id="proceeding-venue"
+						type="text"
+						className="proceeding-modal__control"
+						name="venue"
+						placeholder="e.g. Office of the Rent Tribunal, District XYZ"
+						value={formData.venue}
+						onChange={handleChange}
+						autoComplete="off"
+					/>
+				</div>
+
+				<div className="proceeding-modal__field proceeding-modal__field--full">
+					<label className="proceeding-modal__label" htmlFor="proceeding-remarks">
+						Remarks / settlement terms
+					</label>
+					<textarea
+						id="proceeding-remarks"
+						className="proceeding-modal__control proceeding-modal__control--textarea"
+						name="remarks"
+						rows={5}
+						placeholder="Enter any additional details required for the notice or order…"
+						value={formData.remarks}
+						onChange={handleChange}
+					/>
+				</div>
+			</div>
+		</WorkflowConfirmModal>
+	)
 }

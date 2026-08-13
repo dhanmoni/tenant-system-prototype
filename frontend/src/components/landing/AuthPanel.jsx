@@ -167,6 +167,8 @@ function AuthPanel({
 	regPendingPhone,
 	regOtpMessage,
 	filteredDistricts,
+	districtsError,
+	onRetryDistricts,
 	onLoginChange,
 	onSendOtp,
 	onEditPhone,
@@ -425,6 +427,7 @@ function AuthPanel({
 													value={regForm.district_id}
 													onChange={onRegChange}
 													required
+													disabled={Boolean(districtsError) && filteredDistricts.length === 0}
 												>
 													<option value="">{t('auth.selectDistrict')}</option>
 													{filteredDistricts.map((d) => (
@@ -433,6 +436,20 @@ function AuthPanel({
 														</option>
 													))}
 												</select>
+												{districtsError ? (
+													<p className="auth-panel-field-error" role="alert">
+														{districtsError}{' '}
+														{onRetryDistricts ? (
+															<button
+																type="button"
+																className="auth-panel-inline-retry"
+																onClick={onRetryDistricts}
+															>
+																{t('auth.retry')}
+															</button>
+														) : null}
+													</p>
+												) : null}
 											</AuthField>
 											<div className="auth-panel-field-row">
 												<AuthField label={t('auth.gender')}>

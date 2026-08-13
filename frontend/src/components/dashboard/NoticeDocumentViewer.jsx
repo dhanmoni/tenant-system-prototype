@@ -193,19 +193,12 @@ export default function NoticeDocumentViewer({ open, onClose, proceeding, applic
             title="View Notice Document"
             primaryLabel="Print / Save PDF"
             onPrimary={handlePrint}
+            size="wide"
+            bodyClassName="notice-doc-modal"
         >
-            <div 
-                id="notice-print-area" 
-                style={{ 
-                    padding: '2rem', 
-                    fontFamily: 'serif', 
-                    lineHeight: '1.6', 
-                    color: '#000',
-                    border: '1px solid #ccc',
-                    backgroundColor: '#fff',
-                    maxHeight: '60vh',
-                    overflowY: 'auto'
-                }}
+            <div
+                id="notice-print-area"
+                className="notice-doc-modal__paper"
             >
                 {renderContent()}
             </div>

@@ -167,13 +167,7 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 
 	return (
 		<div className="dashboard-card service-form-panel">
-			<h1>{serviceMeta?.label || 'Form I-A - Revision or fixation of other charges'}</h1>
-			<p className="muted">
-				{serviceMeta
-					? `${serviceMeta.matter} (${serviceMeta.rule}) - ${serviceMeta.authority}`
-					: 'Fill the application details and submit to the system.'}
-			</p>
-			{error ? <div className="error">{error}</div> : null}
+			{error ? <div className="error" role="alert">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
 				<TenancyUinLookup
@@ -290,11 +284,11 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 				</fieldset>
 
 				<div className="form-actions">
-					<button type="button" className="secondary" onClick={onBack} disabled={submitting}>
+					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>
 						Back
 					</button>
-					<button type="submit" disabled={submitting}>
-						{submitting ? 'Submitting...' : 'Review & submit'}
+					<button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>
+						{submitting ? 'Submitting…' : 'Review & submit'}
 					</button>
 				</div>
 			</form>

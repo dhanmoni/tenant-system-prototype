@@ -5,8 +5,10 @@ import { buildTenancyFormData, applyDraftToForm, applyInitiatorProfileAutofill, 
 import { formatDate, formatDateTime } from '../../utils/formatters'
 import { Icon } from '../../components/dashboard/Icons'
 import DocumentUploadSlot from '../../components/forms/DocumentUploadSlot'
+import DemoDocsAttachButton from '../../components/forms/DemoDocsAttachButton'
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
 import { useLanguage } from '../../i18n'
+import { fetchDemoFile, getUinSampleManifest } from '../../data/demoUploads'
 import {
 	fetchTenancyDistricts,
 	fetchTenancyOffices,
@@ -16,7 +18,7 @@ import {
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
-	const { t } = useLanguage()
+	const { t, language } = useLanguage()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -118,6 +120,7 @@ function TenancyCertificate() {
 	const [managerPanFile, setManagerPanFile] = useState(null)
 	const [declarationChecked, setDeclarationChecked] = useState(false)
 	const [docPreview, setDocPreview] = useState(null)
+	const [demoDocsLoading, setDemoDocsLoading] = useState(false)
 
 	const [profileType, setProfileType] = useState('')
 	const [profileName, setProfileName] = useState('')
@@ -829,6 +832,37 @@ function TenancyCertificate() {
 		}
 	}
 
+	const attachSampleDocuments = async () => {
+		setDemoDocsLoading(true)
+		try {
+			const manifest = getUinSampleManifest(initiatorRole, language)
+			const [agreement, photo, signature, pan] = await Promise.all([
+				fetchDemoFile(manifest.agreement),
+				fetchDemoFile(manifest.photo),
+				fetchDemoFile(manifest.signature),
+				fetchDemoFile(manifest.pan),
+			])
+			setAgreementFile(agreement)
+			setAgreementPreviewUrl(URL.createObjectURL(agreement))
+			if (initiatorRole === 'TENANT') {
+				await handlePassportPhotoUpload(photo, setTenantPhotoFile, setTenantPhotoPreview, 'tenant')
+				setTenantSignatureFile(signature)
+				setTenantSignaturePreview(URL.createObjectURL(signature))
+				setTenantPanFile(pan)
+			} else {
+				await handlePassportPhotoUpload(photo, setLandlordPhotoFile, setLandlordPhotoPreview, 'landlord')
+				setLandlordSignatureFile(signature)
+				setLandlordSignaturePreview(URL.createObjectURL(signature))
+				setLandlordPanFile(pan)
+			}
+			showSaveToast(t('ws.uin.demo.success'))
+		} catch {
+			showErrorToast(t('ws.uin.demo.error'))
+		} finally {
+			setDemoDocsLoading(false)
+		}
+	}
+
 	const isPdfFile = (file) => file?.type === 'application/pdf' || /\.pdf$/i.test(file?.name || '')
 
 	const openDocPreview = (title, url, isPdf = false, revokeOnClose = false) => {
@@ -1292,6 +1326,13 @@ function TenancyCertificate() {
 			: pendingPartyRole;
 		return (
 			<div className="ws-page ws-uin-apply tenancy-certificate-page">
+				<p className="ws-breadcrumb">
+					<Link to="/dashboard">{t('ws.nav.dashboard')}</Link>
+					<span className="ws-breadcrumb-sep" aria-hidden>
+						/
+					</span>
+					<span>{t('ws.nav.applyUin')}</span>
+				</p>
 				<div className="uin-confirm">
 					<div className="uin-confirm-card">
 						<div className="uin-confirm-icon" aria-hidden>✓</div>
@@ -1391,6 +1432,13 @@ function TenancyCertificate() {
 				</div>
 			) : (
 				<>
+			<p className="ws-breadcrumb">
+				<Link to="/dashboard">{t('ws.nav.dashboard')}</Link>
+				<span className="ws-breadcrumb-sep" aria-hidden>
+					/
+				</span>
+				<span>{t('ws.nav.applyUin')}</span>
+			</p>
 			<header className="ws-uin-apply-head">
 				<div className="ws-uin-apply-head__row">
 					<div className="ws-uin-apply-head__copy">
@@ -1403,19 +1451,6 @@ function TenancyCertificate() {
 						) : null}
 					</div>
 					<div className="ws-uin-apply-head__actions">
-						{/*<button
-							type="button"
-							className="ws-btn ws-btn--secondary ws-uin-drafts-btn"
-							onClick={() => openDraftsModal()}
-						>
-							<Icon name="file" />
-							<span>Drafts</span>
-							{serverDrafts.length > 0 ? (
-								<span className="ws-uin-drafts-btn__badge" aria-label={`${serverDrafts.length} saved drafts`}>
-									{serverDrafts.length}
-								</span>
-							) : null}
-						</button>*/}
 						{isResumedSession ? (
 							<button
 								type="button"
@@ -1481,7 +1516,7 @@ function TenancyCertificate() {
 							<div className="conflict-actions">
 								<button
 									type="button"
-									className="secondary"
+									className="ws-btn ws-btn--outline"
 									onClick={() =>
 										navigate(
 											`/dashboard/status?app_no=${conflictData.existing_application?.application_no}`
@@ -1492,7 +1527,7 @@ function TenancyCertificate() {
 								</button>
 								<button
 									type="button"
-									className="danger"
+									className="ws-btn ws-btn--danger"
 									disabled={tenancySubmitting}
 									onClick={() => submitTenancyApplication(true)}
 								>
@@ -1512,7 +1547,7 @@ function TenancyCertificate() {
 					) : null}
 
 					{!draftLoaded ? (
-						<div className="ws-uin-apply-loading">Loading your application…</div>
+						<div className="ws-uin-apply-loading">{t('ws.uin.loading')}</div>
 					) : null}
 
 					{draftLoaded ? (
@@ -2001,6 +2036,11 @@ function TenancyCertificate() {
 								<p className="tenancy-docs-step__lead">
 									{t('ws.uin.form.uploadsLead')}
 								</p>
+								<DemoDocsAttachButton
+									loading={demoDocsLoading}
+									onClick={attachSampleDocuments}
+									t={t}
+								/>
 								<p className="tenancy-docs-step__disclaimer" role="note">
 									<strong>{t('ws.uin.form.uploadsGuidelines')}</strong> {t('ws.uin.form.uploadsGuidelinesBody')}
 								</p>

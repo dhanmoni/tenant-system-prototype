@@ -177,7 +177,10 @@ function ValuerDashboard({ user, stats, loading, error }) {
 														navigate(
 															app.application_no
 																? `/dashboard/admin/applications/${encodeURIComponent(app.application_no)}`
-																: '/dashboard/admin/inbox'
+																: '/dashboard/admin/inbox',
+															app.application_no
+																? { state: { from: 'inbox' } }
+																: undefined,
 														)
 													}
 												>

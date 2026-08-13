@@ -6,6 +6,10 @@
 	gap: 0.85rem;
 }
 
+.admin-app-details > .ws-breadcrumb {
+	margin-bottom: 0;
+}
+
 .admin-app-details__alert {
 	width: 100%;
 }
@@ -26,10 +30,23 @@
 	gap: 0.5rem;
 }
 
-.admin-app-details__toolbar-actions .ws-btn {
+.admin-app-details__toolbar-actions .ws-btn,
+.page.page-dashboard .ws-root .admin-app-details a.ws-btn {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 0.35rem;
+	text-decoration: none;
+}
+
+.page.page-dashboard .ws-root .admin-app-details a.ws-btn--outline {
+	border: 1px solid #cbd5e1;
+	background: #fff;
+	color: #334155;
+	padding: 9px 16px;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	font-weight: 600;
 }
 
 .admin-app-details__btn-icon {
@@ -522,7 +539,9 @@
 .admin-app-details__card {
 	overflow: hidden;
 	border-radius: 12px;
+	border: 1px solid var(--ws-border, #e2e8f0);
 	border-top: 4px solid #94a3b8;
+	background: #fff;
 	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 

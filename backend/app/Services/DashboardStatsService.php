@@ -144,6 +144,8 @@ class DashboardStatsService
                         ? 'created_at::date'
                         : 'DATE(created_at)';
                     $cols[] = "$dateExpr as created_at_date";
+                } elseif ($col === 'created_at_month') {
+                    $cols[] = $this->sqlYearMonth('created_at').' as created_at_month';
                 } else {
                     $cols[] = $col;
                 }
@@ -1036,5 +1038,200 @@ class DashboardStatsService
         }
 
         return $stats;
+    }
+
+    /**
+     * Aggregated public transparency stats — counts only, no personal data.
+     *
+     * @return array<string, mixed>
+     */
+    public function publicPortalStats(): array
+    {
+        $tenancyTotal = $this->countTenancyApplications();
+        $serviceTotal = $this->countServiceApplications();
+        $uinsIssued = TenancyApplication::query()
+            ->where('status', '!=', Status::DRAFT)
+            ->whereNotNull('uid')
+            ->where('uid', '!=', '')
+            ->count();
+        $mattersConcluded = $this->countServiceByStatus(Status::COMPLETED)
+            + $this->countServiceByStatus(Status::APPROVED);
+
+        $authorityFilings = $this->countServiceApplications(null, $this->modelsForRentAuthority());
+        $courtFilings = $this->countServiceApplications(null, $this->modelsForRentCourt());
+        $tribunalFilings = $this->countServiceApplications(null, $this->modelsForRentTribunal());
+
+        $tenancyByStatus = TenancyApplication::query()
+            ->selectRaw('status, count(*) as count')
+            ->where('status', '!=', Status::DRAFT)
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $issued = (int) $tenancyByStatus->get(Status::APPROVED, 0)
+            + (int) $tenancyByStatus->get(Status::COMPLETED, 0);
+        $underReview = (int) $tenancyByStatus->get(Status::SUBMITTED, 0)
+            + (int) $tenancyByStatus->get(Status::IN_REVIEW, 0)
+            + (int) $tenancyByStatus->get(Status::UNDER_PROCESS, 0)
+            + (int) $tenancyByStatus->get(Status::PENDING, 0);
+        $returned = (int) $tenancyByStatus->get(Status::REJECTED, 0)
+            + (int) $tenancyByStatus->get(Status::WITHDRAWN, 0)
+            + (int) $tenancyByStatus->get(Status::PARTIAL, 0);
+
+        return [
+            'generated_at' => now()->toIso8601String(),
+            'kpis' => [
+                [
+                    'id' => 'applications_submitted',
+                    'value' => $tenancyTotal + $serviceTotal,
+                ],
+                [
+                    'id' => 'uins_issued',
+                    'value' => $uinsIssued,
+                ],
+                [
+                    'id' => 'service_filings',
+                    'value' => $serviceTotal,
+                ],
+                [
+                    'id' => 'disputes_resolved',
+                    'value' => $mattersConcluded,
+                ],
+            ],
+            'monthly' => $this->monthlyPublicApplications(6),
+            'filings' => $this->withShare([
+                ['id' => 'authority', 'value' => $authorityFilings],
+                ['id' => 'court', 'value' => $courtFilings],
+                ['id' => 'tribunal', 'value' => $tribunalFilings],
+            ]),
+            'certificate_status' => $this->withShare([
+                ['id' => 'issued', 'value' => $issued],
+                ['id' => 'under_review', 'value' => $underReview],
+                ['id' => 'returned', 'value' => $returned],
+            ]),
+            'pipeline' => $this->withShare([
+                ['id' => 'received', 'value' => $tenancyTotal],
+                ['id' => 'review', 'value' => $underReview],
+                ['id' => 'issued', 'value' => $issued],
+                ['id' => 'returned', 'value' => $returned],
+            ], $tenancyTotal),
+            'top_districts' => $this->topDistrictsByApplications(5),
+        ];
+    }
+
+    /**
+     * @return array<int, array{key: string, month: string, value: int}>
+     */
+    private function monthlyPublicApplications(int $months = 6): array
+    {
+        $months = max(3, min($months, 12));
+        $start = now()->startOfMonth()->subMonths($months - 1);
+        $end = now()->endOfMonth();
+        $buckets = [];
+        for ($i = 0; $i < $months; $i++) {
+            $cursor = $start->copy()->addMonths($i);
+            $key = $cursor->format('Y-m');
+            $buckets[$key] = [
+                'key' => $key,
+                'month' => $cursor->format('M'),
+                'value' => 0,
+            ];
+        }
+
+        $monthExpr = $this->sqlYearMonth('created_at');
+        $tenancyRows = TenancyApplication::query()
+            ->selectRaw("{$monthExpr} as month_key, COUNT(*) as cnt")
+            ->where('status', '!=', Status::DRAFT)
+            ->whereBetween('created_at', [$start, $end])
+            ->groupByRaw($monthExpr)
+            ->get();
+        foreach ($tenancyRows as $row) {
+            $key = (string) $row->month_key;
+            if (isset($buckets[$key])) {
+                $buckets[$key]['value'] += (int) $row->cnt;
+            }
+        }
+
+        $serviceRows = $this->getCombinedServiceQuery(
+            null,
+            $this->allServiceModels(),
+            ['created_at_month'],
+            'created_at BETWEEN ? AND ?',
+            [$start, $end]
+        )
+            ->selectRaw('created_at_month as month_key, count(*) as cnt')
+            ->groupBy('created_at_month')
+            ->get();
+        foreach ($serviceRows as $row) {
+            $key = (string) $row->month_key;
+            if (isset($buckets[$key])) {
+                $buckets[$key]['value'] += (int) $row->cnt;
+            }
+        }
+
+        return array_values($buckets);
+    }
+
+    /**
+     * @return array<int, array{name: string, applications: int}>
+     */
+    private function topDistrictsByApplications(int $limit = 5): array
+    {
+        $tenancyByDistrict = TenancyApplication::query()
+            ->selectRaw('district_id, count(*) as count')
+            ->where('status', '!=', Status::DRAFT)
+            ->whereNotNull('district_id')
+            ->groupBy('district_id')
+            ->pluck('count', 'district_id');
+
+        $serviceByDistrict = $this->getCombinedServiceQuery(null, $this->allServiceModels(), ['district_id'])
+            ->selectRaw('district_id, count(*) as count')
+            ->groupBy('district_id')
+            ->pluck('count', 'district_id');
+
+        $ids = $tenancyByDistrict->keys()->merge($serviceByDistrict->keys())->unique()->filter();
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $names = District::query()->whereIn('id', $ids)->pluck('name', 'id');
+
+        return $ids
+            ->map(function ($id) use ($tenancyByDistrict, $serviceByDistrict, $names) {
+                $total = (int) $tenancyByDistrict->get($id, 0) + (int) $serviceByDistrict->get($id, 0);
+
+                return [
+                    'name' => (string) ($names->get($id) ?: '—'),
+                    'applications' => $total,
+                ];
+            })
+            ->filter(fn ($row) => $row['applications'] > 0)
+            ->sortByDesc('applications')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function withShare(array $rows, ?int $total = null): array
+    {
+        $sum = $total ?? array_sum(array_column($rows, 'value'));
+        return array_map(function (array $row) use ($sum) {
+            $value = (int) ($row['value'] ?? 0);
+            $row['pct'] = $sum > 0 ? (int) round(($value / $sum) * 100) : 0;
+
+            return $row;
+        }, $rows);
+    }
+
+    private function sqlYearMonth(string $column): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'pgsql' => "to_char({$column}, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', {$column})",
+            default => "DATE_FORMAT({$column}, '%Y-%m')",
+        };
     }
 }

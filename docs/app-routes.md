@@ -4,10 +4,11 @@
 
 **Source of truth:** `frontend/src/App.jsx` (+ sidebar links in `frontend/src/workspace/config/navigation.js`).
 
-**Last reviewed:** 2026-08-11
+**Last reviewed:** 2026-08-13
 
 **Related:**
 
+- [legacy-public-shell-reference.md](./legacy-public-shell-reference.md) — undefined routes, HIGHLIGHTS carousel, guest fallback shell
 - [legacy-code-map.md](./legacy-code-map.md) — workspace shell vs legacy bodies
 - [frontend-remaining-work.md](./frontend-remaining-work.md) — unfinished pages / GIGW gaps
 - [frontend-modernization-roadmap.md](./frontend-modernization-roadmap.md)
@@ -47,10 +48,15 @@ Outside the workspace shell (problem):
 | `/about` | `pages/About.jsx` | About portal / department. |
 | `/services` | `pages/Services.jsx` | Public services catalogue / how to apply. |
 | `/policies` | `pages/Policies.jsx` | Policies (partial vs GIGW expectations). |
-| `/resources` | `pages/Resources.jsx` | Resources (still largely “coming soon” / drafts). |
+| `/resources` | `pages/Resources.jsx` | Document catalogue (downloads still gated). |
 | `/contact` | `pages/Contact.jsx` | Contact / helpdesk. |
 | `/sitemap` | `pages/Sitemap.jsx` | HTML sitemap of public + auth entry links. |
-| `/public-dashboard` | `pages/PublicDashboard.jsx` | Public demo stats / transparency dashboard. |
+| `/public-dashboard` | `pages/PublicDashboard.jsx` | Public stats (prototype / gated). |
+| `/feedback` | `pages/Feedback.jsx` | GIGW feedback form (prototype, on-screen only). |
+| `/accessibility` | `pages/AccessibilityStatement.jsx` | Accessibility statement. |
+| `/help-centre` | `pages/HelpCentre.jsx` | Help / guidelines. |
+| `/guidelines` | redirect | → `/help-centre`. |
+| `*` | `pages/NotFound.jsx` | Public 404. |
 
 ---
 
@@ -60,8 +66,8 @@ Outside the workspace shell (problem):
 |------|------------------|--------|
 | `/join` | `JoinEntryRedirect` in `App.jsx` | Guest → `/login` with return to join; logged in → `/dashboard/join`. |
 | `/dashboard/join` | `pages/JoinApplication.jsx` | Second-party tenancy join (inside workspace). |
-| `/admin` | `pages/Admin.jsx` | **Legacy** states/districts/users CRUD. Not the sidebar “Manage assistants”. |
-| `/users/:id` | `pages/UserDetail.jsx` | User edit screen. **Protected but not nested under `/dashboard`.** |
+| `/admin` | redirect | → `/dashboard`. Old `pages/Admin.jsx` is no longer routed. |
+| `/users/:id` | redirect | → `/dashboard/admin/users/:id` (workspace chrome). |
 
 ---
 
@@ -75,14 +81,16 @@ Parent: `ProtectedRoute` → `workspace/layout/WorkspaceLayout.jsx` (sidebar, to
 | `/dashboard/profile` | `WorkspaceProfile` | Edit own profile. |
 | `/dashboard/tenancy-certificate` | `TenancyCertificate` | Apply / continue UIN (tenancy certificate). |
 | `/dashboard/status` | `WorkspaceUinStatus` | Citizen list of own submissions. |
-| `/dashboard/status/:type/:applicationNo` | `ApplicationDetails` in `WorkspaceLegacyFrame` | Citizen view of one application. |
+| `/dashboard/status/:type/:applicationNo` | `WorkspaceApplicationDetails` | Citizen view of one application. |
 | `/dashboard/services` | `WorkspaceServices` | Services catalogue → opens Form I–VI. |
-| `/dashboard/:formType` | `FormPortal` in `WorkspaceLegacyFrame` | Dynamic service form (e.g. `form-vi-rent-tribunal-appeal`). |
-| `/dashboard/admin/users` | `UserManagement` + legacy frame | Staff / assistants / user directory. |
+| `/dashboard/forms/:formType` | `WorkspaceFormPortal` | Dynamic service form (e.g. `form-vi-rent-tribunal-appeal`). |
+| `/dashboard/:formType` | `LegacyFormRedirect` | Known form slugs → `/dashboard/forms/...`; else workspace 404. |
+| `/dashboard/admin/users/:id` | `WorkspaceUserDetail` | Staff user edit. |
+| `/dashboard/admin/users` | `WorkspaceUsers` | Staff / assistants / user directory. |
 | `/dashboard/admin/inbox` | `ApplicationList` | Assistant / valuer queue (inbox endpoint by role). |
 | `/dashboard/admin/applications` | `ApplicationList` | Service applications (all / filters). |
 | `/dashboard/admin/applications/:applicationNo` | `WorkspaceAdminApplicationDetails` | Staff view/process Form I–VI (+ valuers, proceedings…). |
-| `/dashboard/admin/tenancy` | `TenancyRecords` + frame | UIN / tenancy application list. |
+| `/dashboard/admin/tenancy` | `WorkspaceTenancyRecords` | UIN / tenancy application list. |
 | `/dashboard/admin/tenancy/:applicationNo` | `WorkspaceAdminApplicationDetails` | Staff view of a UIN application. |
 | `/dashboard/admin/districts` | `WorkspaceDistricts` | Super Admin district management. |
 | `/dashboard/join` | `JoinApplication` | Join invite flow when authenticated. |
@@ -110,9 +118,9 @@ Unknown `:formType` → “Form not found” (no redirect).
 |-------|----------------|---------------------|
 | **`/` and `/login` both render landing** | Two pathnames, one page; join/protect use `/login`, marketing uses `/`. | Keep both for now, or canonicalize: `/login` → `/` + hash, document that intentionally. |
 | **`/#login` looks like a second site** | Users think it’s another route. | Document as hash bookmark (see above). Optional: only use AuthNavLink state without showing hash. |
-| **`/admin` vs `/dashboard/admin/*`** | Two “admin” worlds; `/admin` is old `Admin.jsx`, not in sidebar. | Redirect `/admin` → `/dashboard` or remove; move any needed CRUD into workspace. |
-| **`/users/:id` outside shell** | Opens with a11y bar but **no workspace sidebar**. | Nest as `/dashboard/admin/users/:id` (or redirect). |
-| **GIGW links in commented footer** | `/guidelines`, `/feedback`, `/help-centre` appear in dead `App.jsx` footer HTML but **have no routes**. | Add pages or delete references. |
+| **`/admin` vs `/dashboard/admin/*`** | Was two admin worlds. | **Fixed:** `/admin` redirects to `/dashboard`. |
+| **`/users/:id` outside shell** | Was missing workspace sidebar. | **Fixed:** nested under `/dashboard/admin/users/:id`. |
+| **GIGW links** | `/guidelines`, `/feedback`, `/help-centre` | **Fixed:** pages exist; `/guidelines` → help centre. |
 | **Unrouted page files still in repo** | `OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog`, `ApplicationInbox`, `Register.jsx` (dead body), thin workspace wrappers unused as routes. | Wire or delete (see remaining-work). |
 | **Citizen vs staff detail URLs** | Citizen: `/dashboard/status/:type/:applicationNo`. Staff: `/dashboard/admin/applications/:applicationNo`. Same domain, different pages. | OK if intentional; document; avoid linking the wrong one. |
 | **Inbox vs applications share `ApplicationList`** | Same component; behaviour switches on `pathname` (`…/inbox` vs `…/applications`). Easy to break with refactor. | Consider dedicated wrappers/routes or clear prop from route. |
@@ -139,44 +147,25 @@ This is the intended SPA layout: one shell, swap outlet.
 
 | Path | Problem |
 |------|---------|
-| `/admin` | Sibling of `/dashboard`, separate chrome, legacy page. |
-| `/users/:id` | Sibling of `/dashboard`; loses workspace nav / consistent title. |
+| `/admin` | **Fixed** — redirects to `/dashboard`. |
+| `/users/:id` | **Fixed** — redirects into workspace. |
 | `/join` | Top-level redirect helper (OK), but target join lives under dashboard — good split if documented. |
 | `/login` + `/` | Duplicated landing parents (not nested under a shared `PublicLayout` route). Marketing pages (`/about`, …) also each mount their own `PublicPageLayout` / nav — fine, but no shared React route layout parent. |
 
-### 5.3 Dangerous sibling: `/dashboard/:formType`
+### 5.3 Form routes: `/dashboard/forms/:formType`
 
-Declared as a **param catch-all** under `/dashboard`:
-
-```jsx
-<Route path=":formType" element={…FormPortal…} />
-```
-
-Static children (`profile`, `admin/users`, …) win when they match, but:
-
-- `/dashboard/admin` (no further segment) can fall into `:formType === "admin"` → **Form not found**.
-- Any typo (`/dashboard/profil`) becomes a form slug instead of a 404 page.
-- Future routes under `/dashboard/*` must be registered **before** `:formType` or use a reserved prefix (e.g. `/dashboard/forms/:formType`).
-
-**Preferred nesting later:**
-
-```
-/dashboard/forms/:formType     ← forms only
-/dashboard/admin/*             ← all staff tools
-/dashboard/*                   ← citizen workspace
-```
+Canonical form path is `/dashboard/forms/:formType`. Old `/dashboard/:formType` bookmarks redirect when the slug is a known service form; otherwise the workspace 404 is shown. `/dashboard/admin` (no extra segment) redirects to `/dashboard`.
 
 ### 5.4 Mixed “workspace pages” vs “legacy bodies”
 
-Several routes use **thin workspace wrappers** or **`WorkspaceLegacyFrame` + old `pages/dashboard/*`**:
+Several routes use **thin workspace wrappers** around `pages/dashboard/*` bodies (`WorkspaceLegacyFrame` has been removed):
 
 | Route area | Reality |
 |------------|---------|
-| Districts | Workspace page (`WorkspaceDistricts`) |
+| Districts / Users / User detail | Workspace pages (`ws-*` bodies) |
 | Admin application details | Workspace wrapper → `AdminApplicationDetails` |
-| Users / list / inbox / tenancy / forms | Still mostly legacy components inside frame |
-
-Nesting in the **router** is fine; nesting of **code ownership** is incomplete (see legacy-code-map).
+| Service list / inbox / tenancy list | Workspace wrappers → list pages |
+| Forms / citizen details / UIN apply | Workspace wrappers or `ws-page` directly |
 
 ---
 
@@ -210,7 +199,7 @@ Links that staff **use** but aren’t always in sidebar still exist as deep link
 4. **Medium — dead pages**
    - Delete or route `OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog`, unused `ApplicationInbox`.
 5. **Low — GIGW**
-   - Add `/feedback`, accessibility statement, fuller policies, help centre — or stop advertising them.
+   - Expand policy text; connect feedback form to a real mailbox.
 
 ---
 
@@ -223,17 +212,21 @@ Links that staff **use** but aren’t always in sidebar still exist as deep link
 /about /services /policies
 /resources /contact /sitemap
 /public-dashboard
+/feedback /accessibility /help-centre
+/guidelines                        → /help-centre
 /join                              → login or /dashboard/join
-/admin                             LEGACY (avoid)
-/users/:id                         LEGACY chrome gap
+/admin                             → /dashboard
+/users/:id                         → /dashboard/admin/users/:id
 /dashboard
 /dashboard/profile
 /dashboard/tenancy-certificate
 /dashboard/status
 /dashboard/status/:type/:applicationNo
 /dashboard/services
-/dashboard/:formType               Form I–VI (catch-all)
+/dashboard/forms/:formType         Form I–VI
+/dashboard/:formType               redirect known forms or 404
 /dashboard/admin/users
+/dashboard/admin/users/:id
 /dashboard/admin/inbox
 /dashboard/admin/applications
 /dashboard/admin/applications/:applicationNo
@@ -241,9 +234,12 @@ Links that staff **use** but aren’t always in sidebar still exist as deep link
 /dashboard/admin/tenancy/:applicationNo
 /dashboard/admin/districts
 /dashboard/join
+*                                  public 404
 ```
 
 **Not routes:** `/#login`, `/#register`.
+
+**Catch-all:** Public `*` → `NotFound`. Dashboard unknown slugs → `WorkspaceNotFound` (via `LegacyFormRedirect`). See [legacy-public-shell-reference.md](./legacy-public-shell-reference.md).
 
 ---
 

@@ -6,32 +6,39 @@ import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { useDistricts } from '../../../hooks/useDistricts'
 import { formatDate } from '../../../utils/formatters'
 import { APPLICATION_TYPES } from '../../../constants/application'
-import { ADMIN_ROLES, ROLES } from '../../../constants/roles'
-import { STATUS, STATUS_LABELS } from '../../../constants/status'
+import { ROLES, TENANCY_STAFF_ROLES } from '../../../constants/roles'
+import { STATUS } from '../../../constants/status'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
+import { useLanguage } from '../../../i18n'
 import './TenancyRecords.css'
 
-const STATUS_PILLS = [
-	{ value: '', label: 'All' },
-	{ value: STATUS.APPROVED, label: 'Approved' },
-	{ value: STATUS.REJECTED, label: 'Rejected' },
-	{ value: STATUS.IN_REVIEW, label: 'In review' },
-]
+function buildStatusPills(t) {
+	return [
+		{ value: '', label: t('ws.users.filter.all') },
+		{ value: STATUS.APPROVED, label: t('ws.status.approved') },
+		{ value: STATUS.REJECTED, label: t('ws.status.rejected') },
+		{ value: STATUS.IN_REVIEW, label: t('ws.status.inReview') },
+	]
+}
 
-const SORT_OPTIONS = [
-	{ key: 'created_at', label: 'Date' },
-	{ key: 'application_no', label: 'Application no.' },
-	{ key: 'uid', label: 'UIN' },
-	{ key: 'applicant', label: 'Applicant' },
-	{ key: 'district', label: 'District' },
-	{ key: 'status', label: 'Status' },
-]
+function buildSortOptions(t) {
+	return [
+		{ key: 'created_at', label: t('ws.adminApps.col.date') },
+		{ key: 'application_no', label: t('ws.adminApps.col.appNo') },
+		{ key: 'uid', label: t('ws.adminTenancy.col.uin') },
+		{ key: 'applicant', label: t('ws.adminApps.col.applicant') },
+		{ key: 'district', label: t('ws.users.col.district') },
+		{ key: 'status', label: t('ws.users.col.status') },
+	]
+}
 
 const TenancyRecords = ({ user }) => {
+	const { t } = useLanguage()
 	const navigate = useNavigate()
 	const [records, setRecords] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
+	const [reloadKey, setReloadKey] = useState(0)
 	const [page, setPage] = useState(1)
 	const [paginationInfo, setPaginationInfo] = useState(null)
 	
@@ -48,8 +55,8 @@ const TenancyRecords = ({ user }) => {
 	const recordsRefHasData = useRef(false)
 
 	useEffect(() => {
-		if (![...ADMIN_ROLES, ROLES.RENT_AUTHORITY, ROLES.RA_ASSISTANT].includes(user?.role)) {
-			navigate('/dashboard')
+		if (user?.role && !TENANCY_STAFF_ROLES.includes(user.role)) {
+			navigate('/dashboard', { replace: true })
 		}
 	}, [user?.role, navigate])
 
@@ -76,14 +83,14 @@ const TenancyRecords = ({ user }) => {
 			recordsRefHasData.current = true
 			setPaginationInfo(data.pagination || null)
 		} catch {
-			setError('Failed to load tenancy applications')
+			setError(t('ws.adminTenancy.error'))
 		} finally {
 			setLoading(false)
 		}
-	}, [page, filters])
+	}, [page, filters, reloadKey, t])
 
 	useEffect(() => {
-		if ([...ADMIN_ROLES, ROLES.RENT_AUTHORITY, ROLES.RA_ASSISTANT].includes(user?.role)) {
+		if (TENANCY_STAFF_ROLES.includes(user?.role)) {
 			fetchRecords()
 		}
 	}, [fetchRecords, user?.role])
@@ -179,15 +186,18 @@ const TenancyRecords = ({ user }) => {
 		})
 	}
 
+	const statusPills = useMemo(() => buildStatusPills(t), [t])
+	const sortOptions = useMemo(() => buildSortOptions(t), [t])
+
 	const statusFilterLabel = filters.status
-		? STATUS_LABELS[filters.status] || filters.status
-		: 'All'
+		? adminStatusLabel(filters.status, t)
+		: t('ws.users.filter.all')
 
 	const filterToolbar = (
 		<div className="admin-tenancy-panel">
 			<div className="admin-tenancy-panel__top">
 				<label className="admin-tenancy-panel__search">
-					<span className="admin-tenancy-panel__label">Search UIN applications</span>
+					<span className="admin-tenancy-panel__label">{t('ws.adminTenancy.search')}</span>
 					<div className="admin-tenancy-panel__search-field">
 						<Icon name="search" className="admin-tenancy-panel__search-icon" />
 						<input
@@ -196,7 +206,7 @@ const TenancyRecords = ({ user }) => {
 							type="search"
 							value={searchInput}
 							onChange={(e) => setSearchInput(e.target.value)}
-							placeholder="Application number, e.g. APP-…"
+							placeholder={t('ws.adminTenancy.searchPh')}
 							autoComplete="off"
 							spellCheck={false}
 						/>
@@ -205,10 +215,10 @@ const TenancyRecords = ({ user }) => {
 			</div>
 
 			<div className="admin-tenancy-panel__filters">
-				<div className="admin-tenancy-panel__status" role="group" aria-label="Filter by status">
-					<span className="admin-tenancy-panel__label">Status</span>
+				<div className="admin-tenancy-panel__status" role="group" aria-label={t('ws.adminTenancy.filter.statusAria')}>
+					<span className="admin-tenancy-panel__label">{t('ws.users.filter.status')}</span>
 					<div className="admin-tenancy-panel__status-pills">
-						{STATUS_PILLS.map((pill) => (
+						{statusPills.map((pill) => (
 							<button
 								key={pill.value || 'all'}
 								type="button"
@@ -227,14 +237,14 @@ const TenancyRecords = ({ user }) => {
 
 				{user?.role === ROLES.SUPER_ADMIN ? (
 					<label className="admin-tenancy-panel__field">
-						<span className="admin-tenancy-panel__label">District</span>
+						<span className="admin-tenancy-panel__label">{t('ws.users.filter.district')}</span>
 						<select
 							id="tenancy-district"
 							className="admin-tenancy-panel__select"
 							value={filters.district_id}
 							onChange={(e) => handleFilterChange('district_id', e.target.value)}
 						>
-							<option value="">All districts</option>
+							<option value="">{t('ws.users.filter.allDistricts')}</option>
 							{districts.map((d) => (
 								<option key={d.id} value={d.id}>
 									{d.name}
@@ -245,7 +255,7 @@ const TenancyRecords = ({ user }) => {
 				) : null}
 
 				<label className="admin-tenancy-panel__field">
-					<span className="admin-tenancy-panel__label">Sort by</span>
+						<span className="admin-tenancy-panel__label">{t('ws.users.sort.label')}</span>
 					<select
 						id="tenancy-sort-by"
 						className="admin-tenancy-panel__select"
@@ -258,7 +268,7 @@ const TenancyRecords = ({ user }) => {
 							}))
 						}
 					>
-						{SORT_OPTIONS.map((opt) => (
+						{sortOptions.map((opt) => (
 							<option key={opt.key} value={opt.key}>
 								{opt.label}
 							</option>
@@ -269,15 +279,22 @@ const TenancyRecords = ({ user }) => {
 
 			<div className="admin-tenancy-panel__meta">
 				<p className="admin-tenancy-panel__summary">
-					Showing <strong>{sortedRecords.length}</strong> UIN application
-					{sortedRecords.length === 1 ? '' : 's'}
+					{t(
+						sortedRecords.length === 1
+							? 'ws.adminTenancy.summaryOne'
+							: 'ws.adminTenancy.summary',
+						{ shown: sortedRecords.length },
+					)}
 					{filters.status ? (
 						<>
 							{' '}
-							· Status: <strong>{statusFilterLabel}</strong>
+							· {t('ws.adminApps.summaryStatus', { status: statusFilterLabel })}
 						</>
 					) : null}
-					<span className="admin-tenancy-panel__note"> · Service forms are listed separately</span>
+					<span className="admin-tenancy-panel__note">
+						{' '}
+						· {t('ws.adminTenancy.note')}
+					</span>
 				</p>
 
 				{hasActiveFilters ? (
@@ -286,7 +303,7 @@ const TenancyRecords = ({ user }) => {
 						className="ws-btn ws-btn--outline ws-btn--sm admin-tenancy-panel__clear"
 						onClick={clearFilters}
 					>
-						Clear filters
+						{t('ws.users.clearFilters')}
 					</button>
 				) : null}
 			</div>
@@ -297,12 +314,19 @@ const TenancyRecords = ({ user }) => {
 		<>
 			{error ? (
 				<div className="ws-profile-alert ws-profile-alert--error" role="alert">
-					{error}
+					<span>{error}</span>
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm"
+						onClick={() => setReloadKey((key) => key + 1)}
+					>
+						{t('ws.adminTenancy.retry')}
+					</button>
 				</div>
 			) : null}
 
 			<DataTable
-				title="Tenancy applications (UIN)"
+				title={t('ws.adminTenancy.tableTitle')}
 				accent="uin"
 				loading={loading}
 				data={sortedRecords}
@@ -316,42 +340,42 @@ const TenancyRecords = ({ user }) => {
 				columns={[
 					{
 						key: 'application_no',
-						label: 'Application no.',
+						label: t('ws.adminApps.col.appNo'),
 						mono: true,
 						sortable: true,
 					},
 					{
 						key: 'uid',
-						label: 'UIN',
+						label: t('ws.adminTenancy.col.uin'),
 						mono: true,
 						sortable: true,
 						render: (val) => val || '—',
 					},
 					{
 						key: 'applicant',
-						label: 'Applicant',
+						label: t('ws.adminApps.col.applicant'),
 						sortable: true,
 						render: (_, row) => row.landlord_name || row.tenant_name || '—',
 					},
 					{
 						key: 'district',
-						label: 'District',
+						label: t('ws.users.col.district'),
 						sortable: true,
 						render: (val) => val?.name || '—',
 					},
 					{
 						key: 'status',
-						label: 'Status',
+						label: t('ws.users.col.status'),
 						sortable: true,
 						render: (val) => (
 							<span className={adminStatusBadgeClass(val)}>
-								{adminStatusLabel(val)}
+								{adminStatusLabel(val, t)}
 							</span>
 						),
 					},
 					{
 						key: 'created_at',
-						label: 'Date',
+						label: t('ws.adminApps.col.date'),
 						sortable: true,
 						render: (val) => formatDate(val),
 					},
@@ -360,8 +384,10 @@ const TenancyRecords = ({ user }) => {
 					<button
 						type="button"
 						className="ws-status-action-btn ws-status-action-btn--view"
-						title="View details"
-						aria-label={`View ${record.application_no || 'application'}`}
+						title={t('ws.adminApps.viewTitle')}
+						aria-label={t('ws.adminApps.viewAria', {
+							appNo: record.application_no || t('ws.adminTenancy.col.uin'),
+						})}
 						onClick={(e) => {
 							e.preventDefault()
 							e.stopPropagation()
@@ -369,10 +395,10 @@ const TenancyRecords = ({ user }) => {
 						}}
 					>
 						<Icon name="eye" />
-						<span>View</span>
+						<span>{t('ws.users.action.view')}</span>
 					</button>
 				)}
-				emptyMessage="No UIN tenancy applications found."
+				emptyMessage={t('ws.adminTenancy.empty')}
 				pagination={
 					paginationInfo
 						? {

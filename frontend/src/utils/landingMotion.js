@@ -3,6 +3,22 @@
 export const easePlayful = [0.34, 1.45, 0.64, 1]
 export const easeOutExpo = [0.22, 1, 0.36, 1]
 
+/** Shared landing section entrance — large fade-in-up */
+export const fadeInUpBigVariants = {
+	hidden: { opacity: 0, y: 80 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: {
+			duration: 1.05,
+			ease: easeOutExpo,
+			when: 'beforeChildren',
+			staggerChildren: 0.12,
+			delayChildren: 0.1,
+		},
+	},
+}
+
 /* ── Modern scroll intros (Services / Stats / Benefits) ── */
 export const scrollSectionVariants = {
 	hidden: {},
@@ -501,62 +517,52 @@ export const faqItemVariants = {
 	},
 }
 
+export const scrollStatSectionVariants = fadeInUpBigVariants
+
 export const scrollStatRailVariants = {
-	hidden: { opacity: 0, y: 36 },
+	hidden: {},
 	visible: {
-		opacity: 1,
-		y: 0,
 		transition: {
-			duration: 0.52,
-			ease: easeOutExpo,
-			staggerChildren: 0.12,
-			delayChildren: 0.06,
+			staggerChildren: 0.14,
+			delayChildren: 0.22,
 		},
 	},
 }
 
 export const scrollStatItemVariants = {
-	hidden: { opacity: 0, y: 36, scale: 0.78, rotate: -3 },
+	hidden: { opacity: 0, y: 42 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		scale: 1,
-		rotate: 0,
 		transition: {
-			type: 'spring',
-			stiffness: 320,
-			damping: 16,
-			mass: 0.75,
-			staggerChildren: 0.06,
+			duration: 0.85,
+			ease: easeOutExpo,
+			staggerChildren: 0.08,
 			delayChildren: 0.04,
 		},
 	},
 }
 
 export const scrollStatIconVariants = {
-	hidden: { opacity: 0, scale: 0.35, rotate: -18 },
+	hidden: { opacity: 0, y: 22 },
 	visible: {
 		opacity: 1,
-		scale: 1,
-		rotate: 0,
+		y: 0,
 		transition: {
-			type: 'spring',
-			stiffness: 460,
-			damping: 14,
-			mass: 0.6,
+			duration: 0.7,
+			ease: easeOutExpo,
 		},
 	},
 }
 
 export const scrollStatLabelVariants = {
-	hidden: { opacity: 0, y: 12 },
+	hidden: { opacity: 0, y: 18 },
 	visible: {
 		opacity: 1,
 		y: 0,
 		transition: {
-			type: 'spring',
-			stiffness: 300,
-			damping: 22,
+			duration: 0.7,
+			ease: easeOutExpo,
 		},
 	},
 }
@@ -704,24 +710,21 @@ export const showcaseCardHover = {
 	transition: { type: 'spring', stiffness: 420, damping: 22 },
 }
 
-/** Landing hero — one-time intro on copy; carousel slides horizontally */
+/** Landing hero — one-time intro on copy; carousel crossfades */
 const heroIntroEase = [0.22, 1, 0.36, 1]
 
 export const heroSlideVariants = {
-	enter: (direction = 1) => ({
-		x: direction >= 0 ? '100%' : '-100%',
-		opacity: 1,
-	}),
-	center: {
-		x: 0,
-		opacity: 1,
-		transition: { duration: 0.95, ease: heroIntroEase },
+	enter: {
+		opacity: 0,
 	},
-	exit: (direction = 1) => ({
-		x: direction >= 0 ? '-100%' : '100%',
+	center: {
 		opacity: 1,
-		transition: { duration: 0.9, ease: [0.4, 0, 0.2, 1] },
-	}),
+		transition: { duration: 0.4, ease: heroIntroEase },
+	},
+	exit: {
+		opacity: 0,
+		transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+	},
 }
 
 export const heroCopyContainerVariants = {

@@ -1,11 +1,9 @@
-import WorkspacePageHeader from '../../components/WorkspacePageHeader'
 import AdminApplicationDetails from '../../../pages/dashboard/admin/AdminApplicationDetails'
 
-/** Workspace route entry for admin application detail (compact header). */
+/** Workspace route entry for admin application detail. */
 function WorkspaceAdminApplicationDetails() {
 	return (
-		<div className="ws-page ws-legacy-page ws-admin-page">
-			<WorkspacePageHeader title={null} subtitle={null} />
+		<div className="ws-page ws-admin-page">
 			<AdminApplicationDetails />
 		</div>
 	)

@@ -234,13 +234,6 @@ export function getWorkspaceNavigation(user) {
 	]
 }
 
-/** Citizen sidebar — helpdesk contact shown below main nav */
-export const WORKSPACE_SUPPORT_CONTACT = {
-	phoneDisplay: '1800-000-0000',
-	phoneHref: 'tel:18000000000',
-	email: 'helpdesk.tcms@nic.in',
-}
-
 export function showWorkspaceSupport(user) {
 	return user?.role === ROLES.USER
 }

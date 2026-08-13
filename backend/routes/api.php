@@ -44,6 +44,7 @@ Route::get('/public/states', [StateController::class, 'publicIndex']);
 Route::get('/public/districts', [DistrictController::class, 'publicIndex']);
 Route::get('/public/offices', [OfficeController::class, 'publicIndex']);
 Route::get('/public/village-wards', [VillageWardController::class, 'publicIndex']);
+Route::get('/public/portal-stats', [DashboardController::class, 'publicStats']);
 Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplicationController::class, 'receipt']);
 Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
 
@@ -131,6 +132,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
         Route::post('/users', [UserManagementController::class, 'store']);
         Route::put('/users/{user}', [UserManagementController::class, 'update']);
         // Users are deactivated (blocked), not deleted, to preserve history.
+        Route::post('/users/{user}/approve', [UserManagementController::class, 'approve']);
         Route::post('/users/{user}/toggle-block', [UserManagementController::class, 'toggleBlock']);
     });
 

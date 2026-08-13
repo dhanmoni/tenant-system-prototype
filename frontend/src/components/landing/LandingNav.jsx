@@ -12,7 +12,7 @@ import digitalIndiaLogo from '../../assets/img/digital-india.png'
 import { useAuthSession } from '../../context/AuthSessionContext'
 import { useLanguage } from '../../i18n'
 
-function LandingNav({ variant = 'overlay' }) {
+function LandingNav({ variant = 'static' }) {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const location = useLocation()
 	const { t } = useLanguage()

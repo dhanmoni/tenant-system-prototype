@@ -15,11 +15,15 @@ const sectionShellVariants = {
 	},
 }
 
-/** Left column — orchestrates a clean cascade */
+/** Left column — big fade-in plus original cascade */
 const promoColVariants = {
-	hidden: {},
+	hidden: { opacity: 0, y: 56 },
 	visible: {
+		opacity: 1,
+		y: 0,
 		transition: {
+			duration: 0.62,
+			ease: easeOutExpo,
 			staggerChildren: 0.11,
 			delayChildren: 0.05,
 		},

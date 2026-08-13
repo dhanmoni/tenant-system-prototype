@@ -47,7 +47,7 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 			const rect = triggerRef.current.getBoundingClientRect()
 			setPanelPos({
 				top: rect.bottom + 10,
-				left: rect.left + rect.width / 2,
+				left: rect.left,
 			})
 		}
 

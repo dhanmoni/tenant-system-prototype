@@ -14,6 +14,16 @@ class DashboardController extends Controller
     }
 
     /**
+     * Public transparency totals (no personal data). Cached briefly.
+     */
+    public function publicStats()
+    {
+        $stats = cache()->remember('public_portal_stats', 60, fn () => $this->dashboardStats->publicPortalStats());
+
+        return response()->json($stats);
+    }
+
+    /**
      * Dashboard statistics for system admin.
      */
     public function stats(Request $request)

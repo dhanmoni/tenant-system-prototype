@@ -1,11 +1,31 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useOutletContext, useParams } from 'react-router-dom'
 import api, { csrf } from '../api'
-import { ROLES, ADMIN_ROLES } from '../constants/roles'
+import { PRINCIPAL_ROLES, ROLES } from '../constants/roles'
+import { getRoleLabel } from '../constants/roleLabels'
+import { formatDateTime } from '../utils/formatters'
+import { useToast } from '../context/ToastContext'
+import WorkflowConfirmModal from '../components/dashboard/WorkflowConfirmModal'
+import { useLanguage } from '../i18n'
 
-function UserDetail({ user: currentUser }) {
+function isCitizenRole(role) {
+	return String(role || '').toLowerCase().trim() === ROLES.USER
+}
+
+function canToggleStatus(currentUser, target) {
+	if (!currentUser || !target) return false
+	if (target.id === currentUser.id) return false
+	if (currentUser.role === ROLES.SUPER_ADMIN) return true
+	if (target.role === ROLES.SUPER_ADMIN) return false
+	return [ROLES.DISTRICT_ADMIN, ...PRINCIPAL_ROLES].includes(currentUser.role)
+}
+
+function UserDetail({ user: currentUserProp }) {
+	const { user: outletUser } = useOutletContext() || {}
+	const currentUser = currentUserProp || outletUser
 	const { id } = useParams()
-	const navigate = useNavigate()
+	const { showToast } = useToast()
+	const { t } = useLanguage()
 	const [user, setUser] = useState(null)
 	const [editMode, setEditMode] = useState(false)
 	const [form, setForm] = useState({
@@ -20,7 +40,10 @@ function UserDetail({ user: currentUser }) {
 	const [designations, setDesignations] = useState([])
 	const [roles, setRoles] = useState([])
 	const [error, setError] = useState('')
-	const [success, setSuccess] = useState('')
+	const [saving, setSaving] = useState(false)
+	const [statusModal, setStatusModal] = useState(null)
+	const [statusReason, setStatusReason] = useState('')
+	const [statusLoading, setStatusLoading] = useState(false)
 
 	const loadUser = async () => {
 		try {
@@ -37,7 +60,7 @@ function UserDetail({ user: currentUser }) {
 				role: data.user?.role || '',
 			})
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to load user')
+			setError(err?.response?.data?.message || t('ws.userDetail.error.load'))
 		}
 	}
 
@@ -52,7 +75,7 @@ function UserDetail({ user: currentUser }) {
 			setDesignations(designationRes.data?.data || [])
 			setRoles(roleRes.data?.data || [])
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to load options')
+			setError(err?.response?.data?.message || t('ws.userDetail.error.options'))
 		}
 	}
 
@@ -61,9 +84,13 @@ function UserDetail({ user: currentUser }) {
 		loadOptions()
 	}, [id])
 
+	const listPath = isCitizenRole(user?.role)
+		? '/dashboard/admin/users?mode=tenant'
+		: '/dashboard/admin/users?mode=office'
+
 	const handleUpdate = async () => {
 		setError('')
-		setSuccess('')
+		setSaving(true)
 		try {
 			await csrf()
 			await api.put(`/api/users/${id}`, {
@@ -74,273 +101,342 @@ function UserDetail({ user: currentUser }) {
 				designation_id: form.designation_id || null,
 				role: form.role,
 			})
-			setSuccess('User updated successfully.')
 			setEditMode(false)
+			showToast(t('ws.userDetail.toast.updated'), 'success')
 			await loadUser()
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to update user')
+			setError(err?.response?.data?.message || t('ws.userDetail.error.update'))
+		} finally {
+			setSaving(false)
 		}
 	}
 
 	const handleApprove = async () => {
 		setError('')
-		setSuccess('')
 		try {
 			await csrf()
 			await api.post(`/api/users/${id}/approve`)
-			setSuccess('User approved successfully.')
+			showToast(t('ws.userDetail.toast.approved'), 'success')
 			await loadUser()
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to approve user')
+			setError(err?.response?.data?.message || t('ws.userDetail.error.approve'))
 		}
 	}
 
-	const handleDelete = async () => {
+	const openStatusModal = (deactivating) => {
 		setError('')
-		setSuccess('')
+		setStatusReason('')
+		setStatusModal({ deactivating })
+	}
+
+	const closeStatusModal = () => {
+		setStatusModal(null)
+		setStatusReason('')
+	}
+
+	const handleToggleBlock = async () => {
+		if (!user || !statusModal) return
+		const deactivating = statusModal.deactivating
+		const reason = statusReason.trim()
+		if (deactivating && !reason) return
+		setError('')
+		setStatusLoading(true)
 		try {
 			await csrf()
-			await api.delete(`/api/users/${id}`)
-			navigate('/dashboard')
+			await api.post(
+				`/api/users/${user.id}/toggle-block`,
+				deactivating ? { reason } : {},
+			)
+			closeStatusModal()
+			showToast(
+				deactivating
+					? t('ws.userDetail.toast.deactivated')
+					: t('ws.userDetail.toast.activated'),
+				'success',
+			)
+			await loadUser()
 		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to delete user')
+			setError(err?.response?.data?.message || t('ws.userDetail.error.status'))
+		} finally {
+			setStatusLoading(false)
 		}
 	}
 
 	if (!user) {
 		return (
-			<div className="auth-card dashboard-card">
-				<h1>User Details</h1>
-				{error ? <div className="error">{error}</div> : null}
-				<p className="muted">Loading user...</p>
+			<div className="ws-user-detail">
+				{error ? <p className="ws-user-detail__alert" role="alert">{error}</p> : null}
+				<p className="ws-muted">{t('ws.userDetail.loading')}</p>
 			</div>
 		)
 	}
 
+	const citizen = isCitizenRole(user.role)
+	const statusLabel = user.is_blocked
+		? t('ws.userDetail.status.blocked')
+		: user.approved_at
+			? t('ws.userDetail.status.approved')
+			: t('ws.userDetail.status.pending')
+
 	return (
-		<section className="dashboard-layout">
-			<aside className="dashboard-menu">
-				<nav className="dashboard-links">
-					<Link className="dashboard-link" to="/dashboard">
-						Dashboard
-					</Link>
-					{currentUser?.role !== ROLES.USER && currentUser?.role !== ROLES.SUPER_ADMIN ? (
-						<>
-							<Link className="dashboard-link" to="/dashboard">
-								State Managment
-							</Link>
-							<Link className="dashboard-link" to="/dashboard">
-								District Managment
-							</Link>
-							<Link className="dashboard-link" to="/dashboard">
-								Office Managment
-							</Link>
-							<Link className="dashboard-link" to="/dashboard">
-								Role Managment
-							</Link>
-							<Link className="dashboard-link" to="/dashboard">
-								User Managment
-							</Link>
-						</>
-					) : null}
-				</nav>
-			</aside>
-			<div className="auth-card dashboard-card">
-				<div className="admin-header">
-					<div>
-						<h1>User Details</h1>
-						<p className="muted">Manage user information and approvals.</p>
-					</div>
-				</div>
-				{error ? <div className="error">{error}</div> : null}
-				{success ? <div className="admin-success">{success}</div> : null}
-				<div className="admin-card user-detail-grid user-detail-section">
-					<label>
-						Name
-						{editMode ? (
-							<input
-								type="text"
-								value={form.name}
-								onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-							/>
-						) : (
-							<div className="muted">{user.name}</div>
-						)}
+		<div className="ws-user-detail">
+			<p className="ws-breadcrumb">
+				<Link to={listPath}>{t('ws.userDetail.breadcrumb')}</Link>
+				<span className="ws-breadcrumb-sep" aria-hidden>
+					/
+				</span>
+				<span>{user.name || t('ws.userDetail.fallbackName')}</span>
+			</p>
+
+			{error ? <p className="ws-user-detail__alert" role="alert">{error}</p> : null}
+
+			<div className="ws-user-detail__grid">
+				<div className="ws-user-detail__field">
+					<label className="ws-user-detail__label" htmlFor="user-detail-name">
+						{t('ws.userDetail.name')}
 					</label>
-					<label>
-						Email
-						{editMode ? (
-							<input
-								type="email"
-								value={form.email}
-								onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-							/>
-						) : (
-							<div className="muted">{user.email}</div>
-						)}
-					</label>
-					<label>
-						Phone
-						{editMode ? (
-							<input
-								type="text"
-								value={form.phone}
-								onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-							/>
-						) : (
-							<div className="muted">{user.phone || '-'}</div>
-						)}
-					</label>
-					{
-						String(user.role || '').toLowerCase().trim() === ROLES.USER ? null : (
-						<>
-							<label>
-								Office
-								{editMode ? (
-									<select
-										value={form.office_id}
-										onChange={(e) =>
-											setForm((prev) => ({ ...prev, office_id: e.target.value }))
-										}
-									>
-										<option value="">---SELECT---</option>
-										{offices.map((office) => (
-											<option key={office.id} value={office.id}>
-												{office.name}
-											</option>
-										))}
-									</select>
-								) : (
-									<div className="muted">{user.office?.name || 'Unassigned'}</div>
-								)}
-							</label>
-							<label>
-								Designation
-								{editMode ? (
-									<select
-										value={form.designation_id}
-										onChange={(e) =>
-											setForm((prev) => ({ ...prev, designation_id: e.target.value }))
-										}
-									>
-										<option value="">---SELECT---</option>
-										{designations.map((designation) => (
-											<option key={designation.id} value={designation.id}>
-												{designation.name}
-											</option>
-										))}
-									</select>
-								) : (
-									<div className="muted">
-										{user.designation?.name || 'Unassigned'}
-									</div>
-								)}
-							</label>
-						</>
+					{editMode ? (
+						<input
+							id="user-detail-name"
+							className="ws-user-detail__control"
+							type="text"
+							value={form.name}
+							onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+						/>
+					) : (
+						<p className="ws-user-detail__value">{user.name || '—'}</p>
 					)}
-					{
-						String(user.role || '').toLowerCase().trim() === ROLES.USER ? null : (
-						<label>
-							Role
+				</div>
+
+				<div className="ws-user-detail__field">
+					<label className="ws-user-detail__label" htmlFor="user-detail-email">
+						{t('ws.userDetail.email')}
+					</label>
+					{editMode ? (
+						<input
+							id="user-detail-email"
+							className="ws-user-detail__control"
+							type="email"
+							value={form.email}
+							onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+						/>
+					) : (
+						<p className="ws-user-detail__value">{user.email || '—'}</p>
+					)}
+				</div>
+
+				<div className="ws-user-detail__field">
+					<label className="ws-user-detail__label" htmlFor="user-detail-phone">
+						{t('ws.userDetail.phone')}
+					</label>
+					{editMode ? (
+						<input
+							id="user-detail-phone"
+							className="ws-user-detail__control"
+							type="text"
+							value={form.phone}
+							onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+						/>
+					) : (
+						<p className="ws-user-detail__value">{user.phone || '—'}</p>
+					)}
+				</div>
+
+				{citizen ? null : (
+					<>
+						<div className="ws-user-detail__field">
+							<label className="ws-user-detail__label" htmlFor="user-detail-office">
+								{t('ws.userDetail.office')}
+							</label>
 							{editMode ? (
 								<select
+									id="user-detail-office"
+									className="ws-user-detail__control"
+									value={form.office_id}
+									onChange={(e) =>
+										setForm((prev) => ({ ...prev, office_id: e.target.value }))
+									}
+								>
+									<option value="">{t('ws.userDetail.selectOffice')}</option>
+									{offices.map((office) => (
+										<option key={office.id} value={office.id}>
+											{office.name}
+										</option>
+									))}
+								</select>
+							) : (
+								<p className="ws-user-detail__value">{user.office?.name || t('ws.userDetail.unassigned')}</p>
+							)}
+						</div>
+						<div className="ws-user-detail__field">
+							<label className="ws-user-detail__label" htmlFor="user-detail-designation">
+								{t('ws.userDetail.designation')}
+							</label>
+							{editMode ? (
+								<select
+									id="user-detail-designation"
+									className="ws-user-detail__control"
+									value={form.designation_id}
+									onChange={(e) =>
+										setForm((prev) => ({ ...prev, designation_id: e.target.value }))
+									}
+								>
+									<option value="">{t('ws.userDetail.selectDesignation')}</option>
+									{designations.map((designation) => (
+										<option key={designation.id} value={designation.id}>
+											{designation.name}
+										</option>
+									))}
+								</select>
+							) : (
+								<p className="ws-user-detail__value">
+									{user.designation?.name || t('ws.userDetail.unassigned')}
+								</p>
+							)}
+						</div>
+						<div className="ws-user-detail__field">
+							<label className="ws-user-detail__label" htmlFor="user-detail-role">
+								{t('ws.userDetail.role')}
+							</label>
+							{editMode ? (
+								<select
+									id="user-detail-role"
+									className="ws-user-detail__control"
 									value={form.role}
 									onChange={(e) =>
 										setForm((prev) => ({ ...prev, role: e.target.value }))
 									}
 								>
-									<option value="">---SELECT---</option>
+									<option value="">{t('ws.userDetail.selectRole')}</option>
 									{roles.map((role) => (
 										<option key={role.id} value={role.name}>
-											{role.name}
+											{getRoleLabel(role.name, t)}
 										</option>
 									))}
 								</select>
 							) : (
-								<div className="muted">{user.role}</div>
+								<p className="ws-user-detail__value">{getRoleLabel(user.role, t)}</p>
 							)}
-						</label>
-					)}
-					<label>
-						Status
-						<div className="muted">
-							{user.is_blocked
-								? 'Blocked'
-								: user.approved_at
-									? 'Approved'
-									: 'Pending'}
 						</div>
-					</label>
-					<label>
-						Created date
-						<div className="muted">
-							{user.created_at ? new Date(user.created_at).toLocaleString() : '-'}
-						</div>
-					</label>
-					{
-						currentUser?.role === ROLES.SUPER_ADMIN &&
-							(String(user.role || '').toLowerCase().trim() === ROLES.USER) ? (
-							<label>
-								Block user
-								<label className="toggle-switch">
-									<input
-										type="checkbox"
-										checked={Boolean(user.is_blocked)}
-										onChange={async () => {
-											setError('')
-											setSuccess('')
-											try {
-												await csrf()
-												await api.post(`/api/users/${user.id}/toggle-block`)
-												await loadUser()
-											} catch (err) {
-												setError(
-													err?.response?.data?.message || 'Failed to update status'
-												)
-											}
-										}}
-									/>
-									<span className="toggle-slider" />
-								</label>
-							</label>
-						) : null
-					}
+					</>
+				)}
+
+				<div className="ws-user-detail__field">
+					<span className="ws-user-detail__label">{t('ws.userDetail.status')}</span>
+					<p className="ws-user-detail__value">{statusLabel}</p>
 				</div>
-				<div className="nav-actions user-detail-actions">
-					{String(user.role || '').toLowerCase().trim() === ROLES.USER ||
-						String(user.role || '').toLowerCase().trim() === ROLES.USER ? null : editMode ? (
-							<>
-								<button type="button" onClick={handleUpdate}>
-									Save
-								</button>
-								<button
-									type="button"
-									className="secondary"
-									onClick={() => setEditMode(false)}
-								>
-									Cancel
-								</button>
-							</>
-						) : (
-						<>
-							<button type="button" onClick={() => setEditMode(true)}>
-								Edit
-							</button>
-							{currentUser?.role === ROLES.SUPER_ADMIN && !user.approved_at ? (
-								<button type="button" onClick={handleApprove}>
-									Approve
-								</button>
-							) : null}
-							<button type="button" className="secondary" onClick={handleDelete}>
-								Delete
-							</button>
-						</>
-					)}
+				<div className="ws-user-detail__field">
+					<span className="ws-user-detail__label">{t('ws.userDetail.created')}</span>
+					<p className="ws-user-detail__value">{formatDateTime(user.created_at)}</p>
 				</div>
+				{user.is_blocked && user.block_reason ? (
+					<div className="ws-user-detail__field">
+						<span className="ws-user-detail__label">{t('ws.userDetail.blockReason')}</span>
+						<p className="ws-user-detail__value">{user.block_reason}</p>
+					</div>
+				) : null}
 			</div>
-		</section>
+
+			<div className="ws-user-detail__actions">
+				{!citizen && editMode ? (
+					<>
+						<button
+							type="button"
+							className="ws-btn ws-btn--primary"
+							onClick={handleUpdate}
+							disabled={saving}
+						>
+							{saving ? t('ws.userDetail.saving') : t('ws.userDetail.save')}
+						</button>
+						<button
+							type="button"
+							className="ws-btn ws-btn--outline"
+							onClick={() => setEditMode(false)}
+							disabled={saving}
+						>
+							{t('ws.userDetail.cancel')}
+						</button>
+					</>
+				) : (
+					<>
+						{citizen ? null : (
+							<button
+								type="button"
+								className="ws-btn ws-btn--primary"
+								onClick={() => setEditMode(true)}
+							>
+								{t('ws.userDetail.edit')}
+							</button>
+						)}
+						{currentUser?.role === ROLES.SUPER_ADMIN && !user.approved_at ? (
+							<button type="button" className="ws-btn ws-btn--outline" onClick={handleApprove}>
+								{t('ws.userDetail.approve')}
+							</button>
+						) : null}
+						{canToggleStatus(currentUser, user) ? (
+							<button
+								type="button"
+								className={`ws-btn ${user.is_blocked ? 'ws-btn--primary' : 'ws-btn--danger'}`}
+								onClick={() => openStatusModal(!user.is_blocked)}
+							>
+								{user.is_blocked ? t('ws.userDetail.activate') : t('ws.userDetail.deactivate')}
+							</button>
+						) : null}
+					</>
+				)}
+				<Link to={listPath} className="ws-btn ws-btn--outline">
+					{t('ws.userDetail.back')}
+				</Link>
+			</div>
+
+			<WorkflowConfirmModal
+				open={Boolean(statusModal)}
+				onClose={() => {
+					if (!statusLoading) closeStatusModal()
+				}}
+				title={
+					statusModal?.deactivating
+						? t('ws.users.modal.deactivateTitle')
+						: t('ws.users.modal.activateTitle')
+				}
+				description={
+					statusModal?.deactivating
+						? t('ws.users.modal.deactivateDesc', { name: user.name })
+						: t('ws.users.modal.activateDesc', { name: user.name })
+				}
+				primaryLabel={
+					statusLoading
+						? statusModal?.deactivating
+							? t('ws.users.modal.deactivating')
+							: t('ws.users.modal.activating')
+						: statusModal?.deactivating
+							? t('ws.users.modal.deactivate')
+							: t('ws.users.modal.activate')
+				}
+				primaryVariant={statusModal?.deactivating ? 'danger' : 'primary'}
+				onPrimary={handleToggleBlock}
+				primaryDisabled={
+					statusLoading || (Boolean(statusModal?.deactivating) && !statusReason.trim())
+				}
+			>
+				{statusModal?.deactivating ? (
+					<label className="workflow-confirm-field">
+						<span className="workflow-confirm-field__label">
+							{t('ws.users.modal.reason')}
+						</span>
+						<textarea
+							className="workflow-confirm-field__input"
+							value={statusReason}
+							onChange={(e) => setStatusReason(e.target.value)}
+							placeholder={t('ws.users.modal.reasonPh')}
+							rows={4}
+							required
+						/>
+					</label>
+				) : null}
+			</WorkflowConfirmModal>
+		</div>
 	)
 }
 
 export default UserDetail
-

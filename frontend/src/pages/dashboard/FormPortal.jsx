@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { getFormServiceMeta } from '../../data/tenantServices'
 import { APPLICATION_TYPES } from '../../constants/application'
+import ServiceFormShell from '../../components/forms/ServiceFormShell'
 import WorkspaceRouteLoader from '../../workspace/components/WorkspaceRouteLoader'
 
 const formPanelLoaders = {
@@ -39,13 +40,29 @@ function FormPortal() {
 	}, [formType])
 
 	if (!Panel) {
-		return <div className="ws-dashboard-loading">Form not found</div>
+		return (
+			<div className="service-form-page">
+				<p className="ws-breadcrumb">
+					<Link to="/dashboard/services">All services</Link>
+					<span className="ws-breadcrumb-sep" aria-hidden>
+						/
+					</span>
+					<span>Unavailable</span>
+				</p>
+				<p className="ws-muted">This form is not available.</p>
+				<Link to="/dashboard/services" className="ws-btn ws-btn--outline">
+					Back to services
+				</Link>
+			</div>
+		)
 	}
 
 	return (
-		<Suspense fallback={<WorkspaceRouteLoader label="Opening form…" />}>
-			<Panel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-		</Suspense>
+		<ServiceFormShell serviceMeta={serviceMeta}>
+			<Suspense fallback={<WorkspaceRouteLoader label="Opening form…" />}>
+				<Panel user={user} serviceMeta={serviceMeta} onBack={onBack} />
+			</Suspense>
+		</ServiceFormShell>
 	)
 }
 

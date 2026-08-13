@@ -1,11 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { Icon } from '../../components/dashboard/Icons'
 import { useLanguage } from '../../i18n'
-import {
-	getWorkspaceNavigation,
-	showWorkspaceSupport,
-	WORKSPACE_SUPPORT_CONTACT,
-} from '../config/navigation'
+import { getWorkspaceNavigation, showWorkspaceSupport } from '../config/navigation'
 
 const PREFETCH_BY_PATH = {
 	'/dashboard/services': () =>
@@ -123,30 +119,18 @@ function WorkspaceSidebar({
 				<div className="ws-sidebar-support" aria-label={t('ws.nav.support')}>
 					<div className="ws-nav-section-label">{t('ws.nav.support')}</div>
 					<div className="ws-sidebar-support-list">
-						<div
+						<NavLink
+							to="/contact"
 							className="ws-sidebar-support-item"
-							title={collapsed ? WORKSPACE_SUPPORT_CONTACT.phoneDisplay : undefined}
-						>
-							<Icon name="bell" className="ws-sidebar-support-icon ws-sidebar-support-icon--phone" />
-							<div className="ws-sidebar-support-copy">
-								<span className="ws-sidebar-support-label">{t('ws.support.phone')}</span>
-								<span className="ws-sidebar-support-value">
-									{WORKSPACE_SUPPORT_CONTACT.phoneDisplay}
-								</span>
-							</div>
-						</div>
-						<div
-							className="ws-sidebar-support-item"
-							title={collapsed ? WORKSPACE_SUPPORT_CONTACT.email : undefined}
+							title={collapsed ? t('ws.support.contactUs') : undefined}
+							onClick={handleNavClick}
 						>
 							<Icon name="mail" className="ws-sidebar-support-icon ws-sidebar-support-icon--mail" />
 							<div className="ws-sidebar-support-copy">
-								<span className="ws-sidebar-support-label">{t('ws.support.email')}</span>
-								<span className="ws-sidebar-support-value ws-sidebar-support-value--email">
-									{WORKSPACE_SUPPORT_CONTACT.email}
-								</span>
+								<span className="ws-sidebar-support-label">{t('ws.support.helpdesk')}</span>
+								<span className="ws-sidebar-support-value">{t('ws.support.contactUs')}</span>
 							</div>
-						</div>
+						</NavLink>
 					</div>
 				</div>
 			) : null}

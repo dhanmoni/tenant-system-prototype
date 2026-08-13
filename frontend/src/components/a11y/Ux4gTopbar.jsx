@@ -68,7 +68,7 @@ export default function Ux4gTopbar({
 							onClick={(e) => handleSkipLinkClick(e, mainContentTargetId)}
 						>
 							<span className="ux4g-topbar__skip-full">{t('a11y.skipToMain')}</span>
-							<span className="ux4g-topbar__skip-short">Skip</span>
+							<span className="ux4g-topbar__skip-short">{t('a11y.skipShort')}</span>
 						</a>
 
 						{/* Tablet+ : font size */}

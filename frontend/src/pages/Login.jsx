@@ -7,7 +7,6 @@ import { formatApiErrors } from '../utils/formatApiErrors'
 import LandingNav from '../components/landing/LandingNav'
 import LandingHero from '../components/landing/LandingHero'
 import DailyUpdateTicker from '../components/landing/DailyUpdateTicker'
-import PortalStatsBar from '../components/landing/PortalStatsBar'
 import GetStartedSection from '../components/landing/GetStartedSection'
 import PortalGuideSection from '../components/landing/PortalGuideSection'
 import PortalServicesSection from '../components/landing/PortalServicesSection'
@@ -51,6 +50,8 @@ function Login({ onLogin }) {
 	const [regPendingPhone, setRegPendingPhone] = useState('')
 	const [regOtpMessage, setRegOtpMessage] = useState('')
 	const [districts, setDistricts] = useState([])
+	const [districtsError, setDistrictsError] = useState('')
+	const [districtsReloadKey, setDistrictsReloadKey] = useState(0)
 	const landingBootstrapped = useRef(false)
 	const suppressAuthHashScroll = useRef(true)
 
@@ -71,6 +72,7 @@ function Login({ onLogin }) {
 		if (districts.length > 0) return
 
 		const loadDistricts = async () => {
+			setDistrictsError('')
 			try {
 				const { data } = await api.get('/api/public/districts')
 				const list = Array.isArray(data.districts) ? data.districts : []
@@ -81,10 +83,11 @@ function Login({ onLogin }) {
 				)
 			} catch (err) {
 				console.error('Failed to load districts', err)
+				setDistrictsError(t('auth.districtLoadError'))
 			}
 		}
 		loadDistricts()
-	}, [mode, districts.length])
+	}, [mode, districts.length, districtsReloadKey, t])
 
 	useEffect(() => {
 		const handleScroll = () => setShowBackToTop(window.scrollY > 420)
@@ -445,6 +448,12 @@ function Login({ onLogin }) {
 		regPendingPhone,
 		regOtpMessage,
 		filteredDistricts: districts,
+		districtsError,
+		onRetryDistricts: () => {
+			setDistricts([])
+			setDistrictsError('')
+			setDistrictsReloadKey((n) => n + 1)
+		},
 		onLoginChange: handleLoginChange,
 		onSendOtp: handleSendOtp,
 		onEditPhone: handleEditPhone,
@@ -461,8 +470,9 @@ function Login({ onLogin }) {
 	return (
 		<AuthPanelNavigationContext.Provider value={authNavValue}>
 			<div className="landing-page-home min-w-0 overflow-x-clip">
+				<LandingNav variant="static" />
 				<div className="relative landing-hero-wrap">
-					<LandingHero navSlot={<LandingNav />} />
+					<LandingHero />
 				</div>
 
 				<DailyUpdateTicker />
@@ -470,8 +480,8 @@ function Login({ onLogin }) {
 				<div className="landing-body">
 					<GetStartedSection authPanelProps={authPanelProps} />
 					<PortalServicesSection />
-					<PortalStatsBar />
-					<PortalBenefitsSection className="portal-benefits--after-stats" />
+					<div className="landing-section-blend landing-section-blend--services-benefits" aria-hidden />
+					<PortalBenefitsSection />
 					<PortalGuideSection />
 					<PortalFaqSection />
 					<NeedSupportSection />

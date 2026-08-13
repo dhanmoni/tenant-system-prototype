@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
+import { Link, useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
-import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
+import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, TENANCY_STAFF_ROLES } from '../../../constants/roles'
 import { getRoleLabel } from '../../../constants/roleLabels'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
 import { formatDate, formatDateTime } from '../../../utils/formatters'
@@ -13,6 +13,7 @@ import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatus
 import { buildServiceFormDocument } from '../../../utils/buildServiceFormDocument'
 import ProceedingModal from '../../../components/dashboard/ProceedingModal'
 import NoticeDocumentViewer from '../../../components/dashboard/NoticeDocumentViewer'
+import { useToast } from '../../../context/ToastContext'
 import './ApplicationDetails.css'
 
 const EXCLUDED_FIELDS = new Set([
@@ -307,16 +308,38 @@ function buildEditForm(app) {
 	return form
 }
 
+function serviceApplicationsListPath(role) {
+	if (ASSISTANT_ROLES.includes(role) || role === ROLES.VALUER) {
+		return '/dashboard/admin/inbox'
+	}
+	return '/dashboard/admin/applications'
+}
+
+function serviceApplicationsListLabel(role) {
+	return role === ROLES.VALUER ? 'Valuation inbox' : 'Service applications'
+}
+
 const AdminApplicationDetails = () => {
 	const { applicationNo } = useParams()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { user } = useOutletContext()
+	const { showToast } = useToast()
 	const fromTenancy =
 		location.state?.from === 'tenancy' ||
 		location.pathname.includes('/admin/tenancy/')
-	const listPath = fromTenancy ? '/dashboard/admin/tenancy' : '/dashboard/admin/applications'
-	const listLabel = fromTenancy ? 'tenancy applications' : 'service applications'
+	const fromInbox = location.state?.from === 'inbox'
+	const fromApplications = location.state?.from === 'applications'
+	const listPath = fromTenancy
+		? '/dashboard/admin/tenancy'
+		: fromInbox
+			? '/dashboard/admin/inbox'
+			: fromApplications
+				? '/dashboard/admin/applications'
+				: serviceApplicationsListPath(user?.role)
+	const listLabel = fromTenancy
+		? 'Tenancy applications'
+		: serviceApplicationsListLabel(user?.role)
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
@@ -357,6 +380,13 @@ const AdminApplicationDetails = () => {
 	useEffect(() => {
 		viewerModeRef.current = viewerMode
 	}, [viewerMode])
+
+	useEffect(() => {
+		if (!fromTenancy || !user?.role) return
+		if (!TENANCY_STAFF_ROLES.includes(user.role)) {
+			navigate('/dashboard', { replace: true })
+		}
+	}, [fromTenancy, user?.role, navigate])
 
 	const updatePaperHeight = useCallback(() => {
 		if (paperRef.current) {
@@ -417,7 +447,7 @@ const AdminApplicationDetails = () => {
 			)
 			openInPrintWindow(res.data)
 		} catch (err) {
-			alert(err?.response?.data?.message || 'Failed to open printable application.')
+			showToast(err?.response?.data?.message || 'Failed to open printable application.', 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -457,7 +487,7 @@ const AdminApplicationDetails = () => {
 			} else if (err?.message) {
 				message = err.message
 			}
-			alert(message)
+			showToast(message, 'error')
 		} finally {
 			setAgreementLoading(false)
 		}
@@ -485,7 +515,7 @@ const AdminApplicationDetails = () => {
 			setProceedings([res.data.proceeding, ...proceedings])
 			setShowProceedingModal(false)
 		} catch (err) {
-			alert(err?.response?.data?.message || 'Failed to save proceeding')
+			showToast(err?.response?.data?.message || 'Failed to save proceeding', 'error')
 		} finally {
 			setProceedingSubmitting(false)
 		}
@@ -693,77 +723,62 @@ const AdminApplicationDetails = () => {
 		}
 	}, [user?.role, application?.form_type])
 
-	const handleAssignValuer = async () => {
-		if (!selectedValuerId) return alert('Please select a valuer')
-		const isReassign = Boolean(application?.assigned_valuer_id)
-		const changingPerson =
-			isReassign && String(application.assigned_valuer_id) !== String(selectedValuerId)
-		const hadReport =
-			Boolean(application?.valuer_report) ||
-			application?.status === STATUS.VALUER_REPORT_SUBMITTED
+	const requestAssignValuer = () => {
+		if (!selectedValuerId) return showToast('Please select a valuer', 'error')
+		setWorkflowMessage('')
+		setWorkflowModal('assign-valuer')
+	}
 
-		if (isReassign) {
-			const target =
-				valuers.find((v) => String(v.id) === String(selectedValuerId))?.name || 'this valuer'
-			const confirmMsg = hadReport
-				? `Reassign to ${target}? The previous valuer report will be cleared and the file returned to “Valuer assigned”.`
-				: changingPerson
-					? `Reassign this Form I-B to ${target}?`
-					: `Confirm reassignment to ${target}?`
-			if (!window.confirm(confirmMsg)) return
-		}
+	const handleAssignValuer = async () => {
+		if (!selectedValuerId) return showToast('Please select a valuer', 'error')
+		const isReassign = Boolean(application?.assigned_valuer_id)
 
 		setActionLoading(true)
 		try {
 			const { data } = await api.post(`/api/admin/applications/${application.id}/assign-valuer`, {
 				assigned_valuer_id: Number(selectedValuerId),
 			})
-			alert(data?.message || (isReassign ? 'Valuer reassigned successfully' : 'Valuer assigned successfully'))
+			showToast(data?.message || (isReassign ? 'Valuer reassigned successfully' : 'Valuer assigned successfully'), 'success')
 			setValuerLoadError('')
+			setWorkflowModal(null)
 			await fetchDetails({ silent: true })
 		} catch (err) {
 			console.error(err)
-			alert(err.response?.data?.message || 'Failed to assign valuer')
+			showToast(err.response?.data?.message || 'Failed to assign valuer', 'error')
 		} finally {
 			setActionLoading(false)
 		}
 	}
 
 	const handleRemoveValuer = async () => {
-		const hadReport =
-			Boolean(application?.valuer_report) ||
-			application?.status === STATUS.VALUER_REPORT_SUBMITTED
-		const confirmMsg = hadReport
-			? 'Remove the assigned valuer and clear the submitted report? The file returns to In Review.'
-			: 'Remove the assigned valuer? The file returns to In Review.'
-		if (!window.confirm(confirmMsg)) return
 		setActionLoading(true)
 		try {
 			const { data } = await api.post(`/api/admin/applications/${application.id}/remove-valuer`)
-			alert(data?.message || 'Valuer removed successfully')
+			showToast(data?.message || 'Valuer removed successfully', 'success')
 			setSelectedValuerId('')
+			setWorkflowModal(null)
 			await fetchDetails({ silent: true })
 		} catch (err) {
 			console.error(err)
-			alert(err.response?.data?.message || 'Failed to remove valuer')
+			showToast(err.response?.data?.message || 'Failed to remove valuer', 'error')
 		} finally {
 			setActionLoading(false)
 		}
 	}
 
 	const handleSubmitValuerReport = async () => {
-		if (!valuerReport.trim()) return alert('Please enter the report')
+		if (!valuerReport.trim()) return showToast('Please enter the report', 'error')
 		setActionLoading(true)
 		try {
 			const { data } = await api.post(`/api/admin/applications/${application.id}/submit-valuer-report`, {
 				valuer_report: valuerReport,
 			})
-			alert(data?.message || 'Report submitted successfully')
+			showToast(data?.message || 'Report submitted successfully', 'success')
 			setValuerReport('')
 			await fetchDetails({ silent: true })
 		} catch (err) {
 			console.error(err)
-			alert(err.response?.data?.message || 'Failed to submit report')
+			showToast(err.response?.data?.message || 'Failed to submit report', 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -815,7 +830,7 @@ const AdminApplicationDetails = () => {
 			await fetchDetails({ silent: true })
 		} catch (err) {
 			console.error(`Error during ${workflowModal}:`, err)
-			alert(err.response?.data?.message || `Failed to ${workflowModal} application.`)
+			showToast(err.response?.data?.message || `Failed to ${workflowModal} application.`, 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -828,7 +843,16 @@ const AdminApplicationDetails = () => {
 		) {
 			return
 		}
-		if (!window.confirm('Are you sure you want to forcefully move this application?')) return
+		openWorkflowModal('superadmin-move')
+	}
+
+	const confirmSuperAdminMove = async () => {
+		if (
+			!isSuperAdmin ||
+			application?.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE
+		) {
+			return
+		}
 
 		try {
 			setActionLoading(true)
@@ -836,11 +860,12 @@ const AdminApplicationDetails = () => {
 				`/api/admin/applications/${application.form_type}/${application.id}/superadmin-move`,
 				superAdminControls
 			)
-			alert('Application moved successfully.')
+			setWorkflowModal(null)
+			showToast('Application moved successfully.', 'success')
 			fetchDetails()
 		} catch (err) {
 			console.error('Error during superadmin move:', err)
-			alert('Failed to move application.')
+			showToast('Failed to move application.', 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -1452,7 +1477,7 @@ const AdminApplicationDetails = () => {
 											<button
 												type="button"
 												className="ws-btn ws-btn--primary"
-												onClick={handleAssignValuer}
+												onClick={requestAssignValuer}
 												disabled={actionLoading || !selectedValuerId}
 											>
 												{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
@@ -1461,7 +1486,7 @@ const AdminApplicationDetails = () => {
 												<button
 													type="button"
 													className="ws-btn ws-btn--danger"
-													onClick={handleRemoveValuer}
+													onClick={() => openWorkflowModal('remove-valuer')}
 													disabled={actionLoading}
 												>
 													Remove
@@ -1471,7 +1496,14 @@ const AdminApplicationDetails = () => {
 									</div>
 									{valuerLoadError ? (
 										<p className="admin-app-details__valuer-error" role="alert">
-											{valuerLoadError}
+											{valuerLoadError}{' '}
+											<button
+												type="button"
+												className="ws-btn ws-btn--outline ws-btn--sm"
+												onClick={fetchValuers}
+											>
+												Retry
+											</button>
 										</p>
 									) : valuers.length === 0 && !valuerLoadError ? (
 										<p className="admin-app-details__valuer-error" role="status">
@@ -1579,21 +1611,26 @@ const AdminApplicationDetails = () => {
 	)
 
 	if (loading) {
-		return <div className="ws-dashboard-loading">Loading application details…</div>
-	}
-
-	if (error) {
 		return (
-			<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
-				{error}
+			<div className="admin-app-details">
+				<p className="ws-muted">Loading application details…</p>
 			</div>
 		)
 	}
 
-	if (!application) {
+	if (error || !application) {
 		return (
-			<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
-				Application not found.
+			<div className="admin-app-details">
+				<p className="ws-breadcrumb">
+					<Link to={listPath}>{listLabel}</Link>
+					<span className="ws-breadcrumb-sep" aria-hidden>
+						/
+					</span>
+					<span>Details</span>
+				</p>
+				<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
+					{error || 'Application not found.'}
+				</div>
 			</div>
 		)
 	}
@@ -1618,6 +1655,14 @@ const AdminApplicationDetails = () => {
 				isServiceViewOnly ? ' admin-service-doc' : ''
 			}`}
 		>
+			<p className="ws-breadcrumb no-print">
+				<Link to={listPath}>{listLabel}</Link>
+				<span className="ws-breadcrumb-sep" aria-hidden>
+					/
+				</span>
+				<span>{application.application_no}</span>
+			</p>
+
 			<div className="admin-app-details__toolbar no-print">
 				<button
 					type="button"
@@ -1625,7 +1670,7 @@ const AdminApplicationDetails = () => {
 					onClick={() => (editing ? cancelEditing() : navigate(listPath))}
 				>
 					<Icon name="collapse" className="admin-app-details__back-icon" />
-					{editing ? 'Exit edit mode' : `Back to ${listLabel}`}
+					{editing ? 'Exit edit mode' : `Back to ${listLabel.toLowerCase()}`}
 				</button>
 
 				<div className="admin-app-details__toolbar-actions">
@@ -2546,6 +2591,65 @@ const AdminApplicationDetails = () => {
 					) : null}
 				</div>
 			) : null}
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'assign-valuer'}
+				onClose={closeWorkflowModal}
+				title={application.assigned_valuer_id ? 'Reassign valuer' : 'Assign valuer'}
+				description={(() => {
+					const target =
+						valuers.find((v) => String(v.id) === String(selectedValuerId))?.name ||
+						'this valuer'
+					const hadReport =
+						Boolean(application.valuer_report) ||
+						application.status === STATUS.VALUER_REPORT_SUBMITTED
+					if (!application.assigned_valuer_id) {
+						return `Assign ${application.application_no} to ${target}? The file will appear in the valuer inbox.`
+					}
+					if (hadReport) {
+						return `Reassign ${application.application_no} to ${target}? The previous valuer report will be cleared and the file returned to “Valuer assigned”.`
+					}
+					return `Reassign ${application.application_no} to ${target}?`
+				})()}
+				primaryLabel={
+					actionLoading
+						? application.assigned_valuer_id
+							? 'Reassigning…'
+							: 'Assigning…'
+						: application.assigned_valuer_id
+							? 'Confirm reassignment'
+							: 'Confirm assignment'
+				}
+				onPrimary={handleAssignValuer}
+				primaryDisabled={Boolean(actionLoading) || !selectedValuerId}
+			/>
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'remove-valuer'}
+				onClose={closeWorkflowModal}
+				title="Remove valuer"
+				description={
+					Boolean(application.valuer_report) ||
+					application.status === STATUS.VALUER_REPORT_SUBMITTED
+						? `Remove the assigned valuer from ${application.application_no} and clear the submitted report? The file returns to In Review.`
+						: `Remove the assigned valuer from ${application.application_no}? The file returns to In Review.`
+				}
+				primaryLabel={actionLoading ? 'Removing…' : 'Remove valuer'}
+				primaryVariant="danger"
+				onPrimary={handleRemoveValuer}
+				primaryDisabled={Boolean(actionLoading)}
+			/>
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'superadmin-move'}
+				onClose={closeWorkflowModal}
+				title="Force-move application"
+				description={`Forcefully move ${application.application_no}? This bypasses the normal office workflow.`}
+				primaryLabel={actionLoading ? 'Moving…' : 'Confirm move'}
+				primaryVariant="danger"
+				onPrimary={confirmSuperAdminMove}
+				primaryDisabled={Boolean(actionLoading)}
+			/>
 
 			<WorkflowConfirmModal
 				open={workflowModal === 'forward'}

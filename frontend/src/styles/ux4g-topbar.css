@@ -476,13 +476,24 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 
 /* ---------------------------------------------------------------------------
    Official UX4G accessibility widget — mobile / tablet polish
-   Topbar already opens the panel; hide the large floating FAB on small screens
+   Topbar already opens the panel; hide the large floating FAB on phones
    so it does not cover headings. Panel becomes a full-width bottom sheet.
+   Tablet + laptop: keep the FAB, stacked under the back-to-top button.
 --------------------------------------------------------------------------- */
 
-/* Hide default FAB whenever the topbar trigger is available (all breakpoints) */
-.uw-widget-custom-trigger {
-	display: none !important;
+@media (max-width: 767.98px) {
+	.uw-widget-custom-trigger {
+		display: none !important;
+	}
+}
+
+@media (min-width: 768px) {
+	.uw-widget-custom-trigger {
+		display: flex !important;
+		right: var(--fab-inset-x, 24px) !important;
+		bottom: var(--fab-inset-y, 20px) !important;
+		z-index: 58 !important;
+	}
 }
 
 /* Soft scrim while the panel is open (JS sets inline right: 0) */

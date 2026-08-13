@@ -12,18 +12,16 @@ const footerSocialClass =
 	'landing-footer-social flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/80 no-underline transition hover:border-white/40 hover:bg-white/10 hover:text-white'
 
 function FooterLink({ item }) {
-	const className = footerLinkClass
-
-	if (item.hash) {
-		return (
-			<a href={item.to} className={className}>
-				{item.label}
-			</a>
-		)
-	}
-
 	return (
-		<Link to={item.to} className={className}>
+		<Link
+			to={item.to}
+			className={footerLinkClass}
+			onClick={() => {
+				if (!String(item.to).includes('#')) {
+					window.scrollTo(0, 0)
+				}
+			}}
+		>
 			{item.label}
 		</Link>
 	)
@@ -55,6 +53,9 @@ function LandingFooter() {
 		{ label: t('nav.services'), to: '/services' },
 		{ label: t('footer.policiesGuidelines'), to: '/policies' },
 		{ label: t('nav.resources'), to: '/resources' },
+		{ label: t('help.title'), to: '/help-centre' },
+		{ label: t('a11yPage.title'), to: '/accessibility' },
+		{ label: t('feedback.title'), to: '/feedback' },
 		{ label: t('nav.contactUs'), to: '/contact' },
 		{ label: t('footer.sitemap'), to: '/sitemap' },
 	]
@@ -69,7 +70,7 @@ function LandingFooter() {
 		{ label: 'LinkedIn', href: 'https://www.linkedin.com/', icon: Link2 },
 		{ label: 'Facebook', href: 'https://www.facebook.com/', icon: Share2 },
 		{ label: 'YouTube', href: 'https://www.youtube.com/', icon: Globe },
-		{ label: t('nav.contact'), href: '/contact', icon: Mail },
+		{ label: t('nav.contact'), href: '/contact', icon: Mail, external: false },
 		{ label: 'TCP Assam', href: 'https://tcp.assam.gov.in/', icon: ExternalLink },
 	]
 
@@ -86,21 +87,33 @@ function LandingFooter() {
 							{t('footer.tagline')}
 						</p>
 						<div className="mt-5 flex flex-wrap gap-2">
-							{socialLinks.map(({ label, href, icon: Icon }) => (
-								<a
-									key={label}
-									href={href}
-									target="_blank"
-									rel="noopener noreferrer"
-									className={footerSocialClass}
-									aria-label={label}
-								>
-									<Icon className="h-4 w-4" aria-hidden />
-								</a>
-							))}
+							{socialLinks.map(({ label, href, icon: Icon, external }) =>
+								external === false ? (
+									<Link
+										key={label}
+										to={href}
+										className={footerSocialClass}
+										aria-label={label}
+									>
+										<Icon className="h-4 w-4" aria-hidden />
+									</Link>
+								) : (
+									<a
+										key={label}
+										href={href}
+										target="_blank"
+										rel="noopener noreferrer"
+										className={footerSocialClass}
+										aria-label={label}
+									>
+										<Icon className="h-4 w-4" aria-hidden />
+									</a>
+								),
+							)}
 						</div>
-						<p className="mt-5 text-xs text-white/45">{t('footer.lastUpdated', { date: '20 Mar 2026' })}</p>
-						<p className="text-xs text-white/45">{t('footer.visitors')}</p>
+						<p className="mt-5 text-xs text-white/45">
+							{t('footer.lastUpdated', { date: siteLastUpdated })}
+						</p>
 					</div>
 
 					<div className="lg:col-span-2">
@@ -165,10 +178,18 @@ function LandingFooter() {
 						{t('footer.lastUpdatedLabel')} <time dateTime="2026-05-16">{siteLastUpdated}</time>
 					</p>
 					<div className="flex flex-wrap gap-4">
-						<Link to="/policies" className="landing-footer-link text-white/50 no-underline hover:text-white">
+						<Link
+							to="/policies"
+							className="landing-footer-link text-white/50 no-underline hover:text-white"
+							onClick={() => window.scrollTo(0, 0)}
+						>
 							{t('footer.terms')}
 						</Link>
-						<Link to="/policies" className="landing-footer-link text-white/50 no-underline hover:text-white">
+						<Link
+							to="/policies"
+							className="landing-footer-link text-white/50 no-underline hover:text-white"
+							onClick={() => window.scrollTo(0, 0)}
+						>
 							{t('footer.privacy')}
 						</Link>
 						<a

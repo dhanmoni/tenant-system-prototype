@@ -109,9 +109,9 @@ Quick action copy says “Districts & states” and “offices, roles, and desig
 | List all users (no district filter) | `GET /api/users` | User management table |
 | View / edit user | `GET/PUT /api/users/{id}` | `/users/:id` (`UserDetail`) — loads offices, designations, roles via super-admin APIs |
 | Create user | `POST /api/users` | **Limited roles in UI** (see below) |
-| Delete user | `DELETE /api/users/{id}` | Delete button on `UserDetail` (**works** if route allowed) |
-| Approve pending registration | `UserManagementController::approve` | Button on `UserDetail` — **`POST /api/users/{id}/approve` is not registered in `api.php`** (broken) |
-| Block / unblock citizen | `toggleBlock` | Toggle for `user` role only — **`POST /api/users/{id}/toggle-block` not registered in `api.php`** (broken) |
+| Delete user | `destroy` exists; **no DELETE route** (by design — deactivate instead) | Removed from `UserDetail`; use Activate / Deactivate |
+| Approve pending registration | `UserManagementController::approve` | Super admin **Approve** on `UserDetail` — `POST /api/users/{id}/approve` |
+| Deactivate / activate account | `toggleBlock` | Users list + `UserDetail` — `POST /api/users/{id}/toggle-block` (reason required when deactivating). Accounts are not deleted. |
 
 **Create-user UI restriction (super admin):** only `district_admin` and principal roles (`rent_authority`, `rent_court`, `rent_tribunal`). Assistants and other super admins are **not** in the dropdown, even though the controller comment says “Super admin can create anyone.”
 
@@ -165,7 +165,7 @@ Super admin uses the **“all applications”** list with **View** only (`Applic
 ## Gaps and inconsistencies (fix or document)
 
 1. **`Demo_NIC_Credentials.md` §5** lists State Management, Office Management, Role Management, and User Activity Log as super-admin screens — **most are not routed** in the workspace app.
-2. **Approve / block user** — controller methods exist; **routes missing** in `backend/routes/api.php`.
+2. ~~**Approve / block user** — routes missing~~ **Done:** `POST /api/users/{user}/approve` and `toggle-block` are registered; UI deactivates instead of deleting.
 3. **“Districts & states” quick action** — only districts implemented; no state admin UI or authenticated state API.
 4. **Dead imports** in `App.jsx`: `OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog` — no `/dashboard/admin/...` routes.
 5. **User create mismatch** — backend allows any role for super admin; UI restricts to DA + principals; assistants must be created by principals (or fix UI).
@@ -182,7 +182,7 @@ Super admin uses the **“all applications”** list with **View** only (`Applic
 
 | Item | Rationale |
 | ---- | --------- |
-| Register `POST /api/users/{user}/approve` and `POST /api/users/{user}/toggle-block` | Wire existing controller methods used by `UserDetail` |
+| ~~Register approve / toggle-block routes~~ | Done — see User management above |
 | Workspace routes + nav for **Offices**, **Designations**, **Roles** | APIs already super-admin-only; match quick-action copy |
 | **Activity log** page (`/dashboard/admin/activity`) | Full searchable log; API exists |
 | **State / UT master data** (if multi-state) | Admin CRUD + route; or remove “states” from marketing copy if Assam-only |

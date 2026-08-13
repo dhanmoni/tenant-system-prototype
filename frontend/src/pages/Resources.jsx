@@ -9,11 +9,10 @@ function Resources() {
 			title={t('resources.title')}
 			titleId="resources-heading"
 			breadcrumbLabel={t('resources.title')}
-			lead={t('resources.lead')}
 		>
 			<div className="gov-plain-page gov-resources gov-resources--soon">
 				<p className="gov-resources__soon" role="status">
-					{t('resources.comingSoonPage')}
+					{t('resources.comingSoon')}
 				</p>
 			</div>
 		</PublicPageLayout>

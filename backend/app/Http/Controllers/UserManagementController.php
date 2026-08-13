@@ -241,6 +241,10 @@ class UserManagementController extends Controller
 
     public function approve(Request $request, User $user)
     {
+        if ($request->user()->role !== Roles::SUPER_ADMIN) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         if ($user->approved_at) {
             return response()->json(['message' => 'User already approved'], 422);
         }

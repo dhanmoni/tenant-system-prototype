@@ -11,6 +11,7 @@ import {
 	Stamp,
 } from 'lucide-react'
 import { portalServiceHighlights } from '../../data/portalServices'
+import PortalStatsBar from './PortalStatsBar'
 import {
 	scrollCtaVariants,
 	scrollHeaderVariants,
@@ -26,6 +27,7 @@ import {
 } from '../../utils/landingMotion'
 import PortalServicesWatermark from './PortalServicesWatermark'
 import { useLanguage } from '../../i18n'
+import { highlightServiceTo } from '../../utils/scrollToHash'
 
 const SERVICE_ORDER = ['uin', 'rent-authority', 'rent-court', 'rent-tribunal']
 
@@ -217,9 +219,6 @@ function ServicesFlowSvg({ flow, className, reveal, reduceMotion, gradientId }) 
 	)
 }
 
-function highlightHref(itemId) {
-	return `/services#${itemId === 'uin' ? 'uin-registration' : itemId}`
-}
 
 const highlightIcons = {
 	uin: FileCheck,
@@ -284,11 +283,12 @@ function PortalServicesSection() {
 	return (
 		<section
 			id="services"
-			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 pt-20 sm:pt-24 lg:pt-28 pb-24 sm:pb-28 lg:pb-32"
+			className="portal-services-showcase landing-body landing-wallpaper-bg landing-wallpaper-bg--white scroll-mt-28 pt-8 sm:pt-10 lg:pt-12 pb-24 sm:pb-28 lg:pb-32"
 			aria-labelledby="services-heading"
 		>
 			<div className="portal-services-showcase__seam" aria-hidden />
 			<div id="tenancy-authorities" className="scroll-mt-28" tabIndex={-1} aria-hidden />
+			<PortalStatsBar />
 
 			<div ref={sectionRef} className="portal-services-showcase__inner mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<ServicesFloatMotifs reduceMotion={reduceMotion} />
@@ -360,7 +360,7 @@ function PortalServicesSection() {
 											whileTap={reduceMotion ? undefined : servicesCardTap}
 										>
 											<Link
-												to={highlightHref(item.id)}
+												to={highlightServiceTo(item.id)}
 												className={`portal-services-showcase-card portal-services-showcase-card--link ${item.accent}`}
 												aria-label={`${item.title}: ${item.description}`}
 											>

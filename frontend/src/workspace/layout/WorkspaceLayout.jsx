@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, Suspense } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import ProfileCompletionModal from '../../components/dashboard/ProfileCompletionModal'
@@ -11,39 +11,17 @@ import {
 	resolvePassportPhotoUrl,
 	PROFILE_REMINDER_DISMISSED_KEY,
 	PROFILE_REMINDER_SUPPRESSED_KEY,
+	PROFILE_REMINDER_NOTIF_ID,
 } from '../../utils/profileCompleteness'
 import { useLanguage } from '../../i18n'
 import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
 import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
 import WorkspacePageSearch from '../components/WorkspacePageSearch'
 import WorkspaceSidebar from './WorkspaceSidebar'
+import { useWorkspaceNotifications } from '../hooks/useWorkspaceNotifications'
 import { prefetchTenancyGeoLists } from '../../utils/tenancyGeoCache'
 import '../styles/workspace.css'
 import '../../styles/service-forms.css'
-
-const DEMO_NOTIFICATIONS = [
-	{
-		id: 1,
-		title: 'Application received',
-		body: 'Your UIN draft progress was saved successfully.',
-		time: 'Just now',
-		unread: true,
-	},
-	{
-		id: 2,
-		title: 'Document review',
-		body: 'PAN card verification is pending with the Rent Authority.',
-		time: '2 hours ago',
-		unread: true,
-	},
-	{
-		id: 3,
-		title: 'Payment reminder',
-		body: 'Complete the application fee to lodge your tenancy certificate.',
-		time: 'Yesterday',
-		unread: false,
-	},
-]
 
 function workspaceLoaderLabel(pathname) {
 	if (pathname.includes('/admin/role')) return 'Opening roles…'
@@ -75,13 +53,15 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 			return false
 		}
 	})
-	const [notifications, setNotifications] = useState(DEMO_NOTIFICATIONS)
+	const { notifications, loading: notificationsLoading, markAllRead, markOneRead } =
+		useWorkspaceNotifications(user)
 	const notifRef = useRef(null)
 	const topbarRef = useRef(null)
 	const [profiles, setProfiles] = useState([])
 	const [isSwitching, setIsSwitching] = useState(false)
 	const [profilePickerOpen, setProfilePickerOpen] = useState(false)
 	const [profileIncomplete, setProfileIncomplete] = useState(false)
+	const [profileNotifRead, setProfileNotifRead] = useState(false)
 	const [reminderDismissed, setReminderDismissed] = useState(
 		() => sessionStorage.getItem(PROFILE_REMINDER_DISMISSED_KEY) === '1'
 	)
@@ -97,7 +77,19 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		return translated === key ? getRoleLabel(role) : translated
 	}
 	const currentRoleLabel = translateRole(user?.role)
-	const unreadCount = notifications.filter((n) => n.unread).length
+	const displayNotifications = useMemo(() => {
+		if (user?.role !== ROLES.USER || !profileIncomplete) return notifications
+		const reminder = {
+			id: PROFILE_REMINDER_NOTIF_ID,
+			title: t('ws.profile.notifTitle'),
+			body: t('ws.profile.notifBody'),
+			time: t('ws.profile.notifTime'),
+			unread: !profileNotifRead,
+			to: '/dashboard/profile',
+		}
+		return [reminder, ...notifications.filter((item) => item.id !== PROFILE_REMINDER_NOTIF_ID)]
+	}, [user?.role, profileIncomplete, notifications, profileNotifRead, t])
+	const unreadCount = displayNotifications.filter((n) => n.unread).length
 
 	const syncTopbarPanels = useCallback(() => {
 		const topbar = topbarRef.current
@@ -249,22 +241,26 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		!reminderSuppressed &&
 		location.pathname !== '/dashboard/profile'
 
-	const handleDismissProfileReminder = ({ suppressPermanent = false } = {}) => {
-		if (suppressPermanent) {
-			localStorage.setItem(PROFILE_REMINDER_SUPPRESSED_KEY, '1')
-			setReminderSuppressed(true)
-			return
-		}
+	const handleDismissProfileReminder = useCallback(() => {
 		sessionStorage.setItem(PROFILE_REMINDER_DISMISSED_KEY, '1')
 		setReminderDismissed(true)
-	}
+	}, [])
 
 	const handleCompleteProfile = () => {
+		handleDismissProfileReminder()
 		navigate('/dashboard/profile')
 	}
 
 	const markAllNotificationsRead = () => {
-		setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
+		setProfileNotifRead(true)
+		markAllRead()
+	}
+
+	const openNotification = (item) => {
+		if (item.id === PROFILE_REMINDER_NOTIF_ID) setProfileNotifRead(true)
+		markOneRead(item.id)
+		setNotifOpen(false)
+		if (item.to) navigate(item.to)
 	}
 
 	const toggleSidebarCollapsed = () => {
@@ -361,18 +357,27 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 												) : null}
 											</div>
 											<ul className="ws-topbar-notif-list">
-												{notifications.map((item) => (
-													<li
-														key={item.id}
-														className={`ws-topbar-notif-item${item.unread ? ' is-unread' : ''}`}
-													>
-														<div className="ws-topbar-notif-item-title">{item.title}</div>
-														<p className="ws-topbar-notif-item-body">{item.body}</p>
-														<span className="ws-topbar-notif-item-time">{item.time}</span>
+												{notificationsLoading && displayNotifications.length === 0 ? (
+													<li className="ws-topbar-notif-empty">{t('ws.top.notifLoading')}</li>
+												) : null}
+												{!notificationsLoading && displayNotifications.length === 0 ? (
+													<li className="ws-topbar-notif-empty">{t('ws.top.notifEmpty')}</li>
+												) : null}
+												{displayNotifications.map((item) => (
+													<li key={item.id}>
+														<button
+															type="button"
+															className={`ws-topbar-notif-item${item.unread ? ' is-unread' : ''}`}
+															onClick={() => openNotification(item)}
+														>
+															<div className="ws-topbar-notif-item-title">{item.title}</div>
+															<p className="ws-topbar-notif-item-body">{item.body}</p>
+															<span className="ws-topbar-notif-item-time">{item.time}</span>
+														</button>
 													</li>
 												))}
 											</ul>
-											<p className="ws-topbar-notif-foot">{t('ws.top.notifDemo')}</p>
+											<p className="ws-topbar-notif-foot">{t('ws.top.notifFoot')}</p>
 										</div>
 									) : null}
 								</div>
@@ -427,7 +432,12 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 								<button
 									type="button"
 									className="ws-topbar-btn ws-topbar-btn--logout"
-									onClick={onLogout}
+									onClick={(event) => {
+										event.preventDefault()
+										setNotifOpen(false)
+										setProfilePickerOpen(false)
+										onLogout?.()
+									}}
 								>
 									<Icon name="logout" className="ws-topbar-btn-icon" />
 									<span>{t('ws.top.signOut')}</span>
