@@ -4,7 +4,7 @@
 
 **Source of truth:** `frontend/src/App.jsx` (+ sidebar links in `frontend/src/workspace/config/navigation.js`).
 
-**Last reviewed:** 2026-08-13
+**Last reviewed:** 2026-08-14
 
 **Related:**
 
@@ -51,7 +51,7 @@ Outside the workspace shell (problem):
 | `/resources` | `pages/Resources.jsx` | Document catalogue (downloads still gated). |
 | `/contact` | `pages/Contact.jsx` | Contact / helpdesk. |
 | `/sitemap` | `pages/Sitemap.jsx` | HTML sitemap of public + auth entry links. |
-| `/public-dashboard` | `pages/PublicDashboard.jsx` | Public stats (prototype / gated). |
+| `/public-dashboard` | `pages/PublicDashboard.jsx` | Public stats from `GET /api/public/portal-stats`. |
 | `/feedback` | `pages/Feedback.jsx` | GIGW feedback form (prototype, on-screen only). |
 | `/accessibility` | `pages/AccessibilityStatement.jsx` | Accessibility statement. |
 | `/help-centre` | `pages/HelpCentre.jsx` | Help / guidelines. |
@@ -93,6 +93,11 @@ Parent: `ProtectedRoute` → `workspace/layout/WorkspaceLayout.jsx` (sidebar, to
 | `/dashboard/admin/tenancy` | `WorkspaceTenancyRecords` | UIN / tenancy application list. |
 | `/dashboard/admin/tenancy/:applicationNo` | `WorkspaceAdminApplicationDetails` | Staff view of a UIN application. |
 | `/dashboard/admin/districts` | `WorkspaceDistricts` | Super Admin district management. |
+| `/dashboard/admin/states` | `WorkspaceStates` | Super Admin state master data. |
+| `/dashboard/admin/offices` | `WorkspaceOffices` | Super Admin office CRUD. |
+| `/dashboard/admin/designations` | `WorkspaceDesignations` | Super Admin designation CRUD. |
+| `/dashboard/admin/roles` | `WorkspaceRoles` | Super Admin role-label CRUD (not login RBAC keys). |
+| `/dashboard/admin/activity-log` | `WorkspaceActivityLog` | Super Admin activity log. |
 | `/dashboard/join` | `JoinApplication` | Join invite flow when authenticated. |
 
 ### Valid `:formType` values (FormPortal)
@@ -121,7 +126,6 @@ Unknown `:formType` → “Form not found” (no redirect).
 | **`/admin` vs `/dashboard/admin/*`** | Was two admin worlds. | **Fixed:** `/admin` redirects to `/dashboard`. |
 | **`/users/:id` outside shell** | Was missing workspace sidebar. | **Fixed:** nested under `/dashboard/admin/users/:id`. |
 | **GIGW links** | `/guidelines`, `/feedback`, `/help-centre` | **Fixed:** pages exist; `/guidelines` → help centre. |
-| **Unrouted page files still in repo** | `OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog`, `ApplicationInbox`, `Register.jsx` (dead body), thin workspace wrappers unused as routes. | Wire or delete (see remaining-work). |
 | **Citizen vs staff detail URLs** | Citizen: `/dashboard/status/:type/:applicationNo`. Staff: `/dashboard/admin/applications/:applicationNo`. Same domain, different pages. | OK if intentional; document; avoid linking the wrong one. |
 | **Inbox vs applications share `ApplicationList`** | Same component; behaviour switches on `pathname` (`…/inbox` vs `…/applications`). Easy to break with refactor. | Consider dedicated wrappers/routes or clear prop from route. |
 
@@ -180,7 +184,7 @@ From `getWorkspaceNavigation()` — only links that exist:
 | Assistants | Dashboard, inbox, (± tenancy for RA asst), (± service apps for RT asst), profile |
 | Valuer | Dashboard, valuation inbox, profile |
 | District Admin | Dashboard, tenancy, service apps, staff directory, profile |
-| Super Admin | Dashboard, service apps, user management, districts, profile |
+| Super Admin | Dashboard, tenancy, service apps, user management, **master data** (districts, states, offices, designations, roles, activity log), profile |
 
 Links that staff **use** but aren’t always in sidebar still exist as deep links (e.g. application detail URLs).
 
@@ -188,18 +192,17 @@ Links that staff **use** but aren’t always in sidebar still exist as deep link
 
 ## 7. Fix priorities (practical)
 
-1. **High — nesting / chrome**
-   - Move `/users/:id` under `/dashboard/admin/users/:id` (or redirect).
-   - Redirect or remove `/admin` (legacy).
-2. **High — catch-all safety**
-   - Rename form route to `/dashboard/forms/:formType` (update Services links) **or** add an explicit empty `/dashboard/admin` redirect.
-3. **Medium — URL clarity**
-   - Document `/` vs `/login` vs `/#login` for the team (this file).
+Nesting / chrome / form catch-all work in this file is **done** (`/admin` and `/users/:id` redirect; forms live at `/dashboard/forms/:formType`). Super Admin master-data routes are wired.
+
+Remaining route-adjacent work:
+
+1. **Medium — URL clarity**
+   - Keep documenting `/` vs `/login` vs `/#login` (`#login` / `#register` alias to `#auth-card-section`).
    - Optionally collapse `/login` → `/` with replace.
-4. **Medium — dead pages**
-   - Delete or route `OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog`, unused `ApplicationInbox`.
-5. **Low — GIGW**
-   - Expand policy text; connect feedback form to a real mailbox.
+2. **Low — GIGW**
+   - Expand policy text; connect feedback form to a real mailbox (page exists, on-screen only).
+
+See [frontend-remaining-work.md](./frontend-remaining-work.md) for the full leftover list.
 
 ---
 
@@ -233,6 +236,11 @@ Links that staff **use** but aren’t always in sidebar still exist as deep link
 /dashboard/admin/tenancy
 /dashboard/admin/tenancy/:applicationNo
 /dashboard/admin/districts
+/dashboard/admin/states
+/dashboard/admin/offices
+/dashboard/admin/designations
+/dashboard/admin/roles
+/dashboard/admin/activity-log
 /dashboard/join
 *                                  public 404
 ```

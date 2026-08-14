@@ -1,38 +1,32 @@
 /**
  * Public-facing portal statistics for the landing page.
- * Replace values with a public API (e.g. GET /api/public-portal-stats) when available.
+ * Values come from GET /api/public/portal-stats (same payload as Public Dashboard).
  */
-export const portalPublicStats = [
+export const PORTAL_STAT_DEFS = [
 	{
 		id: 'applications_submitted',
-		value: 12840,
-		display: '12K+',
-		label: 'Applications submitted',
-		description: 'Tenancy and service applications filed through the portal statewide.',
 		icon: 'fileStack',
 	},
 	{
 		id: 'uins_issued',
-		value: 9215,
-		display: '9K+',
-		label: 'UINs issued',
-		description: 'Unique Identification Numbers issued to registered tenancies.',
 		icon: 'idCard',
 	},
 	{
 		id: 'service_filings',
-		value: 5120,
-		display: '5K+',
-		label: 'Service filings',
-		description: 'Assam Tenancy Act forms submitted to Rent Authority, Court, and Tribunal.',
 		icon: 'landmark',
 	},
 	{
 		id: 'disputes_resolved',
-		value: 1446,
-		display: '1.4K+',
-		label: 'Disputes resolved',
-		description: 'Disputes and appeals concluded through the digital workflow.',
 		icon: 'circleCheck',
 	},
 ]
+
+export function mapPortalKpis(kpis = []) {
+	const byId = Object.fromEntries(
+		(Array.isArray(kpis) ? kpis : []).map((row) => [row.id, Number(row.value) || 0]),
+	)
+	return PORTAL_STAT_DEFS.map((def) => ({
+		...def,
+		value: byId[def.id] ?? 0,
+	}))
+}

@@ -28,6 +28,9 @@ function statusClass(status) {
 	if ([STATUS.DRAFT, STATUS.PARTIAL, STATUS.PENDING].includes(s)) {
 		return 'ws-badge ws-badge--warning'
 	}
+	if ([STATUS.WITHDRAWN, STATUS.CANCELLED].includes(s)) {
+		return 'ws-badge ws-badge--muted'
+	}
 	return 'ws-badge ws-badge--pending'
 }
 

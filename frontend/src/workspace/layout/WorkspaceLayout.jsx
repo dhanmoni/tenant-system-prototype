@@ -14,6 +14,7 @@ import {
 	PROFILE_REMINDER_NOTIF_ID,
 } from '../../utils/profileCompleteness'
 import { useLanguage } from '../../i18n'
+import { useToast } from '../../context/ToastContext'
 import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
 import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
 import WorkspacePageSearch from '../components/WorkspacePageSearch'
@@ -42,6 +43,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	const location = useLocation()
 	const navigate = useNavigate()
 	const { t } = useLanguage()
+	const { showToast } = useToast()
 	const routeLoading = useDashboardRouteLoader(true)
 	const loaderLabel = workspaceLoaderLabel(location.pathname)
 	const [navOpen, setNavOpen] = useState(false)
@@ -138,7 +140,9 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 					setProfiles([])
 				}
 			})
-			.catch((err) => console.error('Failed to fetch user profiles:', err))
+			.catch(() => {
+				setProfiles([])
+			})
 	}, [user?.id])
 
 	const handleProfileSwitch = async (targetId) => {
@@ -147,8 +151,8 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		try {
 			await api.post('/api/switch-profile', { user_id: targetId })
 			window.location.href = '/dashboard'
-		} catch (err) {
-			console.error(err)
+		} catch {
+			showToast(t('ws.profile.switchError'), 'error')
 			setIsSwitching(false)
 		}
 	}

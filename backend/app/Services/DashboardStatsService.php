@@ -1051,6 +1051,7 @@ class DashboardStatsService
         $serviceTotal = $this->countServiceApplications();
         $uinsIssued = TenancyApplication::query()
             ->where('status', '!=', Status::DRAFT)
+            ->where('status', '!=', Status::CANCELLED)
             ->whereNotNull('uid')
             ->where('uid', '!=', '')
             ->count();
@@ -1075,6 +1076,7 @@ class DashboardStatsService
             + (int) $tenancyByStatus->get(Status::PENDING, 0);
         $returned = (int) $tenancyByStatus->get(Status::REJECTED, 0)
             + (int) $tenancyByStatus->get(Status::WITHDRAWN, 0)
+            + (int) $tenancyByStatus->get(Status::CANCELLED, 0)
             + (int) $tenancyByStatus->get(Status::PARTIAL, 0);
 
         return [

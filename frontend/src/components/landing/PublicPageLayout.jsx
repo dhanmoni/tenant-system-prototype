@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
-import LandingNav from './LandingNav'
 import LandingFooter from './LandingFooter'
 import { useLanguage } from '../../i18n'
 
@@ -21,16 +20,13 @@ function PublicPageLayout({
 
 	return (
 		<div className="page-public-site min-w-0 overflow-x-clip">
-			<header
-				className={`public-page-header${showHero ? '' : ' public-page-header--compact'}`}
-			>
-				<LandingNav variant="static" />
-				{showHero ? (
+			{showHero ? (
+				<header className="public-page-header">
 					<Suspense fallback={null}>
 						<PublicPageHero slides={heroSlides} />
 					</Suspense>
-				) : null}
-			</header>
+				</header>
+			) : null}
 
 			<div className="public-page landing-body landing-wallpaper-bg landing-wallpaper-bg--white min-h-[40vh]">
 				<div className="public-page__content">

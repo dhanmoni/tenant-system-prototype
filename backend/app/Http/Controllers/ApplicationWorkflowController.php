@@ -667,6 +667,9 @@ class ApplicationWorkflowController extends Controller
         if ($type === ApplicationTypes::VALUER_APPOINTMENT) {
             $relations[] = 'assignedValuer';
         }
+        if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
+            $relations = ['district', 'office', 'villageWard', 'cancelledBy', 'approvedBy', 'rejectedBy', 'forwardedBy'];
+        }
         $application = $modelClass::with($relations)->find($id);
         if (!$application) return response()->json(['message' => 'Application not found'], 404);
 
@@ -700,7 +703,7 @@ class ApplicationWorkflowController extends Controller
             if ($modelClass) {
                 $relations = ['district'];
                 if ($type === ApplicationTypes::TENANCY_CERTIFICATE) {
-                    $relations = ['district', 'office', 'villageWard'];
+                    $relations = ['district', 'office', 'villageWard', 'cancelledBy', 'approvedBy', 'rejectedBy', 'forwardedBy'];
                 } else {
                     $relations = ['user', 'forwardedBy', 'district'];
                 }

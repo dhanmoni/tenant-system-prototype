@@ -669,3 +669,23 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 	}
 }
 
+@media (prefers-reduced-motion: reduce) {
+	#uw-main,
+	#uw-main.uwaw,
+	.uw-widget-custom-trigger {
+		transition: none !important;
+		animation: none !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+@media print {
+	#uw-main,
+	#uw-main.uwaw,
+	.uw-widget-custom-trigger,
+	.landing-fab-top,
+	.ux4g-topbar {
+		display: none !important;
+	}
+}
+

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Building2, CircleCheckBig, FileStack, IdCard } from 'lucide-react'
-import { portalPublicStats } from '../../data/portalPublicStats'
+import { mapPortalKpis } from '../../data/portalPublicStats'
+import { fetchPublicPortalStats } from '../../services/portalStats'
 import {
 	scrollStatIconVariants,
 	scrollStatItemVariants,
@@ -117,19 +118,39 @@ function PortalStatsBar() {
 	const stripRef = useRef(null)
 	const isInView = useInView(stripRef, { once: true, amount: 0.2 })
 	const reduceMotion = useReducedMotion()
-	const reveal = reduceMotion || isInView
+	const [kpis, setKpis] = useState(() => mapPortalKpis())
+	const [statsReady, setStatsReady] = useState(false)
+
+	useEffect(() => {
+		let active = true
+		fetchPublicPortalStats()
+			.then((data) => {
+				if (active) setKpis(mapPortalKpis(data?.kpis))
+			})
+			.catch(() => {
+				if (active) setKpis(mapPortalKpis())
+			})
+			.finally(() => {
+				if (active) setStatsReady(true)
+			})
+		return () => {
+			active = false
+		}
+	}, [])
+
+	const reveal = (reduceMotion || isInView) && statsReady
 
 	const stats = useMemo(
 		() =>
-			portalPublicStats.map((stat) => {
+			kpis.map((stat) => {
 				const keys = statCopyKeys[stat.id]
 				return {
 					...stat,
-					label: keys ? t(keys.label) : stat.label,
-					description: keys ? t(keys.description) : stat.description,
+					label: keys ? t(keys.label) : stat.id,
+					description: keys ? t(keys.description) : '',
 				}
 			}),
-		[t],
+		[t, kpis],
 	)
 
 	return (

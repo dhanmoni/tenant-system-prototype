@@ -8,11 +8,15 @@ use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::orderBy('name')->paginate(5);
+        $query = Role::orderBy('name');
 
-        return response()->json($roles);
+        if ($request->boolean('all')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate(15));
     }
 
     public function store(Request $request)

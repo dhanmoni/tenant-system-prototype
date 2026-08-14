@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDate } from '../../../utils/formatters'
@@ -153,7 +153,11 @@ function UserOverview() {
 				<div className="ws-citizen-welcome-accent" aria-hidden />
 				<div className="ws-citizen-welcome-inner">
 					<div className="ws-citizen-welcome-stats" aria-label={t('ws.citizen.stats.aria')}>
-						<article className="ws-citizen-stat-card ws-citizen-stat-card--total">
+						<Link
+							to="/dashboard/status"
+							className="ws-citizen-stat-card ws-citizen-stat-card--total"
+							aria-label={t('ws.citizen.stat.openTotal')}
+						>
 							<div className="ws-citizen-stat-card-top">
 								<span className="ws-citizen-stat-card-icon" aria-hidden>
 									<Icon name="list" />
@@ -163,8 +167,12 @@ function UserOverview() {
 							<span className="ws-citizen-stat-card-value">
 								{loading ? '…' : stats.total}
 							</span>
-						</article>
-						<article className="ws-citizen-stat-card ws-citizen-stat-card--progress">
+						</Link>
+						<Link
+							to="/dashboard/status"
+							className="ws-citizen-stat-card ws-citizen-stat-card--progress"
+							aria-label={t('ws.citizen.stat.openInProgress')}
+						>
 							<div className="ws-citizen-stat-card-top">
 								<span className="ws-citizen-stat-card-icon" aria-hidden>
 									<Icon name="clock" />
@@ -176,8 +184,12 @@ function UserOverview() {
 							<span className="ws-citizen-stat-card-value">
 								{loading ? '…' : stats.inReview}
 							</span>
-						</article>
-						<article className="ws-citizen-stat-card ws-citizen-stat-card--done">
+						</Link>
+						<Link
+							to="/dashboard/status"
+							className="ws-citizen-stat-card ws-citizen-stat-card--done"
+							aria-label={t('ws.citizen.stat.openCompleted')}
+						>
 							<div className="ws-citizen-stat-card-top">
 								<span className="ws-citizen-stat-card-icon" aria-hidden>
 									<Icon name="check" />
@@ -189,7 +201,7 @@ function UserOverview() {
 							<span className="ws-citizen-stat-card-value">
 								{loading ? '…' : stats.completed}
 							</span>
-						</article>
+						</Link>
 					</div>
 				</div>
 			</header>

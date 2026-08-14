@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import api from '../../../api'
+import { fetchActivityLogs } from '../../../services/activityLogs'
 import { formatDateTime, formatDisplayName } from '../../../utils/formatters'
 
 function formatAction(action) {
@@ -17,7 +17,7 @@ function ActivityFeed() {
 			setLoading(true)
 			setError('')
 			try {
-				const { data } = await api.get('/api/activity-logs', { params: { per_page: 8 } })
+				const data = await fetchActivityLogs({ per_page: 8 })
 				const list = Array.isArray(data) ? data : data?.data ?? []
 				setLogs(list)
 			} catch (err) {

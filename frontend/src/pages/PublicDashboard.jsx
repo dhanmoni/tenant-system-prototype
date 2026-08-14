@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
 import PublicDashboardSummary from '../components/public-dashboard/PublicDashboardSummary'
 import { publicDashboardLinks } from '../data/publicDashboardData'
-import api from '../api'
+import { fetchPublicPortalStats } from '../services/portalStats'
 import { useLanguage } from '../i18n'
 
 const monthKeys = {
@@ -61,9 +61,8 @@ function PublicDashboard() {
 		let active = true
 		setLoading(true)
 		setError('')
-		api
-			.get('/api/public/portal-stats', { skipAuthRedirect: true })
-			.then(({ data }) => {
+		fetchPublicPortalStats()
+			.then((data) => {
 				if (active) setStats(data)
 			})
 			.catch(() => {

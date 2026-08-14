@@ -15,17 +15,18 @@ const sectionShellVariants = {
 	},
 }
 
-/** Left column — big fade-in plus original cascade */
+/** Left column — large fade-up (whole promo block) */
 const promoColVariants = {
-	hidden: { opacity: 0, y: 56 },
+	hidden: { opacity: 0, y: 96, scale: 0.92 },
 	visible: {
 		opacity: 1,
 		y: 0,
+		scale: 1,
 		transition: {
-			duration: 0.62,
+			duration: 0.92,
 			ease: easeOutExpo,
-			staggerChildren: 0.11,
-			delayChildren: 0.05,
+			staggerChildren: 0.12,
+			delayChildren: 0.06,
 		},
 	},
 }
@@ -51,13 +52,13 @@ const promoHeadlineBlockVariants = {
 }
 
 const promoTitleLineVariants = {
-	hidden: { opacity: 0, y: 36, clipPath: 'inset(0 0 100% 0)' },
+	hidden: { opacity: 0, y: 64, clipPath: 'inset(0 0 100% 0)' },
 	visible: {
 		opacity: 1,
 		y: 0,
 		clipPath: 'inset(0 0 0% 0)',
 		transition: {
-			duration: 0.62,
+			duration: 0.78,
 			ease: easeOutExpo,
 		},
 	},
@@ -159,8 +160,8 @@ function GetStartedSection({ authPanelProps }) {
 	const reduceMotion = useReducedMotion()
 	const inView = useInView(sectionRef, {
 		once: true,
-		amount: 0.22,
-		margin: '0px 0px -10% 0px',
+		amount: 0.12,
+		margin: '0px 0px -6% 0px',
 	})
 	const animate = Boolean(reduceMotion) || inView
 

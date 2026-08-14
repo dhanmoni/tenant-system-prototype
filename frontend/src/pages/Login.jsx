@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import api, { csrf } from '../api'
-import { AuthPanelNavigationContext } from '../context/AuthPanelNavigationContext'
+import { fetchDistricts as fetchPublicDistricts } from '../services/districts'
+import { useRegisterAuthPanelNavigation } from '../context/AuthPanelNavigationContext'
 import { authHashForMode, modeFromHash, scrollToAuthPanel } from '../utils/authPanelNav'
 import { formatApiErrors } from '../utils/formatApiErrors'
-import LandingNav from '../components/landing/LandingNav'
 import LandingHero from '../components/landing/LandingHero'
 import DailyUpdateTicker from '../components/landing/DailyUpdateTicker'
 import GetStartedSection from '../components/landing/GetStartedSection'
@@ -74,15 +74,13 @@ function Login({ onLogin }) {
 		const loadDistricts = async () => {
 			setDistrictsError('')
 			try {
-				const { data } = await api.get('/api/public/districts')
-				const list = Array.isArray(data.districts) ? data.districts : []
+				const list = await fetchPublicDistricts({ publicOnly: true })
 				setDistricts(
 					[...list].sort((a, b) =>
 						(a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
 					)
 				)
-			} catch (err) {
-				console.error('Failed to load districts', err)
+			} catch {
 				setDistrictsError(t('auth.districtLoadError'))
 			}
 		}
@@ -427,10 +425,16 @@ function Login({ onLogin }) {
 		})
 	}, [location.hash])
 
-	const authNavValue = {
-		openLogin: () => openAuthPanel('login'),
-		openRegister: () => openAuthPanel('register'),
-	}
+	const authNavValue = useMemo(
+		() => ({
+			openLogin: () => openAuthPanel('login'),
+			openRegister: () => openAuthPanel('register'),
+		}),
+		// openAuthPanel closes over latest switchMode / navigate
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[location.pathname, location.search, location.state],
+	)
+	useRegisterAuthPanelNavigation(authNavValue)
 
 	const authPanelProps = {
 		mode,
@@ -468,33 +472,30 @@ function Login({ onLogin }) {
 	}
 
 	return (
-		<AuthPanelNavigationContext.Provider value={authNavValue}>
-			<div className="landing-page-home min-w-0 overflow-x-clip">
-				<LandingNav variant="static" />
-				<div className="relative landing-hero-wrap">
-					<LandingHero />
-				</div>
-
-				<DailyUpdateTicker />
-
-				<div className="landing-body">
-					<GetStartedSection authPanelProps={authPanelProps} />
-					<PortalServicesSection />
-					<div className="landing-section-blend landing-section-blend--services-benefits" aria-hidden />
-					<PortalBenefitsSection />
-					<PortalGuideSection />
-					<PortalFaqSection />
-					<NeedSupportSection />
-					<GovernmentLogosCarousel />
-					<LandingFooter />
-				</div>
-
-				<LandingFab
-					showBackToTop={showBackToTop}
-					onBackToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-				/>
+		<div className="landing-page-home min-w-0 overflow-x-clip">
+			<div className="relative landing-hero-wrap">
+				<LandingHero />
 			</div>
-		</AuthPanelNavigationContext.Provider>
+
+			<DailyUpdateTicker />
+
+			<div className="landing-body">
+				<GetStartedSection authPanelProps={authPanelProps} />
+				<PortalServicesSection />
+				<div className="landing-section-blend landing-section-blend--services-benefits" aria-hidden />
+				<PortalBenefitsSection />
+				<PortalGuideSection />
+				<PortalFaqSection />
+				<NeedSupportSection />
+				<GovernmentLogosCarousel />
+				<LandingFooter />
+			</div>
+
+			<LandingFab
+				showBackToTop={showBackToTop}
+				onBackToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+			/>
+		</div>
 	)
 }
 

@@ -9830,6 +9830,13 @@ a.ws-sidebar-support-item:hover {
 	box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), 0 12px 28px rgba(15, 23, 42, 0.05);
 	overflow: hidden;
 	transition: box-shadow 0.18s ease, transform 0.18s ease;
+	text-decoration: none;
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	text-align: left;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .page.page-dashboard .ws-root .ws-citizen-stat-card:hover {

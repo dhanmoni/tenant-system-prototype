@@ -254,6 +254,11 @@ class TenancyApplicationController extends Controller
             return response()->json(['message' => 'No tenancy record found for this UIN.'], 404);
         }
 
+        [, $uinError] = TenancyApplication::resolveForServiceForm($application->uid);
+        if ($uinError) {
+            return response()->json(['message' => $uinError], 422);
+        }
+
         return response()->json([
             'tenancy' => $this->serializeTenancyForAutofill($application),
         ]);
@@ -550,6 +555,59 @@ class TenancyApplicationController extends Controller
         return response()->json([
             'exists' => false,
             'ref_code' => $refCode,
+        ]);
+    }
+
+    /**
+     * Landlord cancels an issued UIN (tenancy certificate).
+     */
+    public function cancel(Request $request, TenancyApplication $tenancyApplication)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!$this->userIsLandlord($user, $tenancyApplication)) {
+            return response()->json(['message' => 'Only the landlord can cancel this UIN.'], 403);
+        }
+
+        $issuedStatuses = [Status::APPROVED, Status::COMPLETED];
+        $hasUin = filled($tenancyApplication->uid);
+        if (!$hasUin || !in_array($tenancyApplication->status, $issuedStatuses, true)) {
+            return response()->json([
+                'message' => 'Only an issued tenancy certificate (UIN) can be cancelled.',
+            ], 409);
+        }
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:10', 'max:2000'],
+        ]);
+
+        $reason = trim($data['reason']);
+        $movement = $tenancyApplication->movement_history ?? [];
+        $movement[] = [
+            'status' => Status::CANCELLED,
+            'current_with' => null,
+            'moved_at' => Carbon::now()->toDateTimeString(),
+            'action' => 'UIN cancelled by landlord.',
+            'reason' => $reason,
+            'cancelled_by_user_id' => $user->id,
+        ];
+
+        $tenancyApplication->update([
+            'status' => Status::CANCELLED,
+            'cancellation_reason' => $reason,
+            'cancelled_at' => Carbon::now(),
+            'cancelled_by_user_id' => $user->id,
+            'movement_history' => $movement,
+            'assigned_to_role' => null,
+            'current_with' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Tenancy certificate cancelled successfully.',
+            'application' => $tenancyApplication->fresh(),
         ]);
     }
 
@@ -1480,7 +1538,7 @@ class TenancyApplicationController extends Controller
     private function findBlockingApplicationByRefCode(string $refCode, ?int $exceptId = null): ?TenancyApplication
     {
         $query = TenancyApplication::where('ref_code', $refCode)
-            ->whereNotIn('status', [Status::DRAFT, Status::REJECTED]);
+            ->whereNotIn('status', [Status::DRAFT, Status::REJECTED, Status::CANCELLED, Status::WITHDRAWN]);
 
         if ($exceptId) {
             $query->where('id', '!=', $exceptId);
@@ -1667,6 +1725,21 @@ class TenancyApplicationController extends Controller
         if ($user->role === \App\Constants\Roles::DISTRICT_ADMIN && !empty($user->district_id) && !empty($application->office_id)) {
             $office = Office::find($application->office_id);
             return $office && (int) $office->district_id === (int) $user->district_id;
+        }
+
+        return false;
+    }
+
+    private function userIsLandlord($user, TenancyApplication $application): bool
+    {
+        if ($application->landlord_user_id && (int) $application->landlord_user_id === (int) $user->id) {
+            return true;
+        }
+        if ($user->phone && $application->landlord_phone && $application->landlord_phone === $user->phone) {
+            return true;
+        }
+        if ($user->email && $application->landlord_email && strcasecmp((string) $application->landlord_email, (string) $user->email) === 0) {
+            return true;
         }
 
         return false;

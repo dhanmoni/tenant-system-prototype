@@ -51,9 +51,7 @@ export function useToast() {
 	const ctx = useContext(ToastContext)
 	if (!ctx) {
 		return {
-			showToast: (message) => {
-				if (message) window.alert(String(message))
-			},
+			showToast: () => {},
 			dismiss: () => {},
 		}
 	}

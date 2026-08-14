@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import api, { csrf } from '../../../api'
+import { csrf } from '../../../api'
+import { fetchDistricts, createDistrict, toggleDistrictActive } from '../../../services/districts'
+import { getApiErrorMessage } from '../../../services/errors'
+import { useLanguage } from '../../../i18n'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
@@ -12,12 +15,13 @@ import './DistrictManagement.css'
 const PER_PAGE = 15
 
 const STATUS_PILLS = [
-	{ value: '', label: 'All' },
-	{ value: 'active', label: 'Active' },
-	{ value: 'inactive', label: 'Inactive' },
+	{ value: '', labelKey: 'ws.districts.statusAll' },
+	{ value: 'active', labelKey: 'ws.districts.statusActive' },
+	{ value: 'inactive', labelKey: 'ws.districts.statusInactive' },
 ]
 
 function DistrictManagement({ user }) {
+	const { t } = useLanguage()
 	const navigate = useNavigate()
 	const [districts, setDistricts] = useState([])
 	const [districtName, setDistrictName] = useState('')
@@ -79,10 +83,10 @@ function DistrictManagement({ user }) {
 		setLoading(true)
 		setError('')
 		try {
-			const { data } = await api.get('/api/districts', { params: { all: true } })
-			setDistricts(Array.isArray(data) ? data : data.data || [])
+			const list = await fetchDistricts()
+			setDistricts(list)
 		} catch {
-			setError('Failed to load districts')
+			setError(t('ws.districts.loadError'))
 		} finally {
 			setLoading(false)
 		}
@@ -137,11 +141,11 @@ function DistrictManagement({ user }) {
 		e.preventDefault()
 		const trimmed = districtName.trim()
 		if (!trimmed) {
-			setFormError('Please enter a district name.')
+			setFormError(t('ws.districts.nameRequired'))
 			return
 		}
 		if (!/^[A-Za-z\s]+$/.test(trimmed)) {
-			setFormError('District name may only contain letters and spaces.')
+			setFormError(t('ws.districts.namePattern'))
 			return
 		}
 
@@ -150,22 +154,16 @@ function DistrictManagement({ user }) {
 		setAdding(true)
 		try {
 			await csrf()
-			await api.post('/api/districts', { name: trimmed })
+			await createDistrict({ name: trimmed })
 			setDistrictName('')
 			setShowAddModal(false)
 			setSuccessModal({
-				title: 'District added',
-				message: `"${trimmed}" was added successfully and is now available across the portal.`,
+				title: t('ws.districts.addedTitle'),
+				message: t('ws.districts.addedBody', { name: trimmed }),
 			})
 			await loadDistricts()
 		} catch (err) {
-			const apiErrors = err?.response?.data?.errors
-			const firstFieldError = apiErrors
-				? Object.values(apiErrors).flat().find(Boolean)
-				: null
-			setFormError(
-				firstFieldError || err?.response?.data?.message || 'Failed to add district'
-			)
+			setFormError(getApiErrorMessage(err, t('ws.districts.addError')))
 		} finally {
 			setAdding(false)
 		}
@@ -190,24 +188,25 @@ function DistrictManagement({ user }) {
 		setError('')
 		try {
 			await csrf()
-			await api.post(
-				`/api/districts/${district.id}/toggle-active`,
-				deactivating ? { reason } : {}
-			)
+			await toggleDistrictActive(district.id, deactivating ? { reason } : {})
 			closeStatusModal()
 			setSuccessModal({
-				title: deactivating ? 'District deactivated' : 'District activated',
+				title: deactivating
+					? t('ws.districts.deactivatedTitle')
+					: t('ws.districts.activatedTitle'),
 				message: deactivating
-					? `"${district.name}" has been deactivated and will be hidden from active use.${
-							reason ? ` Reason: ${reason}` : ''
-						}`
-					: `"${district.name}" has been activated and is available again.`,
+					? t('ws.districts.deactivateDesc', { name: district.name })
+					: t('ws.districts.activateDesc', { name: district.name }),
 			})
 			loadDistricts()
 		} catch (err) {
 			setError(
-				err?.response?.data?.message ||
-					`Failed to ${deactivating ? 'deactivate' : 'activate'} district`
+				getApiErrorMessage(
+					err,
+					t('ws.districts.toggleError', {
+						action: deactivating ? t('ws.districts.deactivate') : t('ws.districts.activate'),
+					}),
+				),
 			)
 		} finally {
 			setStatusLoading(false)
@@ -215,13 +214,15 @@ function DistrictManagement({ user }) {
 	}
 
 	const statusFilterLabel =
-		STATUS_PILLS.find((pill) => pill.value === filters.status)?.label || 'All'
+		STATUS_PILLS.find((pill) => pill.value === filters.status)?.labelKey
+			? t(STATUS_PILLS.find((pill) => pill.value === filters.status).labelKey)
+			: t('ws.districts.statusAll')
 
 	const filterToolbar = (
 		<div className="ws-district-toolbar">
 			<div className="ws-district-toolbar__top">
 				<label className="ws-district-toolbar__search">
-					<span className="ws-district-toolbar__label">Search districts</span>
+					<span className="ws-district-toolbar__label">{t('ws.districts.search')}</span>
 					<div className="ws-district-toolbar__search-field">
 						<Icon name="search" className="ws-district-toolbar__search-icon" />
 						<input
@@ -230,7 +231,7 @@ function DistrictManagement({ user }) {
 							type="search"
 							value={searchInput}
 							onChange={(e) => setSearchInput(e.target.value)}
-							placeholder="District name…"
+							placeholder={t('ws.districts.searchPh')}
 							autoComplete="off"
 						/>
 					</div>
@@ -245,13 +246,13 @@ function DistrictManagement({ user }) {
 						setShowAddModal(true)
 					}}
 				>
-					Add district
+					{t('ws.districts.add')}
 				</button>
 			</div>
 
 			<div className="ws-district-toolbar__filters">
-				<div className="ws-district-toolbar__status" role="group" aria-label="Filter by status">
-					<span className="ws-district-toolbar__label">Status</span>
+				<div className="ws-district-toolbar__status" role="group" aria-label={t('ws.districts.status')}>
+					<span className="ws-district-toolbar__label">{t('ws.districts.status')}</span>
 					<div className="ws-district-toolbar__status-pills">
 						{STATUS_PILLS.map((pill) => (
 							<button
@@ -264,7 +265,7 @@ function DistrictManagement({ user }) {
 								}`}
 								onClick={() => handleFilterChange('status', pill.value)}
 							>
-								{pill.label}
+								{t(pill.labelKey)}
 							</button>
 						))}
 					</div>
@@ -273,13 +274,17 @@ function DistrictManagement({ user }) {
 
 			<div className="ws-district-toolbar__meta">
 				<p className="ws-district-toolbar__summary">
-					Showing <strong>{paginatedDistricts.length}</strong> of{' '}
-					<strong>{filteredDistricts.length}</strong>
-					{filteredDistricts.length === 1 ? ' district' : ' districts'}
+					{t('ws.districts.showing', {
+						shown: paginatedDistricts.length,
+						total: filteredDistricts.length,
+					})}{' '}
+					{filteredDistricts.length === 1
+						? t('ws.districts.one')
+						: t('ws.districts.many')}
 					{filters.status ? (
 						<>
 							{' '}
-							· Status: <strong>{statusFilterLabel}</strong>
+							· {t('ws.districts.status')}: <strong>{statusFilterLabel}</strong>
 						</>
 					) : null}
 				</p>
@@ -290,7 +295,7 @@ function DistrictManagement({ user }) {
 						className="ws-btn ws-btn--outline ws-btn--sm ws-district-toolbar__clear"
 						onClick={clearFilters}
 					>
-						Clear filters
+						{t('ws.districts.clear')}
 					</button>
 				) : null}
 			</div>
@@ -322,18 +327,15 @@ function DistrictManagement({ user }) {
 							>
 								<header className="ws-district-modal__header">
 									<div>
-										<h3 id="add-district-title">Add new district</h3>
-										<p className="ws-district-modal__hint">
-											Enter the official district name as it should appear across the
-											portal. Letters and spaces only.
-										</p>
+										<h3 id="add-district-title">{t('ws.districts.modalTitle')}</h3>
+										<p className="ws-district-modal__hint">{t('ws.districts.modalHint')}</p>
 									</div>
 									<button
 										type="button"
 										className="ws-district-modal__close"
 										onClick={closeAddModal}
 										disabled={adding}
-										aria-label="Close"
+										aria-label={t('ws.districts.close')}
 									>
 										×
 									</button>
@@ -351,7 +353,7 @@ function DistrictManagement({ user }) {
 									noValidate
 								>
 									<div className="ws-district-modal__field">
-										<label htmlFor="district-name">District name</label>
+										<label htmlFor="district-name">{t('ws.districts.fieldName')}</label>
 										<input
 											id="district-name"
 											type="text"
@@ -360,7 +362,7 @@ function DistrictManagement({ user }) {
 												setDistrictName(e.target.value)
 												if (formError) setFormError('')
 											}}
-											placeholder="e.g. Kamrup Metropolitan"
+											placeholder={t('ws.districts.placeholder')}
 											required
 											autoFocus
 											disabled={adding}
@@ -374,14 +376,14 @@ function DistrictManagement({ user }) {
 											onClick={closeAddModal}
 											disabled={adding}
 										>
-											Cancel
+											{t('ws.districts.cancel')}
 										</button>
 										<button
 											type="submit"
 											className="ws-btn ws-btn--primary"
 											disabled={adding || !districtName.trim()}
 										>
-											{adding ? 'Adding…' : 'Add district'}
+											{adding ? t('ws.districts.adding') : t('ws.districts.add')}
 										</button>
 									</div>
 								</form>
@@ -393,17 +395,17 @@ function DistrictManagement({ user }) {
 
 			<DataTable
 				className="ws-district-table"
-				title="Districts"
+				title={t('ws.districts.tableTitle')}
 				accent="default"
 				loading={loading}
 				data={paginatedDistricts}
 				totalCount={filteredDistricts.length}
 				toolbar={filterToolbar}
 				columns={[
-					{ key: 'serial_no', label: 'S.no.', mono: true, width: '72px' },
+					{ key: 'serial_no', label: t('ws.districts.col.sno'), mono: true, width: '72px' },
 					{
 						key: 'name',
-						label: 'District name',
+						label: t('ws.districts.col.name'),
 						render: (val, row) => (
 							<div className="ws-district-name">
 								<span className="ws-district-name__text">{val}</span>
@@ -417,7 +419,7 @@ function DistrictManagement({ user }) {
 					},
 					{
 						key: 'is_active',
-						label: 'Status',
+						label: t('ws.districts.col.status'),
 						render: (val) => {
 							const inactive = val === false
 							return (
@@ -428,7 +430,7 @@ function DistrictManagement({ user }) {
 											: 'ws-district-status--active'
 									}`}
 								>
-									{inactive ? 'Inactive' : 'Active'}
+									{inactive ? t('ws.districts.statusInactive') : t('ws.districts.statusActive')}
 								</span>
 							)
 						},
@@ -444,18 +446,18 @@ function DistrictManagement({ user }) {
 									? 'ws-status-action-btn--join'
 									: 'ws-status-action-btn--reject'
 							}`}
-							title={`${inactive ? 'Activate' : 'Deactivate'} ${district.name}`}
+							title={`${inactive ? t('ws.districts.activate') : t('ws.districts.deactivate')} ${district.name}`}
 							onClick={() => openStatusModal(district)}
 						>
 							<Icon name={inactive ? 'check' : 'lock'} />
-							<span>{inactive ? 'Activate' : 'Deactivate'}</span>
+							<span>{inactive ? t('ws.districts.activate') : t('ws.districts.deactivate')}</span>
 						</button>
 					)
 				}}
 				emptyMessage={
 					hasActiveFilters
-						? 'No districts match your filters.'
-						: 'No districts found.'
+						? t('ws.districts.emptyFiltered')
+						: t('ws.districts.empty')
 				}
 				pagination={
 					filteredDistricts.length > PER_PAGE
@@ -471,22 +473,26 @@ function DistrictManagement({ user }) {
 			<WorkflowConfirmModal
 				open={Boolean(statusModal)}
 				onClose={closeStatusModal}
-				title={statusModal?.deactivating ? 'Deactivate district' : 'Activate district'}
+				title={
+					statusModal?.deactivating
+						? t('ws.districts.deactivateTitle')
+						: t('ws.districts.activateTitle')
+				}
 				description={
 					statusModal
 						? statusModal.deactivating
-							? `Deactivating "${statusModal.district.name}" will hide it from active use. Please provide a reason.`
-							: `Reactivate "${statusModal.district.name}"?`
+							? t('ws.districts.deactivateDesc', { name: statusModal.district.name })
+							: t('ws.districts.activateDesc', { name: statusModal.district.name })
 						: ''
 				}
 				primaryLabel={
 					statusLoading
 						? statusModal?.deactivating
-							? 'Deactivating…'
-							: 'Activating…'
+							? t('ws.districts.deactivating')
+							: t('ws.districts.activating')
 						: statusModal?.deactivating
-							? 'Deactivate district'
-							: 'Activate district'
+							? t('ws.districts.deactivateTitle')
+							: t('ws.districts.activateTitle')
 				}
 				primaryVariant={statusModal?.deactivating ? 'danger' : 'primary'}
 				onPrimary={confirmToggleStatus}
@@ -497,13 +503,13 @@ function DistrictManagement({ user }) {
 				{statusModal?.deactivating ? (
 					<label className="workflow-confirm-field">
 						<span className="workflow-confirm-field__label">
-							Reason for deactivation (required)
+							{t('ws.districts.reason')}
 						</span>
 						<textarea
 							className="workflow-confirm-field__input"
 							value={statusReason}
 							onChange={(e) => setStatusReason(e.target.value)}
-							placeholder="Explain why this district is being deactivated…"
+							placeholder={t('ws.districts.reasonPh')}
 							rows={4}
 							required
 						/>

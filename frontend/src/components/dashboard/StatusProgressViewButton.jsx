@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { Icon } from './Icons'
 import ApplicationStatusProgressModal from './ApplicationStatusProgressModal'
+import { STATUS } from '../../constants/status'
+
+function isClosedStatus(status) {
+	const s = String(status || '').toUpperCase()
+	return s === STATUS.WITHDRAWN || s === STATUS.CANCELLED
+}
 
 /**
  * Icon button that opens the shared application status progress modal.
@@ -15,7 +21,7 @@ function StatusProgressViewButton({
 }) {
 	const [open, setOpen] = useState(false)
 
-	if (!application) return null
+	if (!application || isClosedStatus(application.status)) return null
 
 	const useWorkspaceBtn = variant === 'workspace' || variant === 'admin'
 	const btnClass = useWorkspaceBtn

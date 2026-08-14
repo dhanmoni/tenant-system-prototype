@@ -160,6 +160,7 @@ function LandingHero() {
 			aria-label={t('hero.aria')}
 		>
 			<div className="landing-hero-media">
+				<div className="landing-hero-fill" aria-hidden />
 				<div
 					className={`landing-hero-track${
 						reduceMotion || instant ? ' is-instant' : ''

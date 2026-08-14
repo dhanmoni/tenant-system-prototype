@@ -15,6 +15,7 @@ export const STATUS = {
 	VALUER_ASSIGNED: 'VALUER_ASSIGNED',
 	VALUER_REPORT_SUBMITTED: 'VALUER_REPORT_SUBMITTED',
 	WITHDRAWN: 'WITHDRAWN',
+	CANCELLED: 'CANCELLED',
 }
 
 export const STATUS_LABELS = {
@@ -30,6 +31,7 @@ export const STATUS_LABELS = {
 	[STATUS.VALUER_ASSIGNED]: 'Assigned to Valuer',
 	[STATUS.VALUER_REPORT_SUBMITTED]: 'Valuer Report Submitted',
 	[STATUS.WITHDRAWN]: 'Withdrawn',
+	[STATUS.CANCELLED]: 'Cancelled',
 }
 
 export const STATUS_COLORS = {
@@ -43,4 +45,5 @@ export const STATUS_COLORS = {
 	[STATUS.VALUER_ASSIGNED]: 'info',
 	[STATUS.VALUER_REPORT_SUBMITTED]: 'warning',
 	[STATUS.WITHDRAWN]: 'secondary',
+	[STATUS.CANCELLED]: 'danger',
 }

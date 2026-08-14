@@ -17,13 +17,15 @@ class OfficeController extends Controller
         return response()->json($offices);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $offices = Office::with(['state', 'district'])
-            ->orderBy('name')
-            ->paginate(5);
+        $query = Office::with(['state', 'district'])->orderBy('name');
 
-        return response()->json($offices);
+        if ($request->boolean('all')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate(15));
     }
 
     public function store(Request $request)

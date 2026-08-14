@@ -151,12 +151,37 @@ export function getWorkspaceNavigation(user) {
 				],
 			},
 			{
-				sectionKey: 'ws.nav.districtsGroup',
+				sectionKey: 'ws.nav.masterData',
 				items: [
 					{
 						to: '/dashboard/admin/districts',
 						labelKey: 'ws.nav.districts',
 						icon: 'map',
+					},
+					{
+						to: '/dashboard/admin/states',
+						labelKey: 'ws.nav.states',
+						icon: 'chart',
+					},
+					{
+						to: '/dashboard/admin/offices',
+						labelKey: 'ws.nav.offices',
+						icon: 'building',
+					},
+					{
+						to: '/dashboard/admin/designations',
+						labelKey: 'ws.nav.designations',
+						icon: 'badge',
+					},
+					{
+						to: '/dashboard/admin/roles',
+						labelKey: 'ws.nav.roles',
+						icon: 'settings',
+					},
+					{
+						to: '/dashboard/admin/activity-log',
+						labelKey: 'ws.nav.activityLog',
+						icon: 'activity',
 					},
 				],
 			},

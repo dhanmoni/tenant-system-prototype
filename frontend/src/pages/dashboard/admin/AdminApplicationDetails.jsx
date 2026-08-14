@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Link, useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
 import api from '../../../api'
+import { fetchAdminApplication, fetchValuers as fetchValuerUsers } from '../../../services/adminApplications'
+import { getApiErrorMessage } from '../../../services/errors'
+import { useLanguage } from '../../../i18n'
 import { Icon } from '../../../components/dashboard/Icons'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
@@ -24,9 +27,11 @@ const EXCLUDED_FIELDS = new Set([
 	'forwarded_by_user_id',
 	'rejected_by_user_id',
 	'approved_by_user_id',
+	'cancelled_by_user_id',
 	'forwarded_by',
 	'rejected_by',
 	'approved_by',
+	'cancelled_by',
 	'movement_history',
 	'edit_history',
 	'created_at',
@@ -59,6 +64,8 @@ const WORKFLOW_FIELDS = new Set([
 	'rejection_message',
 	'approval_message',
 	'forward_remarks',
+	'cancelled_at',
+	'cancellation_reason',
 ])
 
 const SUMMARY_FIELDS = ['district', 'form_type', 'status']
@@ -84,6 +91,8 @@ const NON_EDITABLE_KEYS = new Set([
 	'rejection_message',
 	'approval_message',
 	'forward_remarks',
+	'cancelled_at',
+	'cancellation_reason',
 	'ref_code',
 	'wizard_step',
 	'current_with',
@@ -105,16 +114,16 @@ const NON_EDITABLE_KEYS = new Set([
 ])
 
 const TENANCY_FIELD_SECTIONS = [
-	{ title: 'Registration', prefixes: ['registration_date', 'apply_type'] },
-	{ title: 'Landlord details', prefixes: ['landlord_'] },
-	{ title: 'Tenant details', prefixes: ['tenant_'] },
-	{ title: 'Manager details', prefixes: ['manager_'] },
-	{ title: 'Property & charges', prefixes: ['property_'] },
+	{ titleKey: 'ws.adminDetail.section.registration', prefixes: ['registration_date', 'apply_type'] },
+	{ titleKey: 'ws.adminDetail.section.landlord', prefixes: ['landlord_'] },
+	{ titleKey: 'ws.adminDetail.section.tenant', prefixes: ['tenant_'] },
+	{ titleKey: 'ws.adminDetail.section.manager', prefixes: ['manager_'] },
+	{ titleKey: 'ws.adminDetail.section.property', prefixes: ['property_'] },
 ]
 
 const SERVICE_FIELD_SECTIONS = [
 	{
-		title: 'Applicant & parties',
+		titleKey: 'ws.adminDetail.section.parties',
 		prefixes: [
 			'applicant_',
 			'appellant_',
@@ -126,15 +135,15 @@ const SERVICE_FIELD_SECTIONS = [
 		],
 	},
 	{
-		title: 'Property & premises',
+		titleKey: 'ws.adminDetail.section.premises',
 		prefixes: ['property_', 'premises_', 'building_', 'schedule_'],
 	},
 	{
-		title: 'Rent & charges',
+		titleKey: 'ws.adminDetail.section.rent',
 		prefixes: ['rent_', 'charge_', 'other_charges', 'existing_', 'amount'],
 	},
 	{
-		title: 'Case & filing',
+		titleKey: 'ws.adminDetail.section.case',
 		prefixes: [
 			'case_',
 			'order_',
@@ -238,9 +247,9 @@ function isWideEditField(key) {
 	)
 }
 
-function buildEditSections(editForm, formType) {
+function buildEditSections(editForm, formType, t) {
 	const fields = Object.entries(editForm).filter(([key]) => isEditableField(key))
-	return groupDetailFields(fields, formType).filter((section) =>
+	return groupDetailFields(fields, formType, t).filter((section) =>
 		section.fields.some(([key]) => isEditableField(key))
 	)
 }
@@ -253,10 +262,10 @@ function getUinValue(app) {
 	return null
 }
 
-function groupDetailFields(fields, formType) {
+function groupDetailFields(fields, formType, t) {
 	if (formType === APPLICATION_TYPES.TENANCY_CERTIFICATE) {
 		const sections = TENANCY_FIELD_SECTIONS.map((section) => ({
-			title: section.title,
+			title: t(section.titleKey),
 			fields: fields.filter(([key]) =>
 				section.prefixes.some(
 					(prefix) => key === prefix || key.startsWith(prefix)
@@ -267,14 +276,16 @@ function groupDetailFields(fields, formType) {
 		const assigned = new Set(sections.flatMap((s) => s.fields.map(([key]) => key)))
 		const other = fields.filter(([key]) => !assigned.has(key))
 		if (other.length > 0) {
-			sections.push({ title: 'Other details', fields: other })
+			sections.push({ title: t('ws.adminDetail.section.other'), fields: other })
 		}
 
-		return sections.length > 0 ? sections : [{ title: 'Application details', fields }]
+		return sections.length > 0
+			? sections
+			: [{ title: t('ws.adminDetail.section.application'), fields }]
 	}
 
 	const sections = SERVICE_FIELD_SECTIONS.map((section) => ({
-		title: section.title,
+		title: t(section.titleKey),
 		fields: fields.filter(([key]) =>
 			section.prefixes.some(
 				(prefix) => key === prefix || key.startsWith(prefix)
@@ -287,13 +298,15 @@ function groupDetailFields(fields, formType) {
 	const other = fields.filter(([key]) => !assigned.has(key) && !isFileField(key))
 
 	if (documents.length > 0) {
-		sections.push({ title: 'Documents & uploads', fields: documents })
+		sections.push({ title: t('ws.adminDetail.section.docs'), fields: documents })
 	}
 	if (other.length > 0) {
-		sections.push({ title: 'Other details', fields: other })
+		sections.push({ title: t('ws.adminDetail.section.other'), fields: other })
 	}
 
-	return sections.length > 0 ? sections : [{ title: 'Application details', fields }]
+	return sections.length > 0
+		? sections
+		: [{ title: t('ws.adminDetail.section.application'), fields }]
 }
 
 function buildEditForm(app) {
@@ -315,8 +328,10 @@ function serviceApplicationsListPath(role) {
 	return '/dashboard/admin/applications'
 }
 
-function serviceApplicationsListLabel(role) {
-	return role === ROLES.VALUER ? 'Valuation inbox' : 'Service applications'
+function serviceApplicationsListLabel(role, t) {
+	return role === ROLES.VALUER
+		? t('ws.adminDetail.list.valuer')
+		: t('ws.adminDetail.list.services')
 }
 
 const AdminApplicationDetails = () => {
@@ -325,6 +340,7 @@ const AdminApplicationDetails = () => {
 	const location = useLocation()
 	const { user } = useOutletContext()
 	const { showToast } = useToast()
+	const { t } = useLanguage()
 	const fromTenancy =
 		location.state?.from === 'tenancy' ||
 		location.pathname.includes('/admin/tenancy/')
@@ -338,8 +354,8 @@ const AdminApplicationDetails = () => {
 				? '/dashboard/admin/applications'
 				: serviceApplicationsListPath(user?.role)
 	const listLabel = fromTenancy
-		? 'Tenancy applications'
-		: serviceApplicationsListLabel(user?.role)
+		? t('ws.adminDetail.list.tenancy')
+		: serviceApplicationsListLabel(user?.role, t)
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
@@ -500,8 +516,8 @@ const AdminApplicationDetails = () => {
 			setProceedingsLoading(true)
 			const res = await api.get(`/api/admin/applications/${formType}/${app.id}/proceedings`)
 			setProceedings(res.data.proceedings || [])
-		} catch (err) {
-			console.error('Failed to fetch proceedings', err)
+		} catch {
+			setProceedings([])
 		} finally {
 			setProceedingsLoading(false)
 		}
@@ -669,8 +685,8 @@ const AdminApplicationDetails = () => {
 	const fetchDetails = async ({ silent = false } = {}) => {
 		try {
 			if (!silent) setLoading(true)
-			const response = await api.get(`/api/admin/applications/${applicationNo}`)
-			const app = response.data.application
+			const response = await fetchAdminApplication(applicationNo)
+			const app = response.application
 			setApplication(app)
 			setSelectedValuerId(app?.assigned_valuer_id ? String(app.assigned_valuer_id) : '')
 			// Initialize superadmin controls to a valid transition for this form type
@@ -691,8 +707,7 @@ const AdminApplicationDetails = () => {
 			}
 			setError(null)
 		} catch (err) {
-			console.error('Error fetching application details:', err)
-			setError('Failed to load application details.')
+			setError(getApiErrorMessage(err, t('ws.adminDetail.loadError')))
 		} finally {
 			if (!silent) setLoading(false)
 		}
@@ -700,7 +715,7 @@ const AdminApplicationDetails = () => {
 
 	const fetchValuers = async () => {
 		try {
-			const { data } = await api.get('/api/users?role=valuer')
+			const data = await fetchValuerUsers()
 			// Support both { users: [...] } and resource-wrapped { users: { data: [...] } } shapes.
 			const rawUsers = Array.isArray(data?.users)
 				? data.users
@@ -710,10 +725,9 @@ const AdminApplicationDetails = () => {
 			const valuerUsers = rawUsers.filter((u) => u?.role === ROLES.VALUER)
 			setValuers(valuerUsers)
 			setValuerLoadError('')
-		} catch (err) {
-			console.error('Error fetching valuers:', err)
+		} catch {
 			setValuers([])
-			setValuerLoadError('Could not load valuer list. Please refresh and try again.')
+			setValuerLoadError(t('ws.adminDetail.loadError'))
 		}
 	}
 
@@ -743,8 +757,7 @@ const AdminApplicationDetails = () => {
 			setWorkflowModal(null)
 			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(err)
-			showToast(err.response?.data?.message || 'Failed to assign valuer', 'error')
+			showToast(getApiErrorMessage(err, 'Failed to assign valuer'), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -759,8 +772,7 @@ const AdminApplicationDetails = () => {
 			setWorkflowModal(null)
 			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(err)
-			showToast(err.response?.data?.message || 'Failed to remove valuer', 'error')
+			showToast(getApiErrorMessage(err, 'Failed to remove valuer'), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -777,8 +789,7 @@ const AdminApplicationDetails = () => {
 			setValuerReport('')
 			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(err)
-			showToast(err.response?.data?.message || 'Failed to submit report', 'error')
+			showToast(getApiErrorMessage(err, 'Failed to submit report'), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -829,8 +840,7 @@ const AdminApplicationDetails = () => {
 			})
 			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(`Error during ${workflowModal}:`, err)
-			showToast(err.response?.data?.message || `Failed to ${workflowModal} application.`, 'error')
+			showToast(getApiErrorMessage(err, `Failed to ${workflowModal} application.`), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -864,8 +874,7 @@ const AdminApplicationDetails = () => {
 			showToast('Application moved successfully.', 'success')
 			fetchDetails()
 		} catch (err) {
-			console.error('Error during superadmin move:', err)
-			showToast('Failed to move application.', 'error')
+			showToast(getApiErrorMessage(err, t('ws.adminDetail.moveError')), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -1153,7 +1162,7 @@ const AdminApplicationDetails = () => {
 	}
 
 	const renderEditWorkspace = () => {
-		const editSections = buildEditSections(editForm, application.form_type)
+		const editSections = buildEditSections(editForm, application.form_type, t)
 		return (
 			<div className="admin-edit-form">
 				<header className="admin-edit-form__header">
@@ -1343,7 +1352,20 @@ const AdminApplicationDetails = () => {
 			text: application.rejection_message,
 		})
 
-		const comments = [forwardComment, approvalComment, rejectionComment].filter(Boolean)
+		const cancellationComment = renderReviewComment({
+			title: 'Cancellation note',
+			authorName: application.cancelled_by?.name,
+			roleLabel: 'Landlord',
+			roleTone: 'reject',
+			at: application.cancelled_at
+				? formatDateTime(application.cancelled_at) ||
+					new Date(application.cancelled_at).toLocaleString()
+				: null,
+			dateTime: application.cancelled_at,
+			text: application.cancellation_reason,
+		})
+
+		const comments = [forwardComment, approvalComment, rejectionComment, cancellationComment].filter(Boolean)
 		if (comments.length === 0) return null
 
 		return (
@@ -1613,7 +1635,7 @@ const AdminApplicationDetails = () => {
 	if (loading) {
 		return (
 			<div className="admin-app-details">
-				<p className="ws-muted">Loading application details…</p>
+				<p className="ws-muted">{t('ws.adminDetail.loading')}</p>
 			</div>
 		)
 	}
@@ -1626,10 +1648,10 @@ const AdminApplicationDetails = () => {
 					<span className="ws-breadcrumb-sep" aria-hidden>
 						/
 					</span>
-					<span>Details</span>
+					<span>{t('ws.adminDetail.crumb')}</span>
 				</p>
 				<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
-					{error || 'Application not found.'}
+					{error || t('ws.adminDetail.notFound')}
 				</div>
 			</div>
 		)
@@ -1637,7 +1659,7 @@ const AdminApplicationDetails = () => {
 
 	const statusClass = adminStatusBadgeClass(application.status)
 	const statusText = adminStatusLabel(application.status)
-	const detailSections = groupDetailFields(detailFields, application.form_type)
+	const detailSections = groupDetailFields(detailFields, application.form_type, t)
 	const storageBase = (api.defaults.baseURL || '').replace(/\/$/, '')
 	const hasManager =
 		hasDisplayValue(application.manager_name) &&
@@ -1670,7 +1692,9 @@ const AdminApplicationDetails = () => {
 					onClick={() => (editing ? cancelEditing() : navigate(listPath))}
 				>
 					<Icon name="collapse" className="admin-app-details__back-icon" />
-					{editing ? 'Exit edit mode' : `Back to ${listLabel.toLowerCase()}`}
+					{editing
+						? t('ws.adminDetail.exitEdit')
+						: t('ws.adminDetail.backTo', { list: listLabel })}
 				</button>
 
 				<div className="admin-app-details__toolbar-actions">
@@ -1682,7 +1706,7 @@ const AdminApplicationDetails = () => {
 								onClick={handlePrintTenancyForm}
 								disabled={actionLoading}
 							>
-								{actionLoading ? 'Opening…' : 'Print / Save PDF'}
+								{actionLoading ? t('ws.adminDetail.opening') : t('ws.adminDetail.print')}
 							</button>
 							{application.agreement_pdf_path ? (
 								<button
@@ -1691,7 +1715,7 @@ const AdminApplicationDetails = () => {
 									onClick={handleViewAgreement}
 									disabled={agreementLoading}
 								>
-									{agreementLoading ? 'Loading…' : 'View agreement'}
+									{agreementLoading ? t('ws.adminDetail.loadingShort') : t('ws.adminDetail.viewAgreement')}
 								</button>
 							) : null}
 						</>
@@ -1714,7 +1738,7 @@ const AdminApplicationDetails = () => {
 								onClick={cancelEditing}
 								disabled={actionLoading}
 							>
-								Cancel
+								{t('ws.profile.cancel')}
 							</button>
 							<button
 								type="button"
@@ -1722,7 +1746,7 @@ const AdminApplicationDetails = () => {
 								onClick={handleSave}
 								disabled={actionLoading}
 							>
-								{actionLoading ? 'Saving…' : 'Save changes'}
+								{actionLoading ? t('ws.adminDetail.saving') : t('ws.adminDetail.save')}
 							</button>
 						</>
 					) : null}

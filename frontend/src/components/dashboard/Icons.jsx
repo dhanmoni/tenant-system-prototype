@@ -149,6 +149,21 @@ export const Icon = ({ name, className = '' }) => {
 				<path d="M13.73 21a2 2 0 0 1-3.46 0" />
 			</svg>
 		),
+		trash: (
+			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+				<polyline points="3 6 5 6 21 6" />
+				<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+				<path d="M10 11v6" />
+				<path d="M14 11v6" />
+				<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+			</svg>
+		),
+		badge: (
+			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+				<circle cx="12" cy="8" r="6" />
+				<path d="M8.2 13.2 7 22l5-3 5 3-1.2-8.8" />
+			</svg>
+		),
 		lock: (
 			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
 				<rect x="4" y="11" width="16" height="10" rx="2" ry="2" />

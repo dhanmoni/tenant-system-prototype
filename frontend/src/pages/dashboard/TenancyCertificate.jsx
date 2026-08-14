@@ -291,7 +291,6 @@ function TenancyCertificate() {
 			}
 			setError(t('ws.uin.error.cannotContinue'))
 		} catch (err) {
-			console.error('Failed to load draft', err)
 			setError(err?.response?.data?.message || t('ws.uin.error.loadFailed'))
 		} finally {
 			setDraftLoaded(true)
@@ -302,8 +301,7 @@ function TenancyCertificate() {
 		try {
 			const { data } = await api.get('/api/profile')
 			applyProfileUser(data.user || {})
-		} catch (err) {
-			console.error('Failed to load profile for prefill')
+		} catch {
 			applyProfileUser(user || {})
 		}
 	}
@@ -492,7 +490,6 @@ function TenancyCertificate() {
 				err?.response?.data?.message ||
 				(status ? `Request failed (${status})` : err?.message) ||
 				'Network error'
-			console.error('Village/wards load failed', { districtId: id, detail, err })
 			setError(`Failed to load village/wards — ${detail}`)
 			setTenancyVillageWards([])
 		} finally {

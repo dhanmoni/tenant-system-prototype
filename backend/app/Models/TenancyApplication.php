@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
+use App\Constants\Status;
 
 class TenancyApplication extends Model
 {
@@ -91,6 +92,9 @@ class TenancyApplication extends Model
         'approved_by_user_id',
         'approval_message',
         'forward_remarks',
+        'cancellation_reason',
+        'cancelled_at',
+        'cancelled_by_user_id',
     ];
 
     public function district()
@@ -136,6 +140,11 @@ class TenancyApplication extends Model
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by_user_id');
+    }
+
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by_user_id');
     }
 
     public function isFullyCompleted(): bool
@@ -218,5 +227,29 @@ class TenancyApplication extends Model
         }
 
         return $prefix . '-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Resolve an issued UIN for service-form apply / lookup.
+     *
+     * @return array{0: ?self, 1: ?string}
+     */
+    public static function resolveForServiceForm(string $uid): array
+    {
+        $application = self::where('uid', trim($uid))->first();
+        if (!$application) {
+            return [null, 'Invalid Tenancy UID'];
+        }
+        if ($application->status === Status::CANCELLED) {
+            return [null, 'This UIN has been cancelled and cannot be used to apply for service forms.'];
+        }
+        if ($application->status === Status::WITHDRAWN) {
+            return [null, 'This application was withdrawn and cannot be used to apply for service forms.'];
+        }
+        if (!in_array($application->status, [Status::APPROVED, Status::COMPLETED], true)) {
+            return [null, 'This UIN is not an issued tenancy certificate and cannot be used for service forms.'];
+        }
+
+        return [$application, null];
     }
 }

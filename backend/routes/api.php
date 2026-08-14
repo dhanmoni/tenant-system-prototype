@@ -66,6 +66,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     Route::get('/tenancy-applications/{tenancyApplication}/acknowledgement', [TenancyApplicationController::class, 'downloadAcknowledgement']);
     Route::get('/tenancy-applications/{tenancyApplication}/agreement', [TenancyApplicationController::class, 'downloadAgreement']);
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
+    Route::post('/tenancy-applications/{tenancyApplication}/cancel', [TenancyApplicationController::class, 'cancel']);
 
     // Tenant Forms (Assam Tenancy Rules draft) - user only
     Route::middleware('role:user')->group(function () {
@@ -143,6 +144,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
         // Districts are deactivated, not deleted, to preserve history.
         Route::apiResource('districts', DistrictController::class)->except(['destroy']);
         Route::post('districts/{district}/toggle-active', [DistrictController::class, 'toggleActive']);
+        Route::apiResource('states', StateController::class);
         Route::apiResource('offices', OfficeController::class);
         Route::apiResource('designations', DesignationController::class);
         Route::apiResource('roles', RoleController::class);

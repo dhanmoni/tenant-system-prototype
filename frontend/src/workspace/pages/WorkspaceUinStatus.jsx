@@ -14,9 +14,16 @@ import { useToast } from '../../context/ToastContext'
 const TAB_TENANCY = 'tenancy'
 const TAB_SERVICE = 'service'
 
+function statusFromSearchParams(searchParams) {
+	const value = String(searchParams.get('status') || '').toLowerCase()
+	return value || 'all'
+}
+
 function buildTenancyStatusFilters(t) {
 	return [
 		{ key: 'all', label: t('ws.uinStatus.filter.all') },
+		{ key: 'in_progress', label: t('ws.uinStatus.filter.inProgress') },
+		{ key: 'completed', label: t('ws.uinStatus.filter.completed') },
 		{ key: 'draft', label: t('ws.status.draft') },
 		{ key: 'partial', label: t('ws.status.partial') },
 		{ key: 'submitted', label: t('ws.status.submitted') },
@@ -24,12 +31,15 @@ function buildTenancyStatusFilters(t) {
 		{ key: 'approved', label: t('ws.status.approved') },
 		{ key: 'rejected', label: t('ws.status.rejected') },
 		{ key: 'withdrawn', label: t('ws.status.withdrawn') },
+		{ key: 'cancelled', label: t('ws.status.cancelled') },
 	]
 }
 
 function buildServiceStatusFilters(t) {
 	return [
 		{ key: 'all', label: t('ws.uinStatus.filter.all') },
+		{ key: 'in_progress', label: t('ws.uinStatus.filter.inProgress') },
+		{ key: 'completed', label: t('ws.uinStatus.filter.completed') },
 		{ key: 'pending', label: t('ws.status.pending') },
 		{ key: 'submitted', label: t('ws.status.submitted') },
 		{ key: 'in_review', label: t('ws.status.inReview') },
@@ -72,6 +82,7 @@ function formatStatusText(status, applicationType = '', t) {
 	if (normalizedStatus === STATUS.VALUER_ASSIGNED) return t('ws.status.valuerAssigned')
 	if (normalizedStatus === STATUS.VALUER_REPORT_SUBMITTED) return t('ws.status.valuerReport')
 	if (normalizedStatus === STATUS.WITHDRAWN) return t('ws.status.withdrawn')
+	if (normalizedStatus === STATUS.CANCELLED) return t('ws.status.cancelled')
 
 	return status || '—'
 }
@@ -81,8 +92,8 @@ function statusBadgeClass(status) {
 	if ([STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(s)) {
 		return 'ws-badge ws-badge--success'
 	}
-	if ([STATUS.REJECTED].includes(s)) return 'ws-badge ws-badge--danger'
-	if ([STATUS.WITHDRAWN].includes(s)) return 'ws-badge ws-badge--muted'
+	if (s === STATUS.REJECTED) return 'ws-badge ws-badge--danger'
+	if ([STATUS.WITHDRAWN, STATUS.CANCELLED].includes(s)) return 'ws-badge ws-badge--muted'
 	if ([STATUS.PARTIAL, STATUS.PENDING, STATUS.DRAFT].includes(s)) return 'ws-badge ws-badge--warning'
 	return 'ws-badge ws-badge--pending'
 }
@@ -312,7 +323,9 @@ function ApplicationsTable({
 								</td>
 								{isTenancy ? (
 									<td>
-										{String(app.status).toUpperCase() === 'DRAFT' ? (
+										{['DRAFT', STATUS.WITHDRAWN, STATUS.CANCELLED].includes(
+											String(app.status || '').toUpperCase()
+										) ? (
 											<span className="ws-text-muted">—</span>
 										) : app.initiator_completed && app.second_party_completed ? (
 											<span className="ws-badge ws-badge--success">
@@ -448,7 +461,7 @@ function WorkspaceUinStatus() {
 	const [copiedRefCode, setCopiedRefCode] = useState('')
 
 	const [activeTab, setActiveTab] = useState(TAB_TENANCY)
-	const [statusFilter, setStatusFilter] = useState('all')
+	const [statusFilter, setStatusFilter] = useState(() => statusFromSearchParams(searchParams))
 	const [serviceGroup, setServiceGroup] = useState('all')
 	const [formFilter, setFormFilter] = useState('all')
 

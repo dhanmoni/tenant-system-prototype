@@ -18,8 +18,10 @@ import HelpCentre from './pages/HelpCentre'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthSessionProvider } from './context/AuthSessionContext'
+import { AuthPanelNavigationProvider } from './context/AuthPanelNavigationContext'
 import { ToastProvider } from './context/ToastContext'
 import Ux4gTopbar from './components/a11y/Ux4gTopbar'
+import LandingNav from './components/landing/LandingNav'
 import {
 	getMainContentTargetId,
 	getNavTargetId,
@@ -40,6 +42,11 @@ const WorkspaceApplicationDetails = lazy(
 )
 const WorkspaceFormPortal = lazy(() => import('./workspace/pages/WorkspaceFormPortal'))
 const DistrictManagement = lazy(() => import('./workspace/pages/admin/WorkspaceDistricts'))
+const WorkspaceStates = lazy(() => import('./workspace/pages/admin/WorkspaceStates'))
+const WorkspaceOffices = lazy(() => import('./workspace/pages/admin/WorkspaceOffices'))
+const WorkspaceRoles = lazy(() => import('./workspace/pages/admin/WorkspaceRoles'))
+const WorkspaceDesignations = lazy(() => import('./workspace/pages/admin/WorkspaceDesignations'))
+const WorkspaceActivityLog = lazy(() => import('./workspace/pages/admin/WorkspaceActivityLog'))
 const WorkspaceUsers = lazy(() => import('./workspace/pages/admin/WorkspaceUsers'))
 const WorkspaceUserDetail = lazy(() => import('./workspace/pages/admin/WorkspaceUserDetail'))
 const WorkspaceServiceApplications = lazy(
@@ -259,9 +266,10 @@ function App() {
 
 	return (
 		<AuthSessionProvider user={user} onLogout={handleLogout}>
+		<AuthPanelNavigationProvider>
 		<ToastProvider>
 		<div
-			className={`page${usesLandingChrome || (!user && !isDashboardRoute) ? ' page-landing' : ''}${usesLandingChrome ? ' page-landing-home page-public-marketing' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
+			className={`page${usesLandingChrome || (!user && !isDashboardRoute) ? ' page-landing' : ''}${usesLandingChrome ? ' page-landing-home page-public-marketing' : ''}${isPublicMarketingPage ? ' page-public-inner' : ''}${user && isDashboardRoute ? ' page-dashboard' : ''}`}
 		>
 			<nav className="skip-links" aria-label={t('a11y.skipLinks')}>
 				<a
@@ -287,6 +295,7 @@ function App() {
 				onDecreaseFont={decreaseFontScale}
 				onResetFont={() => setFontScale('normal')}
 			/>
+			{usesLandingChrome ? <LandingNav variant="static" /> : null}
 
 			<main id="main-content">
 				<ScrollToTop />
@@ -352,6 +361,11 @@ function App() {
 								path="admin/districts"
 								element={<DistrictManagement />}
 							/>
+							<Route path="admin/states" element={<WorkspaceStates />} />
+							<Route path="admin/offices" element={<WorkspaceOffices />} />
+							<Route path="admin/roles" element={<WorkspaceRoles />} />
+							<Route path="admin/designations" element={<WorkspaceDesignations />} />
+							<Route path="admin/activity-log" element={<WorkspaceActivityLog />} />
 							<Route
 								path="join"
 								element={<JoinApplication user={user} />}
@@ -367,6 +381,7 @@ function App() {
 			</main>
 		</div>
 		</ToastProvider>
+		</AuthPanelNavigationProvider>
 		</AuthSessionProvider>
 	)
 }

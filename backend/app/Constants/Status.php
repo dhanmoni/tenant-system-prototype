@@ -14,6 +14,7 @@ class Status
     public const PENDING = 'PENDING';
     public const DRAFT = 'DRAFT';
     public const WITHDRAWN = 'WITHDRAWN';
+    public const CANCELLED = 'CANCELLED';
     public const VALUER_ASSIGNED = 'VALUER_ASSIGNED';
     public const VALUER_REPORT_SUBMITTED = 'VALUER_REPORT_SUBMITTED';
 
@@ -33,6 +34,7 @@ class Status
             self::PENDING,
             self::DRAFT,
             self::WITHDRAWN,
+            self::CANCELLED,
             self::VALUER_ASSIGNED,
             self::VALUER_REPORT_SUBMITTED,
         ];

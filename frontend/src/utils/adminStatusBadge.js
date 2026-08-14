@@ -9,6 +9,9 @@ export function adminStatusBadgeClass(status) {
 	if ([STATUS.DRAFT, STATUS.PARTIAL, STATUS.PENDING].includes(s)) {
 		return 'ws-badge ws-badge--warning'
 	}
+	if ([STATUS.WITHDRAWN, STATUS.CANCELLED].includes(s)) {
+		return 'ws-badge ws-badge--muted'
+	}
 	return 'ws-badge ws-badge--pending'
 }
 
@@ -23,6 +26,7 @@ const STATUS_I18N_KEYS = {
 	[STATUS.PENDING]: 'ws.status.pending',
 	[STATUS.UNDER_PROCESS]: 'ws.status.underProcess',
 	[STATUS.WITHDRAWN]: 'ws.status.withdrawn',
+	[STATUS.CANCELLED]: 'ws.status.cancelled',
 	[STATUS.VALUER_ASSIGNED]: 'ws.status.valuerAssigned',
 	[STATUS.VALUER_REPORT_SUBMITTED]: 'ws.status.valuerReport',
 }

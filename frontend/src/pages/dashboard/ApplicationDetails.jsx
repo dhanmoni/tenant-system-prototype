@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../api'
 import { formatDateTime, formatDate } from '../../utils/formatters'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../constants/application'
@@ -43,9 +43,24 @@ function labelizeField(key) {
 	return String(key || '').replace(/_/g, ' ')
 }
 
+function userIsLandlord(user, app) {
+	if (!user || !app) return false
+	if (app.landlord_user_id && Number(app.landlord_user_id) === Number(user.id)) return true
+	if (user.phone && app.landlord_phone && String(app.landlord_phone) === String(user.phone)) return true
+	if (
+		user.email &&
+		app.landlord_email &&
+		String(app.landlord_email).toLowerCase() === String(user.email).toLowerCase()
+	) {
+		return true
+	}
+	return false
+}
+
 function ApplicationDetails() {
 	const { type, applicationNo } = useParams()
 	const navigate = useNavigate()
+	const { user } = useOutletContext() || {}
 	const { showToast } = useToast()
 	const { t } = useLanguage()
 	const statusPath = '/dashboard/status'
@@ -59,6 +74,9 @@ function ApplicationDetails() {
 	const [viewProceedingDoc, setViewProceedingDoc] = useState(null)
 	const [confirmWithdraw, setConfirmWithdraw] = useState(false)
 	const [withdrawing, setWithdrawing] = useState(false)
+	const [confirmCancelUin, setConfirmCancelUin] = useState(false)
+	const [cancelReason, setCancelReason] = useState('')
+	const [cancellingUin, setCancellingUin] = useState(false)
 
 	useEffect(() => {
 		loadApplication()
@@ -116,6 +134,26 @@ function ApplicationDetails() {
 		}
 	}
 
+	const handleCancelUin = async () => {
+		const reason = cancelReason.trim()
+		if (reason.length < 10) {
+			showToast(t('ws.uinCancel.reasonError'), 'error')
+			return
+		}
+		setCancellingUin(true)
+		try {
+			await api.post(`/api/tenancy-applications/${application.application_no}/cancel`, { reason })
+			showToast(t('ws.uinCancel.success'), 'success')
+			setConfirmCancelUin(false)
+			setCancelReason('')
+			await loadApplication()
+		} catch (err) {
+			showToast(err?.response?.data?.message || t('ws.uinCancel.error'), 'error')
+		} finally {
+			setCancellingUin(false)
+		}
+	}
+
 	const breadcrumb = (
 		<p className="ws-breadcrumb no-print">
 			<Link to={statusPath}>My applications</Link>
@@ -151,6 +189,12 @@ function ApplicationDetails() {
 	const baseUrl = (api.defaults.baseURL || 'http://localhost:8000').replace(/\/$/, '')
 	const canWithdraw = application.status === STATUS.SUBMITTED
 	const isTenancy = type === APPLICATION_TYPES.TENANCY_CERTIFICATE
+	const canCancelUin =
+		isTenancy &&
+		Boolean(application.uid) &&
+		[STATUS.APPROVED, STATUS.COMPLETED].includes(String(application.status || '').toUpperCase()) &&
+		userIsLandlord(user, application)
+	const isCancelled = String(application.status || '').toUpperCase() === STATUS.CANCELLED
 
 	const renderProceedings = () => {
 		if (type !== APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL) return null
@@ -284,13 +328,34 @@ function ApplicationDetails() {
 							{t('ws.uinStatus.action.withdraw')}
 						</button>
 					) : null}
+					{canCancelUin ? (
+						<button
+							type="button"
+							className="ws-btn ws-btn--danger ws-btn--sm"
+							title={t('ws.uinCancel.actionTitle')}
+							onClick={() => setConfirmCancelUin(true)}
+						>
+							{t('ws.uinCancel.action')}
+						</button>
+					) : null}
 				</div>
 			</div>
+
+			{isCancelled ? (
+				<div className="ws-alert ws-alert--error admin-app-details__alert no-print" role="status">
+					<strong>{t('ws.uinCancel.banner')}</strong>
+					{application.cancellation_reason ? (
+						<p style={{ margin: '0.4rem 0 0' }}>
+							{t('ws.uinCancel.reasonLabel')}: {application.cancellation_reason}
+						</p>
+					) : null}
+				</div>
+			) : null}
 
 			{isTenancy ? (
 				<div className="tenancy-preview-container">
 					<div className="govt-form-document">
-						<div className="govt-form-watermark">OFFICIAL</div>
+						<div className="govt-form-watermark">{isCancelled ? t('ws.status.cancelled') : 'OFFICIAL'}</div>
 						<div className="govt-form-header" style={{ textAlign: 'center', marginBottom: '30px' }}>
 							<div style={{ fontWeight: 'bold', fontSize: '1.2rem', textTransform: 'uppercase' }}>
 								THE FIRST SCHEDULE
@@ -624,6 +689,37 @@ function ApplicationDetails() {
 				primaryDisabled={withdrawing}
 				onPrimary={handleWithdraw}
 			/>
+
+			<WorkflowConfirmModal
+				open={confirmCancelUin}
+				onClose={() => {
+					if (!cancellingUin) {
+						setConfirmCancelUin(false)
+						setCancelReason('')
+					}
+				}}
+				title={t('ws.uinCancel.title')}
+				description={t('ws.uinCancel.description', {
+					appNo: application.application_no || '',
+					uin: application.uid || '',
+				})}
+				primaryLabel={cancellingUin ? t('ws.uinCancel.working') : t('ws.uinCancel.confirm')}
+				primaryVariant="danger"
+				primaryDisabled={cancellingUin || cancelReason.trim().length < 10}
+				onPrimary={handleCancelUin}
+			>
+				<label className="workflow-confirm-field">
+					<span className="workflow-confirm-field__label">{t('ws.uinCancel.reason')}</span>
+					<textarea
+						className="workflow-confirm-field__input"
+						rows={4}
+						value={cancelReason}
+						onChange={(e) => setCancelReason(e.target.value)}
+						placeholder={t('ws.uinCancel.reasonPh')}
+						disabled={cancellingUin}
+					/>
+				</label>
+			</WorkflowConfirmModal>
 		</div>
 	)
 }
