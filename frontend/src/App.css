@@ -46,6 +46,13 @@ html.a11y-font-xlarge .accessibility-bar .accessibility-toolbar-label {
 	font-size: 13px !important;
 }
 
+/* Landing nav should not "inflate" when we scale page fonts via accessibility options.
+   UX4G bar is already fixed-size; only the nav pills/container were growing. */
+html.a11y-font-large .landing-nav-host,
+html.a11y-font-xlarge .landing-nav-host {
+	font-size: 100% !important;
+}
+
 @media (max-width: 1279px) {
 	html.a11y-font-large .accessibility-bar,
 	html.a11y-font-xlarge .accessibility-bar {
@@ -2878,11 +2885,9 @@ body.a11y-contrast-high .landing-need-support::after {
 
 	.page-landing-home .landing-nav-host {
 		position: relative !important;
-		top: auto !important;
-		right: auto !important;
-		bottom: auto !important;
-		left: auto !important;
+		inset: auto !important;
 		flex-shrink: 0;
+		contain: layout style;
 	}
 
 	.landing-hero-media {
@@ -9578,6 +9583,7 @@ body.a11y-contrast-high .landing-wallpaper-bg::before {
 	position: relative !important;
 	inset: auto !important;
 	flex-shrink: 0;
+	contain: layout style;
 }
 
 .page-public-inner .landing-nav-host--static {

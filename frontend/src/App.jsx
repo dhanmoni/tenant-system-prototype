@@ -114,7 +114,17 @@ function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const navigate = useNavigate()
-	const [fontScale, setFontScale] = useState('normal')
+	const [fontScale, setFontScale] = useState(() => {
+		// Prevent nav/pill reflow: apply saved font scale before first paint.
+		if (typeof window === 'undefined') return 'normal'
+		try {
+			const savedScale = localStorage.getItem('a11y-font-scale')
+			if (savedScale === 'normal' || savedScale === 'large' || savedScale === 'xlarge') return savedScale
+			return 'normal'
+		} catch {
+			return 'normal'
+		}
+	})
 
 	useEffect(() => {
 		let active = true
@@ -169,17 +179,6 @@ function App() {
 	const usesLandingChrome = isLandingHome || isPublicMarketingPage
 	const mainContentTargetId = getMainContentTargetId(location.pathname)
 	const navTargetId = getNavTargetId(location.pathname)
-
-	useEffect(() => {
-		try {
-			const savedScale = localStorage.getItem('a11y-font-scale')
-			if (savedScale === 'normal' || savedScale === 'large' || savedScale === 'xlarge') {
-				setFontScale(savedScale)
-			}
-		} catch {
-			// Ignore localStorage access errors.
-		}
-	}, [])
 
 	useEffect(() => {
 		try {

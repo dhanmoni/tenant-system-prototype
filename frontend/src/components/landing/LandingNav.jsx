@@ -214,8 +214,7 @@ function LandingNav({ variant = 'static' }) {
 			: null
 
 	return (
-		<motion.nav
-			initial={false}
+		<nav
 			id="landing-primary-nav"
 			className={`landing-nav-host${isStatic ? ' landing-nav-host--static' : ' landing-nav-host--overlay'}${menuOpen ? ' is-menu-open' : ''}`}
 			aria-label={t('nav.main')}
@@ -366,7 +365,7 @@ function LandingNav({ variant = 'static' }) {
 					</div>
 				</div>
 			</div>
-		</motion.nav>
+		</nav>
 	)
 }
 

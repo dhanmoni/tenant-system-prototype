@@ -59,7 +59,7 @@
 
 .ux4g-topbar .ux4g-icon,
 .ux4g-topbar .ux4g-icon-filled {
-	font-family: 'UX4G Material Icons', sans-serif;
+	font-family: 'UX4G Material Icons', sans-serif !important;
 }
 
 .ux4g-topbar .ux4g-icon,
@@ -77,12 +77,39 @@
 	white-space: nowrap;
 	direction: ltr;
 	-webkit-font-smoothing: antialiased;
-	font-feature-settings: 'liga';
-	-webkit-font-feature-settings: 'liga';
+	/* Material Icons are rendered via ligatures; dyslexia toggle can disable them. */
+	font-feature-settings: 'liga' !important;
+	-webkit-font-feature-settings: 'liga' !important;
+	font-variant-ligatures: normal !important;
 }
 
 .ux4g-topbar .ux4g-icon-outlined {
-	font-family: 'UX4G Material Icons Outlined', sans-serif;
+	font-family: 'UX4G Material Icons Outlined', sans-serif !important;
+}
+
+/* Widget dyslexia/font toggles can override generic topbar styles.
+   Lock icon ligatures using the accessibility-bar id (higher specificity). */
+#accessibility-bar.ux4g-topbar span.ux4g-icon-outlined.ux4g-top-bar-icon,
+header#accessibility-bar.ux4g-topbar span.ux4g-icon-outlined.ux4g-top-bar-icon,
+#accessibility-bar.ux4g-topbar span.ux4g-icon-outlined,
+header#accessibility-bar.ux4g-topbar span.ux4g-icon-outlined {
+	font-family: 'UX4G Material Icons Outlined', sans-serif !important;
+	/* Force Material Icons ligatures even if dyslexia mode disables them. */
+	font-feature-settings: 'liga' 1, 'clig' 1 !important;
+	-webkit-font-feature-settings: 'liga' 1, 'clig' 1 !important;
+	font-variant-ligatures: normal !important;
+}
+
+#accessibility-bar.ux4g-topbar span.ux4g-icon.ux4g-top-bar-icon,
+header#accessibility-bar.ux4g-topbar span.ux4g-icon.ux4g-top-bar-icon,
+#accessibility-bar.ux4g-topbar span.ux4g-icon,
+header#accessibility-bar.ux4g-topbar span.ux4g-icon,
+#accessibility-bar.ux4g-topbar span.ux4g-icon-filled,
+header#accessibility-bar.ux4g-topbar span.ux4g-icon-filled {
+	font-family: 'UX4G Material Icons', sans-serif !important;
+	font-feature-settings: 'liga' 1, 'clig' 1 !important;
+	-webkit-font-feature-settings: 'liga' 1, 'clig' 1 !important;
+	font-variant-ligatures: normal !important;
 }
 
 .ux4g-fs-20 {
@@ -312,6 +339,15 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 	align-items: center;
 	padding-block: 4px;
 	overflow: visible;
+}
+
+/* Dyslexic / font toggle from the widget can inject global !important fonts.
+   Lock the topbar to the correct icon font + stable typography. */
+.ux4g-topbar,
+.ux4g-topbar * {
+	letter-spacing: normal !important;
+	line-height: 1 !important;
+	text-transform: none !important;
 }
 
 /* Indian flag — from UX4G accessibility-bar.css (.india-flag) */
