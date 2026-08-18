@@ -138,9 +138,10 @@ function PublicDashboard() {
 		>
 			<div className="public-dashboard-page gov-plain-page">
 				{loading ? (
-					<p className="public-dashboard-status" role="status">
-						{t('pd.loading')}
-					</p>
+					<div className="public-dashboard-loading" role="status" aria-live="polite">
+						<span className="public-dashboard-loading__spinner" aria-hidden />
+						<p className="public-dashboard-loading__label">{t('pd.loading')}</p>
+					</div>
 				) : null}
 
 				{error ? (

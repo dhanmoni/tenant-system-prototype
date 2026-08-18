@@ -17,6 +17,7 @@ import { useLanguage } from '../../i18n'
 import { useToast } from '../../context/ToastContext'
 import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
 import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
+import CitizenDashboardSkeleton from '../pages/user/CitizenDashboardSkeleton'
 import WorkspacePageSearch from '../components/WorkspacePageSearch'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import { useWorkspaceNotifications } from '../hooks/useWorkspaceNotifications'
@@ -46,6 +47,14 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	const { showToast } = useToast()
 	const routeLoading = useDashboardRouteLoader(true)
 	const loaderLabel = workspaceLoaderLabel(location.pathname)
+	const isCitizenHome =
+		user?.role === ROLES.USER &&
+		(location.pathname === '/dashboard' || location.pathname === '/dashboard/')
+	const pageFallback = isCitizenHome ? (
+		<CitizenDashboardSkeleton showActions />
+	) : (
+		<WorkspaceRouteLoader label={loaderLabel} />
+	)
 	const [navOpen, setNavOpen] = useState(false)
 	const [notifOpen, setNotifOpen] = useState(false)
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -455,9 +464,9 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 						tabIndex={-1}
 						aria-label="Workspace content"
 					>
-						{routeLoading ? <WorkspaceRouteLoader label={loaderLabel} /> : null}
+						{routeLoading ? pageFallback : null}
 						{/* Catch page-chunk suspend here so App Suspense cannot unmount sidebar / a11y chrome */}
-						<Suspense fallback={<WorkspaceRouteLoader label={loaderLabel} />}>
+						<Suspense fallback={pageFallback}>
 							<Outlet context={{ user, onLogout, onUserUpdate }} />
 						</Suspense>
 					</div>

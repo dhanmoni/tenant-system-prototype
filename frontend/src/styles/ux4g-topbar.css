@@ -57,14 +57,14 @@
 	--ux4g-rgb-white: 255, 255, 255;
 }
 
-.ux4g-icon,
-.ux4g-icon-filled {
+.ux4g-topbar .ux4g-icon,
+.ux4g-topbar .ux4g-icon-filled {
 	font-family: 'UX4G Material Icons', sans-serif;
 }
 
-.ux4g-icon,
-.ux4g-icon-filled,
-.ux4g-icon-outlined {
+.ux4g-topbar .ux4g-icon,
+.ux4g-topbar .ux4g-icon-filled,
+.ux4g-topbar .ux4g-icon-outlined {
 	font-weight: normal;
 	font-style: normal;
 	font-size: var(--ux4g-icon-size, 16px);
@@ -81,7 +81,7 @@
 	-webkit-font-feature-settings: 'liga';
 }
 
-.ux4g-icon-outlined {
+.ux4g-topbar .ux4g-icon-outlined {
 	font-family: 'UX4G Material Icons Outlined', sans-serif;
 }
 
@@ -475,9 +475,7 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 }
 
 /* ---------------------------------------------------------------------------
-   Official UX4G accessibility widget — mobile / tablet polish
-   Topbar already opens the panel; hide the large floating FAB on phones
-   so it does not cover headings. Panel becomes a full-width bottom sheet.
+   UX4G widget FAB — hide on phones (topbar opens the panel).
    Tablet + laptop: keep the FAB, stacked under the back-to-top button.
 --------------------------------------------------------------------------- */
 
@@ -496,13 +494,156 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 	}
 }
 
-/* Soft scrim while the panel is open (JS sets inline right: 0) */
+/* ---------------------------------------------------------------------------
+   Official UX4G accessibility widget — isolate from portal CSS
+   Widget injects a full HTML document; portal button/h2/icon rules leak in.
+--------------------------------------------------------------------------- */
+#uw-main.uwaw,
+#uw-main {
+	font-family: 'Lato', 'Noto Sans', 'Segoe UI', system-ui, sans-serif !important;
+	font-style: normal !important;
+	font-weight: 400 !important;
+	letter-spacing: normal !important;
+	line-height: 1.4 !important;
+	color: #212121 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	overflow: hidden !important;
+	min-height: 0 !important;
+	height: min(530px, 85dvh) !important;
+	max-height: min(530px, 85dvh) !important;
+	box-sizing: border-box !important;
+}
+
+#uw-main *,
+#uw-main *::before,
+#uw-main *::after {
+	box-sizing: border-box;
+	font-family: inherit !important;
+	font-style: normal !important;
+	letter-spacing: normal !important;
+}
+
+#uw-main h1,
+#uw-main h2,
+#uw-main h3,
+#uw-main h4,
+#uw-main p,
+#uw-main span,
+#uw-main a,
+#uw-main button,
+#uw-main label {
+	font-family: inherit !important;
+	font-style: normal !important;
+	text-transform: none !important;
+}
+
+#uw-main .second-panel {
+	flex-shrink: 0;
+}
+
+#uw-main .second-panel h2,
+#uw-main .second-panel h3 {
+	font-size: 1.125rem !important;
+	line-height: 1.3 !important;
+	font-weight: 600 !important;
+	font-style: normal !important;
+	margin: 0 !important;
+	color: #fff !important;
+}
+
+#uw-main .uwaw-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	margin-bottom: 0 !important;
+}
+
+#uw-main .h-scroll {
+	flex: 1 1 auto !important;
+	height: auto !important;
+	max-height: none !important;
+	min-height: 0 !important;
+	overflow-y: auto !important;
+	overflow-x: hidden !important;
+	-webkit-overflow-scrolling: touch;
+}
+
+#uw-main .uwaw-features {
+	align-items: stretch;
+}
+
+#uw-main #featureItem-ht-dark,
+#uw-main #dark-btn {
+	display: none !important;
+}
+
+#uw-main button.uwaw-features__item__i,
+#uw-main .uwaw-features__item__i {
+	display: flex !important;
+	flex-flow: column nowrap !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 0.35rem;
+	width: 100% !important;
+	min-height: 6.75rem !important;
+	height: auto !important;
+	margin: 0 !important;
+	padding: 0.65rem 0.4rem !important;
+	border: 2px solid #fff !important;
+	border-radius: 12px !important;
+	background: #fff !important;
+	box-shadow: none !important;
+	color: #212121 !important;
+	text-align: center !important;
+	text-decoration: none !important;
+	text-transform: none !important;
+	line-height: 1.25 !important;
+}
+
+#uw-main .uwaw-features__item__icon {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	margin: 0 0 0.35rem !important;
+	height: 2rem !important;
+}
+
+/* Widget icons are CSS masks — do not treat them as Material font glyphs */
+#uw-main .ux4g-icon {
+	font-family: inherit !important;
+	font-size: 0 !important;
+	line-height: 0 !important;
+	display: inline-block !important;
+	width: 2rem !important;
+	height: 2rem !important;
+	background-color: #212121 !important;
+	background-image: none !important;
+	mask-size: contain !important;
+	-webkit-mask-size: contain !important;
+	mask-repeat: no-repeat !important;
+	-webkit-mask-repeat: no-repeat !important;
+	mask-position: center !important;
+	-webkit-mask-position: center !important;
+}
+
+#uw-main .uwaw-features__item__name,
+#uw-main .ux4g-copy {
+	display: block;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+	font-style: normal !important;
+	line-height: 1.25 !important;
+	color: #212121 !important;
+}
+
 #uw-main[style*='right: 0'],
 #uw-main[style*='right:0'] {
 	box-shadow: 0 -8px 40px rgba(15, 23, 42, 0.28) !important;
 }
 
-/* Broken UX4G logo URL → text credit on all viewports */
 #uw-main .copyrights-accessibility a.copyright-text img {
 	display: none !important;
 }
@@ -514,32 +655,54 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 	letter-spacing: 0.02em;
 }
 
+#uw-main .reset-panel {
+	position: static !important;
+	flex-shrink: 0;
+	width: 100% !important;
+	bottom: auto !important;
+	padding: 8px 14px 12px !important;
+	background: #fff !important;
+	border-top: 1px solid #e2e8f0;
+}
+
 #uw-main .copyrights-accessibility {
 	display: flex !important;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
+	padding: 0 !important;
+	width: 100%;
+	background: transparent !important;
 }
 
-#uw-main .reset-panel {
-	position: static !important;
-	width: 100% !important;
-	bottom: auto !important;
+#uw-main .btn-reset-all {
+	flex: 1 1 auto;
+	min-width: 0;
+	max-width: 100%;
+	font-family: inherit !important;
+	font-style: normal !important;
+	box-shadow: none !important;
+}
+
+#uw-main .copyrights-accessibility a.copyright-text {
+	flex: 0 0 auto;
+	justify-content: flex-end !important;
+	gap: 6px !important;
+	padding: 0 !important;
+	width: auto !important;
+	font-size: 12px;
+	color: #475569 !important;
+	text-decoration: none !important;
 }
 
 @media (max-width: 767.98px) {
-	/*
-	  Widget toggles inline right: -530px / 0.
-	  On phones, pin to the viewport and slide with transform so width stays 100%.
-	*/
 	#uw-main.uwaw,
 	#uw-main {
 		left: 0 !important;
 		right: 0 !important;
 		width: 100% !important;
 		max-width: 100% !important;
-		min-height: 0 !important;
 		height: min(72dvh, 560px) !important;
 		max-height: min(72dvh, 560px) !important;
 		border-top-left-radius: 16px !important;
@@ -551,11 +714,6 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 		transform: translate3d(100%, 0, 0);
 		transition: transform 0.3s ease, box-shadow 0.3s ease !important;
 		pointer-events: none;
-		display: flex !important;
-		flex-direction: column !important;
-		overflow: hidden !important;
-		font-family: 'Lato', 'Noto Sans', system-ui, sans-serif !important;
-		font-style: normal !important;
 	}
 
 	#uw-main[style*='right: 0'],
@@ -565,37 +723,12 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 	}
 
 	#uw-main .second-panel {
-		flex-shrink: 0;
 		padding: 12px 14px !important;
 		gap: 12px !important;
 	}
 
-	#uw-main .second-panel h2,
-	#uw-main .second-panel h3 {
-		font-size: 1.05rem !important;
-		line-height: 1.3 !important;
-		font-style: normal !important;
-		font-weight: 600 !important;
-		font-family: inherit !important;
-	}
-
 	#uw-main .uwaw-body {
-		flex: 1 1 auto;
-		min-height: 0;
-		display: flex;
-		flex-direction: column;
 		padding: 10px 12px 0 !important;
-		margin-bottom: 0 !important;
-		overflow: hidden;
-	}
-
-	#uw-main .h-scroll {
-		flex: 1 1 auto;
-		height: auto !important;
-		max-height: none !important;
-		min-height: 0 !important;
-		-webkit-overflow-scrolling: touch;
-		padding-bottom: 8px;
 	}
 
 	#uw-main .uwaw-features {
@@ -604,54 +737,8 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 		padding-bottom: 8px !important;
 	}
 
-	#uw-main .uwaw-features__item__i {
-		height: auto !important;
-		min-height: 84px !important;
-		padding: 8px 6px !important;
-	}
-
-	#uw-main .uwaw-features__item__name,
-	#uw-main .ux4g-copy {
-		font-style: normal !important;
-		font-size: 12px !important;
-		line-height: 1.25 !important;
-	}
-
-	/* Footer: reset + credit — stop absolute overlap / broken logo */
 	#uw-main .reset-panel {
-		position: static !important;
-		flex-shrink: 0;
-		width: 100% !important;
-		bottom: auto !important;
 		padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0)) !important;
-		background: #fff !important;
-		border-top: 1px solid #e2e8f0;
-	}
-
-	#uw-main .copyrights-accessibility {
-		display: flex !important;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 8px;
-		padding: 0 !important;
-		width: 100%;
-	}
-
-	#uw-main .btn-reset-all {
-		flex: 1 1 auto;
-		min-width: 0;
-		max-width: 100%;
-	}
-
-	#uw-main .copyrights-accessibility a.copyright-text {
-		flex: 0 0 auto;
-		justify-content: flex-end !important;
-		gap: 6px !important;
-		padding: 0 !important;
-		width: auto !important;
-		font-size: 12px;
-		color: #475569 !important;
 	}
 }
 
@@ -659,13 +746,8 @@ html.a11y-font-xlarge .ux4g-topbar .ux4g-topbar__selectbtn {
 	#uw-main.uwaw,
 	#uw-main {
 		max-width: min(420px, 92vw) !important;
-		max-height: min(80dvh, 560px) !important;
 		height: min(80dvh, 560px) !important;
-	}
-
-	#uw-main .h-scroll {
-		height: calc(min(80dvh, 560px) - 140px) !important;
-		max-height: calc(min(80dvh, 560px) - 140px) !important;
+		max-height: min(80dvh, 560px) !important;
 	}
 }
 

@@ -10,6 +10,10 @@ import { tenantServiceGroups } from '../../../data/tenantServices'
 import { useLanguage } from '../../../i18n'
 import CitizenStatusChart from '../../components/dashboard/CitizenStatusChart'
 import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
+import {
+	CitizenChartSkeleton,
+	CitizenRecentSkeleton,
+} from './CitizenDashboardSkeleton'
 
 const SERVICE_TILE_ICONS = {
 	'rent-authority': 'building',
@@ -165,7 +169,7 @@ function UserOverview() {
 								<span className="ws-citizen-stat-card-label">{t('ws.citizen.stat.total')}</span>
 							</div>
 							<span className="ws-citizen-stat-card-value">
-								{loading ? '…' : stats.total}
+								{loading ? <span className="ws-skel ws-skel--stat" aria-hidden /> : stats.total}
 							</span>
 						</Link>
 						<Link
@@ -182,7 +186,11 @@ function UserOverview() {
 								</span>
 							</div>
 							<span className="ws-citizen-stat-card-value">
-								{loading ? '…' : stats.inReview}
+								{loading ? (
+									<span className="ws-skel ws-skel--stat" aria-hidden />
+								) : (
+									stats.inReview
+								)}
 							</span>
 						</Link>
 						<Link
@@ -199,7 +207,11 @@ function UserOverview() {
 								</span>
 							</div>
 							<span className="ws-citizen-stat-card-value">
-								{loading ? '…' : stats.completed}
+								{loading ? (
+									<span className="ws-skel ws-skel--stat" aria-hidden />
+								) : (
+									stats.completed
+								)}
 							</span>
 						</Link>
 					</div>
@@ -290,7 +302,7 @@ function UserOverview() {
 					</div>
 					<div className="ws-card-body ws-citizen-lower-body">
 						{loading ? (
-							<div className="ws-empty">{t('ws.citizen.recent.loading')}</div>
+							<CitizenRecentSkeleton />
 						) : loadError ? (
 							<div className="ws-citizen-empty-state">
 								<p>{loadError}</p>
@@ -372,7 +384,11 @@ function UserOverview() {
 					</div>
 					<div className="ws-card-body ws-citizen-lower-body">
 						<p className="ws-citizen-chart-hint">{t('ws.citizen.chart.hint')}</p>
-						<CitizenStatusChart applications={applications} />
+						{loading ? (
+							<CitizenChartSkeleton />
+						) : (
+							<CitizenStatusChart applications={applications} />
+						)}
 						<button
 							type="button"
 							className="ws-btn ws-btn--outline ws-citizen-status-link"

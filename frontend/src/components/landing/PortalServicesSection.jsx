@@ -24,6 +24,7 @@ import {
 	servicesTitleAccentVariants,
 	servicesTitleWordVariants,
 	introLeadVariants,
+	landingInView,
 } from '../../utils/landingMotion'
 import PortalServicesWatermark from './PortalServicesWatermark'
 import { useLanguage } from '../../i18n'
@@ -65,9 +66,9 @@ function ServicesAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduc
 			className="landing-section-title landing-section-title--playful"
 			aria-label={fullTitle}
 		>
-			{leadWords.map((word) => (
+			{leadWords.map((word, index) => (
 				<motion.span
-					key={word}
+					key={`${word}-${index}`}
 					className="landing-section-title__word"
 					variants={reduceMotion ? undefined : servicesTitleWordVariants}
 				>
@@ -258,11 +259,7 @@ function PortalServicesSection() {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const inView = useInView(sectionRef, {
-		once: true,
-		amount: 0.28,
-		margin: '0px 0px -12% 0px',
-	})
+	const inView = useInView(sectionRef, landingInView)
 	const reveal = Boolean(reduceMotion) || inView
 
 	const items = useMemo(() => {

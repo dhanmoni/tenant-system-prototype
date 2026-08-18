@@ -2,155 +2,35 @@ import { useMemo, useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Check } from 'lucide-react'
 import AuthPanel from './AuthPanel'
-import { easeOutExpo, easePlayful } from '../../utils/landingMotion'
+import { easeOutExpo } from '../../utils/landingMotion'
 import { useLanguage } from '../../i18n'
 
 const sectionShellVariants = {
 	hidden: {},
 	visible: {
 		transition: {
-			staggerChildren: 0.16,
-			delayChildren: 0.02,
-		},
-	},
-}
-
-/** Left column — large fade-up (whole promo block) */
-const promoColVariants = {
-	hidden: { opacity: 0, y: 96, scale: 0.92 },
-	visible: {
-		opacity: 1,
-		y: 0,
-		scale: 1,
-		transition: {
-			duration: 0.92,
-			ease: easeOutExpo,
-			staggerChildren: 0.12,
-			delayChildren: 0.06,
-		},
-	},
-}
-
-const promoEyebrowVariants = {
-	hidden: { opacity: 0, y: 10, letterSpacing: '0.28em' },
-	visible: {
-		opacity: 1,
-		y: 0,
-		letterSpacing: '0.14em',
-		transition: { duration: 0.45, ease: easeOutExpo },
-	},
-}
-
-const promoHeadlineBlockVariants = {
-	hidden: {},
-	visible: {
-		transition: {
-			staggerChildren: 0.1,
-			delayChildren: 0.02,
-		},
-	},
-}
-
-const promoTitleLineVariants = {
-	hidden: { opacity: 0, y: 64, clipPath: 'inset(0 0 100% 0)' },
-	visible: {
-		opacity: 1,
-		y: 0,
-		clipPath: 'inset(0 0 0% 0)',
-		transition: {
-			duration: 0.78,
-			ease: easeOutExpo,
-		},
-	},
-}
-
-const promoUnderlineVariants = {
-	hidden: { scaleX: 0, opacity: 0 },
-	visible: {
-		scaleX: 1,
-		opacity: 1,
-		transition: {
-			duration: 0.55,
-			ease: easePlayful,
-			delay: 0.04,
-		},
-	},
-}
-
-const promoLeadVariants = {
-	hidden: { opacity: 0, y: 18 },
-	visible: {
-		opacity: 1,
-		y: 0,
-		transition: {
-			duration: 0.48,
-			ease: easeOutExpo,
-		},
-	},
-}
-
-const promoFeaturesListVariants = {
-	hidden: {},
-	visible: {
-		transition: {
-			staggerChildren: 0.09,
+			staggerChildren: 0.14,
 			delayChildren: 0.04,
 		},
 	},
 }
 
-const promoFeatureItemVariants = {
-	hidden: { opacity: 0, x: -18, y: 8 },
-	visible: {
-		opacity: 1,
-		x: 0,
-		y: 0,
-		transition: {
-			type: 'spring',
-			stiffness: 380,
-			damping: 26,
-			mass: 0.75,
-		},
-	},
-}
-
-const promoCtaVariants = {
-	hidden: { opacity: 0, y: 14 },
+/** One transform per column — large fade-up, no nested motion. */
+const promoColVariants = {
+	hidden: { opacity: 0, y: 80 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		transition: {
-			duration: 0.48,
-			ease: easeOutExpo,
-			delay: 0.06,
-		},
-	},
-}
-
-const promoCheckVariants = {
-	hidden: { opacity: 0, scale: 0.4 },
-	visible: {
-		opacity: 1,
-		scale: 1,
-		transition: {
-			type: 'spring',
-			stiffness: 460,
-			damping: 18,
-		},
+		transition: { duration: 1.05, ease: easeOutExpo },
 	},
 }
 
 const authColVariants = {
-	hidden: { opacity: 0, y: 32, scale: 0.975 },
+	hidden: { opacity: 0, y: 72 },
 	visible: {
 		opacity: 1,
 		y: 0,
-		scale: 1,
-		transition: {
-			duration: 0.55,
-			ease: easeOutExpo,
-			delay: 0.1,
-		},
+		transition: { duration: 1, ease: easeOutExpo },
 	},
 }
 
@@ -160,7 +40,7 @@ function GetStartedSection({ authPanelProps }) {
 	const reduceMotion = useReducedMotion()
 	const inView = useInView(sectionRef, {
 		once: true,
-		amount: 0.12,
+		amount: 0.18,
 		margin: '0px 0px -6% 0px',
 	})
 	const animate = Boolean(reduceMotion) || inView
@@ -196,67 +76,34 @@ function GetStartedSection({ authPanelProps }) {
 					className="get-started-promo"
 					variants={reduceMotion ? undefined : promoColVariants}
 				>
-					<motion.p
-						className="get-started-eyebrow"
-						variants={reduceMotion ? undefined : promoEyebrowVariants}
-					>
-						{t('home.getStarted.eyebrow')}
-					</motion.p>
+					<p className="get-started-eyebrow">{t('home.getStarted.eyebrow')}</p>
 
-					<motion.div
-						className="get-started-headline-wrap"
-						variants={reduceMotion ? undefined : promoHeadlineBlockVariants}
-					>
+					<div className="get-started-headline-wrap">
 						<h2 id="get-started-heading" className="get-started-headline">
-							<motion.span
-								className="get-started-headline__primary"
-								variants={reduceMotion ? undefined : promoTitleLineVariants}
-							>
+							<span className="get-started-headline__primary">
 								{t('home.getStarted.headline1')}
-							</motion.span>
-							<motion.span
-								className="get-started-headline__accent"
-								variants={reduceMotion ? undefined : promoTitleLineVariants}
-							>
+							</span>
+							<span className="get-started-headline__accent">
 								{t('home.getStarted.headline2')}
-							</motion.span>
+							</span>
 						</h2>
-						<motion.span
-							className="get-started-headline-underline"
-							variants={reduceMotion ? undefined : promoUnderlineVariants}
-							aria-hidden
-						/>
-					</motion.div>
+						<span className="get-started-headline-underline" aria-hidden />
+					</div>
 
-					<motion.p
-						className="get-started-promo-lead"
-						variants={reduceMotion ? undefined : promoLeadVariants}
-					>
-						{t('home.getStarted.lead')}
-					</motion.p>
+					<p className="get-started-promo-lead">{t('home.getStarted.lead')}</p>
 
-					<motion.ul
-						className="get-started-promo-features"
-						variants={reduceMotion ? undefined : promoFeaturesListVariants}
-					>
+					<ul className="get-started-promo-features">
 						{promoFeatures.map((item) => (
-							<motion.li key={item} variants={reduceMotion ? undefined : promoFeatureItemVariants}>
-								<motion.span
-									className="get-started-promo-check-wrap"
-									variants={reduceMotion ? undefined : promoCheckVariants}
-									aria-hidden
-								>
+							<li key={item}>
+								<span className="get-started-promo-check-wrap" aria-hidden>
 									<Check className="get-started-promo-check" strokeWidth={2.75} />
-								</motion.span>
+								</span>
 								<span>{item}</span>
-							</motion.li>
+							</li>
 						))}
-					</motion.ul>
+					</ul>
 
-					<motion.div
-						className="get-started-promo-actions"
-						variants={reduceMotion ? undefined : promoCtaVariants}
-					>
+					<div className="get-started-promo-actions">
 						<a
 							href="#portal-guide"
 							onClick={scrollToHowToApply}
@@ -264,7 +111,7 @@ function GetStartedSection({ authPanelProps }) {
 						>
 							{t('hero.howToApply')}
 						</a>
-					</motion.div>
+					</div>
 				</motion.div>
 
 				<motion.div

@@ -323,7 +323,7 @@ const en = {
 
 	'home.support.title': 'Need support?',
 	'home.support.lead': 'Contact us for help and support.',
-	'home.support.cta': 'Get in touch',
+	'home.support.cta': 'Contact us',
 
 	'home.logos.aria': 'Related government websites',
 	'home.logos.srOnly':

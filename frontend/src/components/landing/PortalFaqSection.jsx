@@ -11,6 +11,7 @@ import {
 	faqTitleAccentVariants,
 	faqTitleWordVariants,
 	introLeadVariants,
+	landingInView,
 } from '../../utils/landingMotion'
 
 function FaqItem({ item, isOpen, onToggle, reduceMotion }) {
@@ -95,9 +96,9 @@ function FaqAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMoti
 			className="landing-section-title landing-section-title--playful"
 			aria-label={fullTitle}
 		>
-			{leadWords.map((word) => (
+			{leadWords.map((word, index) => (
 				<motion.span
-					key={word}
+					key={`${word}-${index}`}
 					className="landing-section-title__word"
 					variants={reduceMotion ? undefined : faqTitleWordVariants}
 				>
@@ -118,11 +119,7 @@ function PortalFaqSection() {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const inView = useInView(sectionRef, {
-		once: true,
-		amount: 0.22,
-		margin: '0px 0px -8% 0px',
-	})
+	const inView = useInView(sectionRef, landingInView)
 	const reveal = Boolean(reduceMotion) || inView
 
 	const faqItems = useMemo(

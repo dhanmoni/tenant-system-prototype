@@ -10434,6 +10434,147 @@ a.ws-sidebar-support-item:hover {
 	border-bottom: none !important;
 }
 
+/* Citizen dashboard skeleton — same boxes as the loaded dashboard */
+.ws-skel {
+	display: block;
+	background: linear-gradient(90deg, #e8edf3 0%, #f4f7fb 42%, #e8edf3 100%);
+	background-size: 200% 100%;
+	animation: ws-skel-shimmer 1.2s ease-in-out infinite;
+	border-radius: 6px;
+}
+
+.ws-citizen-stat-card-value .ws-skel--stat {
+	display: inline-block;
+	width: 2.15ch;
+	height: 0.92em;
+	margin: 0;
+	vertical-align: -0.08em;
+	border-radius: 6px;
+}
+
+.ws-skel--appno {
+	width: min(100%, 9.25rem);
+	height: 0.875rem;
+}
+
+.ws-skel--type {
+	width: min(100%, 8.5rem);
+	height: 0.875rem;
+}
+
+.ws-skel--badge {
+	height: 1.375rem;
+	width: 5.75rem;
+	border-radius: 999px;
+}
+
+.ws-skel--date {
+	height: 0.8125rem;
+	width: 4.5rem;
+}
+
+.ws-citizen-recent-row--skel {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 8px;
+	width: 100%;
+	margin: 0;
+	padding: 12px 14px;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+.ws-citizen-recent-row--skel .ws-citizen-recent-no,
+.ws-citizen-recent-row--skel .ws-citizen-recent-type,
+.ws-citizen-recent-row--skel .ws-citizen-recent-status,
+.ws-citizen-recent-row--skel .ws-citizen-recent-date {
+	min-width: 0;
+	display: flex;
+	align-items: center;
+}
+
+@media (min-width: 640px) {
+	.ws-citizen-recent-row--skel {
+		grid-template-columns:
+			minmax(0, 1.05fr)
+			minmax(0, 1.1fr)
+			minmax(7.5rem, 9.5rem)
+			minmax(4.75rem, 5.5rem);
+		gap: 8px 12px;
+		padding: 10px 12px;
+		min-height: 2.75rem;
+	}
+}
+
+.ws-citizen-chart--skel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 18px;
+	padding: 16px 12px 12px;
+}
+
+.ws-skel--donut {
+	width: 148px;
+	height: 148px;
+	margin: 0;
+	border-radius: 50%;
+	background: conic-gradient(#dbe4ee 0 38%, #eef2f6 38% 68%, #d5dee8 68% 100%);
+	background-size: 100% 100%;
+	-webkit-mask: radial-gradient(farthest-side, transparent 54%, #000 55%);
+	mask: radial-gradient(farthest-side, transparent 54%, #000 55%);
+	animation: ws-skel-shimmer 1.2s ease-in-out infinite;
+}
+
+.ws-citizen-chart-skel-legend {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 10px 16px;
+	width: 100%;
+}
+
+.ws-citizen-chart-skel-swatch {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.ws-skel--swatch {
+	width: 12px;
+	height: 12px;
+	border-radius: 3px;
+	flex-shrink: 0;
+}
+
+.ws-skel--legend {
+	height: 11px;
+	width: 4.25rem;
+	margin: 0;
+}
+
+@keyframes ws-skel-shimmer {
+	0% {
+		background-position: 100% 0;
+	}
+	100% {
+		background-position: -100% 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ws-skel,
+	.ws-skel--donut {
+		animation: none;
+		background: #e8edf3;
+	}
+
+	.ws-skel--donut {
+		background: #e2e8f0;
+	}
+}
+
 .ws-table-actions-col {
 	width: 3.5rem;
 	text-align: center;

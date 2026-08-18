@@ -74,6 +74,10 @@ const publicPagesEn = {
 	'pd.link.services': 'Browse all services',
 	'pd.link.guide': 'How to register & apply',
 	'pd.link.login': 'Login or create account',
+	'pd.loading': 'Loading dashboard figures…',
+	'pd.loadError': 'Could not load public statistics.',
+	'pd.retry': 'Try again',
+	'pd.empty': 'No figures published for this period.',
 
 	// Services page
 	'services.title': 'Services',
@@ -190,6 +194,7 @@ const publicPagesEn = {
 		'Directorate of Town and Country Planning, Assam — helpdesk and office contact details.',
 	'contact.helpdesk': 'Helpdesk',
 	'contact.tollFree': 'Toll-free:',
+	'contact.phoneLabel': 'Phone:',
 	'contact.emailLabel': 'Email:',
 	'contact.hoursLabel': 'Hours (demo):',
 	'contact.hoursValue': 'Monday–Friday, 10:00–17:00 IST',

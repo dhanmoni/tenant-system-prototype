@@ -72,6 +72,10 @@ const publicPagesAs = {
 	'pd.link.services': 'সকলো সেৱা চাওক',
 	'pd.link.guide': 'কেনেকৈ পঞ্জীয়ন আৰু আবেদন কৰিব',
 	'pd.link.login': 'লগইন বা একাউণ্ট সৃষ্টি',
+	'pd.loading': 'ডেশ্ববৰ্ডৰ তথ্য লোড হৈ আছে…',
+	'pd.loadError': 'ৰাজহুৱা পৰিসংখ্যা লোড কৰিব পৰা নগ’ল।',
+	'pd.retry': 'পুনৰ চেষ্টা কৰক',
+	'pd.empty': 'এই সময়ৰ বাবে কোনো তথ্য প্ৰকাশিত হোৱা নাই।',
 
 	'services.title': 'সেৱাসমূহ',
 	'services.lead':
@@ -184,6 +188,7 @@ const publicPagesAs = {
 		'নগৰ আৰু গ্ৰাম্য পৰিকল্পনা সঞ্চালকালয়, অসম — হেল্পডেস্ক আৰু কাৰ্যালয়ৰ যোগাযোগ।',
 	'contact.helpdesk': 'হেল্পডেস্ক',
 	'contact.tollFree': 'ট\'ল-ফ্ৰী:',
+	'contact.phoneLabel': 'ফোন:',
 	'contact.emailLabel': 'ইমেইল:',
 	'contact.hoursLabel': 'সময় (ডেম\'):',
 	'contact.hoursValue': 'সোমবাৰ–শুক্ৰবাৰ, ১০:০০–১৭:০০ IST',

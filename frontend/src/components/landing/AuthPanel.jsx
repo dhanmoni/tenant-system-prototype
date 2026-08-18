@@ -5,29 +5,21 @@ import OtpInput from './OtpInput'
 import { easeOutExpo } from '../../utils/landingMotion'
 import { useLanguage } from '../../i18n'
 
-/** Login ↔ Register — slide + fade (dir: 1 = to register, -1 = to login) */
-const MODE_ENTER_MS = 0.48
-const MODE_EXIT_MS = 0.28
-const MODE_HEIGHT_MS = 0.52
+/** Login ↔ Register — opacity only (slide + height + ink spring was jittery) */
+const MODE_ENTER_MS = 0.4
+const MODE_EXIT_MS = 0.22
+const MODE_HEIGHT_MS = 0.4
 
 const modeVariants = {
-	enter: (dir) => ({
-		opacity: 0,
-		x: dir * 36,
-		y: 22,
-	}),
+	enter: { opacity: 0 },
 	center: {
 		opacity: 1,
-		x: 0,
-		y: 0,
 		transition: { duration: MODE_ENTER_MS, ease: easeOutExpo },
 	},
-	exit: (dir) => ({
+	exit: {
 		opacity: 0,
-		x: dir * -28,
-		y: 10,
 		transition: { duration: MODE_EXIT_MS, ease: easeOutExpo },
-	}),
+	},
 }
 
 function AuthAlert({ type, children }) {
@@ -117,10 +109,7 @@ function AutoHeight({ reduceMotion, watchKey, children }) {
 
 		const update = () => {
 			const next = node.offsetHeight
-			setHeight(next)
-			if (!modeAnimRef.current) {
-				setAnimate(false)
-			}
+			if (next > 0) setHeight(next)
 		}
 
 		update()
@@ -193,7 +182,6 @@ function AuthPanel({
 }) {
 	const { t } = useLanguage()
 	const reduceMotion = useReducedMotion()
-	const [modeDir, setModeDir] = useState(1)
 	const loginStep = otpSent ? 1 : 0
 	const regStepIndex = regStep === 'otp' ? 1 : 0
 	const heightWatchKey = mode
@@ -205,13 +193,11 @@ function AuthPanel({
 
 	const switchToLogin = (e) => {
 		e?.preventDefault?.()
-		setModeDir(-1)
 		onSwitchMode('login')
 	}
 
 	const switchToRegister = (e) => {
 		e?.preventDefault?.()
-		setModeDir(1)
 		onSwitchMode('register')
 	}
 
@@ -236,18 +222,6 @@ function AuthPanel({
 						onClick={switchToLogin}
 					>
 						{t('auth.logIn')}
-						{mode === 'login' ? (
-							reduceMotion ? (
-								<span className="auth-panel-tab-ink" aria-hidden />
-							) : (
-								<motion.span
-									className="auth-panel-tab-ink"
-									layoutId="auth-tab-ink"
-									transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-									aria-hidden
-								/>
-							)
-						) : null}
 					</button>
 					<button
 						type="button"
@@ -259,29 +233,20 @@ function AuthPanel({
 						onClick={switchToRegister}
 					>
 						{t('auth.register')}
-						{mode === 'register' ? (
-							reduceMotion ? (
-								<span className="auth-panel-tab-ink" aria-hidden />
-							) : (
-								<motion.span
-									className="auth-panel-tab-ink"
-									layoutId="auth-tab-ink"
-									transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-									aria-hidden
-								/>
-							)
-						) : null}
 					</button>
+					<span
+						className={`auth-panel-tab-ink-bar${mode === 'register' ? ' is-register' : ''}`}
+						aria-hidden
+					/>
 				</div>
 
 				<AutoHeight reduceMotion={reduceMotion} watchKey={heightWatchKey}>
-					<AnimatePresence mode="wait" initial={false} custom={modeDir}>
+					<AnimatePresence mode="wait" initial={false}>
 						{mode === 'login' ? (
 							<motion.div
 								key="login"
 								className="auth-panel-body"
 								role="tabpanel"
-								custom={modeDir}
 								variants={reduceMotion ? undefined : modeVariants}
 								initial={reduceMotion ? false : 'enter'}
 								animate={reduceMotion ? undefined : 'center'}
@@ -390,7 +355,6 @@ function AuthPanel({
 								key="register"
 								className="auth-panel-body"
 								role="tabpanel"
-								custom={modeDir}
 								variants={reduceMotion ? undefined : modeVariants}
 								initial={reduceMotion ? false : 'enter'}
 								animate={reduceMotion ? undefined : 'center'}

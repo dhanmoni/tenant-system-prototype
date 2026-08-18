@@ -7,12 +7,6 @@ import heroBannerFourteen from '../assets/img/HeroBanner5.1.webp'
 export const HERO_LCP_SRC = '/hero-lcp.webp'
 
 export const HERO_SLIDE_DEFS = [
-
-	{
-		src: heroBannerThirteen,
-		altKey: 'hero.slide5Alt',
-		objectPosition: 'center center',
-	},
 	{
 		src: HERO_LCP_SRC,
 		altKey: 'hero.slide3Alt',
@@ -20,12 +14,15 @@ export const HERO_SLIDE_DEFS = [
 		lcp: true,
 	},
 	{
+		src: heroBannerThirteen,
+		altKey: 'hero.slide5Alt',
+		objectPosition: 'center center',
+	},
+	{
 		src: heroCommunityHomes,
 		altKey: 'hero.slide1Alt',
 		objectPosition: 'center 42%',
 	},
-
-
 	{
 		src: heroBannerFourteen,
 		altKey: 'hero.slide6Alt',
