@@ -68,12 +68,14 @@
   - **User Management** – View user list, open user detail to **update** or **delete** users.
 5. **System admin only (Super Admin)**
   - Dashboard (with stats and quick actions), Application Status, State Management, District Management, plus:
-  - **Office Management** – Office, Designation.
-  - **Role Management** – List/manage roles.
-  - **User Management** – Full CRUD, approve, block.
-  - **User Activity Log** – View activity logs.
+  - **Office Management** – `/dashboard/admin/offices`
+  - **Role Management** – `/dashboard/admin/roles` (staff role labels)
+  - **Designations** – `/dashboard/admin/designations`
+  - **States** – `/dashboard/admin/states`
+  - **User Management** – Full CRUD, approve, deactivate.
+  - **User Activity Log** – `/dashboard/admin/activity-log`
 6. **Other routes**
-  - **User detail (/users/:id)** – View/edit user (protected, by permission).
+  - **User detail** – `/dashboard/admin/users/:id` (old `/users/:id` redirects).
 7. **Accessibility (global)**
   - Top accessibility controls are available across pages: **A-**, **A**, **A+**, and **High Contrast**.
   - Skip links are available for keyboard users: **Skip to main content** and **Skip to navigation**.

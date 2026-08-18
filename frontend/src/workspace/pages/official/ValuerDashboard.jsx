@@ -42,7 +42,7 @@ function ValuerDashboard({ user, stats, loading, error }) {
 				value: assignedCount,
 				hint: 'Form I-B awaiting your report',
 				icon: 'clock',
-				tone: assignedCount > 0 ? 'warning' : 'success',
+				tone: assignedCount > 0 ? 'teal' : 'success',
 			},
 			{
 				label: 'Reports submitted',
@@ -177,7 +177,10 @@ function ValuerDashboard({ user, stats, loading, error }) {
 														navigate(
 															app.application_no
 																? `/dashboard/admin/applications/${encodeURIComponent(app.application_no)}`
-																: '/dashboard/admin/inbox'
+																: '/dashboard/admin/inbox',
+															app.application_no
+																? { state: { from: 'inbox' } }
+																: undefined,
 														)
 													}
 												>

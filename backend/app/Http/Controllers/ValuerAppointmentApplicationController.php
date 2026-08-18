@@ -42,9 +42,9 @@ class ValuerAppointmentApplicationController extends Controller
             $signaturePath = $request->file('signature_image')->store('tenancy/signatures/valuer-appointment', 'public');
         }
 
-        $tenancy = \App\Models\TenancyApplication::where('uid', $data['tenancy_uin'])->first();
-        if (!$tenancy) {
-            return response()->json(['message' => 'Invalid Tenancy UID'], 422);
+        [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin']);
+        if ($uinError) {
+            return response()->json(['message' => $uinError], 422);
         }
 
         $application = ValuerAppointmentApplication::create([

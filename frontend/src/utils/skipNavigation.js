@@ -6,6 +6,10 @@ const PUBLIC_MARKETING_PATHS = new Set([
 	'/contact',
 	'/public-dashboard',
 	'/sitemap',
+	'/feedback',
+	'/accessibility',
+	'/help-centre',
+	'/guidelines',
 ])
 
 export function isPublicMarketingPath(pathname = '') {
@@ -24,14 +28,11 @@ export function getMainContentTargetId(pathname = '') {
 }
 
 /** Resolve primary navigation skip target for current route. */
-export function getNavTargetId(pathname = '', isLandingHome = false) {
+export function getNavTargetId(pathname = '') {
 	if (String(pathname || '').startsWith('/dashboard')) {
 		return 'workspace-primary-nav'
 	}
-	if (isLandingHome || isPublicMarketingPath(pathname)) {
-		return 'landing-primary-nav'
-	}
-	return 'public-primary-nav'
+	return 'landing-primary-nav'
 }
 
 /**

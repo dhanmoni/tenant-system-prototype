@@ -5,10 +5,12 @@ import DocumentUploadSlot from '../components/forms/DocumentUploadSlot'
 import { cleanOptionalValue } from '../utils/tenancyDraft'
 import { formatDate } from '../utils/formatters'
 import { useLanguage } from '../i18n'
+import DemoDocsAttachButton from '../components/forms/DemoDocsAttachButton'
+import { fetchDemoFile, getJoinSampleManifest } from '../data/demoUploads'
 
 function JoinApplication() {
 	const { user } = useOutletContext()
-	const { t } = useLanguage()
+	const { t, language } = useLanguage()
 	const [searchParams] = useSearchParams()
 	const navigate = useNavigate()
 	const refCode = searchParams.get('ref') || ''
@@ -44,6 +46,7 @@ function JoinApplication() {
 	const [panDocumentFile, setPanDocumentFile] = useState(null)
 	const [declarationChecked, setDeclarationChecked] = useState(false)
 	const [docPreview, setDocPreview] = useState(null)
+	const [demoDocsLoading, setDemoDocsLoading] = useState(false)
 
 	const TOTAL_STEPS = JOIN_STEPS.length
 	const maxReachableStep = Math.max(joinStep, maxReachedStep)
@@ -56,6 +59,29 @@ function JoinApplication() {
 			saveToastTimerRef.current = null
 		}, 3500)
 	}, [t])
+
+	const attachSampleDocuments = async () => {
+		setDemoDocsLoading(true)
+		setError('')
+		try {
+			const manifest = getJoinSampleManifest(application?.second_party_role, language)
+			const [photo, signature, pan] = await Promise.all([
+				fetchDemoFile(manifest.photo),
+				fetchDemoFile(manifest.signature),
+				fetchDemoFile(manifest.pan),
+			])
+			setPhotoFile(photo)
+			setPhotoPreview(URL.createObjectURL(photo))
+			setSignatureFile(signature)
+			setSignaturePreview(URL.createObjectURL(signature))
+			setPanDocumentFile(pan)
+			showSaveToast(t('ws.uin.demo.success'))
+		} catch {
+			setError(t('ws.uin.demo.error'))
+		} finally {
+			setDemoDocsLoading(false)
+		}
+	}
 
 	useEffect(() => () => {
 		if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
@@ -937,6 +963,11 @@ function JoinApplication() {
 										<p className="tenancy-docs-step__lead">
 											{t('ws.join.docs.lead')}
 										</p>
+										<DemoDocsAttachButton
+											loading={demoDocsLoading}
+											onClick={attachSampleDocuments}
+											t={t}
+										/>
 										<p className="tenancy-docs-step__disclaimer" role="note">
 											<strong>{t('ws.join.docs.guidelines')}</strong>{' '}
 											{t('ws.join.docs.guidelinesBody')}

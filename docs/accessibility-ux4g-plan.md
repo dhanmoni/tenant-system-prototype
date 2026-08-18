@@ -272,7 +272,7 @@ The widget does **not** replace content accessibility. Track separately:
 
 - [ ] CSP: allow `img1.digitallocker.gov.in` / `cdn.ux4g.gov.in` (or self-host assets).
 - [ ] Document upgrade path when UX4G publishes widget **v2.0** (auto-update).
-- [ ] Prefer reduced-motion and print styles not broken by widget CSS.
+- [x] Prefer reduced-motion and print styles not broken by widget CSS.
 - [ ] Confirm widget z-index above workspace topbar but below blocking modals (profile picker, auth).
 - [ ] Add short QA script to `Demo_NIC_Credentials.md` or a11y section in this doc.
 

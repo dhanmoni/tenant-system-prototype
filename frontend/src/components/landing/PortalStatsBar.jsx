@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Building2, CircleCheckBig, FileStack, IdCard } from 'lucide-react'
-import { portalPublicStats } from '../../data/portalPublicStats'
+import { mapPortalKpis } from '../../data/portalPublicStats'
+import { fetchPublicPortalStats } from '../../services/portalStats'
 import {
 	scrollStatIconVariants,
 	scrollStatItemVariants,
 	scrollStatLabelVariants,
 	scrollStatRailVariants,
+	scrollStatSectionVariants,
 } from '../../utils/landingMotion'
 import { useLanguage } from '../../i18n'
 
@@ -51,39 +53,60 @@ function formatCompact(value) {
 	return `${value}+`
 }
 
+function formatLiveCount(current, target) {
+	if (current >= target - 0.5) return formatCompact(target)
+	if (target >= 1_000_000) return `${(current / 1_000_000).toFixed(2)}M+`
+	if (target >= 10_000) return `${(current / 1000).toFixed(1)}K+`
+	if (target >= 1_000) return `${(current / 1000).toFixed(2)}K+`
+	return `${Math.round(current)}+`
+}
+
+function easeOutQuint(t) {
+	return 1 - (1 - t) ** 5
+}
+
 function AnimatedFigure({ stat, active }) {
 	const reduceMotion = useReducedMotion()
-	const [display, setDisplay] = useState(reduceMotion ? stat.display || formatCompact(stat.value) : '0')
+	const finalDisplay = stat.display || formatCompact(stat.value)
+	const [display, setDisplay] = useState(reduceMotion ? finalDisplay : '0')
 
 	useEffect(() => {
 		if (reduceMotion || !active) {
-			setDisplay(stat.display || formatCompact(stat.value))
-			return
+			setDisplay(finalDisplay)
+			return undefined
 		}
 
 		const target = stat.value
-		const duration = 1400
-		const start = performance.now()
+		const duration = 2600
+		const delay = 280
 		let frame = 0
+		let start = 0
 
 		const tick = (now) => {
+			if (!start) start = now
 			const progress = Math.min((now - start) / duration, 1)
-			const eased = 1 - (1 - progress) ** 3
-			setDisplay(formatCompact(Math.round(target * eased)))
+			const current = target * easeOutQuint(progress)
+			setDisplay(formatLiveCount(current, target))
 			if (progress < 1) frame = requestAnimationFrame(tick)
 		}
 
-		setDisplay('0')
-		frame = requestAnimationFrame(tick)
-		return () => cancelAnimationFrame(frame)
-	}, [active, reduceMotion, stat.display, stat.value])
+		setDisplay(formatLiveCount(0, target))
+		const wait = window.setTimeout(() => {
+			frame = requestAnimationFrame(tick)
+		}, delay)
+
+		return () => {
+			window.clearTimeout(wait)
+			cancelAnimationFrame(frame)
+		}
+	}, [active, reduceMotion, finalDisplay, stat.value])
 
 	return (
 		<motion.span
 			className="portal-stats-card__figure"
-			initial={reduceMotion ? false : { opacity: 0, scale: 0.7, y: 12 }}
-			animate={reduceMotion || active ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.7, y: 12 }}
-			transition={{ type: 'spring', stiffness: 360, damping: 16, delay: 0.14 }}
+			initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+			animate={reduceMotion || active ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+			transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.28 }}
 		>
 			{display}
 		</motion.span>
@@ -93,31 +116,56 @@ function AnimatedFigure({ stat, active }) {
 function PortalStatsBar() {
 	const { t } = useLanguage()
 	const stripRef = useRef(null)
-	const isInView = useInView(stripRef, { once: true, margin: '-12% 0px -8% 0px' })
+	const isInView = useInView(stripRef, { once: true, amount: 0.2 })
 	const reduceMotion = useReducedMotion()
-	const reveal = reduceMotion || isInView
+	const [kpis, setKpis] = useState(() => mapPortalKpis())
+	const [statsReady, setStatsReady] = useState(false)
+
+	useEffect(() => {
+		let active = true
+		fetchPublicPortalStats()
+			.then((data) => {
+				if (active) setKpis(mapPortalKpis(data?.kpis))
+			})
+			.catch(() => {
+				if (active) setKpis(mapPortalKpis())
+			})
+			.finally(() => {
+				if (active) setStatsReady(true)
+			})
+		return () => {
+			active = false
+		}
+	}, [])
+
+	const reveal = (reduceMotion || isInView) && statsReady
 
 	const stats = useMemo(
 		() =>
-			portalPublicStats.map((stat) => {
+			kpis.map((stat) => {
 				const keys = statCopyKeys[stat.id]
 				return {
 					...stat,
-					label: keys ? t(keys.label) : stat.label,
-					description: keys ? t(keys.description) : stat.description,
+					label: keys ? t(keys.label) : stat.id,
+					description: keys ? t(keys.description) : '',
 				}
 			}),
-		[t],
+		[t, kpis],
 	)
 
 	return (
 		<section
 			ref={stripRef}
 			id="portal-stats"
-			className="portal-stats-card portal-stats-card--bridge portal-stats-card--rail scroll-mt-28"
+			className="portal-stats-card portal-stats-card--lead portal-stats-card--rail scroll-mt-28"
 			aria-label={t('home.stats.aria')}
 		>
-			<div className="portal-stats-card__wrap mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+			<motion.div
+				className="portal-stats-card__wrap mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+				initial={reduceMotion ? false : 'hidden'}
+				animate={reveal ? 'visible' : 'hidden'}
+				variants={reduceMotion ? undefined : scrollStatSectionVariants}
+			>
 				<motion.ul
 					className="portal-stats-card__panel"
 					role="list"
@@ -156,7 +204,7 @@ function PortalStatsBar() {
 						)
 					})}
 				</motion.ul>
-			</div>
+			</motion.div>
 		</section>
 	)
 }

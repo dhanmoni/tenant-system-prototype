@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
 import ContactMap from '../components/landing/ContactMap'
+import { supportContact, supportMailto, supportMapsUrl, supportTel } from '../data/supportContact'
 import { useLanguage } from '../i18n'
 
 function Contact() {
@@ -20,22 +21,15 @@ function Contact() {
 						<section>
 							<h2>{t('contact.helpdesk')}</h2>
 							<p>
-								<strong>{t('contact.tollFree')}</strong>{' '}
-								<a href="tel:18000000000">1800-000-0000</a>
+								<strong>{t('contact.phoneLabel')}</strong>{' '}
+								<a href={supportTel}>{supportContact.phoneDisplay}</a>
 							</p>
 							<p>
 								<strong>{t('contact.emailLabel')}</strong>{' '}
-								<a href="mailto:helpdesk.tcms@nic.in">helpdesk.tcms@nic.in</a>
+								<a href={supportMailto}>{supportContact.email}</a>
 							</p>
 							<p>
 								<strong>{t('contact.hoursLabel')}</strong> {t('contact.hoursValue')}
-							</p>
-						</section>
-
-						<section>
-							<h2>{t('contact.phone')}</h2>
-							<p>
-								<a href="tel:+913612234567">+91 361 223 4567</a>
 							</p>
 						</section>
 					</div>
@@ -52,15 +46,6 @@ function Contact() {
 								))}
 							</p>
 						</section>
-
-						<section>
-							<h2>{t('contact.email')}</h2>
-							<p>
-								<a href="mailto:support@assamtenancy.gov.in">
-									support@assamtenancy.gov.in
-								</a>
-							</p>
-						</section>
 					</div>
 				</div>
 
@@ -69,11 +54,7 @@ function Contact() {
 					<p>{t('contact.mapAddress')}</p>
 					<ContactMap />
 					<p className="gov-plain-page__map-note">
-						<a
-							href="https://www.google.com/maps/search/?api=1&query=Directorate+of+Town+and+Country+Planning+Assam+Dispur"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
+						<a href={supportMapsUrl} target="_blank" rel="noopener noreferrer">
 							{t('contact.openMaps')}
 						</a>
 					</p>
@@ -82,11 +63,9 @@ function Contact() {
 				<p className="gov-plain-page__meta">{t('contact.meta')}</p>
 
 				<p className="gov-plain-page__links">
-					<Link to="/#login">{t('contact.signIn')}</Link>
+					<Link to="/login">{t('contact.signIn')}</Link>
 					{' · '}
-					<Link to="/#register">{t('contact.register')}</Link>
-					{' · '}
-					<a href="https://tcp.assam.gov.in/" target="_blank" rel="noopener noreferrer">
+					<a href={supportContact.tcpContactPage} target="_blank" rel="noopener noreferrer">
 						{t('contact.tcpSite')}
 					</a>
 				</p>

@@ -64,10 +64,15 @@ Routes under `/dashboard` for `super_admin` today:
 | User management | `/dashboard/admin/users` | Staff + citizens (`?mode=tenant` for citizens) |
 | Service applications | `/dashboard/admin/applications` | All forms, all districts |
 | Tenancy applications | `/dashboard/admin/tenancy` | UIN / tenancy records |
-| Districts | `/dashboard/admin/districts` | Add / delete districts |
+| Districts | `/dashboard/admin/districts` | Add / deactivate districts |
+| States | `/dashboard/admin/states` | State master data |
+| Offices | `/dashboard/admin/offices` | Circle / district offices |
+| Designations | `/dashboard/admin/designations` | Staff titles |
+| Roles | `/dashboard/admin/roles` | Role labels (not login keys) |
+| Activity log | `/dashboard/admin/activity-log` | Searchable staff actions |
 | My profile | `/dashboard/profile` | Same as other roles |
 
-**Not in sidebar (but may exist in code or API):** Application inbox, UIN status (citizen flow), States, Offices, Designations, Roles, dedicated Activity log page.
+**Not in sidebar:** Application inbox (assistants), UIN apply/status (citizen flow).
 
 Source: `frontend/src/workspace/config/navigation.js`
 
@@ -80,7 +85,7 @@ Source: `frontend/src/workspace/config/navigation.js`
 | Statewide dashboard stats | `GET /api/dashboard-stats` (**super admin only**) | `SuperAdminDashboard`, `OfficialOverview` |
 | Recent activity snippet | `GET /api/activity-logs` | `ActivityFeed` on super admin dashboard; legacy `DashboardHome` also loads logs |
 | Charts / district map / form breakdown | Included in stats payload | Shown on super admin dashboard |
-| Quick actions | — | Users, service apps, tenancy, districts |
+| Quick actions | — | Users, service apps, tenancy, districts, offices, activity log |
 
 Stats include (among others): states, districts, offices, roles, designations, user counts, tenancy + service application counts, status pipeline, district breakdown.
 
@@ -93,10 +98,10 @@ Source: `backend/app/Services/DashboardStatsService.php`, `backend/app/Http/Cont
 | Resource | Endpoints | UI today |
 | -------- | --------- | -------- |
 | Districts | `GET/POST/PUT/DELETE /api/districts` | **Yes** — `DistrictManagement` |
-| Offices | `/api/offices` (apiResource) | **No dedicated route** — page exists (`OfficeManagement.jsx`) but not mounted in workspace |
-| Designations | `/api/designations` | **No dedicated route** — `DesignationManagement.jsx` imported, not routed |
-| Roles | `/api/roles` | **No dedicated route** — `RoleManagement.jsx` imported, not routed |
-| States | Public: `GET /api/public/states` only | **No admin CRUD** — `StateManagement.jsx` exists; import **commented out** in `App.jsx`; no API resource for authenticated state CRUD |
+| Offices | `/api/offices` (apiResource) | **Yes** — `/dashboard/admin/offices` |
+| Designations | `/api/designations` | **Yes** — `/dashboard/admin/designations` |
+| Roles | `/api/roles` | **Yes** — `/dashboard/admin/roles` (label CRUD; login RBAC still uses system keys) |
+| States | Public `GET /api/public/states`; admin `apiResource /api/states` | **Yes** — `/dashboard/admin/states` |
 
 Quick action copy says “Districts & states” and “offices, roles, and designations,” but the linked screen is **districts only**.
 
@@ -109,9 +114,9 @@ Quick action copy says “Districts & states” and “offices, roles, and desig
 | List all users (no district filter) | `GET /api/users` | User management table |
 | View / edit user | `GET/PUT /api/users/{id}` | `/users/:id` (`UserDetail`) — loads offices, designations, roles via super-admin APIs |
 | Create user | `POST /api/users` | **Limited roles in UI** (see below) |
-| Delete user | `DELETE /api/users/{id}` | Delete button on `UserDetail` (**works** if route allowed) |
-| Approve pending registration | `UserManagementController::approve` | Button on `UserDetail` — **`POST /api/users/{id}/approve` is not registered in `api.php`** (broken) |
-| Block / unblock citizen | `toggleBlock` | Toggle for `user` role only — **`POST /api/users/{id}/toggle-block` not registered in `api.php`** (broken) |
+| Delete user | `destroy` exists; **no DELETE route** (by design — deactivate instead) | Removed from `UserDetail`; use Activate / Deactivate |
+| Approve pending registration | `UserManagementController::approve` | Super admin **Approve** on `UserDetail` — `POST /api/users/{id}/approve` |
+| Deactivate / activate account | `toggleBlock` | Users list + `UserDetail` — `POST /api/users/{id}/toggle-block` (reason required when deactivating). Accounts are not deleted. |
 
 **Create-user UI restriction (super admin):** only `district_admin` and principal roles (`rent_authority`, `rent_court`, `rent_tribunal`). Assistants and other super admins are **not** in the dropdown, even though the controller comment says “Super admin can create anyone.”
 
@@ -164,12 +169,12 @@ Super admin uses the **“all applications”** list with **View** only (`Applic
 
 ## Gaps and inconsistencies (fix or document)
 
-1. **`Demo_NIC_Credentials.md` §5** lists State Management, Office Management, Role Management, and User Activity Log as super-admin screens — **most are not routed** in the workspace app.
-2. **Approve / block user** — controller methods exist; **routes missing** in `backend/routes/api.php`.
-3. **“Districts & states” quick action** — only districts implemented; no state admin UI or authenticated state API.
-4. **Dead imports** in `App.jsx`: `OfficeManagement`, `RoleManagement`, `DesignationManagement`, `ActivityLog` — no `/dashboard/admin/...` routes.
+1. ~~**`Demo_NIC_Credentials.md` §5** lists State / Office / Role / Activity Log as super-admin screens — **most are not routed**~~ **Done:** workspace routes + sidebar under Master data.
+2. ~~**Approve / block user** — routes missing~~ **Done:** `POST /api/users/{user}/approve` and `toggle-block` are registered; UI deactivates instead of deleting.
+3. ~~**“Districts & states” quick action** — only districts implemented~~ **Done:** states + offices + activity log screens exist.
+4. ~~**Dead imports** in `App.jsx`~~ **Done:** pages live under `workspace/pages/admin/` and are routed.
 5. **User create mismatch** — backend allows any role for super admin; UI restricts to DA + principals; assistants must be created by principals (or fix UI).
-6. **No audit UI** — activity logs API works; no full-page log viewer in workspace nav.
+6. ~~**No audit UI**~~ **Done:** `/dashboard/admin/activity-log`.
 7. **No RBAC on user delete/update** — `destroy` / `update` have no extra checks beyond `managementRoles` middleware (any principal could delete users in API unless tightened).
 8. **Demo auth** — fixed OTP; not suitable for production.
 9. **Legacy `UserDetail`** — old dashboard layout links; super admin primary path is workspace.
@@ -182,10 +187,10 @@ Super admin uses the **“all applications”** list with **View** only (`Applic
 
 | Item | Rationale |
 | ---- | --------- |
-| Register `POST /api/users/{user}/approve` and `POST /api/users/{user}/toggle-block` | Wire existing controller methods used by `UserDetail` |
-| Workspace routes + nav for **Offices**, **Designations**, **Roles** | APIs already super-admin-only; match quick-action copy |
-| **Activity log** page (`/dashboard/admin/activity`) | Full searchable log; API exists |
-| **State / UT master data** (if multi-state) | Admin CRUD + route; or remove “states” from marketing copy if Assam-only |
+| ~~Register approve / toggle-block routes~~ | Done — see User management above |
+| ~~Workspace routes + nav for **Offices**, **Designations**, **Roles**~~ | Done — sidebar Master data |
+| ~~**Activity log** page~~ | Done — `/dashboard/admin/activity-log` |
+| ~~**State master data**~~ | Done — `/dashboard/admin/states` + `/api/states` |
 | Super admin UI to create **assistants** (optional) | Align with backend “create anyone” or document that only principals create assistants |
 | **Assign / change district** on user create form | Required for DA and principals; validate against districts list |
 | **Impersonation / support mode** (future) | Read-only view as district user for support (out of scope for prototype) |

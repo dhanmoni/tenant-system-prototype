@@ -29,12 +29,18 @@ const publicPagesEn = {
 	'pd.monthly.title': 'Applications per month',
 	'pd.monthly.note': 'New applications received through the portal (last six months)',
 	'pd.monthly.aria': 'Bar chart of monthly applications',
-	'pd.month.dec': 'Dec',
 	'pd.month.jan': 'Jan',
 	'pd.month.feb': 'Feb',
 	'pd.month.mar': 'Mar',
 	'pd.month.apr': 'Apr',
 	'pd.month.may': 'May',
+	'pd.month.jun': 'Jun',
+	'pd.month.jul': 'Jul',
+	'pd.month.aug': 'Aug',
+	'pd.month.sep': 'Sep',
+	'pd.month.oct': 'Oct',
+	'pd.month.nov': 'Nov',
+	'pd.month.dec': 'Dec',
 	'pd.filings.title': 'Filings by tenancy body',
 	'pd.filings.note': 'Assam Tenancy Act matters filed online by receiving authority',
 	'pd.filings.authority': 'Authority',
@@ -217,6 +223,68 @@ const publicPagesEn = {
 	'policies.privacy.title': 'Privacy and data protection',
 	'policies.privacy.p1':
 		'Personal information collected during registration and application submission is used solely for tenancy administration, verification, and services. Data is handled in line with applicable government data protection guidelines and departmental policies.',
+	'policies.related.title': 'Related pages',
+	'policies.related.body':
+		'Read how to use this portal, report a problem, or get help with accessibility.',
+
+	'a11yPage.title': 'Accessibility statement',
+	'a11yPage.lead':
+		'This portal is designed so people can use Assam tenancy services with assistive tools and the accessibility options in the top bar.',
+	'a11yPage.commitment.title': 'Our commitment',
+	'a11yPage.commitment.body':
+		'The Directorate of Town and Country Planning, Assam, aims to make this website usable for all citizens, including people with disabilities, in line with Guidelines for Indian Government Websites (GIGW).',
+	'a11yPage.features.title': 'What you can adjust',
+	'a11yPage.features.body':
+		'Use the accessibility bar to change text size, switch language, turn on high contrast, or highlight links. Keyboard users can skip to main content with the skip links at the top of each page.',
+	'a11yPage.help.title': 'Need more help?',
+	'a11yPage.help.body':
+		'If a page is hard to use, send feedback or contact the office. We will try to provide the information in another format where we can.',
+	'a11yPage.feedback': 'Send feedback',
+	'a11yPage.contact': 'Contact us',
+
+	'feedback.title': 'Feedback',
+	'feedback.lead':
+		'Tell us about a problem, a suggestion, or an accessibility issue on this portal. Do not include passwords or other private login details.',
+	'feedback.thanksTitle': 'Message received',
+	'feedback.thanks': 'Thank you. Your message has been recorded for this demo session.',
+	'feedback.sendAnother': 'Send another message',
+	'feedback.required': 'Please enter your message.',
+	'feedback.name': 'Name (optional)',
+	'feedback.email': 'Email (optional)',
+	'feedback.category': 'What is this about?',
+	'feedback.cat.content': 'Content or wording',
+	'feedback.cat.accessibility': 'Accessibility',
+	'feedback.cat.technical': 'Technical problem',
+	'feedback.cat.other': 'Other',
+	'feedback.message': 'Your message',
+	'feedback.note':
+		'This prototype stores feedback on this screen only. A live portal will send it to the department.',
+	'feedback.submit': 'Submit feedback',
+	'feedback.aside.title': 'Before you send',
+	'feedback.aside.body':
+		'Use this form for portal problems, wording, or accessibility. For an application already in progress, sign in and open that application.',
+	'feedback.aside.contact': 'Need a reply from the office?',
+	'feedback.aside.contactLink': 'Contact the helpdesk',
+	'feedback.aside.help': 'Looking for how to apply?',
+	'feedback.aside.helpLink': 'Open the help centre',
+
+	'help.title': 'Help centre',
+	'help.lead':
+		'Short answers for registering a tenancy, using your account, and reaching the office.',
+	'help.apply.title': 'How to apply',
+	'help.apply.body':
+		'Create an account, then apply for a UIN to register the tenancy. Other forms (rent, possession, appeals) are under All services after you sign in. The Services page explains which form to pick.',
+	'help.apply.services': 'Browse services',
+	'help.apply.guide': 'How to apply (home page)',
+	'help.account.title': 'Sign in and your account',
+	'help.account.body':
+		'Use the mobile number you registered with. An OTP is sent to that number. You can track UIN status and applications from your dashboard after sign-in.',
+	'help.account.login': 'Go to sign in',
+	'help.contact.title': 'Still need help?',
+	'help.contact.body':
+		'Use the contact page for office phone and email, or send feedback if something on the website is wrong.',
+	'help.contact.link': 'Contact us',
+	'help.contact.feedback': 'Send feedback',
 
 	// Documents (route: /resources)
 	'resources.title': 'Documents',
@@ -276,6 +344,9 @@ const publicPagesEn = {
 	'sitemap.dashboard': 'Public dashboard',
 	'sitemap.policies': 'Policies & guidelines',
 	'sitemap.resources': 'Documents',
+	'sitemap.help': 'Help centre',
+	'sitemap.accessibility': 'Accessibility statement',
+	'sitemap.feedback': 'Feedback',
 	'sitemap.contactUs': 'Contact us',
 	'sitemap.related': 'Related government websites',
 	'sitemap.tcpFull': 'Directorate of Town & Country Planning, Assam',

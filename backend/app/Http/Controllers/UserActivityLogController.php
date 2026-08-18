@@ -25,7 +25,20 @@ class UserActivityLogController extends Controller
             $query->where('logged_at', '<=', $request->input('to') . ' 23:59:59');
         }
 
-        $logs = $query->paginate(10);
+        if ($request->filled('q')) {
+            $needle = $request->input('q');
+            $query->where(function ($inner) use ($needle) {
+                $inner->where('action', 'like', '%' . $needle . '%')
+                    ->orWhere('ip_address', 'like', '%' . $needle . '%')
+                    ->orWhereHas('user', function ($userQuery) use ($needle) {
+                        $userQuery->where('name', 'like', '%' . $needle . '%')
+                            ->orWhere('email', 'like', '%' . $needle . '%');
+                    });
+            });
+        }
+
+        $perPage = min(50, max(5, (int) $request->input('per_page', 15)));
+        $logs = $query->paginate($perPage);
 
         return response()->json($logs);
     }

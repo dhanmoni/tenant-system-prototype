@@ -27,3 +27,11 @@ export const ADMIN_ROLES = [
 	ROLES.SUPER_ADMIN,
 	ROLES.DISTRICT_ADMIN
 ];
+
+/** Staff who may open UIN / tenancy applications (matches sidebar). */
+export const TENANCY_STAFF_ROLES = [
+	ROLES.SUPER_ADMIN,
+	ROLES.DISTRICT_ADMIN,
+	ROLES.RENT_AUTHORITY,
+	ROLES.RA_ASSISTANT,
+];

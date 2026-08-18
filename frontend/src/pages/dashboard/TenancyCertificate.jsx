@@ -5,12 +5,20 @@ import { buildTenancyFormData, applyDraftToForm, applyInitiatorProfileAutofill, 
 import { formatDate, formatDateTime } from '../../utils/formatters'
 import { Icon } from '../../components/dashboard/Icons'
 import DocumentUploadSlot from '../../components/forms/DocumentUploadSlot'
+import DemoDocsAttachButton from '../../components/forms/DemoDocsAttachButton'
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
 import { useLanguage } from '../../i18n'
+import { fetchDemoFile, getUinSampleManifest } from '../../data/demoUploads'
+import {
+	fetchTenancyDistricts,
+	fetchTenancyOffices,
+	getCachedTenancyDistricts,
+	getCachedTenancyOffices,
+} from '../../utils/tenancyGeoCache'
 
 function TenancyCertificate() {
 	const { user } = useOutletContext()
-	const { t } = useLanguage()
+	const { t, language } = useLanguage()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -28,8 +36,8 @@ function TenancyCertificate() {
 	const [draftSaving, setDraftSaving] = useState(false)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
-	const [pageReady, setPageReady] = useState(false)
-	const [draftLoaded, setDraftLoaded] = useState(false)
+	const [pageReady, setPageReady] = useState(true)
+	const [draftLoaded, setDraftLoaded] = useState(!draftParam)
 	const [startOverOpen, setStartOverOpen] = useState(false)
 	const [startOverBusy, setStartOverBusy] = useState(false)
 	const [draftsModalOpen, setDraftsModalOpen] = useState(false)
@@ -48,11 +56,11 @@ function TenancyCertificate() {
 	// Step 1: Office/Registration
 	const [tenancyRegistrationDate, setTenancyRegistrationDate] = useState('')
 	const [tenancyOfficeId, setTenancyOfficeId] = useState('')
-	const [tenancyOffices, setTenancyOffices] = useState([])
-	const [tenancyOfficesLoading, setTenancyOfficesLoading] = useState(false)
+	const [tenancyOffices, setTenancyOffices] = useState(() => getCachedTenancyOffices() || [])
+	const [tenancyOfficesLoading, setTenancyOfficesLoading] = useState(() => !getCachedTenancyOffices())
 	const [tenancyDistrictId, setTenancyDistrictId] = useState('')
-	const [tenancyDistricts, setTenancyDistricts] = useState([])
-	const [tenancyDistrictsLoading, setTenancyDistrictsLoading] = useState(false)
+	const [tenancyDistricts, setTenancyDistricts] = useState(() => getCachedTenancyDistricts() || [])
+	const [tenancyDistrictsLoading, setTenancyDistrictsLoading] = useState(() => !getCachedTenancyDistricts())
 	const [tenancyAreaType, setTenancyAreaType] = useState('')
 	const [tenancyLocalBody, setTenancyLocalBody] = useState('')
 	const [tenancyVillageWardId, setTenancyVillageWardId] = useState('')
@@ -112,6 +120,7 @@ function TenancyCertificate() {
 	const [managerPanFile, setManagerPanFile] = useState(null)
 	const [declarationChecked, setDeclarationChecked] = useState(false)
 	const [docPreview, setDocPreview] = useState(null)
+	const [demoDocsLoading, setDemoDocsLoading] = useState(false)
 
 	const [profileType, setProfileType] = useState('')
 	const [profileName, setProfileName] = useState('')
@@ -282,7 +291,6 @@ function TenancyCertificate() {
 			}
 			setError(t('ws.uin.error.cannotContinue'))
 		} catch (err) {
-			console.error('Failed to load draft', err)
 			setError(err?.response?.data?.message || t('ws.uin.error.loadFailed'))
 		} finally {
 			setDraftLoaded(true)
@@ -293,8 +301,7 @@ function TenancyCertificate() {
 		try {
 			const { data } = await api.get('/api/profile')
 			applyProfileUser(data.user || {})
-		} catch (err) {
-			console.error('Failed to load profile for prefill')
+		} catch {
 			applyProfileUser(user || {})
 		}
 	}
@@ -353,16 +360,18 @@ function TenancyCertificate() {
 		setInitiatorRole('LANDLORD')
 
 		if (user?.district_id) {
-			const dId = String(user.district_id)
-			setTenancyDistrictId(dId)
-			loadTenancyVillageWards(dId)
+			const dId = Number(user.district_id)
+			if (Number.isFinite(dId) && dId > 0) {
+				setTenancyDistrictId(String(dId))
+				loadTenancyVillageWards(dId)
 
-			if (user.office_id) {
-				setTenancyOfficeId(String(user.office_id))
-			} else if (tenancyOffices.length > 0) {
-				const officesInDistrict = tenancyOffices.filter(o => String(o.district_id) === dId)
-				if (officesInDistrict.length === 1) {
-					setTenancyOfficeId(String(officesInDistrict[0].id))
+				if (user.office_id) {
+					setTenancyOfficeId(String(user.office_id))
+				} else if (tenancyOffices.length > 0) {
+					const officesInDistrict = tenancyOffices.filter((o) => Number(o.district_id) === dId)
+					if (officesInDistrict.length === 1) {
+						setTenancyOfficeId(String(officesInDistrict[0].id))
+					}
 				}
 			}
 		}
@@ -398,9 +407,9 @@ function TenancyCertificate() {
 	useEffect(() => {
 		if (!draftLoaded || tenancyDistrictId || !tenancyOfficeId || !tenancyOffices.length) return
 		const office = tenancyOffices.find((o) => String(o.id) === String(tenancyOfficeId))
-		if (!office?.district_id) return
-		const districtId = String(office.district_id)
-		setTenancyDistrictId(districtId)
+		const districtId = Number(office?.district_id)
+		if (!Number.isFinite(districtId) || districtId <= 0) return
+		setTenancyDistrictId(String(districtId))
 		loadTenancyVillageWards(districtId)
 	}, [draftLoaded, tenancyDistrictId, tenancyOfficeId, tenancyOffices])
 
@@ -421,32 +430,71 @@ function TenancyCertificate() {
 	}, [propertyPossessionDate, propertyTenancyEndDate])
 
 	const loadTenancyOffices = async () => {
+		const cached = getCachedTenancyOffices()
+		if (cached) {
+			setTenancyOffices(cached)
+			setTenancyOfficesLoading(false)
+			return cached
+		}
 		setTenancyOfficesLoading(true)
 		try {
-			const { data } = await api.get('/api/public/offices')
-			const items = Array.isArray(data) ? data : (data.data || data.offices || [])
+			const items = await fetchTenancyOffices()
 			setTenancyOffices(items)
-		} catch (err) { setError('Failed to load offices') }
-		finally { setTenancyOfficesLoading(false) }
+			return items
+		} catch {
+			setError('Failed to load offices')
+			setTenancyOffices([])
+			return []
+		} finally {
+			setTenancyOfficesLoading(false)
+		}
 	}
 
 	const loadTenancyDistricts = async () => {
+		const cached = getCachedTenancyDistricts()
+		if (cached) {
+			setTenancyDistricts(cached)
+			setTenancyDistrictsLoading(false)
+			return cached
+		}
 		setTenancyDistrictsLoading(true)
 		try {
-			const { data } = await api.get('/api/public/districts')
-			setTenancyDistricts(Array.isArray(data) ? data : (data.districts || data.data || []))
-		} catch (err) { setError('Failed to load districts') }
-		finally { setTenancyDistrictsLoading(false) }
+			const items = await fetchTenancyDistricts()
+			setTenancyDistricts(items)
+			return items
+		} catch {
+			setError('Failed to load districts')
+			setTenancyDistricts([])
+			return []
+		} finally {
+			setTenancyDistrictsLoading(false)
+		}
 	}
 
 	const loadTenancyVillageWards = async (districtId) => {
-		if (!districtId) return setTenancyVillageWards([])
+		const id = Number(districtId)
+		if (!Number.isFinite(id) || id <= 0) {
+			setTenancyVillageWards([])
+			return
+		}
 		setTenancyVillageWardsLoading(true)
 		try {
-			const { data } = await api.get('/api/public/village-wards', { params: { district_id: districtId, t: new Date().getTime() } })
+			const { data } = await api.get('/api/public/village-wards', {
+				params: { district_id: id, t: Date.now() },
+			})
 			setTenancyVillageWards(Array.isArray(data) ? data : data.data || [])
-		} catch (err) { setError('Failed to load village/wards') }
-		finally { setTenancyVillageWardsLoading(false) }
+			setError((prev) => (prev === 'Failed to load village/wards' ? '' : prev))
+		} catch (err) {
+			const status = err?.response?.status
+			const detail =
+				err?.response?.data?.message ||
+				(status ? `Request failed (${status})` : err?.message) ||
+				'Network error'
+			setError(`Failed to load village/wards — ${detail}`)
+			setTenancyVillageWards([])
+		} finally {
+			setTenancyVillageWardsLoading(false)
+		}
 	}
 
 	useEffect(() => {
@@ -454,15 +502,13 @@ function TenancyCertificate() {
 	}, [user, applyProfileUser])
 
 	useEffect(() => {
-		const init = async () => {
-			await Promise.all([
-				loadProfile(),
-				loadTenancyDistricts(),
-				loadTenancyOffices(),
-			])
-			setPageReady(true)
-		}
-		init()
+		/* Paint form immediately; hydrate lists/profile in background (cached on revisit). */
+		setPageReady(true)
+		void Promise.all([
+			loadProfile(),
+			loadTenancyDistricts(),
+			loadTenancyOffices(),
+		])
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
@@ -574,11 +620,8 @@ function TenancyCertificate() {
 
 		if (!draftParam) {
 			resetTenancyFormFields()
-			setDraftLoaded(false)
-			void (async () => {
-				await fetchServerDrafts()
-				setDraftLoaded(true)
-			})()
+			setDraftLoaded(true)
+			void fetchServerDrafts()
 			return
 		}
 
@@ -783,6 +826,37 @@ function TenancyCertificate() {
 			setPreview(URL.createObjectURL(processed))
 		} catch (err) {
 			setError(`Failed to process ${who} photo. Please try another image.`)
+		}
+	}
+
+	const attachSampleDocuments = async () => {
+		setDemoDocsLoading(true)
+		try {
+			const manifest = getUinSampleManifest(initiatorRole, language)
+			const [agreement, photo, signature, pan] = await Promise.all([
+				fetchDemoFile(manifest.agreement),
+				fetchDemoFile(manifest.photo),
+				fetchDemoFile(manifest.signature),
+				fetchDemoFile(manifest.pan),
+			])
+			setAgreementFile(agreement)
+			setAgreementPreviewUrl(URL.createObjectURL(agreement))
+			if (initiatorRole === 'TENANT') {
+				await handlePassportPhotoUpload(photo, setTenantPhotoFile, setTenantPhotoPreview, 'tenant')
+				setTenantSignatureFile(signature)
+				setTenantSignaturePreview(URL.createObjectURL(signature))
+				setTenantPanFile(pan)
+			} else {
+				await handlePassportPhotoUpload(photo, setLandlordPhotoFile, setLandlordPhotoPreview, 'landlord')
+				setLandlordSignatureFile(signature)
+				setLandlordSignaturePreview(URL.createObjectURL(signature))
+				setLandlordPanFile(pan)
+			}
+			showSaveToast(t('ws.uin.demo.success'))
+		} catch {
+			showErrorToast(t('ws.uin.demo.error'))
+		} finally {
+			setDemoDocsLoading(false)
 		}
 	}
 
@@ -1249,6 +1323,13 @@ function TenancyCertificate() {
 			: pendingPartyRole;
 		return (
 			<div className="ws-page ws-uin-apply tenancy-certificate-page">
+				<p className="ws-breadcrumb">
+					<Link to="/dashboard">{t('ws.nav.dashboard')}</Link>
+					<span className="ws-breadcrumb-sep" aria-hidden>
+						/
+					</span>
+					<span>{t('ws.nav.applyUin')}</span>
+				</p>
 				<div className="uin-confirm">
 					<div className="uin-confirm-card">
 						<div className="uin-confirm-icon" aria-hidden>✓</div>
@@ -1348,6 +1429,13 @@ function TenancyCertificate() {
 				</div>
 			) : (
 				<>
+			<p className="ws-breadcrumb">
+				<Link to="/dashboard">{t('ws.nav.dashboard')}</Link>
+				<span className="ws-breadcrumb-sep" aria-hidden>
+					/
+				</span>
+				<span>{t('ws.nav.applyUin')}</span>
+			</p>
 			<header className="ws-uin-apply-head">
 				<div className="ws-uin-apply-head__row">
 					<div className="ws-uin-apply-head__copy">
@@ -1360,19 +1448,6 @@ function TenancyCertificate() {
 						) : null}
 					</div>
 					<div className="ws-uin-apply-head__actions">
-						{/*<button
-							type="button"
-							className="ws-btn ws-btn--secondary ws-uin-drafts-btn"
-							onClick={() => openDraftsModal()}
-						>
-							<Icon name="file" />
-							<span>Drafts</span>
-							{serverDrafts.length > 0 ? (
-								<span className="ws-uin-drafts-btn__badge" aria-label={`${serverDrafts.length} saved drafts`}>
-									{serverDrafts.length}
-								</span>
-							) : null}
-						</button>*/}
 						{isResumedSession ? (
 							<button
 								type="button"
@@ -1438,7 +1513,7 @@ function TenancyCertificate() {
 							<div className="conflict-actions">
 								<button
 									type="button"
-									className="secondary"
+									className="ws-btn ws-btn--outline"
 									onClick={() =>
 										navigate(
 											`/dashboard/status?app_no=${conflictData.existing_application?.application_no}`
@@ -1449,7 +1524,7 @@ function TenancyCertificate() {
 								</button>
 								<button
 									type="button"
-									className="danger"
+									className="ws-btn ws-btn--danger"
 									disabled={tenancySubmitting}
 									onClick={() => submitTenancyApplication(true)}
 								>
@@ -1469,7 +1544,7 @@ function TenancyCertificate() {
 					) : null}
 
 					{!draftLoaded ? (
-						<div className="ws-uin-apply-loading">Loading your application…</div>
+						<div className="ws-uin-apply-loading">{t('ws.uin.loading')}</div>
 					) : null}
 
 					{draftLoaded ? (
@@ -1563,7 +1638,8 @@ function TenancyCertificate() {
 									setTenancyVillageWardId('');
 									setTenancyVillageWards([]);
 									setTenancyVillageName('');
-									loadTenancyVillageWards(dId);
+									setTenancyLocalBody('');
+									if (dId) loadTenancyVillageWards(dId);
 									const officesInDistrict = tenancyOffices.filter(o => String(o.district_id) === dId);
 									if (officesInDistrict.length === 1) {
 										setTenancyOfficeId(String(officesInDistrict[0].id));
@@ -1957,6 +2033,11 @@ function TenancyCertificate() {
 								<p className="tenancy-docs-step__lead">
 									{t('ws.uin.form.uploadsLead')}
 								</p>
+								<DemoDocsAttachButton
+									loading={demoDocsLoading}
+									onClick={attachSampleDocuments}
+									t={t}
+								/>
 								<p className="tenancy-docs-step__disclaimer" role="note">
 									<strong>{t('ws.uin.form.uploadsGuidelines')}</strong> {t('ws.uin.form.uploadsGuidelinesBody')}
 								</p>

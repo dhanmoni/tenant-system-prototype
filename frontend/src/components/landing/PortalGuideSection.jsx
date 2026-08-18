@@ -1,11 +1,9 @@
 import { useMemo, useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import {
-	Briefcase,
 	ClipboardList,
 	Handshake,
 	Laptop,
-	UserPlus,
 	Users,
 } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
@@ -24,14 +22,10 @@ import {
 } from '../../utils/landingMotion'
 
 const GUIDE_FLOAT_MOTIFS = [
-	{ Icon: Users, x: '5%', y: '12%', size: 'lg', delay: '0s', drift: 'a' },
-	{ Icon: UserPlus, x: '12%', y: '48%', size: 'md', delay: '1.2s', drift: 'b' },
-	{ Icon: ClipboardList, x: '4%', y: '78%', size: 'sm', delay: '0.5s', drift: 'c' },
-	{ Icon: Briefcase, x: '16%', y: '22%', size: 'sm', delay: '2s', drift: 'a' },
+	{ Icon: Users, x: '5%', y: '18%', size: 'lg', delay: '0s', drift: 'a' },
+	{ Icon: ClipboardList, x: '10%', y: '72%', size: 'md', delay: '1.2s', drift: 'b' },
 	{ Icon: Handshake, x: '90%', y: '16%', size: 'md', delay: '0.4s', drift: 'b' },
-	{ Icon: Laptop, x: '94%', y: '46%', size: 'lg', delay: '1.5s', drift: 'c' },
-	{ Icon: Users, x: '84%', y: '72%', size: 'sm', delay: '0.9s', drift: 'a' },
-	{ Icon: ClipboardList, x: '92%', y: '88%', size: 'md', delay: '2.3s', drift: 'b' },
+	{ Icon: Laptop, x: '88%', y: '68%', size: 'lg', delay: '1.5s', drift: 'c' },
 ]
 
 function GuideFloatMotifs({ reduceMotion }) {

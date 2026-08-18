@@ -281,14 +281,88 @@ input.admin-user-panel__input {
 
 .admin-user-role {
 	display: inline-block;
-	padding: 0.2rem 0.55rem;
-	font-size: 0.75rem;
-	font-weight: 600;
-	color: #334155;
-	background: #f1f5f9;
-	border: 1px solid #e2e8f0;
+	padding: 0.22rem 0.6rem;
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	line-height: 1.25;
+	border: 1px solid transparent;
 	border-radius: 999px;
 	white-space: nowrap;
+	max-width: 16rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+}
+
+.admin-user-role--default,
+.admin-user-role:not([class*='admin-user-role--']) {
+	color: #334155;
+	background: #f1f5f9;
+	border-color: #e2e8f0;
+}
+
+/* Platform / district admins */
+.admin-user-role--super-admin {
+	color: #1e293b;
+	background: #e2e8f0;
+	border-color: #94a3b8;
+}
+
+.admin-user-role--district-admin {
+	color: #1e3a8a;
+	background: #dbeafe;
+	border-color: #93c5fd;
+}
+
+/* Office heads — distinct family hues */
+.admin-user-role--rent-authority {
+	color: #065f46;
+	background: #d1fae5;
+	border-color: #6ee7b7;
+}
+
+.admin-user-role--rent-court {
+	color: #9a3412;
+	background: #ffedd5;
+	border-color: #fdba74;
+}
+
+.admin-user-role--rent-tribunal {
+	color: #4c1d95;
+	background: #ede9fe;
+	border-color: #c4b5fd;
+}
+
+/* Assistants — softer tones of their office */
+.admin-user-role--ra-assistant {
+	color: #047857;
+	background: #ecfdf5;
+	border-color: #a7f3d0;
+}
+
+.admin-user-role--rc-assistant {
+	color: #c2410c;
+	background: #fff7ed;
+	border-color: #fed7aa;
+}
+
+.admin-user-role--rt-assistant {
+	color: #5b21b6;
+	background: #f5f3ff;
+	border-color: #ddd6fe;
+}
+
+.admin-user-role--valuer {
+	color: #0e7490;
+	background: #cffafe;
+	border-color: #67e8f9;
+}
+
+.admin-user-role--citizen {
+	color: #475569;
+	background: #f8fafc;
+	border-color: #cbd5e1;
 }
 
 .admin-user-status {

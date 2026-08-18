@@ -12,10 +12,18 @@ class VillageWardController extends Controller
      */
     public function publicIndex(Request $request)
     {
-        $query = VillageWard::query()->with('district');
+        $query = VillageWard::query()
+            ->select(['id', 'name', 'type', 'district_id', 'villages', 'area_type', 'local_body']);
 
         if ($request->filled('district_id')) {
-            $query->where('district_id', $request->input('district_id'));
+            $districtId = $request->input('district_id');
+            if (!is_numeric($districtId) || (int) $districtId <= 0) {
+                return response()->json([
+                    'message' => 'Invalid district_id.',
+                    'data' => [],
+                ], 422);
+            }
+            $query->where('district_id', (int) $districtId);
         }
 
         $villageWards = $query->orderBy('name')->get();

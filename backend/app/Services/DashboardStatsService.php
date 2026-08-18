@@ -144,6 +144,8 @@ class DashboardStatsService
                         ? 'created_at::date'
                         : 'DATE(created_at)';
                     $cols[] = "$dateExpr as created_at_date";
+                } elseif ($col === 'created_at_month') {
+                    $cols[] = $this->sqlYearMonth('created_at').' as created_at_month';
                 } else {
                     $cols[] = $col;
                 }
@@ -407,30 +409,59 @@ class DashboardStatsService
     }
 
     /**
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
      * @return array<int, array<string, mixed>>
      */
-    public function districtBreakdown(?int $onlyDistrictId = null, ?array $modelClasses = null): array
-    {
+    public function districtBreakdown(
+        ?int $onlyDistrictId = null,
+        ?array $modelClasses = null,
+        $from = null,
+        $to = null
+    ): array {
         $query = District::query()->with('state:id,name')->withCount(['users', 'offices'])->orderBy('name');
         if ($onlyDistrictId) {
             $query->where('id', $onlyDistrictId);
         }
 
+        $circleCatalog = $this->assamCircleCatalog();
         $modelsToCount = $modelClasses ?? $this->allServiceModels();
+        [$rangeStart, $rangeEnd] = $this->normalizeCreatedAtRange($from, $to);
 
         $districtTenancyCounts = TenancyApplication::query()
             ->selectRaw('district_id, count(*) as count')
             ->where('status', '!=', Status::DRAFT)
-            ->when($onlyDistrictId, fn($q) => $q->where('district_id', $onlyDistrictId))
+            ->when($onlyDistrictId, fn ($q) => $q->where('district_id', $onlyDistrictId))
+            ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
             ->groupBy('district_id')
             ->pluck('count', 'district_id');
 
-        $districtServiceCounts = $this->getCombinedServiceQuery($onlyDistrictId, $modelsToCount, ['district_id'])
+        $serviceExtraSql = null;
+        $serviceExtraBindings = [];
+        if ($rangeStart && $rangeEnd) {
+            $serviceExtraSql = 'created_at BETWEEN ? AND ?';
+            $serviceExtraBindings = [$rangeStart, $rangeEnd];
+        }
+
+        $districtServiceCounts = $this->getCombinedServiceQuery(
+            $onlyDistrictId,
+            $modelsToCount,
+            ['district_id'],
+            $serviceExtraSql,
+            $serviceExtraBindings
+        )
             ->selectRaw('district_id, count(*) as count')
             ->groupBy('district_id')
             ->pluck('count', 'district_id');
 
-        return $query->get()->map(function (District $district) use ($districtTenancyCounts, $districtServiceCounts) {
+        return $query->get()->map(function (District $district) use (
+            $districtTenancyCounts,
+            $districtServiceCounts,
+            $circleCatalog,
+            $modelClasses,
+            $rangeStart,
+            $rangeEnd
+        ) {
             $tenancy = $districtTenancyCounts->get($district->id, 0);
             $service = $districtServiceCounts->get($district->id, 0);
 
@@ -445,8 +476,278 @@ class DashboardStatsService
                 'total_applications' => $tenancy + $service,
                 'users_count' => $district->users_count ?? 0,
                 'offices_count' => $district->offices_count ?? 0,
+                'subdivisions' => $this->subdivisionBreakdownForDistrict(
+                    $district,
+                    $circleCatalog,
+                    $modelClasses,
+                    $rangeStart,
+                    $rangeEnd
+                ),
             ];
         })->values()->all();
+    }
+
+    /**
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
+     * @return array{0: ?\Carbon\Carbon, 1: ?\Carbon\Carbon}
+     */
+    private function normalizeCreatedAtRange($from, $to): array
+    {
+        if (!$from && !$to) {
+            return [null, null];
+        }
+
+        $start = $from
+            ? \Carbon\Carbon::parse($from)->startOfDay()
+            : \Carbon\Carbon::parse($to)->startOfDay();
+        $end = $to
+            ? \Carbon\Carbon::parse($to)->endOfDay()
+            : \Carbon\Carbon::parse($from)->endOfDay();
+
+        if ($start->gt($end)) {
+            [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
+        return [$start, $end];
+    }
+
+    /**
+     * Application counts per circle / sub-division (via circle office).
+     * UIN apps use office_id directly. Service forms are attributed through
+     * tenancy_uin → tenancy application → office_id when a match exists.
+     *
+     * @param  array<string, array<int, string>>|null  $circleCatalog
+     * @param  class-string[]|null  $modelClasses
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
+     * @return array<int, array<string, mixed>>
+     */
+    public function subdivisionBreakdownForDistrict(
+        District $district,
+        ?array $circleCatalog = null,
+        ?array $modelClasses = null,
+        $from = null,
+        $to = null
+    ): array {
+        $circleCatalog ??= $this->assamCircleCatalog();
+        $circleNames = $circleCatalog[$this->normalizeNameKey($district->name)]
+            ?? $this->findCirclesForDistrictName($district->name, $circleCatalog);
+        [$rangeStart, $rangeEnd] = $this->normalizeCreatedAtRange($from, $to);
+
+        $offices = Office::query()
+            ->where('district_id', $district->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'district_id']);
+
+        $tenancyByOffice = TenancyApplication::query()
+            ->select('office_id', DB::raw('COUNT(*) as aggregate'))
+            ->where('district_id', $district->id)
+            ->where('status', '!=', Status::DRAFT)
+            ->whereNotNull('office_id')
+            ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
+            ->groupBy('office_id')
+            ->pluck('aggregate', 'office_id');
+
+        $serviceByOffice = $this->serviceApplicationsByOffice(
+            $district->id,
+            $modelClasses,
+            $rangeStart,
+            $rangeEnd
+        );
+
+        $buildRow = function (?Office $office, string $name) use ($tenancyByOffice, $serviceByOffice) {
+            $tenancy = $office ? (int) ($tenancyByOffice[$office->id] ?? 0) : 0;
+            $service = $office ? (int) ($serviceByOffice[$office->id] ?? 0) : 0;
+
+            return [
+                'name' => $name,
+                'office_id' => $office?->id,
+                'office_name' => $office?->name,
+                'tenancy_applications' => $tenancy,
+                'service_applications' => $service,
+                'total_applications' => $tenancy + $service,
+            ];
+        };
+
+        if ($circleNames === []) {
+            return $offices->map(function (Office $office) use ($buildRow) {
+                return $buildRow($office, $this->displayCircleNameFromOffice($office->name));
+            })->values()->all();
+        }
+
+        $usedOfficeIds = [];
+        $rows = [];
+        foreach ($circleNames as $circleName) {
+            $office = $this->matchOfficeToCircle($offices, $circleName, $usedOfficeIds);
+            if ($office) {
+                $usedOfficeIds[$office->id] = true;
+            }
+            $rows[] = $buildRow($office, $circleName);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Count non-draft service forms per circle office, via linked tenancy UIN.
+     *
+     * @param  class-string[]|null  $modelClasses
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $from
+     * @param  \Carbon\Carbon|\DateTimeInterface|string|null  $to
+     * @return array<int, int> office_id => count
+     */
+    private function serviceApplicationsByOffice(
+        ?int $districtId,
+        ?array $modelClasses = null,
+        $from = null,
+        $to = null
+    ): array {
+        $uinToOffice = TenancyApplication::query()
+            ->when($districtId, fn ($q) => $q->where('district_id', $districtId))
+            ->whereNotNull('uid')
+            ->whereNotNull('office_id')
+            ->where('status', '!=', Status::DRAFT)
+            ->pluck('office_id', 'uid');
+
+        if ($uinToOffice->isEmpty()) {
+            return [];
+        }
+
+        [$rangeStart, $rangeEnd] = $this->normalizeCreatedAtRange($from, $to);
+
+        $counts = [];
+        foreach ($modelClasses ?? $this->allServiceModels() as $modelClass) {
+            $query = $modelClass::query()
+                ->where('status', '!=', Status::DRAFT)
+                ->whereNotNull('tenancy_uin');
+            if ($districtId) {
+                $query->where('district_id', $districtId);
+            }
+            if ($rangeStart && $rangeEnd) {
+                $query->whereBetween('created_at', [$rangeStart, $rangeEnd]);
+            }
+
+            foreach ($query->pluck('tenancy_uin') as $uin) {
+                $officeId = $uinToOffice[$uin] ?? null;
+                if (!$officeId) {
+                    continue;
+                }
+                $counts[$officeId] = ($counts[$officeId] ?? 0) + 1;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * @return array<string, array<int, string>> keyed by normalized district name
+     */
+    private function assamCircleCatalog(): array
+    {
+        static $catalog = null;
+        if (is_array($catalog)) {
+            return $catalog;
+        }
+
+        $path = database_path('seeders/data/assam_circle_offices.json');
+        $catalog = [];
+        if (!is_file($path)) {
+            return $catalog;
+        }
+
+        $groups = json_decode((string) file_get_contents($path), true) ?: [];
+        foreach ($groups as $group) {
+            $district = $group['district'] ?? null;
+            $circles = $group['circles'] ?? null;
+            if (!$district || !is_array($circles)) {
+                continue;
+            }
+            $catalog[$this->normalizeNameKey($district)] = array_values(array_filter(array_map('strval', $circles)));
+        }
+
+        return $catalog;
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $circleCatalog
+     * @return array<int, string>
+     */
+    private function findCirclesForDistrictName(string $districtName, array $circleCatalog): array
+    {
+        $focus = $this->normalizeNameKey($districtName);
+        foreach ($circleCatalog as $key => $circles) {
+            if ($key === $focus || str_contains($key, $focus) || str_contains($focus, $key)) {
+                return $circles;
+            }
+            if (str_contains($focus, 'kamrup rural') && $key === 'kamrup') {
+                return $circles;
+            }
+            if (str_contains($focus, 'south salmara') && str_contains($key, 'salmara')) {
+                return $circles;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, Office>  $offices
+     * @param  array<int, bool>  $usedOfficeIds
+     */
+    private function matchOfficeToCircle($offices, string $circleName, array $usedOfficeIds): ?Office
+    {
+        $circleKey = $this->normalizeCircleKey($circleName);
+        $best = null;
+        $bestScore = 0;
+
+        foreach ($offices as $office) {
+            if (isset($usedOfficeIds[$office->id])) {
+                continue;
+            }
+            $officeKey = $this->normalizeCircleKey($office->name);
+            if ($officeKey === '' || $circleKey === '') {
+                continue;
+            }
+            $score = 0;
+            if ($officeKey === $circleKey) {
+                $score = 3;
+            } elseif (str_contains($officeKey, $circleKey) || str_contains($circleKey, $officeKey)) {
+                $score = 2;
+            }
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $office;
+            }
+        }
+
+        return $bestScore > 0 ? $best : null;
+    }
+
+    private function displayCircleNameFromOffice(string $officeName): string
+    {
+        $name = trim(preg_replace('/\b(circle\s+office|office)\b/i', '', $officeName) ?? $officeName);
+        $name = trim(preg_replace('/\s+/', ' ', $name) ?? $name);
+        $name = preg_replace('/^-\s*/', '', $name) ?? $name;
+
+        return $name !== '' ? $name : $officeName;
+    }
+
+    private function normalizeNameKey(?string $name): string
+    {
+        $value = strtolower((string) $name);
+        $value = str_replace(['–', '—'], '-', $value);
+        $value = preg_replace('/[^a-z0-9]+/', ' ', $value) ?? $value;
+
+        return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+    }
+
+    private function normalizeCircleKey(?string $name): string
+    {
+        $value = $this->normalizeNameKey($name);
+        $value = preg_replace('/\b(circle|office|co|pt)\b/', ' ', $value) ?? $value;
+
+        return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
     }
 
     /**
@@ -737,5 +1038,202 @@ class DashboardStatsService
         }
 
         return $stats;
+    }
+
+    /**
+     * Aggregated public transparency stats — counts only, no personal data.
+     *
+     * @return array<string, mixed>
+     */
+    public function publicPortalStats(): array
+    {
+        $tenancyTotal = $this->countTenancyApplications();
+        $serviceTotal = $this->countServiceApplications();
+        $uinsIssued = TenancyApplication::query()
+            ->where('status', '!=', Status::DRAFT)
+            ->where('status', '!=', Status::CANCELLED)
+            ->whereNotNull('uid')
+            ->where('uid', '!=', '')
+            ->count();
+        $mattersConcluded = $this->countServiceByStatus(Status::COMPLETED)
+            + $this->countServiceByStatus(Status::APPROVED);
+
+        $authorityFilings = $this->countServiceApplications(null, $this->modelsForRentAuthority());
+        $courtFilings = $this->countServiceApplications(null, $this->modelsForRentCourt());
+        $tribunalFilings = $this->countServiceApplications(null, $this->modelsForRentTribunal());
+
+        $tenancyByStatus = TenancyApplication::query()
+            ->selectRaw('status, count(*) as count')
+            ->where('status', '!=', Status::DRAFT)
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $issued = (int) $tenancyByStatus->get(Status::APPROVED, 0)
+            + (int) $tenancyByStatus->get(Status::COMPLETED, 0);
+        $underReview = (int) $tenancyByStatus->get(Status::SUBMITTED, 0)
+            + (int) $tenancyByStatus->get(Status::IN_REVIEW, 0)
+            + (int) $tenancyByStatus->get(Status::UNDER_PROCESS, 0)
+            + (int) $tenancyByStatus->get(Status::PENDING, 0);
+        $returned = (int) $tenancyByStatus->get(Status::REJECTED, 0)
+            + (int) $tenancyByStatus->get(Status::WITHDRAWN, 0)
+            + (int) $tenancyByStatus->get(Status::CANCELLED, 0)
+            + (int) $tenancyByStatus->get(Status::PARTIAL, 0);
+
+        return [
+            'generated_at' => now()->toIso8601String(),
+            'kpis' => [
+                [
+                    'id' => 'applications_submitted',
+                    'value' => $tenancyTotal + $serviceTotal,
+                ],
+                [
+                    'id' => 'uins_issued',
+                    'value' => $uinsIssued,
+                ],
+                [
+                    'id' => 'service_filings',
+                    'value' => $serviceTotal,
+                ],
+                [
+                    'id' => 'disputes_resolved',
+                    'value' => $mattersConcluded,
+                ],
+            ],
+            'monthly' => $this->monthlyPublicApplications(6),
+            'filings' => $this->withShare([
+                ['id' => 'authority', 'value' => $authorityFilings],
+                ['id' => 'court', 'value' => $courtFilings],
+                ['id' => 'tribunal', 'value' => $tribunalFilings],
+            ]),
+            'certificate_status' => $this->withShare([
+                ['id' => 'issued', 'value' => $issued],
+                ['id' => 'under_review', 'value' => $underReview],
+                ['id' => 'returned', 'value' => $returned],
+            ]),
+            'pipeline' => $this->withShare([
+                ['id' => 'received', 'value' => $tenancyTotal],
+                ['id' => 'review', 'value' => $underReview],
+                ['id' => 'issued', 'value' => $issued],
+                ['id' => 'returned', 'value' => $returned],
+            ], $tenancyTotal),
+            'top_districts' => $this->topDistrictsByApplications(5),
+        ];
+    }
+
+    /**
+     * @return array<int, array{key: string, month: string, value: int}>
+     */
+    private function monthlyPublicApplications(int $months = 6): array
+    {
+        $months = max(3, min($months, 12));
+        $start = now()->startOfMonth()->subMonths($months - 1);
+        $end = now()->endOfMonth();
+        $buckets = [];
+        for ($i = 0; $i < $months; $i++) {
+            $cursor = $start->copy()->addMonths($i);
+            $key = $cursor->format('Y-m');
+            $buckets[$key] = [
+                'key' => $key,
+                'month' => $cursor->format('M'),
+                'value' => 0,
+            ];
+        }
+
+        $monthExpr = $this->sqlYearMonth('created_at');
+        $tenancyRows = TenancyApplication::query()
+            ->selectRaw("{$monthExpr} as month_key, COUNT(*) as cnt")
+            ->where('status', '!=', Status::DRAFT)
+            ->whereBetween('created_at', [$start, $end])
+            ->groupByRaw($monthExpr)
+            ->get();
+        foreach ($tenancyRows as $row) {
+            $key = (string) $row->month_key;
+            if (isset($buckets[$key])) {
+                $buckets[$key]['value'] += (int) $row->cnt;
+            }
+        }
+
+        $serviceRows = $this->getCombinedServiceQuery(
+            null,
+            $this->allServiceModels(),
+            ['created_at_month'],
+            'created_at BETWEEN ? AND ?',
+            [$start, $end]
+        )
+            ->selectRaw('created_at_month as month_key, count(*) as cnt')
+            ->groupBy('created_at_month')
+            ->get();
+        foreach ($serviceRows as $row) {
+            $key = (string) $row->month_key;
+            if (isset($buckets[$key])) {
+                $buckets[$key]['value'] += (int) $row->cnt;
+            }
+        }
+
+        return array_values($buckets);
+    }
+
+    /**
+     * @return array<int, array{name: string, applications: int}>
+     */
+    private function topDistrictsByApplications(int $limit = 5): array
+    {
+        $tenancyByDistrict = TenancyApplication::query()
+            ->selectRaw('district_id, count(*) as count')
+            ->where('status', '!=', Status::DRAFT)
+            ->whereNotNull('district_id')
+            ->groupBy('district_id')
+            ->pluck('count', 'district_id');
+
+        $serviceByDistrict = $this->getCombinedServiceQuery(null, $this->allServiceModels(), ['district_id'])
+            ->selectRaw('district_id, count(*) as count')
+            ->groupBy('district_id')
+            ->pluck('count', 'district_id');
+
+        $ids = $tenancyByDistrict->keys()->merge($serviceByDistrict->keys())->unique()->filter();
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $names = District::query()->whereIn('id', $ids)->pluck('name', 'id');
+
+        return $ids
+            ->map(function ($id) use ($tenancyByDistrict, $serviceByDistrict, $names) {
+                $total = (int) $tenancyByDistrict->get($id, 0) + (int) $serviceByDistrict->get($id, 0);
+
+                return [
+                    'name' => (string) ($names->get($id) ?: '—'),
+                    'applications' => $total,
+                ];
+            })
+            ->filter(fn ($row) => $row['applications'] > 0)
+            ->sortByDesc('applications')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function withShare(array $rows, ?int $total = null): array
+    {
+        $sum = $total ?? array_sum(array_column($rows, 'value'));
+        return array_map(function (array $row) use ($sum) {
+            $value = (int) ($row['value'] ?? 0);
+            $row['pct'] = $sum > 0 ? (int) round(($value / $sum) * 100) : 0;
+
+            return $row;
+        }, $rows);
+    }
+
+    private function sqlYearMonth(string $column): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'pgsql' => "to_char({$column}, 'YYYY-MM')",
+            'sqlite' => "strftime('%Y-%m', {$column})",
+            default => "DATE_FORMAT({$column}, '%Y-%m')",
+        };
     }
 }

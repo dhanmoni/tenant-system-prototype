@@ -279,7 +279,11 @@ class TenantFormsStatusController extends Controller
             'in_review' => $normalized === 'IN_REVIEW',
             'approved' => in_array($normalized, ['APPROVED', 'COMPLETED'], true),
             'rejected' => $normalized === 'REJECTED',
+            'withdrawn' => $normalized === 'WITHDRAWN',
+            'cancelled' => $normalized === 'CANCELLED',
             'pending' => in_array($normalized, ['PENDING', 'DRAFT', 'PARTIAL'], true),
+            'in_progress' => in_array($normalized, ['IN_REVIEW', 'UNDER_PROCESS', 'PENDING', 'PARTIAL', 'DRAFT'], true),
+            'completed' => in_array($normalized, ['APPROVED', 'COMPLETED', 'SUBMITTED'], true),
             default => true,
         };
     }

@@ -3,48 +3,57 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { Icon } from './Icons'
 
+const AUTO_DISMISS_MS = 5000
+
 function ProfileCompletionModal({ open, onComplete, onDismiss }) {
-	const [dontShowAgain, setDontShowAgain] = useState(false)
+	const [overlayHost, setOverlayHost] = useState(null)
 
 	useEffect(() => {
-		if (open) setDontShowAgain(false)
+		if (!open) {
+			setOverlayHost(null)
+			return
+		}
+		setOverlayHost(
+			document.getElementById('dashboard-primary-content') || document.body,
+		)
 	}, [open])
 
 	useEffect(() => {
 		if (!open) return undefined
+		const timer = window.setTimeout(() => {
+			onDismiss?.()
+		}, AUTO_DISMISS_MS)
+		return () => window.clearTimeout(timer)
+	}, [open, onDismiss])
+
+	useEffect(() => {
+		if (!open) return undefined
 		const onKeyDown = (event) => {
-			if (event.key === 'Escape') onDismiss?.({ suppressPermanent: dontShowAgain })
+			if (event.key === 'Escape') onDismiss?.()
 		}
 		document.addEventListener('keydown', onKeyDown)
-		const prevOverflow = document.body.style.overflow
-		document.body.style.overflow = 'hidden'
-		return () => {
-			document.removeEventListener('keydown', onKeyDown)
-			document.body.style.overflow = prevOverflow
-		}
-	}, [open, onDismiss, dontShowAgain])
+		return () => document.removeEventListener('keydown', onKeyDown)
+	}, [open, onDismiss])
 
-	if (!open) return null
-
-	const handleDismiss = () => onDismiss?.({ suppressPermanent: dontShowAgain })
+	if (!open || !overlayHost) return null
 
 	return createPortal(
 		<div
 			className="profile-completion-overlay"
 			role="presentation"
-			onClick={handleDismiss}
+			onClick={() => onDismiss?.()}
 		>
 			<div
 				className="profile-completion-modal"
-				role="dialog"
-				aria-modal="true"
+				role="status"
+				aria-live="polite"
 				aria-labelledby="profile-completion-title"
 				onClick={(event) => event.stopPropagation()}
 			>
 				<button
 					type="button"
 					className="profile-completion-modal__close"
-					onClick={handleDismiss}
+					onClick={() => onDismiss?.()}
 					aria-label="Close"
 				>
 					<X className="profile-completion-modal__close-icon" aria-hidden strokeWidth={2.25} />
@@ -58,31 +67,9 @@ function ProfileCompletionModal({ open, onComplete, onDismiss }) {
 				</h2>
 				<p className="profile-completion-modal__message">
 					Add your address, PIN code, PAN, and passport photo so future applications can be
-					auto-filled and you spend less time on each form.
+					auto-filled. This reminder will move to notifications.
 				</p>
-				<ul className="profile-completion-modal__list">
-					<li>Residential address and PIN code</li>
-					<li>PAN card number</li>
-					<li>Passport-size photograph</li>
-				</ul>
-
-				<label className="profile-completion-modal__dont-show">
-					<input
-						type="checkbox"
-						checked={dontShowAgain}
-						onChange={(event) => setDontShowAgain(event.target.checked)}
-					/>
-					<span>Don&apos;t show again</span>
-				</label>
-
 				<footer className="profile-completion-modal__actions">
-					<button
-						type="button"
-						className="workflow-confirm-btn workflow-confirm-btn--secondary"
-						onClick={handleDismiss}
-					>
-						Remind me later
-					</button>
 					<button
 						type="button"
 						className="workflow-confirm-btn workflow-confirm-btn--primary"
@@ -93,7 +80,7 @@ function ProfileCompletionModal({ open, onComplete, onDismiss }) {
 				</footer>
 			</div>
 		</div>,
-		document.body
+		overlayHost,
 	)
 }
 

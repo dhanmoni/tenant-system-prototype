@@ -8,6 +8,18 @@
 	<meta name="description" content="Assam Tenancy Registration Portal — apply for tenancy certificates, track applications, and access services under the Assam Tenancy Act. Government of Assam." />
 	<meta name="author" content="Directorate of Town and Country Planning, Government of Assam" />
 	<title>Assam Tenancy Registration & Management System - ATRMS</title>
+	<style>
+		/* Hide CDN a11y widget until React marks the shell ready (prevents bar-first flash) */
+		html:not(.app-shell-ready) #uw-main,
+		html:not(.app-shell-ready) .accessibility-widget,
+		html:not(.app-shell-ready) [id^='uw-'],
+		html:not(.app-shell-ready) [class*='uw-'] {
+			visibility: hidden !important;
+			opacity: 0 !important;
+			pointer-events: none !important;
+		}
+	</style>
+	<link rel="preload" as="image" href="/hero-lcp.webp" type="image/webp" fetchpriority="high" />
 	<link rel="dns-prefetch" href="https://www.google.com" />
 	<link rel="dns-prefetch" href="https://maps.google.com" />
 	<link rel="dns-prefetch" href="https://cdn.ux4g.gov.in" />
@@ -16,7 +28,12 @@
 	<link
 		rel="stylesheet"
 		href="https://cdn.ux4g.gov.in/UX4G@3.0.18/components/accessibility-bar.css"
+		media="print"
+		onload="this.media='all'"
 	/>
+	<noscript>
+		<link rel="stylesheet" href="https://cdn.ux4g.gov.in/UX4G@3.0.18/components/accessibility-bar.css" />
+	</noscript>
 </head>
 
 <body>

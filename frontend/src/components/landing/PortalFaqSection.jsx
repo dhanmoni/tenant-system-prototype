@@ -1,9 +1,9 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import PortalFaqVector from './PortalFaqVector'
 import { useLanguage } from '../../i18n'
 import {
+	easeOutExpo,
 	faqIntroVariants,
 	faqItemVariants,
 	faqListVariants,
@@ -30,12 +30,18 @@ function FaqItem({ item, isOpen, onToggle, reduceMotion }) {
 					onClick={onToggle}
 				>
 					<span className="landing-faq__question">{item.question}</span>
-					<ChevronDown
+					<motion.span
 						className={`landing-faq__chevron shrink-0${isOpen ? ' is-open' : ''}`}
-						size={20}
-						strokeWidth={2.25}
+						animate={{ rotate: isOpen ? 180 : 0 }}
+						transition={
+							reduceMotion
+								? { duration: 0 }
+								: { type: 'spring', stiffness: 420, damping: 22 }
+						}
 						aria-hidden
-					/>
+					>
+						<ChevronDown size={20} strokeWidth={2.25} />
+					</motion.span>
 				</button>
 			</h3>
 			<motion.div
@@ -49,12 +55,32 @@ function FaqItem({ item, isOpen, onToggle, reduceMotion }) {
 				transition={
 					reduceMotion
 						? { duration: 0 }
-						: { duration: 0.34, ease: [0.22, 1, 0.36, 1] }
+						: {
+								duration: isOpen ? 0.52 : 0.32,
+								ease: easeOutExpo,
+							}
 				}
 			>
-				<div className="landing-faq__panel-inner">
+				<motion.div
+					className="landing-faq__panel-inner"
+					initial={false}
+					animate={
+						isOpen
+							? { opacity: 1, y: 0 }
+							: { opacity: 0, y: 36 }
+					}
+					transition={
+						reduceMotion
+							? { duration: 0 }
+							: {
+									duration: isOpen ? 0.58 : 0.22,
+									ease: easeOutExpo,
+									delay: isOpen ? 0.06 : 0,
+								}
+					}
+				>
 					<p className="landing-faq__answer">{item.answer}</p>
-				</div>
+				</motion.div>
 			</motion.div>
 		</div>
 	)
@@ -162,7 +188,7 @@ function PortalFaqSection() {
 						</motion.p>
 					</motion.header>
 
-					<div className="landing-faq__body">
+					<div className="landing-faq__body landing-faq__body--solo">
 						<motion.div
 							className="landing-faq__list"
 							variants={reduceMotion ? undefined : faqListVariants}
@@ -182,27 +208,6 @@ function PortalFaqSection() {
 								</motion.div>
 							))}
 						</motion.div>
-
-						<motion.aside
-							className="landing-faq__visual"
-							aria-hidden
-							initial={reduceMotion ? false : { opacity: 0, x: 28, scale: 0.94, rotate: 2 }}
-							animate={
-								reveal
-									? { opacity: 1, x: 0, scale: 1, rotate: 0 }
-									: { opacity: 0, x: 28, scale: 0.94, rotate: 2 }
-							}
-							transition={
-								reduceMotion
-									? { duration: 0 }
-									: { type: 'spring', stiffness: 180, damping: 18, delay: 0.16 }
-							}
-						>
-							<div className="landing-faq__visual-glow" />
-							<div className="landing-faq__visual-frame">
-								<PortalFaqVector className="landing-faq__vector" />
-							</div>
-						</motion.aside>
 					</div>
 				</motion.div>
 			</div>

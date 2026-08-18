@@ -1,0 +1,103 @@
+/* Extra master-data controls on top of district toolbar/modal CSS */
+
+.ws-master-actions {
+	display: inline-flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.35rem;
+}
+
+.ws-master-muted {
+	color: #64748b;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	word-break: break-word;
+}
+
+.ws-master-modal--wide {
+	width: min(520px, calc(100vw - 2rem));
+}
+
+.ws-district-modal__field .ws-master-select,
+.ws-district-modal__field .ws-master-textarea {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.6rem 0.75rem;
+	border-radius: 8px;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	background: #fff;
+	font-size: 0.875rem;
+	font-family: inherit;
+	font-weight: 400;
+	color: #0f172a;
+	box-sizing: border-box;
+}
+
+.ws-district-modal__field .ws-master-textarea {
+	resize: vertical;
+	min-height: 5rem;
+	line-height: 1.45;
+}
+
+.ws-district-modal__field .ws-master-select:focus,
+.ws-district-modal__field .ws-master-textarea:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+}
+
+.ws-district-modal__field .ws-master-select:disabled,
+.ws-district-modal__field .ws-master-textarea:disabled {
+	background: #f8fafc;
+	color: #64748b;
+	cursor: not-allowed;
+}
+
+.ws-master-date-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+}
+
+.ws-master-date-field {
+	display: flex;
+	flex-direction: column;
+	min-width: 10rem;
+}
+
+.page.page-dashboard .ws-root .ws-master .ws-master-date-input {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.55rem 0.7rem !important;
+	border: 1px solid var(--ws-border-strong, #cbd5e1);
+	border-radius: 8px;
+	background: #fff;
+	font-size: 0.875rem;
+	font-family: inherit;
+	color: var(--ws-text, #0f172a);
+	box-sizing: border-box;
+}
+
+.page.page-dashboard .ws-root .ws-master .ws-master-date-input:focus {
+	outline: none;
+	border-color: var(--ws-accent, #0d47a1);
+	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+}
+
+.ws-district-table .ws-status-th-actions,
+.ws-master .ws-district-table .ws-status-actions {
+	width: 210px;
+	min-width: 210px;
+}
+
+@media (max-width: 640px) {
+	.ws-master-date-field {
+		flex: 1 1 100%;
+	}
+
+	.ws-master .ws-district-table .ws-table {
+		min-width: 40rem;
+	}
+}

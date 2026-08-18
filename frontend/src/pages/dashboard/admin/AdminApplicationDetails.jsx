@@ -1,17 +1,22 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
+import { Link, useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
 import api from '../../../api'
+import { fetchAdminApplication, fetchValuers as fetchValuerUsers } from '../../../services/adminApplications'
+import { getApiErrorMessage } from '../../../services/errors'
+import { useLanguage } from '../../../i18n'
 import { Icon } from '../../../components/dashboard/Icons'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
-import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES } from '../../../constants/roles'
+import { ROLES, ASSISTANT_ROLES, PRINCIPAL_ROLES, TENANCY_STAFF_ROLES } from '../../../constants/roles'
+import { getRoleLabel } from '../../../constants/roleLabels'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../../utils/adminStatusBadge'
 import { formatDate, formatDateTime } from '../../../utils/formatters'
 import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress'
 import { buildServiceFormDocument } from '../../../utils/buildServiceFormDocument'
 import ProceedingModal from '../../../components/dashboard/ProceedingModal'
 import NoticeDocumentViewer from '../../../components/dashboard/NoticeDocumentViewer'
+import { useToast } from '../../../context/ToastContext'
 import './ApplicationDetails.css'
 
 const EXCLUDED_FIELDS = new Set([
@@ -22,9 +27,11 @@ const EXCLUDED_FIELDS = new Set([
 	'forwarded_by_user_id',
 	'rejected_by_user_id',
 	'approved_by_user_id',
+	'cancelled_by_user_id',
 	'forwarded_by',
 	'rejected_by',
 	'approved_by',
+	'cancelled_by',
 	'movement_history',
 	'edit_history',
 	'created_at',
@@ -57,6 +64,8 @@ const WORKFLOW_FIELDS = new Set([
 	'rejection_message',
 	'approval_message',
 	'forward_remarks',
+	'cancelled_at',
+	'cancellation_reason',
 ])
 
 const SUMMARY_FIELDS = ['district', 'form_type', 'status']
@@ -82,6 +91,8 @@ const NON_EDITABLE_KEYS = new Set([
 	'rejection_message',
 	'approval_message',
 	'forward_remarks',
+	'cancelled_at',
+	'cancellation_reason',
 	'ref_code',
 	'wizard_step',
 	'current_with',
@@ -103,16 +114,16 @@ const NON_EDITABLE_KEYS = new Set([
 ])
 
 const TENANCY_FIELD_SECTIONS = [
-	{ title: 'Registration', prefixes: ['registration_date', 'apply_type'] },
-	{ title: 'Landlord details', prefixes: ['landlord_'] },
-	{ title: 'Tenant details', prefixes: ['tenant_'] },
-	{ title: 'Manager details', prefixes: ['manager_'] },
-	{ title: 'Property & charges', prefixes: ['property_'] },
+	{ titleKey: 'ws.adminDetail.section.registration', prefixes: ['registration_date', 'apply_type'] },
+	{ titleKey: 'ws.adminDetail.section.landlord', prefixes: ['landlord_'] },
+	{ titleKey: 'ws.adminDetail.section.tenant', prefixes: ['tenant_'] },
+	{ titleKey: 'ws.adminDetail.section.manager', prefixes: ['manager_'] },
+	{ titleKey: 'ws.adminDetail.section.property', prefixes: ['property_'] },
 ]
 
 const SERVICE_FIELD_SECTIONS = [
 	{
-		title: 'Applicant & parties',
+		titleKey: 'ws.adminDetail.section.parties',
 		prefixes: [
 			'applicant_',
 			'appellant_',
@@ -124,15 +135,15 @@ const SERVICE_FIELD_SECTIONS = [
 		],
 	},
 	{
-		title: 'Property & premises',
+		titleKey: 'ws.adminDetail.section.premises',
 		prefixes: ['property_', 'premises_', 'building_', 'schedule_'],
 	},
 	{
-		title: 'Rent & charges',
+		titleKey: 'ws.adminDetail.section.rent',
 		prefixes: ['rent_', 'charge_', 'other_charges', 'existing_', 'amount'],
 	},
 	{
-		title: 'Case & filing',
+		titleKey: 'ws.adminDetail.section.case',
 		prefixes: [
 			'case_',
 			'order_',
@@ -236,9 +247,9 @@ function isWideEditField(key) {
 	)
 }
 
-function buildEditSections(editForm, formType) {
+function buildEditSections(editForm, formType, t) {
 	const fields = Object.entries(editForm).filter(([key]) => isEditableField(key))
-	return groupDetailFields(fields, formType).filter((section) =>
+	return groupDetailFields(fields, formType, t).filter((section) =>
 		section.fields.some(([key]) => isEditableField(key))
 	)
 }
@@ -251,10 +262,10 @@ function getUinValue(app) {
 	return null
 }
 
-function groupDetailFields(fields, formType) {
+function groupDetailFields(fields, formType, t) {
 	if (formType === APPLICATION_TYPES.TENANCY_CERTIFICATE) {
 		const sections = TENANCY_FIELD_SECTIONS.map((section) => ({
-			title: section.title,
+			title: t(section.titleKey),
 			fields: fields.filter(([key]) =>
 				section.prefixes.some(
 					(prefix) => key === prefix || key.startsWith(prefix)
@@ -265,14 +276,16 @@ function groupDetailFields(fields, formType) {
 		const assigned = new Set(sections.flatMap((s) => s.fields.map(([key]) => key)))
 		const other = fields.filter(([key]) => !assigned.has(key))
 		if (other.length > 0) {
-			sections.push({ title: 'Other details', fields: other })
+			sections.push({ title: t('ws.adminDetail.section.other'), fields: other })
 		}
 
-		return sections.length > 0 ? sections : [{ title: 'Application details', fields }]
+		return sections.length > 0
+			? sections
+			: [{ title: t('ws.adminDetail.section.application'), fields }]
 	}
 
 	const sections = SERVICE_FIELD_SECTIONS.map((section) => ({
-		title: section.title,
+		title: t(section.titleKey),
 		fields: fields.filter(([key]) =>
 			section.prefixes.some(
 				(prefix) => key === prefix || key.startsWith(prefix)
@@ -285,13 +298,15 @@ function groupDetailFields(fields, formType) {
 	const other = fields.filter(([key]) => !assigned.has(key) && !isFileField(key))
 
 	if (documents.length > 0) {
-		sections.push({ title: 'Documents & uploads', fields: documents })
+		sections.push({ title: t('ws.adminDetail.section.docs'), fields: documents })
 	}
 	if (other.length > 0) {
-		sections.push({ title: 'Other details', fields: other })
+		sections.push({ title: t('ws.adminDetail.section.other'), fields: other })
 	}
 
-	return sections.length > 0 ? sections : [{ title: 'Application details', fields }]
+	return sections.length > 0
+		? sections
+		: [{ title: t('ws.adminDetail.section.application'), fields }]
 }
 
 function buildEditForm(app) {
@@ -306,16 +321,41 @@ function buildEditForm(app) {
 	return form
 }
 
+function serviceApplicationsListPath(role) {
+	if (ASSISTANT_ROLES.includes(role) || role === ROLES.VALUER) {
+		return '/dashboard/admin/inbox'
+	}
+	return '/dashboard/admin/applications'
+}
+
+function serviceApplicationsListLabel(role, t) {
+	return role === ROLES.VALUER
+		? t('ws.adminDetail.list.valuer')
+		: t('ws.adminDetail.list.services')
+}
+
 const AdminApplicationDetails = () => {
 	const { applicationNo } = useParams()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const { user } = useOutletContext()
+	const { showToast } = useToast()
+	const { t } = useLanguage()
 	const fromTenancy =
 		location.state?.from === 'tenancy' ||
 		location.pathname.includes('/admin/tenancy/')
-	const listPath = fromTenancy ? '/dashboard/admin/tenancy' : '/dashboard/admin/applications'
-	const listLabel = fromTenancy ? 'tenancy applications' : 'service applications'
+	const fromInbox = location.state?.from === 'inbox'
+	const fromApplications = location.state?.from === 'applications'
+	const listPath = fromTenancy
+		? '/dashboard/admin/tenancy'
+		: fromInbox
+			? '/dashboard/admin/inbox'
+			: fromApplications
+				? '/dashboard/admin/applications'
+				: serviceApplicationsListPath(user?.role)
+	const listLabel = fromTenancy
+		? t('ws.adminDetail.list.tenancy')
+		: serviceApplicationsListLabel(user?.role, t)
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
@@ -326,6 +366,7 @@ const AdminApplicationDetails = () => {
 	const [saveError, setSaveError] = useState('')
 	const [valuers, setValuers] = useState([])
 	const [selectedValuerId, setSelectedValuerId] = useState('')
+	const [valuerLoadError, setValuerLoadError] = useState('')
 	const [valuerReport, setValuerReport] = useState('')
 	const [workflowModal, setWorkflowModal] = useState(null)
 	const [workflowMessage, setWorkflowMessage] = useState('')
@@ -355,6 +396,13 @@ const AdminApplicationDetails = () => {
 	useEffect(() => {
 		viewerModeRef.current = viewerMode
 	}, [viewerMode])
+
+	useEffect(() => {
+		if (!fromTenancy || !user?.role) return
+		if (!TENANCY_STAFF_ROLES.includes(user.role)) {
+			navigate('/dashboard', { replace: true })
+		}
+	}, [fromTenancy, user?.role, navigate])
 
 	const updatePaperHeight = useCallback(() => {
 		if (paperRef.current) {
@@ -415,7 +463,7 @@ const AdminApplicationDetails = () => {
 			)
 			openInPrintWindow(res.data)
 		} catch (err) {
-			alert(err?.response?.data?.message || 'Failed to open printable application.')
+			showToast(err?.response?.data?.message || 'Failed to open printable application.', 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -455,7 +503,7 @@ const AdminApplicationDetails = () => {
 			} else if (err?.message) {
 				message = err.message
 			}
-			alert(message)
+			showToast(message, 'error')
 		} finally {
 			setAgreementLoading(false)
 		}
@@ -468,8 +516,8 @@ const AdminApplicationDetails = () => {
 			setProceedingsLoading(true)
 			const res = await api.get(`/api/admin/applications/${formType}/${app.id}/proceedings`)
 			setProceedings(res.data.proceedings || [])
-		} catch (err) {
-			console.error('Failed to fetch proceedings', err)
+		} catch {
+			setProceedings([])
 		} finally {
 			setProceedingsLoading(false)
 		}
@@ -483,7 +531,7 @@ const AdminApplicationDetails = () => {
 			setProceedings([res.data.proceeding, ...proceedings])
 			setShowProceedingModal(false)
 		} catch (err) {
-			alert(err?.response?.data?.message || 'Failed to save proceeding')
+			showToast(err?.response?.data?.message || 'Failed to save proceeding', 'error')
 		} finally {
 			setProceedingSubmitting(false)
 		}
@@ -502,47 +550,91 @@ const AdminApplicationDetails = () => {
 	const renderProceedings = () => {
 		if (!application) return null
 
-		const isRtAppeal =
-			application.form_type === APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL ||
-			user?.role === ROLES.RT_ASSISTANT ||
-			user?.role === ROLES.RENT_TRIBUNAL;
+		const isRtAppeal = application.form_type === APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL
+		if (!isRtAppeal) return null
 
-		if (!isRtAppeal) {
-			return null
-		}
+		const canAddProceeding =
+			user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL
+
+		const formatNoticeType = (type) =>
+			String(type || '')
+				.replace(/_/g, ' ')
+				.replace(/\b\w/g, (c) => c.toUpperCase())
 
 		return (
-			<section className="admin-app-details__card ws-card">
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-					<h3 className="admin-app-details__section-title" style={{ margin: 0 }}>Case Proceedings & Notices</h3>
-					{(user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL) && (
-						<button className="ws-btn ws-btn--primary ws-btn--sm" type="button" onClick={() => setShowProceedingModal(true)}>
+			<section className="admin-app-details__card admin-app-details__proceedings-card no-print">
+				<div className="admin-app-details__proceedings-head">
+					<div className="admin-app-details__proceedings-head-text">
+						<h3 className="admin-app-details__section-title">Case Proceedings & Notices</h3>
+						<p className="admin-app-details__proceedings-desc">
+							Hearing notices, adjournments, and tribunal orders for this appeal
+						</p>
+					</div>
+					{canAddProceeding ? (
+						<button
+							className="ws-btn ws-btn--primary ws-btn--sm"
+							type="button"
+							onClick={() => setShowProceedingModal(true)}
+						>
 							Add Proceeding
 						</button>
-					)}
+					) : null}
 				</div>
-				{proceedingsLoading ? (
-					<p>Loading proceedings...</p>
-				) : proceedings.length === 0 ? (
-					<p>No proceedings found.</p>
-				) : (
-					<div className="admin-app-details__grid" style={{ gap: '1rem' }}>
-						{proceedings.map((p) => (
-							<div key={p.id} className="admin-app-details__field" style={{ border: '1px solid var(--clr-neutral-200)', padding: '1rem', borderRadius: '4px' }}>
-								<div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-									{new Date(p.created_at).toLocaleDateString()} - {p.notice_type.replace('_', ' ').toUpperCase()}
-								</div>
-								{p.hearing_date && <div>Hearing: {p.hearing_date} {p.hearing_time}</div>}
-								<small>Sent by: {p.sent_by?.name || 'Unknown'}</small>
-								<div style={{ marginTop: '0.5rem' }}>
-									<button type="button" className="ws-btn ws-btn--secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setViewProceedingDoc(p)}>
+
+				<div className="admin-app-details__proceedings-body">
+					{proceedingsLoading ? (
+						<p className="admin-app-details__proceedings-empty">Loading proceedings…</p>
+					) : proceedings.length === 0 ? (
+						<p className="admin-app-details__proceedings-empty">
+							{canAddProceeding
+								? 'No proceedings found. Use Add Proceeding to issue a notice or record an order.'
+								: 'No proceedings or notices have been recorded for this appeal yet.'}
+						</p>
+					) : (
+						<ul className="admin-app-details__proceedings-list">
+							{proceedings.map((p) => (
+								<li key={p.id} className="admin-app-details__proceeding-item">
+									<div className="admin-app-details__proceeding-main">
+										<div className="admin-app-details__proceeding-title-row">
+											<span className="admin-app-details__proceeding-type">
+												{formatNoticeType(p.notice_type)}
+											</span>
+											<span className="admin-app-details__proceeding-date">
+												{p.created_at
+													? new Date(p.created_at).toLocaleDateString('en-IN', {
+															day: '2-digit',
+															month: 'short',
+															year: 'numeric',
+														})
+													: '—'}
+											</span>
+										</div>
+										{p.hearing_date ? (
+											<p className="admin-app-details__proceeding-meta">
+												Hearing:{' '}
+												<strong>
+													{p.hearing_date}
+													{p.hearing_time ? ` · ${p.hearing_time}` : ''}
+												</strong>
+												{p.venue ? ` · ${p.venue}` : ''}
+											</p>
+										) : null}
+										<p className="admin-app-details__proceeding-meta">
+											Sent by: {p.sent_by?.name || 'Unknown'}
+										</p>
+									</div>
+									<button
+										type="button"
+										className="ws-btn ws-btn--outline ws-btn--sm"
+										onClick={() => setViewProceedingDoc(p)}
+									>
 										View Document
 									</button>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
 			</section>
 		)
 	}
@@ -593,9 +685,10 @@ const AdminApplicationDetails = () => {
 	const fetchDetails = async ({ silent = false } = {}) => {
 		try {
 			if (!silent) setLoading(true)
-			const response = await api.get(`/api/admin/applications/${applicationNo}`)
-			const app = response.data.application
+			const response = await fetchAdminApplication(applicationNo)
+			const app = response.application
 			setApplication(app)
+			setSelectedValuerId(app?.assigned_valuer_id ? String(app.assigned_valuer_id) : '')
 			// Initialize superadmin controls to a valid transition for this form type
 			const transitions = getValidTransitions(app.form_type)
 			if (transitions) {
@@ -614,8 +707,7 @@ const AdminApplicationDetails = () => {
 			}
 			setError(null)
 		} catch (err) {
-			console.error('Error fetching application details:', err)
-			setError('Failed to load application details.')
+			setError(getApiErrorMessage(err, t('ws.adminDetail.loadError')))
 		} finally {
 			if (!silent) setLoading(false)
 		}
@@ -623,12 +715,19 @@ const AdminApplicationDetails = () => {
 
 	const fetchValuers = async () => {
 		try {
-			const { data } = await api.get('/api/users?role=valuer')
-			// The backend currently might just return assistants and valuers together for RA, we can filter it locally
-			const valuerUsers = (data.users || []).filter(u => u.role === ROLES.VALUER)
+			const data = await fetchValuerUsers()
+			// Support both { users: [...] } and resource-wrapped { users: { data: [...] } } shapes.
+			const rawUsers = Array.isArray(data?.users)
+				? data.users
+				: Array.isArray(data?.users?.data)
+					? data.users.data
+					: []
+			const valuerUsers = rawUsers.filter((u) => u?.role === ROLES.VALUER)
 			setValuers(valuerUsers)
-		} catch (err) {
-			console.error('Error fetching valuers:', err)
+			setValuerLoadError('')
+		} catch {
+			setValuers([])
+			setValuerLoadError(t('ws.adminDetail.loadError'))
 		}
 	}
 
@@ -638,50 +737,59 @@ const AdminApplicationDetails = () => {
 		}
 	}, [user?.role, application?.form_type])
 
+	const requestAssignValuer = () => {
+		if (!selectedValuerId) return showToast('Please select a valuer', 'error')
+		setWorkflowMessage('')
+		setWorkflowModal('assign-valuer')
+	}
+
 	const handleAssignValuer = async () => {
-		if (!selectedValuerId) return alert('Please select a valuer')
+		if (!selectedValuerId) return showToast('Please select a valuer', 'error')
+		const isReassign = Boolean(application?.assigned_valuer_id)
+
 		setActionLoading(true)
 		try {
-			await api.post(`/api/admin/applications/${application.id}/assign-valuer`, {
-				assigned_valuer_id: selectedValuerId
+			const { data } = await api.post(`/api/admin/applications/${application.id}/assign-valuer`, {
+				assigned_valuer_id: Number(selectedValuerId),
 			})
-			alert('Valuer assigned successfully')
-			fetchDetails()
+			showToast(data?.message || (isReassign ? 'Valuer reassigned successfully' : 'Valuer assigned successfully'), 'success')
+			setValuerLoadError('')
+			setWorkflowModal(null)
+			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(err)
-			alert(err.response?.data?.message || 'Failed to assign valuer')
+			showToast(getApiErrorMessage(err, 'Failed to assign valuer'), 'error')
 		} finally {
 			setActionLoading(false)
 		}
 	}
 
 	const handleRemoveValuer = async () => {
-		if (!window.confirm('Are you sure you want to remove the assigned valuer?')) return;
 		setActionLoading(true)
 		try {
-			await api.post(`/api/admin/applications/${application.id}/remove-valuer`)
-			alert('Valuer removed successfully')
-			fetchDetails()
+			const { data } = await api.post(`/api/admin/applications/${application.id}/remove-valuer`)
+			showToast(data?.message || 'Valuer removed successfully', 'success')
+			setSelectedValuerId('')
+			setWorkflowModal(null)
+			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(err)
-			alert(err.response?.data?.message || 'Failed to remove valuer')
+			showToast(getApiErrorMessage(err, 'Failed to remove valuer'), 'error')
 		} finally {
 			setActionLoading(false)
 		}
 	}
 
 	const handleSubmitValuerReport = async () => {
-		if (!valuerReport.trim()) return alert('Please enter the report')
+		if (!valuerReport.trim()) return showToast('Please enter the report', 'error')
 		setActionLoading(true)
 		try {
-			await api.post(`/api/admin/applications/${application.id}/submit-valuer-report`, {
-				valuer_report: valuerReport
+			const { data } = await api.post(`/api/admin/applications/${application.id}/submit-valuer-report`, {
+				valuer_report: valuerReport,
 			})
-			alert('Report submitted successfully')
-			fetchDetails()
+			showToast(data?.message || 'Report submitted successfully', 'success')
+			setValuerReport('')
+			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(err)
-			alert(err.response?.data?.message || 'Failed to submit report')
+			showToast(getApiErrorMessage(err, 'Failed to submit report'), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -732,8 +840,7 @@ const AdminApplicationDetails = () => {
 			})
 			await fetchDetails({ silent: true })
 		} catch (err) {
-			console.error(`Error during ${workflowModal}:`, err)
-			alert(err.response?.data?.message || `Failed to ${workflowModal} application.`)
+			showToast(getApiErrorMessage(err, `Failed to ${workflowModal} application.`), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -746,7 +853,16 @@ const AdminApplicationDetails = () => {
 		) {
 			return
 		}
-		if (!window.confirm('Are you sure you want to forcefully move this application?')) return
+		openWorkflowModal('superadmin-move')
+	}
+
+	const confirmSuperAdminMove = async () => {
+		if (
+			!isSuperAdmin ||
+			application?.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE
+		) {
+			return
+		}
 
 		try {
 			setActionLoading(true)
@@ -754,11 +870,11 @@ const AdminApplicationDetails = () => {
 				`/api/admin/applications/${application.form_type}/${application.id}/superadmin-move`,
 				superAdminControls
 			)
-			alert('Application moved successfully.')
+			setWorkflowModal(null)
+			showToast('Application moved successfully.', 'success')
 			fetchDetails()
 		} catch (err) {
-			console.error('Error during superadmin move:', err)
-			alert('Failed to move application.')
+			showToast(getApiErrorMessage(err, t('ws.adminDetail.moveError')), 'error')
 		} finally {
 			setActionLoading(false)
 		}
@@ -858,13 +974,12 @@ const AdminApplicationDetails = () => {
 		)
 	}, [application?.form_type])
 
-	const { workflowFields, detailFields } = useMemo(() => {
+	const { detailFields } = useMemo(() => {
 		if (!application) {
-			return { workflowFields: [], detailFields: [] }
+			return { detailFields: [] }
 		}
 
 		const entries = Object.entries(application).filter(([key]) => !EXCLUDED_FIELDS.has(key))
-		const workflow = []
 		const details = []
 
 		for (const [key, value] of entries) {
@@ -875,7 +990,6 @@ const AdminApplicationDetails = () => {
 			}
 
 			if (WORKFLOW_FIELDS.has(key)) {
-				if (hasDisplayValue(value)) workflow.push([key, value])
 				continue
 			}
 
@@ -883,7 +997,6 @@ const AdminApplicationDetails = () => {
 		}
 
 		return {
-			workflowFields: workflow,
 			detailFields: details,
 		}
 	}, [application])
@@ -1049,7 +1162,7 @@ const AdminApplicationDetails = () => {
 	}
 
 	const renderEditWorkspace = () => {
-		const editSections = buildEditSections(editForm, application.form_type)
+		const editSections = buildEditSections(editForm, application.form_type, t)
 		return (
 			<div className="admin-edit-form">
 				<header className="admin-edit-form__header">
@@ -1149,103 +1262,358 @@ const AdminApplicationDetails = () => {
 		</div>
 	)
 
+	const renderReviewComment = ({
+		title,
+		authorName,
+		roleLabel,
+		roleTone = 'default',
+		at,
+		dateTime,
+		text,
+	}) => {
+		if (!hasDisplayValue(text)) return null
+		const name = authorName || roleLabel || 'Reviewer'
+		const initial = String(name).trim().charAt(0).toUpperCase() || 'R'
+
+		return (
+			<div className="admin-app-details__review-thread">
+				{title ? <h4 className="admin-app-details__review-thread-title">{title}</h4> : null}
+				<article
+					className={`admin-app-details__review-comment admin-app-details__review-comment--${roleTone}`}
+				>
+					<div className="admin-app-details__review-comment-avatar" aria-hidden>
+						{initial}
+					</div>
+					<div className="admin-app-details__review-comment-main">
+						<header className="admin-app-details__review-comment-meta">
+							<span className="admin-app-details__review-comment-author">{name}</span>
+							{roleLabel ? (
+								<span className="admin-app-details__review-comment-role">{roleLabel}</span>
+							) : null}
+							{at ? (
+								<time
+									className="admin-app-details__review-comment-time"
+									dateTime={dateTime || undefined}
+								>
+									{at}
+								</time>
+							) : null}
+						</header>
+						<div className="admin-app-details__review-comment-bubble">
+							<p>{text}</p>
+						</div>
+					</div>
+				</article>
+			</div>
+		)
+	}
+
+	const renderWorkflowRecord = () => {
+		if (!application) return null
+
+		const forwardComment = renderReviewComment({
+			title: 'Assistant review',
+			authorName: application.forwarded_by?.name,
+			roleLabel: application.forwarded_by?.role
+				? getRoleLabel(application.forwarded_by.role)
+				: 'Assistant',
+			roleTone: 'assistant',
+			at: application.forwarded_at
+				? formatDateTime(application.forwarded_at) ||
+					new Date(application.forwarded_at).toLocaleString()
+				: null,
+			dateTime: application.forwarded_at,
+			text: application.forward_remarks || (application.forwarded_at ? 'Forwarded for review.' : null),
+		})
+
+		const approvalComment = renderReviewComment({
+			title: 'Approval note',
+			authorName: application.approved_by?.name,
+			roleLabel: 'Approver',
+			roleTone: 'approve',
+			at: application.approved_at
+				? formatDateTime(application.approved_at) ||
+					new Date(application.approved_at).toLocaleString()
+				: null,
+			dateTime: application.approved_at,
+			text: application.approval_message,
+		})
+
+		const rejectionComment = renderReviewComment({
+			title: 'Rejection note',
+			authorName: application.rejected_by?.name,
+			roleLabel: 'Reviewer',
+			roleTone: 'reject',
+			at: application.rejected_at
+				? formatDateTime(application.rejected_at) ||
+					new Date(application.rejected_at).toLocaleString()
+				: null,
+			dateTime: application.rejected_at,
+			text: application.rejection_message,
+		})
+
+		const cancellationComment = renderReviewComment({
+			title: 'Cancellation note',
+			authorName: application.cancelled_by?.name,
+			roleLabel: 'Landlord',
+			roleTone: 'reject',
+			at: application.cancelled_at
+				? formatDateTime(application.cancelled_at) ||
+					new Date(application.cancelled_at).toLocaleString()
+				: null,
+			dateTime: application.cancelled_at,
+			text: application.cancellation_reason,
+		})
+
+		const comments = [forwardComment, approvalComment, rejectionComment, cancellationComment].filter(Boolean)
+		if (comments.length === 0) return null
+
+		return (
+			<section className="admin-app-details__card admin-app-details__workflow-card no-print">
+				<h2 className="admin-app-details__section-title">Workflow record</h2>
+				<div className="admin-app-details__workflow-body">{comments}</div>
+			</section>
+		)
+	}
+
+	const renderValuerReportComment = (reportText, { title = "Valuer's Report" } = {}) => {
+		const valuerName =
+			application.assigned_valuer?.name ||
+			(application.assigned_valuer_id ? `Valuer #${application.assigned_valuer_id}` : 'Valuer')
+		const submittedAt = application.valuer_report_submitted_at
+			? new Date(application.valuer_report_submitted_at).toLocaleString()
+			: application.valuer_assigned_at
+				? new Date(application.valuer_assigned_at).toLocaleString()
+				: null
+
+		return renderReviewComment({
+			title,
+			authorName: valuerName,
+			roleLabel: 'Valuer',
+			roleTone: 'valuer',
+			at: submittedAt,
+			dateTime:
+				application.valuer_report_submitted_at || application.valuer_assigned_at || undefined,
+			text: reportText,
+		})
+	}
+
 	const renderValuerSections = () => {
 		if (application?.form_type !== APPLICATION_TYPES.VALUER_APPOINTMENT) return null
+		const canManageValuerAssignment = [
+			STATUS.IN_REVIEW,
+			STATUS.VALUER_ASSIGNED,
+			STATUS.VALUER_REPORT_SUBMITTED,
+		].includes(application.status)
+		const assignedValuerName =
+			application.assigned_valuer?.name ||
+			(application.assigned_valuer_id ? `Valuer #${application.assigned_valuer_id}` : null)
+		const assignmentState =
+			application.status === STATUS.VALUER_REPORT_SUBMITTED
+				? 'report'
+				: application.assigned_valuer_id
+					? 'assigned'
+					: 'unassigned'
+		const isAssignedToMe =
+			user?.role === ROLES.VALUER &&
+			Number(application.assigned_valuer_id) === Number(user?.id)
+		const canComposeReport =
+			isAssignedToMe && application.status === STATUS.VALUER_ASSIGNED
 
 		return (
 			<>
-				{user?.role === ROLES.RENT_AUTHORITY && (application.status === STATUS.IN_REVIEW || application.status === STATUS.VALUER_REPORT_SUBMITTED || application.status === STATUS.VALUER_ASSIGNED) && (
-					<section className="admin-app-details__card admin-app-details__valuer-card" style={{ border: '1px solid var(--clr-primary-200)', backgroundColor: 'var(--clr-primary-50)' }}>
-						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-primary-700)' }}>Valuer Assignment</h3>
-						
-						{application.assigned_valuer_id ? (
-							<div className="admin-app-details__grid" style={{ marginBottom: '1rem' }}>
-								{renderStat('Assigned Valuer', application.assigned_valuer?.name || `Valuer ID: ${application.assigned_valuer_id}`)}
-								{renderStat('Assigned Date', new Date(application.valuer_assigned_at).toLocaleString())}
-							</div>
-						) : (
-							<p style={{ marginBottom: '1rem', color: 'var(--clr-gray-600)' }}>No valuer assigned yet.</p>
-						)}
-
-						<div className="admin-app-details__grid" style={{ alignItems: 'flex-end', marginBottom: '1rem' }}>
-							<div className="admin-app-details__field">
-								<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Assign / Reassign Valuer</label>
-								<select
-									className="ws-input"
-									value={selectedValuerId}
-									onChange={(e) => setSelectedValuerId(e.target.value)}
-									disabled={actionLoading}
-								>
-									<option value="">-- Select a Valuer --</option>
-									{valuers.map(v => (
-										<option key={v.id} value={v.id}>{v.name} ({v.email})</option>
-									))}
-								</select>
-							</div>
-							<div style={{ display: 'flex', gap: '0.5rem' }}>
-								<button
-									type="button"
-									className="ws-btn ws-btn--primary"
-									onClick={handleAssignValuer}
-									disabled={actionLoading || !selectedValuerId}
-								>
-									{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
-								</button>
-								{application.assigned_valuer_id && (
-									<button
-										type="button"
-										className="ws-btn ws-btn--danger"
-										onClick={handleRemoveValuer}
-										disabled={actionLoading}
-									>
-										Remove Valuer
-									</button>
-								)}
-							</div>
+				{user?.role === ROLES.RENT_AUTHORITY && (
+					<section className="admin-app-details__card admin-app-details__valuer-card admin-app-details__valuer-card--assign">
+						<div className="admin-app-details__valuer-head">
+							<h3 className="admin-app-details__section-title">Valuer assignment</h3>
+							<span
+								className={`admin-app-details__valuer-state admin-app-details__valuer-state--${assignmentState}`}
+							>
+								{assignmentState === 'report'
+									? 'Report submitted'
+									: assignmentState === 'assigned'
+										? 'Valuer assigned'
+										: 'Not assigned'}
+							</span>
 						</div>
+						<div className="admin-app-details__valuer-body">
+							{!canManageValuerAssignment ? (
+								<p className="admin-app-details__valuer-note">
+									Valuer can be assigned after this Form I-B reaches <strong>In Review</strong>.
+									Current status: <strong>{adminStatusLabel(application.status)}</strong>.
+								</p>
+							) : (
+								<p className="admin-app-details__valuer-note admin-app-details__valuer-note--muted">
+									Assign a district valuer for Form I-B. After assignment the case appears on the
+									valuer dashboard and valuation inbox.
+								</p>
+							)}
 
-						{application.valuer_report && (
-							<div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--clr-primary-200)' }}>
-								<h4 style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--clr-primary-700)' }}>Valuer's Report</h4>
-								<div className="ws-card" style={{ backgroundColor: '#fff', padding: '1rem' }}>
-									<p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{application.valuer_report}</p>
+							{application.assigned_valuer_id ? (
+								<div className="admin-app-details__valuer-stats">
+									{renderStat('Assigned valuer', assignedValuerName || '—')}
+									{renderStat(
+										'Assigned on',
+										application.valuer_assigned_at
+											? new Date(application.valuer_assigned_at).toLocaleString()
+											: '—'
+									)}
 								</div>
-							</div>
-						)}
+							) : canManageValuerAssignment ? (
+								<p className="admin-app-details__valuer-note admin-app-details__valuer-note--muted">
+									No valuer assigned yet.
+								</p>
+							) : null}
+
+							{canManageValuerAssignment ? (
+								<div className="admin-app-details__valuer-assign">
+									<label
+										className="admin-app-details__valuer-label"
+										htmlFor="admin-valuer-select"
+									>
+										{application.assigned_valuer_id
+											? 'Reassign to another valuer'
+											: 'Select valuer'}
+									</label>
+									<div className="admin-app-details__valuer-assign-row">
+										<select
+											id="admin-valuer-select"
+											className="ws-input admin-app-details__valuer-select"
+											value={selectedValuerId}
+											onChange={(e) => setSelectedValuerId(e.target.value)}
+											disabled={actionLoading || valuers.length === 0}
+										>
+											<option value="">
+												{valuers.length === 0
+													? '-- No valuer available --'
+													: '-- Select a valuer --'}
+											</option>
+											{valuers.map((v) => (
+												<option key={v.id} value={v.id}>
+													{v.name}
+													{v.email ? ` (${v.email})` : ''}
+												</option>
+											))}
+										</select>
+										<div className="admin-app-details__valuer-assign-actions">
+											<button
+												type="button"
+												className="ws-btn ws-btn--primary"
+												onClick={requestAssignValuer}
+												disabled={actionLoading || !selectedValuerId}
+											>
+												{application.assigned_valuer_id ? 'Reassign' : 'Assign'}
+											</button>
+											{application.assigned_valuer_id ? (
+												<button
+													type="button"
+													className="ws-btn ws-btn--danger"
+													onClick={() => openWorkflowModal('remove-valuer')}
+													disabled={actionLoading}
+												>
+													Remove
+												</button>
+											) : null}
+										</div>
+									</div>
+									{valuerLoadError ? (
+										<p className="admin-app-details__valuer-error" role="alert">
+											{valuerLoadError}{' '}
+											<button
+												type="button"
+												className="ws-btn ws-btn--outline ws-btn--sm"
+												onClick={fetchValuers}
+											>
+												Retry
+											</button>
+										</p>
+									) : valuers.length === 0 && !valuerLoadError ? (
+										<p className="admin-app-details__valuer-error" role="status">
+											No valuer users found in this district. Create a valuer account first.
+										</p>
+									) : null}
+								</div>
+							) : null}
+
+							{application.valuer_report
+								? renderValuerReportComment(application.valuer_report)
+								: null}
+						</div>
 					</section>
 				)}
 
 				{user?.role === ROLES.VALUER && (
-					<section className="admin-app-details__card admin-app-details__valuer-card" style={{ border: '1px solid var(--clr-info-200)', backgroundColor: 'var(--clr-info-50)' }}>
-						<h3 className="admin-app-details__section-title" style={{ color: 'var(--clr-info-700)' }}>Submit Valuer Report</h3>
-						{application.status === STATUS.VALUER_REPORT_SUBMITTED ? (
-							<div className="ws-card" style={{ backgroundColor: '#fff', padding: '1rem' }}>
-								<p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Report Submitted:</p>
-								<p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{application.valuer_report}</p>
-							</div>
-						) : (
-							<>
-								<div className="admin-app-details__field" style={{ marginBottom: '1rem' }}>
-									<label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Your Report</label>
-									<textarea
-										className="ws-input"
-										rows="5"
-										value={valuerReport}
-										onChange={(e) => setValuerReport(e.target.value)}
-										placeholder="Enter your detailed report here..."
-										disabled={actionLoading}
-									/>
+					<section className="admin-app-details__card admin-app-details__valuer-card admin-app-details__valuer-card--report">
+						<div className="admin-app-details__valuer-head">
+							<h3 className="admin-app-details__section-title">Valuer report</h3>
+							<span
+								className={`admin-app-details__valuer-state admin-app-details__valuer-state--${
+									application.status === STATUS.VALUER_REPORT_SUBMITTED
+										? 'report'
+										: canComposeReport
+											? 'assigned'
+											: 'unassigned'
+								}`}
+							>
+								{application.status === STATUS.VALUER_REPORT_SUBMITTED
+									? 'Submitted'
+									: canComposeReport
+										? 'Awaiting your report'
+										: 'Unavailable'}
+							</span>
+						</div>
+						<div className="admin-app-details__valuer-body">
+							{application.status === STATUS.VALUER_REPORT_SUBMITTED && isAssignedToMe ? (
+								renderValuerReportComment(application.valuer_report, {
+									title: 'Your submitted report',
+								})
+							) : canComposeReport ? (
+								<div className="admin-app-details__valuer-composer">
+									<div
+										className="admin-app-details__valuer-comment-avatar"
+										aria-hidden
+									>
+										{(user?.name || 'V').trim().charAt(0).toUpperCase()}
+									</div>
+									<div className="admin-app-details__valuer-composer-main">
+										<label
+											className="admin-app-details__valuer-label"
+											htmlFor="admin-valuer-report-input"
+										>
+											Add your report comment
+										</label>
+										<textarea
+											id="admin-valuer-report-input"
+											className="ws-input admin-app-details__valuer-textarea"
+											rows={5}
+											value={valuerReport}
+											onChange={(e) => setValuerReport(e.target.value)}
+											placeholder="Write your valuation findings and recommendation…"
+											disabled={actionLoading}
+										/>
+										<div className="admin-app-details__valuer-composer-actions">
+											<span className="admin-app-details__valuer-composer-hint">
+												Visible to Rent Authority after you post.
+											</span>
+											<button
+												type="button"
+												className="ws-btn ws-btn--primary"
+												onClick={handleSubmitValuerReport}
+												disabled={actionLoading || !valuerReport.trim()}
+											>
+												Post report
+											</button>
+										</div>
+									</div>
 								</div>
-								<button
-									type="button"
-									className="ws-btn ws-btn--primary"
-									onClick={handleSubmitValuerReport}
-									disabled={actionLoading || !valuerReport.trim()}
-								>
-									Submit Report
-								</button>
-							</>
-						)}
+							) : (
+								<p className="admin-app-details__valuer-note admin-app-details__valuer-note--muted">
+									{isAssignedToMe
+										? `This file is no longer awaiting a report (status: ${adminStatusLabel(application.status)}).`
+										: 'This Form I-B is not assigned to you for valuation.'}
+								</p>
+							)}
+						</div>
 					</section>
 				)}
 			</>
@@ -1265,28 +1633,33 @@ const AdminApplicationDetails = () => {
 	)
 
 	if (loading) {
-		return <div className="ws-dashboard-loading">Loading application details…</div>
-	}
-
-	if (error) {
 		return (
-			<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
-				{error}
+			<div className="admin-app-details">
+				<p className="ws-muted">{t('ws.adminDetail.loading')}</p>
 			</div>
 		)
 	}
 
-	if (!application) {
+	if (error || !application) {
 		return (
-			<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
-				Application not found.
+			<div className="admin-app-details">
+				<p className="ws-breadcrumb">
+					<Link to={listPath}>{listLabel}</Link>
+					<span className="ws-breadcrumb-sep" aria-hidden>
+						/
+					</span>
+					<span>{t('ws.adminDetail.crumb')}</span>
+				</p>
+				<div className="ws-alert ws-alert--error admin-app-details__alert" role="alert">
+					{error || t('ws.adminDetail.notFound')}
+				</div>
 			</div>
 		)
 	}
 
 	const statusClass = adminStatusBadgeClass(application.status)
 	const statusText = adminStatusLabel(application.status)
-	const detailSections = groupDetailFields(detailFields, application.form_type)
+	const detailSections = groupDetailFields(detailFields, application.form_type, t)
 	const storageBase = (api.defaults.baseURL || '').replace(/\/$/, '')
 	const hasManager =
 		hasDisplayValue(application.manager_name) &&
@@ -1304,6 +1677,14 @@ const AdminApplicationDetails = () => {
 				isServiceViewOnly ? ' admin-service-doc' : ''
 			}`}
 		>
+			<p className="ws-breadcrumb no-print">
+				<Link to={listPath}>{listLabel}</Link>
+				<span className="ws-breadcrumb-sep" aria-hidden>
+					/
+				</span>
+				<span>{application.application_no}</span>
+			</p>
+
 			<div className="admin-app-details__toolbar no-print">
 				<button
 					type="button"
@@ -1311,7 +1692,9 @@ const AdminApplicationDetails = () => {
 					onClick={() => (editing ? cancelEditing() : navigate(listPath))}
 				>
 					<Icon name="collapse" className="admin-app-details__back-icon" />
-					{editing ? 'Exit edit mode' : `Back to ${listLabel}`}
+					{editing
+						? t('ws.adminDetail.exitEdit')
+						: t('ws.adminDetail.backTo', { list: listLabel })}
 				</button>
 
 				<div className="admin-app-details__toolbar-actions">
@@ -1323,7 +1706,7 @@ const AdminApplicationDetails = () => {
 								onClick={handlePrintTenancyForm}
 								disabled={actionLoading}
 							>
-								{actionLoading ? 'Opening…' : 'Print / Save PDF'}
+								{actionLoading ? t('ws.adminDetail.opening') : t('ws.adminDetail.print')}
 							</button>
 							{application.agreement_pdf_path ? (
 								<button
@@ -1332,7 +1715,7 @@ const AdminApplicationDetails = () => {
 									onClick={handleViewAgreement}
 									disabled={agreementLoading}
 								>
-									{agreementLoading ? 'Loading…' : 'View agreement'}
+									{agreementLoading ? t('ws.adminDetail.loadingShort') : t('ws.adminDetail.viewAgreement')}
 								</button>
 							) : null}
 						</>
@@ -1355,7 +1738,7 @@ const AdminApplicationDetails = () => {
 								onClick={cancelEditing}
 								disabled={actionLoading}
 							>
-								Cancel
+								{t('ws.profile.cancel')}
 							</button>
 							<button
 								type="button"
@@ -1363,7 +1746,7 @@ const AdminApplicationDetails = () => {
 								onClick={handleSave}
 								disabled={actionLoading}
 							>
-								{actionLoading ? 'Saving…' : 'Save changes'}
+								{actionLoading ? t('ws.adminDetail.saving') : t('ws.adminDetail.save')}
 							</button>
 						</>
 					) : null}
@@ -1738,19 +2121,7 @@ const AdminApplicationDetails = () => {
 						</div>
 					</div>
 
-					{workflowFields.length > 0 ? (
-						<section className="admin-tenancy-doc__workflow no-print">
-							<h2 className="admin-tenancy-doc__workflow-title">Workflow record</h2>
-							<dl className="admin-app-details__grid">
-								{workflowFields.map(([key, value]) => (
-									<div className="admin-app-details__field" key={key}>
-										<dt>{labelize(key)}</dt>
-										<dd>{renderValue(key, value)}</dd>
-									</div>
-								))}
-							</dl>
-						</section>
-					) : null}
+					{renderWorkflowRecord()}
 				</div>
 			) : !editing && isServiceViewOnly ? (
 				<div className="admin-tenancy-doc__preview">
@@ -1956,20 +2327,7 @@ const AdminApplicationDetails = () => {
 						</section>
 					) : null}
 
-					{workflowFields.length > 0 ? (
-						<section className="admin-tenancy-doc__workflow no-print">
-							<h2 className="admin-tenancy-doc__workflow-title">Workflow record</h2>
-							<dl className="admin-app-details__grid">
-								{workflowFields.map(([key, value]) => (
-									<div className="admin-app-details__field" key={key}>
-										<dt>{labelize(key)}</dt>
-										<dd>{renderValue(key, value)}</dd>
-									</div>
-								))}
-							</dl>
-						</section>
-					) : null}
-
+					{renderWorkflowRecord()}
 					{renderProceedings()}
 				</div>
 			) : !editing ? (
@@ -2011,7 +2369,7 @@ const AdminApplicationDetails = () => {
 						</div>
 					</header>
 
-					{(application.user || isTenancy || workflowFields.length > 0) && !editing ? (
+					{(application.user || isTenancy) && !editing ? (
 						<div className="admin-app-details__meta-row">
 							{application.user ? (
 								<div className="admin-app-details__contact">
@@ -2068,11 +2426,10 @@ const AdminApplicationDetails = () => {
 									) : null}
 								</>
 							) : null}
-							{workflowFields.map(([key, value]) =>
-								renderStat(labelize(key), renderValue(key, value))
-							)}
 						</div>
 					) : null}
+
+					{renderWorkflowRecord()}
 
 					{detailSections.map((section) => {
 						if (section.fields.length === 0) return null
@@ -2260,6 +2617,65 @@ const AdminApplicationDetails = () => {
 			) : null}
 
 			<WorkflowConfirmModal
+				open={workflowModal === 'assign-valuer'}
+				onClose={closeWorkflowModal}
+				title={application.assigned_valuer_id ? 'Reassign valuer' : 'Assign valuer'}
+				description={(() => {
+					const target =
+						valuers.find((v) => String(v.id) === String(selectedValuerId))?.name ||
+						'this valuer'
+					const hadReport =
+						Boolean(application.valuer_report) ||
+						application.status === STATUS.VALUER_REPORT_SUBMITTED
+					if (!application.assigned_valuer_id) {
+						return `Assign ${application.application_no} to ${target}? The file will appear in the valuer inbox.`
+					}
+					if (hadReport) {
+						return `Reassign ${application.application_no} to ${target}? The previous valuer report will be cleared and the file returned to “Valuer assigned”.`
+					}
+					return `Reassign ${application.application_no} to ${target}?`
+				})()}
+				primaryLabel={
+					actionLoading
+						? application.assigned_valuer_id
+							? 'Reassigning…'
+							: 'Assigning…'
+						: application.assigned_valuer_id
+							? 'Confirm reassignment'
+							: 'Confirm assignment'
+				}
+				onPrimary={handleAssignValuer}
+				primaryDisabled={Boolean(actionLoading) || !selectedValuerId}
+			/>
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'remove-valuer'}
+				onClose={closeWorkflowModal}
+				title="Remove valuer"
+				description={
+					Boolean(application.valuer_report) ||
+					application.status === STATUS.VALUER_REPORT_SUBMITTED
+						? `Remove the assigned valuer from ${application.application_no} and clear the submitted report? The file returns to In Review.`
+						: `Remove the assigned valuer from ${application.application_no}? The file returns to In Review.`
+				}
+				primaryLabel={actionLoading ? 'Removing…' : 'Remove valuer'}
+				primaryVariant="danger"
+				onPrimary={handleRemoveValuer}
+				primaryDisabled={Boolean(actionLoading)}
+			/>
+
+			<WorkflowConfirmModal
+				open={workflowModal === 'superadmin-move'}
+				onClose={closeWorkflowModal}
+				title="Force-move application"
+				description={`Forcefully move ${application.application_no}? This bypasses the normal office workflow.`}
+				primaryLabel={actionLoading ? 'Moving…' : 'Confirm move'}
+				primaryVariant="danger"
+				onPrimary={confirmSuperAdminMove}
+				primaryDisabled={Boolean(actionLoading)}
+			/>
+
+			<WorkflowConfirmModal
 				open={workflowModal === 'forward'}
 				onClose={closeWorkflowModal}
 				title="Move to review"
@@ -2269,7 +2685,7 @@ const AdminApplicationDetails = () => {
 				primaryDisabled={Boolean(actionLoading)}
 			>
 				<label className="workflow-confirm-field">
-					<span className="workflow-confirm-field__label">Remarks (optional)</span>
+					<span className="workflow-confirm-field__label">Review comment (optional)</span>
 					<textarea
 						className="workflow-confirm-field__input"
 						value={workflowMessage}
@@ -2290,7 +2706,7 @@ const AdminApplicationDetails = () => {
 				primaryDisabled={Boolean(actionLoading) || !workflowMessage.trim()}
 			>
 				<label className="workflow-confirm-field">
-					<span className="workflow-confirm-field__label">Approval message (required)</span>
+					<span className="workflow-confirm-field__label">Approval comment (required)</span>
 					<textarea
 						className="workflow-confirm-field__input"
 						value={workflowMessage}
@@ -2313,7 +2729,7 @@ const AdminApplicationDetails = () => {
 				primaryDisabled={Boolean(actionLoading) || !workflowMessage.trim()}
 			>
 				<label className="workflow-confirm-field">
-					<span className="workflow-confirm-field__label">Rejection reason (required)</span>
+					<span className="workflow-confirm-field__label">Rejection comment (required)</span>
 					<textarea
 						className="workflow-confirm-field__input"
 						value={workflowMessage}

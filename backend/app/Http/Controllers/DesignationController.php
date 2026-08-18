@@ -8,11 +8,15 @@ use Illuminate\Validation\Rule;
 
 class DesignationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $designations = Designation::orderBy('name')->paginate(5);
+        $query = Designation::orderBy('name');
 
-        return response()->json($designations);
+        if ($request->boolean('all')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate(15));
     }
 
     public function store(Request $request)

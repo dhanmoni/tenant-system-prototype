@@ -1,0 +1,771 @@
+/**
+ * UX4G Accessibility Widget toggles `body.dark-mode`.
+ * Portal overrides for landing, public pages, workspace (all roles), forms, and legacy dashboard.
+ * Docs: https://doc.ux4g.gov.in/ux4g-accessibility/accessibility-widgets.php
+ */
+
+/* ── Shared tokens ── */
+body.dark-mode {
+	--landing-cream: #1a1511;
+	--landing-text: #f3e6d8;
+	--landing-ink: #fdf6ef;
+	--landing-ink-mid: color-mix(in srgb, var(--landing-ink) 55%, transparent);
+	--landing-on-dark: #1a1511;
+	--landing-on-dark-muted: color-mix(in srgb, #1a1511 80%, transparent);
+	--landing-accent: #eea86a;
+	--landing-accent-dark: #f3c69d;
+	--landing-accent-hover: #f0b57a;
+	--landing-wallpaper-base: #1a1511;
+	--nic-bg: #14110e;
+	--nic-white: #1f1914;
+	--nic-border: #3a3028;
+	--nic-text: #f3e6d8;
+	--nic-text-light: #cbb9a6;
+	--gov-bg: #0f1419;
+	--gov-blue-light: #1a2740;
+	--gov-border: #3a4656;
+	--form-field-bg: #121820;
+	--form-field-border: #3a4656;
+	color-scheme: dark;
+}
+
+/* ═══════════════════════════════════════════
+   Landing + public marketing
+   ═══════════════════════════════════════════ */
+
+body.dark-mode .landing-wallpaper-bg,
+body.dark-mode .landing-wallpaper-bg--cream,
+body.dark-mode .landing-wallpaper-bg--white {
+	--landing-wallpaper-base: #1a1511;
+	background-color: #1a1511 !important;
+}
+
+body.dark-mode .landing-wallpaper-bg--white {
+	--landing-wallpaper-base: #14110e;
+	background-color: #14110e !important;
+}
+
+body.dark-mode .landing-wallpaper-bg::before {
+	opacity: 0.22;
+}
+
+body.dark-mode .landing-wallpaper-bg--white::before {
+	opacity: 0.16;
+}
+
+body.dark-mode .page-landing-home,
+body.dark-mode .page-public-marketing,
+body.dark-mode .page-landing {
+	background-color: #14110e;
+	color: #f3e6d8;
+}
+
+body.dark-mode .landing-nav-mobile-brand {
+	background-color: #1a1511 !important;
+	background-image: linear-gradient(
+		180deg,
+		color-mix(in srgb, #2a211a 70%, transparent) 0%,
+		transparent 60%
+	) !important;
+	border-bottom-color: color-mix(in srgb, var(--landing-accent) 28%, #3a3028) !important;
+	box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .landing-nav-mobile-menu-btn {
+	background: #241c16 !important;
+	border-color: #4a3d32 !important;
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .landing-nav-icon-btn {
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .landing-nav-icon-btn:hover {
+	background: #2a211a !important;
+	color: var(--landing-accent) !important;
+}
+
+body.dark-mode .landing-nav-drawer {
+	background: #1a1511 !important;
+	border-top-color: #3a3028 !important;
+}
+
+body.dark-mode .landing-nav-drawer-link {
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .landing-nav-drawer-link:hover {
+	background: #2a211a !important;
+	color: var(--landing-accent) !important;
+}
+
+body.dark-mode .landing-nav-drawer-ctas {
+	border-top-color: #3a3028 !important;
+}
+
+body.dark-mode .landing-nav-shell,
+body.dark-mode .landing-nav-shell-inner {
+	background-color: color-mix(in srgb, #1a1511 92%, transparent);
+	border-color: #3a3028;
+}
+
+body.dark-mode .landing-nav-shell-link,
+body.dark-mode .landing-nav-brand-title,
+body.dark-mode .landing-nav-brand-subtitle {
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .page-landing-home .portal-services-showcase-card,
+body.dark-mode .page-public-marketing .portal-services-showcase-card,
+body.dark-mode .page-landing-home .portal-stats-card__panel,
+body.dark-mode .page-landing-home .landing-faq__item,
+body.dark-mode .page-landing-home .landing-faq__trigger,
+body.dark-mode .page-landing-home .get-started-section .auth-panel.auth-panel--get-started,
+body.dark-mode .page-public-marketing .public-page-card {
+	background: #221a14 !important;
+	border-color: #3a3028 !important;
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .page-landing-home .landing-faq__question,
+body.dark-mode .page-landing-home .landing-faq__answer,
+body.dark-mode .page-landing-home .get-started-section .auth-panel-title,
+body.dark-mode .page-landing-home .get-started-section .auth-panel-tab:not(.auth-panel-tab--active),
+body.dark-mode .page-landing-home .portal-services-showcase-card__title,
+body.dark-mode .page-landing-home .portal-services-showcase-card__desc,
+body.dark-mode .page-landing-home .landing-section-lead,
+body.dark-mode .page-landing-home .landing-section-title,
+body.dark-mode .page-public-marketing .landing-section-lead,
+body.dark-mode .page-public-marketing .landing-section-title {
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .page-landing-home .get-started-section .auth-panel-tab:not(.auth-panel-tab--active):hover {
+	color: var(--landing-accent) !important;
+}
+
+body.dark-mode .page-landing-home .get-started-section .auth-panel-lead,
+body.dark-mode .page-landing-home .get-started-section .auth-panel-label {
+	color: #cbb9a6 !important;
+}
+
+body.dark-mode .portal-stats-card--bridge {
+	background: linear-gradient(180deg, #1a1511 0%, #14110e 100%) !important;
+}
+
+body.dark-mode .portal-stats-card--bridge::before {
+	opacity: 0.35;
+}
+
+body.dark-mode .landing-section-blend--services-benefits {
+	background-image: linear-gradient(180deg, transparent 0%, #1a1511 40%, #14110e 70%, transparent 100%);
+}
+
+body.dark-mode .page-landing-home input,
+body.dark-mode .page-landing-home select,
+body.dark-mode .page-landing-home textarea,
+body.dark-mode .page-public-marketing input,
+body.dark-mode .page-public-marketing select,
+body.dark-mode .page-public-marketing textarea {
+	background: #2a211a !important;
+	border-color: #4a3d32 !important;
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .page-landing-home input::placeholder,
+body.dark-mode .page-public-marketing input::placeholder {
+	color: #a89480 !important;
+}
+
+body.dark-mode .portal-loading-screen.landing-wallpaper-bg,
+body.dark-mode .portal-loading-overlay.landing-wallpaper-bg {
+	background-color: #1a1511 !important;
+}
+
+body.dark-mode .portal-loader-title,
+body.dark-mode .portal-loader-brand,
+body.dark-mode .portal-loader-subtitle {
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .portal-loader-core {
+	background: #2a211a !important;
+}
+
+/* ═══════════════════════════════════════════
+   Public role pages (About, Contact, Services, Policies…)
+   ═══════════════════════════════════════════ */
+
+body.dark-mode .page-public-site,
+body.dark-mode .page-public-site .public-page,
+body.dark-mode .page-public-site .public-page.landing-wallpaper-bg {
+	--landing-wallpaper-base: #14110e;
+	background-color: #14110e !important;
+	color: var(--landing-text);
+}
+
+body.dark-mode .public-page__breadcrumb {
+	color: #a89480;
+}
+
+body.dark-mode .public-page-card,
+body.dark-mode .page-public-site .public-page-card,
+body.dark-mode .page-public-site .landing-service-tile,
+body.dark-mode .page-public-site .landing-notice-list li {
+	background: #221a14 !important;
+	border-color: #3a3028 !important;
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .page-public-site h1,
+body.dark-mode .page-public-site h2,
+body.dark-mode .page-public-site h3,
+body.dark-mode .page-public-site p,
+body.dark-mode .page-public-site li {
+	color: #f3e6d8;
+}
+
+body.dark-mode .page-public-site input,
+body.dark-mode .page-public-site select,
+body.dark-mode .page-public-site textarea {
+	background: #2a211a !important;
+	border-color: #4a3d32 !important;
+	color: #f3e6d8 !important;
+}
+
+/* ═══════════════════════════════════════════
+   Workspace shell (citizen + all admin roles)
+   ═══════════════════════════════════════════ */
+
+body.dark-mode .page.page-dashboard,
+body.dark-mode .page.page-dashboard .ws-root {
+	background: #0f1419;
+	color: #e8eef6;
+}
+
+body.dark-mode .ws-root {
+	--ws-bg: #0f1419;
+	--ws-surface: #1a222d;
+	--ws-border: #2a3544;
+	--ws-border-strong: #3a4656;
+	--ws-text: #e8eef6;
+	--ws-muted: #94a3b8;
+	--ws-accent: #7eb8ff;
+	--ws-accent-soft: rgba(126, 184, 255, 0.14);
+	--ws-accent-hover: #9ec9ff;
+	--ws-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 12px 28px rgba(0, 0, 0, 0.25);
+	color: var(--ws-text);
+}
+
+body.dark-mode .ws-shell,
+body.dark-mode .ws-main-column,
+body.dark-mode .ws-main {
+	background: var(--ws-bg) !important;
+	color: var(--ws-text);
+}
+
+body.dark-mode .ws-sidebar,
+body.dark-mode .ws-topbar,
+body.dark-mode .ws-sidebar-brand {
+	background: var(--ws-surface) !important;
+	border-color: var(--ws-border) !important;
+	color: var(--ws-text);
+}
+
+body.dark-mode .ws-card,
+body.dark-mode .ws-card-header,
+body.dark-mode .ws-panel,
+body.dark-mode .ws-table-wrap,
+body.dark-mode .ws-empty,
+body.dark-mode .ws-profile-picker,
+body.dark-mode .ws-profile-picker-card,
+body.dark-mode .ws-topbar-notif-panel,
+body.dark-mode .ws-topbar-search-field,
+body.dark-mode .ws-sidebar-search,
+body.dark-mode .ws-page .ws-card,
+body.dark-mode .ws-assam-map-frame,
+body.dark-mode .ws-assam-map-toolbar,
+body.dark-mode .ws-assam-tip {
+	background: var(--ws-surface) !important;
+	border-color: var(--ws-border) !important;
+	color: var(--ws-text) !important;
+}
+
+body.dark-mode .ws-card-header {
+	background: #151c26 !important;
+}
+
+body.dark-mode .page.page-dashboard .ws-root a.ws-nav-link:hover {
+	background: #243041 !important;
+}
+
+body.dark-mode .page.page-dashboard .ws-root a.ws-nav-link.active,
+body.dark-mode .page.page-dashboard .ws-root a.ws-nav-link.active:hover {
+	background: var(--ws-accent-soft) !important;
+	color: var(--ws-accent) !important;
+}
+
+body.dark-mode .ws-muted,
+body.dark-mode .ws-page-lead,
+body.dark-mode .ws-card-meta,
+body.dark-mode .ws-stat-label,
+body.dark-mode .ws-table th {
+	color: var(--ws-muted) !important;
+}
+
+body.dark-mode .ws-table,
+body.dark-mode .ws-table td,
+body.dark-mode .ws-table th {
+	border-color: var(--ws-border) !important;
+	color: var(--ws-text);
+}
+
+body.dark-mode .ws-table tbody tr:hover td {
+	background: #151c26 !important;
+}
+
+body.dark-mode .ws-status-action-btn,
+body.dark-mode .ws-btn--outline,
+body.dark-mode .ws-btn--secondary,
+body.dark-mode button.ws-status-action-btn {
+	background: var(--ws-surface) !important;
+	border-color: var(--ws-border-strong) !important;
+	color: var(--ws-text) !important;
+}
+
+body.dark-mode .ws-status-action-btn:hover,
+body.dark-mode .ws-btn--outline:hover,
+body.dark-mode .ws-btn--secondary:hover {
+	background: #243041 !important;
+	border-color: var(--ws-accent) !important;
+	color: var(--ws-accent) !important;
+}
+
+body.dark-mode .ws-btn--primary {
+	background: var(--ws-accent) !important;
+	border-color: var(--ws-accent) !important;
+	color: #fff !important;
+}
+
+body.dark-mode .ws-btn--danger {
+	background: #b91c1c !important;
+	border-color: #b91c1c !important;
+	color: #fff !important;
+}
+
+body.dark-mode .ws-root input,
+body.dark-mode .ws-root select,
+body.dark-mode .ws-root textarea,
+body.dark-mode .page.page-dashboard input:not([type='checkbox']):not([type='radio']),
+body.dark-mode .page.page-dashboard select,
+body.dark-mode .page.page-dashboard textarea {
+	background: #121820 !important;
+	border-color: var(--ws-border-strong) !important;
+	color: var(--ws-text) !important;
+}
+
+body.dark-mode .ws-root input::placeholder,
+body.dark-mode .page.page-dashboard input::placeholder {
+	color: #7c8aa0 !important;
+}
+
+body.dark-mode .ws-assam-map .leaflet-bar a,
+body.dark-mode .ws-assam-map .leaflet-control-zoom a {
+	background: var(--ws-surface) !important;
+	color: var(--ws-text) !important;
+	border-color: var(--ws-border) !important;
+}
+
+body.dark-mode .ws-route-loader,
+body.dark-mode .ws-page-loader {
+	background: color-mix(in srgb, var(--ws-bg) 88%, transparent) !important;
+	color: var(--ws-text);
+}
+
+/* Soft status chips — keep readable on dark */
+body.dark-mode .ws-badge,
+body.dark-mode .ws-chip,
+body.dark-mode .ws-pill {
+	border-color: var(--ws-border-strong);
+}
+
+/* ═══════════════════════════════════════════
+   Service forms / UIN / profile (user + officer)
+   ═══════════════════════════════════════════ */
+
+body.dark-mode .service-form-page,
+body.dark-mode .service-form-section,
+body.dark-mode .service-form-back,
+body.dark-mode .tenancy-fieldset,
+body.dark-mode .service-form-step__dot {
+	background: var(--ws-surface, #1a222d) !important;
+	border-color: var(--ws-border, #2a3544) !important;
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page h1,
+body.dark-mode .service-form-page h2,
+body.dark-mode .service-form-page h3,
+body.dark-mode .service-form-page legend,
+body.dark-mode .service-form-page label {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page input:not([type='checkbox']):not([type='radio']),
+body.dark-mode .service-form-page select,
+body.dark-mode .service-form-page textarea {
+	background: #121820 !important;
+	border-color: #3a4656 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .upload-item-full,
+body.dark-mode .tenancy-preview-grid > * {
+	background: #151c26 !important;
+	border-color: #3a4656 !important;
+}
+
+/* ═══════════════════════════════════════════
+   Modals (profile reminder, status, success)
+   ═══════════════════════════════════════════ */
+
+body.dark-mode .profile-completion-modal,
+body.dark-mode .status-progress-modal,
+body.dark-mode .submission-success-modal,
+body.dark-mode .modal-card,
+body.dark-mode .modal-panel {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .profile-completion-modal h2,
+body.dark-mode .status-progress-modal h2,
+body.dark-mode .submission-success-modal h2,
+body.dark-mode .modal-card h2,
+body.dark-mode .modal-panel h2 {
+	color: #e8eef6 !important;
+}
+
+/* ═══════════════════════════════════════════
+   Legacy dashboard + admin cards
+   ═══════════════════════════════════════════ */
+
+body.dark-mode .dashboard-layout {
+	background: #0f1419 !important;
+}
+
+body.dark-mode .dashboard-content,
+body.dark-mode .dashboard-card,
+body.dark-mode .dashboard-welcome-card,
+body.dark-mode .admin-card,
+body.dark-mode .auth-card.dashboard-card {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .dashboard-card h1,
+body.dark-mode .dashboard-card h2,
+body.dark-mode .admin-card h2 {
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .dashboard-layout .dashboard-card button.secondary,
+body.dark-mode .dashboard-layout .dashboard-welcome-card button.secondary {
+	background: #151c26 !important;
+	color: #7eb8ff !important;
+	border-color: #7eb8ff !important;
+}
+
+body.dark-mode .dashboard-layout .dashboard-card button.secondary:hover,
+body.dark-mode .dashboard-layout .dashboard-welcome-card button.secondary:hover {
+	background: #1a2740 !important;
+}
+
+/* Valuer assignment / report on application details */
+body.dark-mode .admin-app-details__valuer-card,
+body.dark-mode .admin-app-details__valuer-stats .admin-app-details__stat {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-assign {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-state--unassigned {
+	color: #fbbf24 !important;
+	background: rgba(251, 191, 36, 0.12) !important;
+	border-color: #785318 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-state--assigned {
+	color: #7eb8ff !important;
+	background: rgba(126, 184, 255, 0.12) !important;
+	border-color: #3a4656 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-state--report {
+	color: #6ee7b7 !important;
+	background: rgba(110, 231, 183, 0.12) !important;
+	border-color: #2f5b4a !important;
+}
+
+body.dark-mode .admin-app-details__valuer-card .admin-app-details__section-title {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .admin-app-details__review-comment-author,
+body.dark-mode .admin-app-details__review-comment-bubble p,
+body.dark-mode .admin-app-details__valuer-comment-author,
+body.dark-mode .admin-app-details__valuer-comment-bubble p,
+body.dark-mode .admin-app-details__valuer-stats .admin-app-details__stat-value {
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .admin-app-details__review-thread-title,
+body.dark-mode .admin-app-details__valuer-report-title,
+body.dark-mode .admin-app-details__review-comment-time,
+body.dark-mode .admin-app-details__valuer-comment-time,
+body.dark-mode .admin-app-details__valuer-composer-hint,
+body.dark-mode .admin-app-details__valuer-stats .admin-app-details__stat-label {
+	color: #94a3b8 !important;
+}
+
+body.dark-mode .admin-app-details__review-comment-bubble,
+body.dark-mode .admin-app-details__valuer-comment-bubble {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+}
+
+body.dark-mode .admin-app-details__review-comment-bubble::before,
+body.dark-mode .admin-app-details__valuer-comment-bubble::before {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+}
+
+body.dark-mode .admin-app-details__workflow-card,
+body.dark-mode .admin-app-details__workflow-card .admin-app-details__section-title {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .workflow-confirm-field__input {
+	background: #121820 !important;
+	border-color: #3a4656 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .workflow-confirm-field__label {
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .proceeding-modal__label {
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .proceeding-modal__control {
+	background: #121820 !important;
+	border-color: #3a4656 !important;
+	color: #e8eef6 !important;
+	box-shadow: none !important;
+}
+
+body.dark-mode .proceeding-modal__control:hover:not(:disabled) {
+	border-color: #4a5a6e !important;
+}
+
+body.dark-mode .proceeding-modal__control:focus {
+	border-color: #5b8fd9 !important;
+	box-shadow: 0 0 0 3px rgba(91, 143, 217, 0.25) !important;
+}
+
+body.dark-mode .proceeding-modal__control::placeholder {
+	color: #7a8799 !important;
+}
+
+body.dark-mode .proceeding-modal select.proceeding-modal__control {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+body.dark-mode .workflow-confirm-modal__body--wide .workflow-confirm-modal__actions {
+	border-top-color: #2a3544 !important;
+	background: linear-gradient(180deg, rgba(26, 34, 45, 0.92), #1a222d 40%) !important;
+}
+
+body.dark-mode .workflow-confirm-modal__lead {
+	color: #a8b4c4 !important;
+}
+
+body.dark-mode .admin-app-details__valuer-comment-role {
+	background: rgba(126, 184, 255, 0.14) !important;
+	border-color: #3a4656 !important;
+	color: #7eb8ff !important;
+}
+
+body.dark-mode .admin-app-details__valuer-select,
+body.dark-mode .admin-app-details__valuer-textarea {
+	background: #121820 !important;
+	border-color: #3a4656 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-card,
+body.dark-mode .admin-app-details__proceeding-item {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-head {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-head .admin-app-details__section-title,
+body.dark-mode .admin-app-details__proceeding-type {
+	color: #e8eef6 !important;
+	background: transparent !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-desc,
+body.dark-mode .admin-app-details__proceeding-date,
+body.dark-mode .admin-app-details__proceeding-meta,
+body.dark-mode .admin-app-details__proceedings-empty {
+	color: #94a3b8 !important;
+}
+
+body.dark-mode .admin-app-details__proceedings-empty {
+	background: #151c26 !important;
+	border-color: #3a4656 !important;
+}
+
+body.dark-mode .admin-app-details__actions {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+}
+
+/* Admin management panels (User / District / Applications / Tenancy) */
+body.dark-mode .um-panel,
+body.dark-mode .um-card,
+body.dark-mode .um-table-wrap,
+body.dark-mode .um-filters,
+body.dark-mode .dm-panel,
+body.dark-mode .dm-card,
+body.dark-mode .app-list-panel,
+body.dark-mode .app-list-filters,
+body.dark-mode .tenancy-records-panel,
+body.dark-mode .admin-application-details,
+body.dark-mode .application-details-card {
+	background: #1a222d !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .um-panel input,
+body.dark-mode .um-panel select,
+body.dark-mode .dm-panel input,
+body.dark-mode .dm-panel select,
+body.dark-mode .app-list-filters input,
+body.dark-mode .app-list-filters select,
+body.dark-mode .tenancy-records-panel input,
+body.dark-mode .tenancy-records-panel select {
+	background: #121820 !important;
+	border-color: #3a4656 !important;
+	color: #e8eef6 !important;
+}
+
+/* Accessibility utility bar on dashboard */
+body.dark-mode .accessibility-bar {
+	background: #151c26 !important;
+	border-color: #2a3544 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .accessibility-toolbar-btn,
+body.dark-mode .accessibility-toolbar-link,
+body.dark-mode .accessibility-toolbar-label,
+body.dark-mode .accessibility-ministry,
+body.dark-mode .accessibility-directorate {
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .page.page-dashboard > .accessibility-bar {
+	background: #151c26 !important;
+}
+
+/* Staff / user management — colored role badges */
+body.dark-mode .admin-user-role--super-admin {
+	color: #e2e8f0 !important;
+	background: rgba(148, 163, 184, 0.2) !important;
+	border-color: #64748b !important;
+}
+
+body.dark-mode .admin-user-role--district-admin {
+	color: #93c5fd !important;
+	background: rgba(59, 130, 246, 0.18) !important;
+	border-color: #3b82f6 !important;
+}
+
+body.dark-mode .admin-user-role--rent-authority,
+body.dark-mode .admin-user-role--ra-assistant {
+	color: #6ee7b7 !important;
+	background: rgba(16, 185, 129, 0.16) !important;
+	border-color: #059669 !important;
+}
+
+body.dark-mode .admin-user-role--rent-court,
+body.dark-mode .admin-user-role--rc-assistant {
+	color: #fdba74 !important;
+	background: rgba(249, 115, 22, 0.16) !important;
+	border-color: #ea580c !important;
+}
+
+body.dark-mode .admin-user-role--rent-tribunal,
+body.dark-mode .admin-user-role--rt-assistant {
+	color: #c4b5fd !important;
+	background: rgba(139, 92, 246, 0.18) !important;
+	border-color: #7c3aed !important;
+}
+
+body.dark-mode .admin-user-role--valuer {
+	color: #67e8f9 !important;
+	background: rgba(6, 182, 212, 0.16) !important;
+	border-color: #0891b2 !important;
+}
+
+body.dark-mode .admin-user-role--citizen,
+body.dark-mode .admin-user-role--default {
+	color: #cbd5e1 !important;
+	background: rgba(148, 163, 184, 0.12) !important;
+	border-color: #475569 !important;
+}
+
+body.dark-mode .gov-feedback-thanks,
+body.dark-mode .gov-feedback-aside {
+	background: #221a14 !important;
+	border-color: #3a3028 !important;
+}
+
+body.dark-mode .gov-feedback-form input,
+body.dark-mode .gov-feedback-form select,
+body.dark-mode .gov-feedback-form textarea {
+	background: #2a211a !important;
+	border-color: #4a3d32 !important;
+	color: #f3e6d8 !important;
+}
+
+body.dark-mode .gov-feedback-form__error {
+	color: #fca5a5 !important;
+}
+
+body.dark-mode .auth-panel-field-error {
+	color: #fca5a5 !important;
+}

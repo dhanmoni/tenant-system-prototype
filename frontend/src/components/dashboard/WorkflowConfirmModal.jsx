@@ -17,8 +17,11 @@ function WorkflowConfirmModal({
 	primaryDisabled = false,
 	primaryVariant = 'primary',
 	hidePrimary = false,
+	size = 'default',
+	bodyClassName = '',
 }) {
 	const titleId = useId()
+	const isWide = size === 'wide'
 
 	useEffect(() => {
 		if (!open) return undefined
@@ -38,12 +41,16 @@ function WorkflowConfirmModal({
 
 	return createPortal(
 		<div
-			className="status-progress-modal-overlay workflow-confirm-overlay"
+			className={`status-progress-modal-overlay workflow-confirm-overlay${
+				isWide ? ' workflow-confirm-overlay--wide' : ''
+			}`}
 			role="presentation"
 			onClick={onClose}
 		>
 			<div
-				className="status-progress-modal workflow-confirm-modal"
+				className={`status-progress-modal workflow-confirm-modal${
+					isWide ? ' workflow-confirm-modal--wide' : ''
+				}`}
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby={titleId}
@@ -62,7 +69,11 @@ function WorkflowConfirmModal({
 						<X className="status-progress-modal__close-icon" aria-hidden />
 					</button>
 				</div>
-				<div className="status-progress-modal__body workflow-confirm-modal__body">
+				<div
+					className={`status-progress-modal__body workflow-confirm-modal__body${
+						isWide ? ' workflow-confirm-modal__body--wide' : ''
+					}${bodyClassName ? ` ${bodyClassName}` : ''}`}
+				>
 					{description ? <p className="workflow-confirm-modal__lead">{description}</p> : null}
 					{children}
 					{!hidePrimary ? (

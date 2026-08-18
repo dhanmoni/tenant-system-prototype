@@ -33,6 +33,21 @@ const ACTIONS = [
 		icon: 'map',
 		badgeKey: 'districts_count',
 	},
+	{
+		key: 'offices',
+		title: 'Offices',
+		desc: 'Circle and district offices',
+		to: '/dashboard/admin/offices',
+		icon: 'building',
+		badgeKey: 'offices_count',
+	},
+	{
+		key: 'activity',
+		title: 'Activity log',
+		desc: 'Staff actions on this portal',
+		to: '/dashboard/admin/activity-log',
+		icon: 'activity',
+	},
 ]
 
 function SuperAdminQuickActions({ stats }) {

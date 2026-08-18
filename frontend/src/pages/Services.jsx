@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useMemo } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import PublicPageLayout from '../components/landing/PublicPageLayout'
 import { getPortalFormsByGroup, portalServiceSections } from '../data/portalServices'
 import { useLanguage } from '../i18n'
 import { APPLICATION_TYPES } from '../constants/application'
+import { scrollToHashTarget } from '../utils/scrollToHash'
 
 const sectionCopy = {
 	'uin-registration': {
@@ -141,6 +142,20 @@ function ServiceArticle({ section, t }) {
 
 function Services() {
 	const { t } = useLanguage()
+	const { hash } = useLocation()
+
+	useLayoutEffect(() => {
+		if (hash) scrollToHashTarget(hash)
+	}, [hash])
+
+	useEffect(() => {
+		if (!hash) return undefined
+		const frame = window.requestAnimationFrame(() => {
+			scrollToHashTarget(hash)
+		})
+		return () => window.cancelAnimationFrame(frame)
+	}, [hash])
+
 
 	const escalationSteps = useMemo(
 		() => [
@@ -176,9 +191,12 @@ function Services() {
 					<ol className="gov-services-doc__toc-list">
 						{toc.map((item) => (
 							<li key={item.id}>
-								<a href={`#${item.id}`} className="gov-services-doc__toc-link">
+								<Link
+									to={{ pathname: '/services', hash: `#${item.id}` }}
+									className="gov-services-doc__toc-link"
+								>
 									{item.label}
-								</a>
+								</Link>
 							</li>
 						))}
 					</ol>

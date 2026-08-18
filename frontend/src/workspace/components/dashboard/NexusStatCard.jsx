@@ -23,7 +23,7 @@ const LABEL_ICONS = {
 
 /**
  * Nexus SaaS KPI tile — pastel icon + label row, large value (matches reference dashboards).
- * @param {'default'|'warning'|'success'|'accent'|'violet'|'highlight'} tone
+ * @param {'default'|'warning'|'success'|'accent'|'violet'|'teal'|'highlight'} tone
  */
 function NexusStatCard({
 	label,

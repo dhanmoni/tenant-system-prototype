@@ -1,8 +1,10 @@
+import { lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
-import LandingNav from './LandingNav'
-import PublicPageHero from './PublicPageHero'
 import LandingFooter from './LandingFooter'
 import { useLanguage } from '../../i18n'
+
+/* Hero (and its multi-MB banner assets) only load when a page opts in */
+const PublicPageHero = lazy(() => import('./PublicPageHero'))
 
 function PublicPageLayout({
 	eyebrow,
@@ -18,12 +20,13 @@ function PublicPageLayout({
 
 	return (
 		<div className="page-public-site min-w-0 overflow-x-clip">
-			<header
-				className={`public-page-header${showHero ? '' : ' public-page-header--compact'}`}
-			>
-				<LandingNav variant="static" />
-				{showHero ? <PublicPageHero slides={heroSlides} /> : null}
-			</header>
+			{showHero ? (
+				<header className="public-page-header">
+					<Suspense fallback={null}>
+						<PublicPageHero slides={heroSlides} />
+					</Suspense>
+				</header>
+			) : null}
 
 			<div className="public-page landing-body landing-wallpaper-bg landing-wallpaper-bg--white min-h-[40vh]">
 				<div className="public-page__content">

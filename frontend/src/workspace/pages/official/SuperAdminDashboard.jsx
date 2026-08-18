@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
 import NexusStatCard from '../../components/dashboard/NexusStatCard'
@@ -7,7 +8,10 @@ import SuperAdminQuickActions from '../../components/dashboard/SuperAdminQuickAc
 import SuperAdminAttentionPanel from '../../components/dashboard/SuperAdminAttentionPanel'
 import SuperAdminPlatformHealth from '../../components/dashboard/SuperAdminPlatformHealth'
 import DistrictCoverageMap from '../../components/dashboard/DistrictCoverageMap'
-import DailyApplicationsPanel from '../../components/dashboard/DailyApplicationsPanel'
+import DailyApplicationsPanel, {
+	DAILY_PERIOD_OPTIONS,
+	resolveActivityDateRange,
+} from '../../components/dashboard/DailyApplicationsPanel'
 import FormTypeTable from '../../components/dashboard/FormTypeTable'
 import ActivityFeed from '../../components/dashboard/ActivityFeed'
 
@@ -15,11 +19,65 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 	const navigate = useNavigate()
 	const s = stats || {}
 	const [selectedDate, setSelectedDate] = useState(null)
+	const [periodDays, setPeriodDays] = useState(7)
+	const [mapDistricts, setMapDistricts] = useState(null)
+	const [mapMeta, setMapMeta] = useState({
+		total: null,
+		forms: null,
+		uin: null,
+	})
+	const [mapLoading, setMapLoading] = useState(false)
+	const [mapError, setMapError] = useState('')
+
 	const displayName = formatDisplayName(user?.name)
 	const displayEmail = formatDisplayEmail(user?.email)
 	const queueTotal = (s.pending_review ?? 0) + (s.in_review ?? 0)
-	const showDistrictMap = (s.district_breakdown?.length ?? 0) > 0
+	const dateRange = useMemo(
+		() => resolveActivityDateRange(selectedDate, periodDays),
+		[selectedDate, periodDays]
+	)
+
+	const districtsForMap = mapDistricts ?? s.district_breakdown ?? []
+	const showDistrictMap = (s.district_breakdown?.length ?? 0) > 0 || districtsForMap.length > 0
 	const showFormBreakdown = (s.form_type_breakdown?.length ?? 0) > 0
+
+	useEffect(() => {
+		let cancelled = false
+
+		const loadMapBreakdown = async () => {
+			setMapLoading(true)
+			setMapError('')
+			try {
+				const params = {}
+				if (dateRange.from && dateRange.to) {
+					params.from = dateRange.from
+					params.to = dateRange.to
+				}
+				const { data } = await api.get('/api/dashboard-stats/district-breakdown', {
+					params,
+				})
+				if (cancelled) return
+				setMapDistricts(data?.district_breakdown || [])
+				setMapMeta({
+					total: data?.total_applications ?? 0,
+					forms: data?.service_applications ?? 0,
+					uin: data?.tenancy_applications ?? 0,
+				})
+			} catch (err) {
+				if (cancelled) return
+				setMapError(err?.response?.data?.message || 'Failed to load map counts')
+				setMapDistricts((prev) => prev ?? s.district_breakdown ?? [])
+			} finally {
+				if (!cancelled) setMapLoading(false)
+			}
+		}
+
+		loadMapBreakdown()
+		return () => {
+			cancelled = true
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- only refetch when the selected range changes
+	}, [dateRange.from, dateRange.to])
 
 	const kpiCards = useMemo(() => {
 		const totalApps =
@@ -72,6 +130,13 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 			},
 		]
 	}, [s, queueTotal])
+
+	const mapHint =
+		mapMeta.total != null
+			? `${mapMeta.total.toLocaleString('en-IN')} applications in this period · ${
+					mapMeta.uin ?? 0
+				} UIN · ${mapMeta.forms ?? 0} forms`
+			: 'District shading shows how many applications were filed in the selected period'
 
 	return (
 		<div className="ws-page ws-official-dashboard ws-super-admin-dashboard">
@@ -128,23 +193,90 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 							</section>
 
 							{showDistrictMap ? (
-								<section className="ws-sa-block ws-sa-block--map" aria-labelledby="ws-sa-district-heading">
+								<section
+									className="ws-sa-block ws-sa-block--map"
+									aria-labelledby="ws-sa-district-heading"
+								>
 									<div className="ws-sa-block-head">
 										<h2 id="ws-sa-district-heading" className="ws-sa-block-title">
 											Assam map
 										</h2>
 										<p className="ws-sa-block-desc">
-											Statewide coverage — pick a district to zoom in and view its stats
+											Application counts by district for{' '}
+											<strong>{dateRange.label}</strong>
+											{mapLoading ? ' · updating…' : ''}
 										</p>
 									</div>
+
+									<div className="ws-sa-map-filters">
+										{selectedDate ? (
+											<div className="ws-sa-map-filters__selected">
+												<span>
+													Showing map for{' '}
+													<strong>{dateRange.label}</strong>
+												</span>
+												<button
+													type="button"
+													className="ws-daily-panel-clear"
+													onClick={() => setSelectedDate(null)}
+												>
+													Clear date
+												</button>
+											</div>
+										) : (
+											<div
+												className="ws-daily-period"
+												role="group"
+												aria-label="Map period"
+											>
+												{DAILY_PERIOD_OPTIONS.map((option) => (
+													<button
+														key={option.value}
+														type="button"
+														className={`ws-daily-period__btn${
+															periodDays === option.value
+																? ' ws-daily-period__btn--active'
+																: ''
+														}`}
+														onClick={() => setPeriodDays(option.value)}
+														aria-pressed={periodDays === option.value}
+													>
+														{option.label}
+													</button>
+												))}
+											</div>
+										)}
+										{mapMeta.total != null ? (
+											<p className="ws-sa-map-period-total">
+												<strong>
+													{(mapMeta.total ?? 0).toLocaleString('en-IN')}
+												</strong>{' '}
+												filed statewide
+												<span className="ws-sa-map-period-total__split">
+													{(mapMeta.uin ?? 0).toLocaleString('en-IN')} UIN ·{' '}
+													{(mapMeta.forms ?? 0).toLocaleString('en-IN')}{' '}
+													forms
+												</span>
+											</p>
+										) : null}
+									</div>
+
+									{mapError ? (
+										<div className="ws-alert ws-alert--error">{mapError}</div>
+									) : null}
+
 									<DistrictCoverageMap
-										districts={s.district_breakdown}
+										districts={districtsForMap}
+										hint={mapHint}
 										fillContainer
 									/>
 								</section>
 							) : null}
 
-							<section className="ws-sa-block ws-sa-block--daily" aria-labelledby="ws-sa-daily-heading">
+							<section
+								className="ws-sa-block ws-sa-block--daily"
+								aria-labelledby="ws-sa-daily-heading"
+							>
 								<span id="ws-sa-daily-heading" className="sr-only">
 									Daily activity and applications
 								</span>
@@ -153,8 +285,11 @@ function SuperAdminDashboard({ user, stats, loading, error }) {
 									applications={s.applications_feed || s.recent_applications || []}
 									selectedDate={selectedDate}
 									onSelectDate={setSelectedDate}
+									periodDays={periodDays}
+									onPeriodChange={setPeriodDays}
 									scopeLabel="statewide"
 									mode="stats"
+									viewerRole={user?.role}
 								/>
 							</section>
 

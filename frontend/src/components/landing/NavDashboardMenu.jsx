@@ -2,20 +2,43 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, LayoutDashboard } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { useLanguage } from '../../i18n'
+
+const CLOSE_DELAY_MS = 140
 
 function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 	const [open, setOpen] = useState(false)
 	const [panelPos, setPanelPos] = useState({ top: 0, left: 0 })
 	const rootRef = useRef(null)
 	const triggerRef = useRef(null)
+	const closeTimerRef = useRef(null)
 	const location = useLocation()
 	const { t } = useLanguage()
 
+	const clearCloseTimer = () => {
+		if (closeTimerRef.current) {
+			clearTimeout(closeTimerRef.current)
+			closeTimerRef.current = null
+		}
+	}
+
+	const openMenu = () => {
+		clearCloseTimer()
+		setOpen(true)
+	}
+
+	const scheduleClose = () => {
+		clearCloseTimer()
+		closeTimerRef.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS)
+	}
+
 	useEffect(() => {
 		setOpen(false)
+		clearCloseTimer()
 	}, [location.pathname])
+
+	useEffect(() => () => clearCloseTimer(), [])
 
 	useLayoutEffect(() => {
 		if (!open || !triggerRef.current) return undefined
@@ -23,8 +46,8 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 		const updatePosition = () => {
 			const rect = triggerRef.current.getBoundingClientRect()
 			setPanelPos({
-				top: rect.bottom + 8,
-				left: rect.left + rect.width / 2,
+				top: rect.bottom + 10,
+				left: rect.left,
 			})
 		}
 
@@ -58,6 +81,7 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 	}, [open])
 
 	const close = () => {
+		clearCloseTimer()
 		setOpen(false)
 		onNavigate?.()
 	}
@@ -66,9 +90,12 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 		{
 			to: '/public-dashboard',
 			label: t('nav.publicDashboard'),
-			desc: t('nav.dashboardDesc'),
 		},
 	]
+
+	const prefetchPublicDashboard = () => {
+		void import('../../pages/PublicDashboard')
+	}
 
 	if (variant === 'drawer') {
 		return (
@@ -79,13 +106,11 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 						key={item.to}
 						to={item.to}
 						onClick={close}
+						onMouseEnter={prefetchPublicDashboard}
+						onFocus={prefetchPublicDashboard}
 						className="landing-nav-drawer-dropdown-link"
 					>
-						<LayoutDashboard className="h-4 w-4 shrink-0" aria-hidden />
-						<span>
-							<span className="block font-semibold">{item.label}</span>
-							<span className="block text-xs font-normal opacity-80">{item.desc}</span>
-						</span>
+						{item.label}
 					</Link>
 				))}
 			</div>
@@ -103,13 +128,17 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 									top: panelPos.top,
 									left: panelPos.left,
 								}}
+								onMouseEnter={openMenu}
+								onMouseLeave={scheduleClose}
 							>
+								{/* Invisible bridge so cursor can move from trigger → panel */}
+								<span className="landing-nav-dropdown-bridge" aria-hidden />
 								<motion.div
 									id="landing-nav-dashboard-panel"
-									initial={{ opacity: 0, y: -8 }}
+									initial={{ opacity: 0, y: -4 }}
 									animate={{ opacity: 1, y: 0 }}
-									exit={{ opacity: 0, y: -6 }}
-									transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+									exit={{ opacity: 0, y: -3 }}
+									transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
 									className="landing-nav-dropdown-panel"
 									role="menu"
 								>
@@ -118,14 +147,12 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 											key={item.to}
 											to={item.to}
 											role="menuitem"
-											className="landing-nav-dropdown-item"
+											className="landing-nav-dropdown-item landing-nav-dropdown-item--label-only"
+											onMouseEnter={prefetchPublicDashboard}
+											onFocus={prefetchPublicDashboard}
 											onClick={close}
 										>
-											<LayoutDashboard className="h-4 w-4 shrink-0 text-landing" aria-hidden />
-											<span>
-												<span className="landing-nav-dropdown-item-label">{item.label}</span>
-												<span className="landing-nav-dropdown-item-desc">{item.desc}</span>
-											</span>
+											{item.label}
 										</Link>
 									))}
 								</motion.div>
@@ -137,7 +164,12 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 			: null
 
 	return (
-		<div ref={rootRef} className="landing-nav-dropdown">
+		<div
+			ref={rootRef}
+			className={`landing-nav-dropdown${open ? ' is-open' : ''}`}
+			onMouseEnter={openMenu}
+			onMouseLeave={scheduleClose}
+		>
 			<button
 				ref={triggerRef}
 				type="button"
@@ -145,6 +177,7 @@ function NavDashboardMenu({ variant = 'desktop', onNavigate }) {
 				aria-expanded={open}
 				aria-haspopup="true"
 				onClick={() => setOpen((v) => !v)}
+				onFocus={openMenu}
 			>
 				{t('nav.dashboard')}
 				<ChevronDown

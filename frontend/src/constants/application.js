@@ -42,3 +42,24 @@ export const APPLICATION_LABELS = {
 	[APPLICATION_TYPES.RENT_COURT_APPEAL]: 'Appeal against Rent Authority order',
 	[APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL]: 'Appeal against Rent Court order',
 }
+
+const APPLICATION_I18N_KEYS = {
+	[APPLICATION_TYPES.TENANCY_CERTIFICATE]: 'ws.app.tenancy',
+	[APPLICATION_TYPES.RENT_REVISION]: 'ws.app.rentRevision',
+	[APPLICATION_TYPES.OTHER_CHARGES_REVISION]: 'ws.app.otherCharges',
+	[APPLICATION_TYPES.VALUER_APPOINTMENT]: 'ws.app.valuerAppointment',
+	[APPLICATION_TYPES.RENT_COURT_POSSESSION]: 'ws.app.rentCourtPossession',
+	[APPLICATION_TYPES.RENT_COURT_FILING]: 'ws.app.rentCourtFiling',
+	[APPLICATION_TYPES.RENT_AUTHORITY_FILING]: 'ws.app.rentAuthorityFiling',
+	[APPLICATION_TYPES.RENT_COURT_APPEAL]: 'ws.app.rentCourtAppeal',
+	[APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL]: 'ws.app.rentTribunalAppeal',
+}
+
+export function getApplicationLabel(type, t) {
+	const key = APPLICATION_I18N_KEYS[type]
+	if (key && typeof t === 'function') {
+		const translated = t(key)
+		if (translated && translated !== key) return translated
+	}
+	return APPLICATION_LABELS[type] || String(type || '').replace(/-/g, ' ')
+}

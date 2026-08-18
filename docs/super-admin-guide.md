@@ -76,11 +76,11 @@ Super Admin is **not** meant to replace desk officers in the daily approve / rej
 | **Districts** | Yes | Add, edit, activate / deactivate |
 | **UIN / tenancy applications** | Yes (statewide) | View; limited edit via application detail |
 | **Service applications** (Forms I–VI) | Yes (statewide) | View; edit fields + workflow override in emergencies |
-| **Offices** | Count on dashboard only | API exists — **no screen in menu yet** |
-| **Designations** | Count on dashboard only | API exists — **no screen in menu yet** |
-| **Roles (master table)** | Count on dashboard only | API exists — **no screen in menu yet** |
-| **States** | Public data | **No admin screen wired** |
-| **Activity logs** | Short list on dashboard | Full searchable log page **not in menu yet** |
+| **Offices** | Yes | Add, edit, delete (`/dashboard/admin/offices`) |
+| **Designations** | Yes | Add, edit, delete |
+| **Roles (master table)** | Yes | Add, edit, delete (labels; not login RBAC keys) |
+| **States** | Yes | Add, edit, delete |
+| **Activity logs** | Yes | Full searchable page (`/dashboard/admin/activity-log`) |
 
 ---
 
@@ -118,14 +118,12 @@ Honest status — what is **promised in docs or code** but **not fully ready** f
 
 | Gap | What it means |
 |-----|----------------|
-| **Office / Designation / Role screens** | Backend APIs work; **no pages in the sidebar** — only district management is wired. |
-| **State management screen** | Page exists in code; **route and API not connected**. |
-| **Full activity log page** | API works; only a **small feed on dashboard**, no dedicated log screen. |
-| **Approve new user** | Button exists on old user detail page; **API route not registered** — approve may fail. |
-| **Delete user** | UI tries to call delete; system expects **deactivate (block)** instead — route not wired. |
-| **Edit user from user list** | Edit works on old `/users/:id` page — **not linked** from the main user table in workspace. |
+| **Office / Designation / Role / State / Activity log** | **Wired** under sidebar **Master data** (`/dashboard/admin/offices` etc.). |
+| **Approve new user** | `POST /api/users/{id}/approve` is registered. |
+| **Delete user** | Accounts are **deactivated**, not deleted. |
+| **Edit user from user list** | Workspace path `/dashboard/admin/users/:id`. |
 | **Create valuer / another super admin** | Backend allows it; **create-user form does not offer** those roles. |
-| **Docs vs reality** | `Demo_NIC_Credentials.md` lists Office, Role, and Activity Log screens — **most are not in the live menu**. |
+| **Docs vs reality** | Credentials doc now lists the live master-data URLs. |
 | **Two user interfaces** | New workspace + old `UserDetail` page — **inconsistent** experience for some actions. |
 | **Workflow buttons on applications** | Super Admin **should not** approve/reject like a head officer; override panel exists but normal workflow is **intentionally blocked**. |
 

@@ -1,26 +1,84 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
 import { getRoleLabel } from '../../../constants/roleLabels'
 import NexusStatCard from '../../components/dashboard/NexusStatCard'
 import DistrictAdminQuickActions from '../../components/dashboard/DistrictAdminQuickActions'
 import DistrictAdminAttentionPanel from '../../components/dashboard/DistrictAdminAttentionPanel'
-import DailyApplicationsPanel from '../../components/dashboard/DailyApplicationsPanel'
+import DailyApplicationsPanel, {
+	DAILY_PERIOD_OPTIONS,
+	resolveActivityDateRange,
+} from '../../components/dashboard/DailyApplicationsPanel'
 import DistrictCoverageMap from '../../components/dashboard/DistrictCoverageMap'
 
 function DistrictAdminDashboard({ user, stats, loading, error }) {
 	const navigate = useNavigate()
 	const s = stats || {}
 	const [selectedDate, setSelectedDate] = useState(null)
+	const [periodDays, setPeriodDays] = useState(7)
+	const [mapDistricts, setMapDistricts] = useState(null)
+	const [mapMeta, setMapMeta] = useState({
+		total: null,
+		forms: null,
+		uin: null,
+	})
+	const [mapLoading, setMapLoading] = useState(false)
+	const [mapError, setMapError] = useState('')
 
 	const displayName = formatDisplayName(user?.name)
 	const displayEmail = formatDisplayEmail(user?.email)
 	const roleLabel = getRoleLabel(user?.role)
 	const districtName = s.district_name || user?.district?.name || 'Your district'
 	const queueTotal = (s.pending_review ?? 0) + (s.in_review ?? 0)
+	const dateRange = useMemo(
+		() => resolveActivityDateRange(selectedDate, periodDays),
+		[selectedDate, periodDays]
+	)
+
+	const districtsForMap = mapDistricts ?? s.district_breakdown ?? []
 	const showFormBreakdown = (s.form_type_breakdown?.length ?? 0) > 0
-	const showDistrictMap = (s.district_breakdown?.length ?? 0) > 0
+	const showDistrictMap =
+		(s.district_breakdown?.length ?? 0) > 0 || districtsForMap.length > 0
+
+	useEffect(() => {
+		let cancelled = false
+
+		const loadMapBreakdown = async () => {
+			setMapLoading(true)
+			setMapError('')
+			try {
+				const params = {}
+				if (dateRange.from && dateRange.to) {
+					params.from = dateRange.from
+					params.to = dateRange.to
+				}
+				const { data } = await api.get('/api/dashboard-stats/district-breakdown', {
+					params,
+				})
+				if (cancelled) return
+				setMapDistricts(data?.district_breakdown || [])
+				setMapMeta({
+					total: data?.total_applications ?? 0,
+					forms: data?.service_applications ?? 0,
+					uin: data?.tenancy_applications ?? 0,
+				})
+			} catch (err) {
+				if (cancelled) return
+				setMapError(err?.response?.data?.message || 'Failed to load map counts')
+				setMapDistricts((prev) => prev ?? s.district_breakdown ?? [])
+			} finally {
+				if (!cancelled) setMapLoading(false)
+			}
+		}
+
+		loadMapBreakdown()
+		return () => {
+			cancelled = true
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- only refetch when the selected range changes
+	}, [dateRange.from, dateRange.to])
 
 	const kpiCards = useMemo(() => {
 		const totalApps =
@@ -74,6 +132,13 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 		]
 	}, [s, queueTotal])
 
+	const mapHint =
+		mapMeta.total != null
+			? `${mapMeta.total.toLocaleString('en-IN')} applications in this period · ${
+					mapMeta.uin ?? 0
+				} UIN · ${mapMeta.forms ?? 0} forms`
+			: 'Map and sub-division counts follow the selected day or period'
+
 	return (
 		<div className="ws-page ws-official-dashboard ws-district-admin-dashboard">
 			{error ? <div className="ws-alert ws-alert--error">{error}</div> : null}
@@ -119,24 +184,91 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 					<div className="ws-da-layout">
 						<div className="ws-da-main">
 							{showDistrictMap ? (
-								<section className="ws-da-block ws-da-block--map" aria-labelledby="ws-da-map-heading">
+								<section
+									className="ws-da-block ws-da-block--map"
+									aria-labelledby="ws-da-map-heading"
+								>
 									<div className="ws-da-block-head">
 										<h2 id="ws-da-map-heading" className="ws-da-block-title">
 											Your district on the Assam map
 										</h2>
 										<p className="ws-da-block-desc">
-											Boundary for {districtName} only — other districts are not shown
+											Counts for {districtName} —{' '}
+											<strong>{dateRange.label}</strong>
+											{mapLoading ? ' · updating…' : ''}
 										</p>
 									</div>
+
+									<div className="ws-sa-map-filters">
+										{selectedDate ? (
+											<div className="ws-sa-map-filters__selected">
+												<span>
+													Showing map for{' '}
+													<strong>{dateRange.label}</strong>
+												</span>
+												<button
+													type="button"
+													className="ws-daily-panel-clear"
+													onClick={() => setSelectedDate(null)}
+												>
+													Clear date
+												</button>
+											</div>
+										) : (
+											<div
+												className="ws-daily-period"
+												role="group"
+												aria-label="Map period"
+											>
+												{DAILY_PERIOD_OPTIONS.map((option) => (
+													<button
+														key={option.value}
+														type="button"
+														className={`ws-daily-period__btn${
+															periodDays === option.value
+																? ' ws-daily-period__btn--active'
+																: ''
+														}`}
+														onClick={() => setPeriodDays(option.value)}
+														aria-pressed={periodDays === option.value}
+													>
+														{option.label}
+													</button>
+												))}
+											</div>
+										)}
+										{mapMeta.total != null ? (
+											<p className="ws-sa-map-period-total">
+												<strong>
+													{(mapMeta.total ?? 0).toLocaleString('en-IN')}
+												</strong>{' '}
+												filed in district
+												<span className="ws-sa-map-period-total__split">
+													{(mapMeta.uin ?? 0).toLocaleString('en-IN')} UIN ·{' '}
+													{(mapMeta.forms ?? 0).toLocaleString('en-IN')}{' '}
+													forms
+												</span>
+											</p>
+										) : null}
+									</div>
+
+									{mapError ? (
+										<div className="ws-alert ws-alert--error">{mapError}</div>
+									) : null}
+
 									<DistrictCoverageMap
-										districts={s.district_breakdown}
+										districts={districtsForMap}
+										hint={mapHint}
 										focusDistrictName={districtName}
 										lockToDistrict
 									/>
 								</section>
 							) : null}
 
-							<section className="ws-da-block ws-da-block--daily" aria-labelledby="ws-da-daily-heading">
+							<section
+								className="ws-da-block ws-da-block--daily"
+								aria-labelledby="ws-da-daily-heading"
+							>
 								<span id="ws-da-daily-heading" className="sr-only">
 									Daily activity and applications
 								</span>
@@ -145,8 +277,11 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 									applications={s.applications_feed || s.recent_applications || []}
 									selectedDate={selectedDate}
 									onSelectDate={setSelectedDate}
+									periodDays={periodDays}
+									onPeriodChange={setPeriodDays}
 									scopeLabel="your district"
 									mode="stats"
+									viewerRole={user?.role}
 								/>
 							</section>
 						</div>
@@ -173,7 +308,9 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 									</div>
 									<div>
 										<dt>Service applications</dt>
-										<dd>{(s.service_applications ?? 0).toLocaleString('en-IN')}</dd>
+										<dd>
+											{(s.service_applications ?? 0).toLocaleString('en-IN')}
+										</dd>
 									</div>
 									<div>
 										<dt>Pending review</dt>
@@ -189,11 +326,16 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 							{showFormBreakdown ? (
 								<div className="ws-da-panel ws-da-panel--forms">
 									<h3 className="ws-da-panel-title">Forms in your district</h3>
-									<p className="ws-da-panel-desc">Volume by Assam Tenancy Act form type</p>
+									<p className="ws-da-panel-desc">
+										Volume by Assam Tenancy Act form type
+									</p>
 									<ul className="ws-da-forms-list">
 										{s.form_type_breakdown.map((row) => (
 											<li key={row.form_key || row.label}>
-												<span className="ws-da-forms-list__label" title={row.label}>
+												<span
+													className="ws-da-forms-list__label"
+													title={row.label}
+												>
 													{row.label}
 												</span>
 												<strong className="ws-da-forms-list__count">

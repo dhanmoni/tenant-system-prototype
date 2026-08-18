@@ -8,6 +8,8 @@
 
 **Related docs:**
 
+- [legacy-public-shell-reference.md](./legacy-public-shell-reference.md) — undefined routes, HIGHLIGHTS carousel, guest fallback shell
+- [app-routes.md](./app-routes.md) — full URL → page map
 - [frontend-modernization-roadmap.md](./frontend-modernization-roadmap.md) — migration direction and ratings
 - [modifyfrontend.md](./modifyfrontend.md) — CSS conflict / cleanup plan
 - [css-architecture-plan.md](./css-architecture-plan.md)
@@ -173,7 +175,7 @@ Deleting the folder blindly would break the new workspace.
 | `pages/dashboard/DashboardHome.jsx` | Old home | `WorkspaceHome` + overviews |
 | `components/dashboard/OfficialDashboard.jsx` | Old official home | `OfficialOverview` |
 | `pages/dashboard/Profile.jsx` | Old profile | `WorkspaceProfile` |
-| `pages/dashboard/ApplicationStatus.jsx` | Old UIN status | `WorkspaceUinStatus` |
+| `pages/dashboard/ApplicationStatus.jsx` | Old UIN status (deleted) | `WorkspaceUinStatus` |
 | `pages/dashboard/TenantServices.jsx` | Old services catalog | `WorkspaceServices` |
 | `pages/dashboard/admin/ApplicationInbox.jsx` | Separate inbox UI | Same `ApplicationList` as applications |
 | `pages/dashboard/admin/StateManagement.jsx` | Master data | Not wired (import commented) |
@@ -221,7 +223,7 @@ See [modifyfrontend.md](./modifyfrontend.md) for the cleanup phases.
 
 ### 3. Duplicate pages = wrong file edits
 
-Common trap: edit `pages/dashboard/Profile.jsx` or `ApplicationStatus.jsx` — **nothing changes in the browser**, because the live routes use `WorkspaceProfile` / `WorkspaceUinStatus`.
+Common trap: edit `pages/dashboard/Profile.jsx` — **nothing changes in the browser**, because the live route uses `WorkspaceProfile`. (`ApplicationStatus.jsx` is deleted; status is `WorkspaceUinStatus`.)
 
 Same for `Sidebar.jsx` vs `WorkspaceSidebar.jsx`.
 

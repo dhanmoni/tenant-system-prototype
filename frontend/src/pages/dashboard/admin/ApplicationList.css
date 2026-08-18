@@ -1,5 +1,13 @@
 /* Service applications — panel + mobile table (aligned with tenancy list) */
 
+.admin-service-error {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.65rem 0.85rem;
+}
+
 .page.page-dashboard .ws-root .admin-service-table .admin-service-panel,
 .admin-service-panel {
 	display: flex;

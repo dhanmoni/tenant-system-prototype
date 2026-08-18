@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../../utils/formatters'
 import { getRoleLabel } from '../../../constants/roleLabels'
-import { APPLICATION_LABELS } from '../../../constants/application'
+import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../../constants/application'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
+import { ROLES } from '../../../constants/roles'
 import { getOfficeProfileForRole } from '../../config/officeProfiles'
 import NexusStatCard from '../../components/dashboard/NexusStatCard'
 import DistrictCoverageMap from '../../components/dashboard/DistrictCoverageMap'
@@ -14,6 +15,10 @@ function statusLabel(status) {
 	return STATUS_LABELS[key] || status || '—'
 }
 
+function getAppTypeValue(app) {
+	return String(app?.form_type || app?.application_type || '').toLowerCase()
+}
+
 /**
  * Dedicated dashboard for RA / RC / RT assistants.
  */
@@ -21,6 +26,7 @@ function AssistantOfficeDashboard({ user, stats, loading, error }) {
 	const navigate = useNavigate()
 	const s = stats || {}
 	const office = getOfficeProfileForRole(user?.role)
+	const canAccessTenancyInbox = user?.role === ROLES.RA_ASSISTANT
 	const displayName = formatDisplayName(user?.name)
 	const displayEmail = formatDisplayEmail(user?.email)
 	const roleLabel = getRoleLabel(user?.role)
@@ -34,8 +40,53 @@ function AssistantOfficeDashboard({ user, stats, loading, error }) {
 
 	const pendingApps = useMemo(() => {
 		const rows = s.recent_applications || []
-		return rows.filter((app) => String(app.status || '').toUpperCase() === STATUS.SUBMITTED)
+		const submitted = rows.filter((app) => String(app.status || '').toUpperCase() === STATUS.SUBMITTED)
+		// RC/RT assistants do not verify tenancy certificate inbox items.
+		if (canAccessTenancyInbox) return submitted
+		return submitted.filter(
+			(app) => getAppTypeValue(app) !== String(APPLICATION_TYPES.TENANCY_CERTIFICATE).toLowerCase(),
+		)
 	}, [s.recent_applications])
+
+	const tenancyInboxRoute = '/dashboard/admin/tenancy'
+	const serviceInboxRoute = '/dashboard/admin/inbox'
+
+	const tenancyPendingCount = useMemo(() => {
+		if (!pendingApps.length) return 0
+		return pendingApps.filter(
+			(app) => getAppTypeValue(app) === String(APPLICATION_TYPES.TENANCY_CERTIFICATE).toLowerCase(),
+		).length
+	}, [pendingApps])
+
+	const servicePendingCount = Math.max(0, pendingApps.length - tenancyPendingCount)
+
+	const hasTenancyInQueue = tenancyPendingCount > 0
+	const hasServiceInQueue = servicePendingCount > 0
+
+	// Used only when the queue contains a single category.
+	const inboxRoute = hasTenancyInQueue && !hasServiceInQueue ? tenancyInboxRoute : serviceInboxRoute
+
+	const openAppDetails = (app) => {
+		const applicationNo = app.application_no
+		if (!applicationNo) {
+			navigate(inboxRoute)
+			return
+		}
+
+		const isTenancy =
+			getAppTypeValue(app) === String(APPLICATION_TYPES.TENANCY_CERTIFICATE).toLowerCase()
+
+		navigate(
+			isTenancy && canAccessTenancyInbox
+				? `/dashboard/admin/tenancy/${encodeURIComponent(applicationNo)}`
+				: `/dashboard/admin/applications/${encodeURIComponent(applicationNo)}`,
+			{
+				state: {
+					from: isTenancy && canAccessTenancyInbox ? 'tenancy' : 'inbox',
+				},
+			},
+		)
+	}
 
 	const kpiCards = useMemo(() => {
 		if (!office) return []
@@ -100,14 +151,27 @@ function AssistantOfficeDashboard({ user, stats, loading, error }) {
 					<button
 						type="button"
 						className="ws-btn ws-btn--primary ws-asst-command-btn"
-						onClick={() => navigate('/dashboard/admin/inbox')}
+						onClick={() => navigate(serviceInboxRoute)}
 					>
 						<Icon name="list" />
-						Open inbox
-						{pendingCount > 0 ? (
-							<span className="ws-asst-command-count">{pendingCount}</span>
+						Open service inbox
+						{servicePendingCount > 0 ? (
+							<span className="ws-asst-command-count">{servicePendingCount}</span>
 						) : null}
 					</button>
+					{canAccessTenancyInbox ? (
+						<button
+							type="button"
+							className="ws-btn ws-btn--outline ws-asst-command-btn"
+							onClick={() => navigate(tenancyInboxRoute)}
+						>
+							<Icon name="list" />
+							Open tenancy inbox
+							{tenancyPendingCount > 0 ? (
+								<span className="ws-asst-command-count">{tenancyPendingCount}</span>
+							) : null}
+						</button>
+					) : null}
 				</div>
 			</header>
 
@@ -121,17 +185,46 @@ function AssistantOfficeDashboard({ user, stats, loading, error }) {
 								<strong>{pendingCount} application{pendingCount === 1 ? '' : 's'}</strong>{' '}
 								awaiting your verification in {districtName}.
 							</div>
-							<button
-								type="button"
-								className="ws-btn ws-btn--sm ws-btn--primary"
-								onClick={() => navigate('/dashboard/admin/inbox')}
-							>
-								Go to inbox
-							</button>
+							<div className="ws-asst-alert__actions">
+								<button
+									type="button"
+									className="ws-btn ws-btn--sm ws-btn--primary"
+									onClick={() => navigate(serviceInboxRoute)}
+								>
+									Go to service inbox
+								</button>
+								{canAccessTenancyInbox ? (
+									<button
+										type="button"
+										className="ws-btn ws-btn--sm ws-btn--outline"
+										onClick={() => navigate(tenancyInboxRoute)}
+									>
+										Go to tenancy inbox
+									</button>
+								) : null}
+							</div>
 						</div>
 					) : (
 						<div className="ws-asst-alert ws-asst-alert--clear" role="status">
 							Inbox is clear — no submitted applications waiting for verification.
+							<div className="ws-asst-alert__actions">
+								<button
+									type="button"
+									className="ws-btn ws-btn--sm ws-btn--primary"
+									onClick={() => navigate(serviceInboxRoute)}
+								>
+									Open service inbox
+								</button>
+								{canAccessTenancyInbox ? (
+									<button
+										type="button"
+										className="ws-btn ws-btn--sm ws-btn--outline"
+										onClick={() => navigate(tenancyInboxRoute)}
+									>
+										Open tenancy inbox
+									</button>
+								) : null}
+							</div>
 						</div>
 					)}
 
@@ -153,13 +246,24 @@ function AssistantOfficeDashboard({ user, stats, loading, error }) {
 											Submitted applications waiting in your inbox
 										</p>
 									</div>
-									<button
-										type="button"
-										className="ws-btn ws-btn--sm ws-btn--outline"
-										onClick={() => navigate('/dashboard/admin/inbox')}
-									>
-										Full inbox
-									</button>
+									<div className="ws-asst-inbox-actions">
+										<button
+											type="button"
+											className="ws-btn ws-btn--sm ws-btn--outline"
+											onClick={() => navigate(serviceInboxRoute)}
+										>
+											Full service inbox
+										</button>
+										{canAccessTenancyInbox ? (
+											<button
+												type="button"
+												className="ws-btn ws-btn--sm ws-btn--outline"
+												onClick={() => navigate(tenancyInboxRoute)}
+											>
+												Full tenancy inbox
+											</button>
+										) : null}
+									</div>
 								</div>
 								{pendingApps.length ? (
 									<ul className="ws-asst-pending-list">
@@ -183,13 +287,7 @@ function AssistantOfficeDashboard({ user, stats, loading, error }) {
 												<button
 													type="button"
 													className="ws-btn ws-btn--sm ws-btn--outline"
-													onClick={() =>
-														navigate(
-															app.application_no
-																? `/dashboard/admin/applications/${encodeURIComponent(app.application_no)}`
-																: '/dashboard/admin/inbox'
-														)
-													}
+													onClick={() => openAppDetails(app)}
 												>
 													Open
 												</button>
