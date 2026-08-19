@@ -11,7 +11,7 @@ import {
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend)
 
 export const STATUS_CHART_COLORS = {
-	SUBMITTED: '#2563eb',
+	SUBMITTED: '#1565c0',
 	IN_REVIEW: '#d97706',
 	REJECTED: '#dc2626',
 	COMPLETED: '#16a34a',

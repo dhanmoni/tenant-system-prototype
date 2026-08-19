@@ -43,8 +43,8 @@
 .ws-district-modal__field .ws-master-select:focus,
 .ws-district-modal__field .ws-master-textarea:focus {
 	outline: none;
-	border-color: var(--ws-accent, #0d47a1);
-	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+	border-color: var(--ws-accent);
+	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
 }
 
 .ws-district-modal__field .ws-master-select:disabled,
@@ -82,8 +82,8 @@
 
 .page.page-dashboard .ws-root .ws-master .ws-master-date-input:focus {
 	outline: none;
-	border-color: var(--ws-accent, #0d47a1);
-	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+	border-color: var(--ws-accent);
+	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
 }
 
 .ws-district-table .ws-status-th-actions,

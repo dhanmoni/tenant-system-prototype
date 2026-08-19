@@ -92,7 +92,7 @@
 	padding: 1.15rem 1.25rem;
 	background: #fff;
 	border: 1px solid var(--ws-border, #e2e8f0);
-	border-left: 3px solid var(--ws-accent, #2563eb);
+	border-left: 3px solid var(--ws-accent, var(--ws-accent));
 	border-radius: 10px;
 }
 
@@ -102,7 +102,7 @@
 	font-weight: 700;
 	letter-spacing: 0.05em;
 	text-transform: uppercase;
-	color: var(--ws-accent, #2563eb);
+	color: var(--ws-accent, var(--ws-accent));
 }
 
 .admin-edit-form__title {
@@ -173,9 +173,9 @@
 	font-weight: 700;
 	letter-spacing: 0.03em;
 	text-transform: uppercase;
-	color: #1d4ed8;
-	background: #eff6ff;
-	border: 1px solid #bfdbfe;
+	color: var(--ws-accent-hover);
+	background: var(--ws-accent-soft);
+	border: 1px solid var(--gov-blue-light);
 	border-radius: 4px;
 }
 
@@ -217,8 +217,8 @@
 
 .admin-edit-form .admin-app-details__input:focus,
 .admin-edit-form .admin-app-details__textarea:focus {
-	border-color: var(--ws-accent, #2563eb);
-	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+	border-color: var(--ws-accent, var(--ws-accent));
+	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
 }
 
 .admin-edit-form .admin-app-details__textarea {
@@ -391,7 +391,7 @@
 .admin-app-details__hero {
 	display: block;
 	padding: 1.15rem 1.35rem;
-	border-top: 4px solid var(--ws-accent, #0d47a1);
+	border-top: 4px solid var(--ws-accent);
 	border-radius: 12px;
 	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
@@ -404,7 +404,7 @@
 	margin: 0 0 0.4rem;
 	font-size: 0.8125rem;
 	font-weight: 700;
-	color: var(--ws-accent, #0d47a1);
+	color: var(--ws-accent);
 	line-height: 1.35;
 }
 
@@ -480,8 +480,8 @@
 	height: 2.25rem;
 	flex-shrink: 0;
 	border-radius: 999px;
-	background: var(--ws-accent-soft, #e3f2fd);
-	color: var(--ws-accent, #0d47a1);
+	background: var(--ws-accent-soft, var(--gov-blue-light));
+	color: var(--ws-accent);
 }
 
 .admin-app-details__contact-icon svg {
@@ -651,8 +651,8 @@
 
 .admin-app-details__input:focus {
 	outline: none;
-	border-color: var(--ws-accent, #0d47a1);
-	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+	border-color: var(--ws-accent);
+	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
 }
 
 .admin-app-details__textarea {
@@ -675,7 +675,7 @@
 }
 
 .admin-app-details__link {
-	color: var(--ws-accent, #0d47a1);
+	color: var(--ws-accent);
 	font-size: 0.8125rem;
 	font-weight: 600;
 	text-decoration: none;
@@ -723,11 +723,11 @@
 .admin-app-details__valuer-card {
 	border: 1px solid var(--ws-border, #e2e8f0);
 	background: var(--ws-surface, #fff);
-	border-top-color: #2563eb;
+	border-top-color: var(--ws-accent);
 }
 
 .admin-app-details__valuer-card--assign {
-	border-top-color: #2563eb;
+	border-top-color: var(--ws-accent);
 }
 
 .admin-app-details__valuer-card--report {
@@ -768,9 +768,9 @@
 }
 
 .admin-app-details__valuer-state--assigned {
-	color: #1d4ed8;
-	background: #eff6ff;
-	border-color: #93c5fd;
+	color: var(--ws-accent-hover);
+	background: var(--ws-accent-soft);
+	border-color: #90caf9;
 }
 
 .admin-app-details__valuer-state--report {
@@ -1037,12 +1037,12 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: 999px;
-	background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%);
+	background: linear-gradient(145deg, var(--ws-accent) 0%, var(--ws-accent-hover) 100%);
 	color: #fff;
 	font-size: 0.9rem;
 	font-weight: 700;
 	letter-spacing: 0.02em;
-	box-shadow: 0 1px 3px rgba(37, 99, 235, 0.28);
+	box-shadow: 0 1px 3px rgba(21, 101, 192, 0.28);
 }
 
 .admin-app-details__review-comment--assistant .admin-app-details__review-comment-avatar {
@@ -1061,7 +1061,7 @@
 }
 
 .admin-app-details__review-comment--valuer .admin-app-details__review-comment-avatar {
-	background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%);
+	background: linear-gradient(145deg, var(--ws-accent) 0%, var(--ws-accent-hover) 100%);
 }
 
 .admin-app-details__review-comment-main,
@@ -1099,9 +1099,9 @@
 	font-weight: 700;
 	letter-spacing: 0.03em;
 	text-transform: uppercase;
-	color: #1d4ed8;
-	background: #eff6ff;
-	border: 1px solid #bfdbfe;
+	color: var(--ws-accent-hover);
+	background: var(--ws-accent-soft);
+	border: 1px solid var(--gov-blue-light);
 }
 
 .admin-app-details__review-comment--assistant .admin-app-details__review-comment-role {
@@ -1180,8 +1180,8 @@
 }
 
 .admin-app-details__valuer-textarea:focus {
-	border-color: #93c5fd !important;
-	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+	border-color: #90caf9 !important;
+	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
 	outline: none;
 }
 

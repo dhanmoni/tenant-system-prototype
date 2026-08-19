@@ -197,7 +197,7 @@ function WorkspaceServices() {
 	}
 
 	if (user?.role !== ROLES.USER) {
-		return <Navigate to="/dashboard" replace />
+		return <Navigate to="/403" replace />
 	}
 
 	const totalForms = useMemo(() => getAllServiceForms().length, [])

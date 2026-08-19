@@ -10,6 +10,8 @@ const PUBLIC_MARKETING_PATHS = new Set([
 	'/accessibility',
 	'/help-centre',
 	'/guidelines',
+	'/403',
+	'/404',
 ])
 
 export function isPublicMarketingPath(pathname = '') {

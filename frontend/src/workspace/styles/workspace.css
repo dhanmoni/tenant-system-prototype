@@ -465,6 +465,73 @@ a.ws-sidebar-support-item:hover {
 	--ws-topbar-offset: 3.5rem;
 }
 
+/* Profile incomplete — slim top flag below workspace topbar */
+.ws-profile-flag {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 0 0 auto;
+	padding: 0.55rem 1rem 0.55rem 1.25rem;
+	background: var(--ws-accent-soft);
+	border-bottom: 1px solid color-mix(in srgb, var(--ws-accent) 20%, var(--ws-border));
+	color: var(--ws-text);
+	font-size: 0.8125rem;
+	line-height: 1.45;
+}
+
+.ws-profile-flag__text {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	font-weight: 500;
+	color: color-mix(in srgb, var(--ws-text) 88%, var(--ws-accent-hover));
+}
+
+.ws-profile-flag__action {
+	flex-shrink: 0;
+	white-space: nowrap;
+}
+
+.ws-profile-flag__dismiss {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 1.75rem;
+	height: 1.75rem;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--ws-muted);
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ws-profile-flag__dismiss:hover {
+	background: color-mix(in srgb, var(--ws-accent) 10%, transparent);
+	color: var(--ws-text);
+}
+
+.ws-profile-flag__dismiss svg {
+	width: 1rem;
+	height: 1rem;
+}
+
+@media (max-width: 640px) {
+	.ws-profile-flag {
+		flex-wrap: wrap;
+		padding: 0.65rem 0.85rem;
+	}
+
+	.ws-profile-flag__action {
+		order: 3;
+		width: 100%;
+		justify-content: center;
+	}
+}
+
 .ws-topbar-primary {
 	display: contents;
 }

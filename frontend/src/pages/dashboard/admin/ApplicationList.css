@@ -107,8 +107,8 @@ input.admin-service-panel__input {
 .admin-service-panel__input:focus,
 .admin-service-panel__select:focus {
 	outline: none;
-	border-color: var(--ws-accent, #0d47a1);
-	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+	border-color: var(--ws-accent);
+	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
 }
 
 .page.page-dashboard .ws-root .admin-service-panel__filters,
@@ -177,12 +177,12 @@ input.admin-service-panel__input {
 }
 
 .page.page-dashboard .ws-root .admin-service-panel button.ws-admin-service-pill.is-active {
-	background: #0d47a1 !important;
+	background: var(--gov-blue-dark) !important;
 	color: #fff !important;
 }
 
 .page.page-dashboard .ws-root .admin-service-panel button.ws-admin-service-pill--submitted.is-active {
-	background: #1d4ed8 !important;
+	background: var(--ws-accent-hover) !important;
 	color: #fff !important;
 }
 
@@ -267,7 +267,7 @@ input.admin-service-panel__input {
 	border: 1px solid #cbd5e1 !important;
 	border-radius: 8px !important;
 	background: #fff !important;
-	color: #0d47a1 !important;
+	color: var(--gov-blue-dark) !important;
 	font-size: 0.8125rem !important;
 	font-weight: 700 !important;
 	text-decoration: none !important;
@@ -276,9 +276,9 @@ input.admin-service-panel__input {
 
 .page.page-dashboard .ws-root .admin-service-panel button.admin-service-panel__clear.ws-btn:hover:not(:disabled),
 .page.page-dashboard .ws-root button.admin-service-panel__clear:hover:not(:disabled) {
-	background: #eff6ff !important;
-	border-color: #93c5fd !important;
-	color: #0d47a1 !important;
+	background: var(--ws-accent-soft) !important;
+	border-color: #90caf9 !important;
+	color: var(--gov-blue-dark) !important;
 	transform: none;
 	box-shadow: none !important;
 }
@@ -289,10 +289,10 @@ input.admin-service-panel__input {
 	align-items: center;
 	gap: 0.6rem;
 	padding: 0.75rem 1rem;
-	border: 1px solid rgba(13, 71, 161, 0.18);
-	border-left: 3px solid var(--ws-accent, #0d47a1);
+	border: 1px solid rgba(21, 101, 192, 0.18);
+	border-left: 3px solid var(--ws-accent);
 	border-radius: 8px;
-	background: var(--gov-blue-light, #e3f2fd);
+	background: var(--gov-blue-light);
 	color: var(--ws-text, #0f172a);
 	font-size: 0.8125rem;
 	line-height: 1.4;
@@ -302,7 +302,7 @@ input.admin-service-panel__input {
 	flex: 0 0 auto;
 	width: 1rem;
 	height: 1rem;
-	color: var(--ws-accent, #0d47a1);
+	color: var(--ws-accent);
 }
 
 @media (max-width: 1100px) {

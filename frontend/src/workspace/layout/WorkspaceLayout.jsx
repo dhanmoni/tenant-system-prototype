@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api'
-import ProfileCompletionModal from '../../components/dashboard/ProfileCompletionModal'
+import ProfileCompletionBanner from '../../components/dashboard/ProfileCompletionBanner'
 import { Icon } from '../../components/dashboard/Icons'
 import useDashboardRouteLoader from '../../hooks/useDashboardRouteLoader'
 import { ROLES } from '../../constants/roles'
@@ -247,7 +247,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		}
 	}, [location.pathname, user?.role, reminderDismissed, reminderSuppressed])
 
-	const showProfileModal =
+	const showProfileBanner =
 		user?.role === ROLES.USER &&
 		profileIncomplete &&
 		!reminderDismissed &&
@@ -458,6 +458,12 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 							</div>
 						</div>
 					</header>
+					{showProfileBanner ? (
+						<ProfileCompletionBanner
+							onComplete={handleCompleteProfile}
+							onDismiss={handleDismissProfileReminder}
+						/>
+					) : null}
 					<div
 						className="ws-main"
 						id="dashboard-primary-content"
@@ -568,14 +574,6 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 						</div>
 					</div>
 				</div>
-			) : null}
-
-			{user?.role === ROLES.USER ? (
-				<ProfileCompletionModal
-					open={showProfileModal}
-					onComplete={handleCompleteProfile}
-					onDismiss={handleDismissProfileReminder}
-				/>
 			) : null}
 		</div>
 	)
