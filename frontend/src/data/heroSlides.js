@@ -7,10 +7,15 @@ export const HERO_LCP_SRC = '/hero-lcp.webp'
 
 export const HERO_SLIDE_DEFS = [
 	{
+		src: '/hero-slide-last.webp',
+		altKey: 'hero.slide3Alt',
+		objectPosition: 'center center',
+		lcp: true,
+	},
+	{
 		src: HERO_LCP_SRC,
 		altKey: 'hero.slide5Alt',
 		objectPosition: 'center center',
-		lcp: true,
 	},
 	{
 		src: heroCommunityHomes,
@@ -26,10 +31,5 @@ export const HERO_SLIDE_DEFS = [
 		src: heroBannerTwelve,
 		altKey: 'hero.slide4Alt',
 		objectPosition: 'center 42%',
-	},
-	{
-		src: '/hero-slide-last.webp',
-		altKey: 'hero.slide3Alt',
-		objectPosition: 'center center',
 	},
 ]
