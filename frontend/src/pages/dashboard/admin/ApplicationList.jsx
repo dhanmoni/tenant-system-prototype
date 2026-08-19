@@ -94,13 +94,13 @@ const ApplicationList = ({ user }) => {
 		setError('')
 		try {
 			let endpoint = '/api/admin/applications/all'
-			if (isInboxPage) {
+			if (user?.role === ROLES.VALUER) {
+				endpoint = '/api/admin/applications/valuer-inbox'
+			} else if (isInboxPage) {
 				if (ASSISTANT_ROLES.includes(user?.role)) {
 					endpoint = '/api/admin/applications/inbox'
 				} else if (PRINCIPAL_ROLES.includes(user?.role)) {
 					endpoint = '/api/admin/applications/principal-inbox'
-				} else if (user?.role === ROLES.VALUER) {
-					endpoint = '/api/admin/applications/valuer-inbox'
 				}
 			}
 

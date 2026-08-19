@@ -43,5 +43,13 @@ export const SUPER_ADMIN_ROLES = [ROLES.SUPER_ADMIN]
 /** Staff who manage users / service application queues. */
 export const OFFICE_ADMIN_ROLES = [...ADMIN_ROLES, ...PRINCIPAL_ROLES]
 
-/** Assistants and valuers who use the inbox queue. */
-export const INBOX_STAFF_ROLES = [...ASSISTANT_ROLES, ROLES.VALUER]
+/** Assistants, valuers, and principals who may open the inbox queue. */
+export const INBOX_STAFF_ROLES = [...ASSISTANT_ROLES, ...PRINCIPAL_ROLES, ROLES.VALUER]
+
+/** Anyone who may open the service-application list or an application record. */
+export const SERVICE_APPLICATION_ROLES = [
+	...ADMIN_ROLES,
+	...PRINCIPAL_ROLES,
+	...ASSISTANT_ROLES,
+	ROLES.VALUER,
+]

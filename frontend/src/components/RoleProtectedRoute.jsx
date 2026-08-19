@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useOutletContext } from 'react-router-dom'
+import { useAuthSession } from '../context/AuthSessionContext'
 
 /**
  * Nested dashboard gate: logged-in users whose role is not in `roles`
@@ -6,13 +7,15 @@ import { Navigate, Outlet, useOutletContext } from 'react-router-dom'
  */
 function RoleProtectedRoute({ roles = [] }) {
 	const ctx = useOutletContext()
-	const role = ctx?.user?.role
+	const session = useAuthSession()
+	const user = ctx?.user || session?.user
+	const role = user?.role
 
 	if (!role || !roles.includes(role)) {
 		return <Navigate to="/403" replace />
 	}
 
-	return <Outlet context={ctx} />
+	return <Outlet context={ctx?.user ? ctx : { user, onLogout: session?.onLogout }} />
 }
 
 export default RoleProtectedRoute

@@ -36,6 +36,7 @@ import {
 	CITIZEN_ROLES,
 	INBOX_STAFF_ROLES,
 	OFFICE_ADMIN_ROLES,
+	SERVICE_APPLICATION_ROLES,
 	SUPER_ADMIN_ROLES,
 	TENANCY_STAFF_ROLES,
 } from './constants/roles'
@@ -371,12 +372,15 @@ function App() {
 								<Route path="admin/inbox" element={<WorkspaceServiceApplications />} />
 							</Route>
 
-							<Route element={<RoleProtectedRoute roles={OFFICE_ADMIN_ROLES} />}>
+							<Route element={<RoleProtectedRoute roles={SERVICE_APPLICATION_ROLES} />}>
 								<Route path="admin/applications" element={<WorkspaceServiceApplications />} />
 								<Route
 									path="admin/applications/:applicationNo"
 									element={<WorkspaceAdminApplicationDetails />}
 								/>
+							</Route>
+
+							<Route element={<RoleProtectedRoute roles={OFFICE_ADMIN_ROLES} />}>
 								<Route path="admin/users" element={<WorkspaceUsers />} />
 								<Route path="admin/users/:id" element={<WorkspaceUserDetail />} />
 							</Route>
