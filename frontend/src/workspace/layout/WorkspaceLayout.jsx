@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api'
-import ProfileCompletionModal from '../../components/dashboard/ProfileCompletionModal'
+import ProfileCompletionBanner from '../../components/dashboard/ProfileCompletionBanner'
 import { Icon } from '../../components/dashboard/Icons'
 import useDashboardRouteLoader from '../../hooks/useDashboardRouteLoader'
 import { ROLES } from '../../constants/roles'
@@ -17,6 +17,7 @@ import { useLanguage } from '../../i18n'
 import { useToast } from '../../context/ToastContext'
 import { formatDisplayName, formatDisplayEmail } from '../../utils/formatters'
 import WorkspaceRouteLoader from '../components/WorkspaceRouteLoader'
+import CitizenDashboardSkeleton from '../pages/user/CitizenDashboardSkeleton'
 import WorkspacePageSearch from '../components/WorkspacePageSearch'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import { useWorkspaceNotifications } from '../hooks/useWorkspaceNotifications'
@@ -46,6 +47,14 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	const { showToast } = useToast()
 	const routeLoading = useDashboardRouteLoader(true)
 	const loaderLabel = workspaceLoaderLabel(location.pathname)
+	const isCitizenHome =
+		user?.role === ROLES.USER &&
+		(location.pathname === '/dashboard' || location.pathname === '/dashboard/')
+	const pageFallback = isCitizenHome ? (
+		<CitizenDashboardSkeleton showActions />
+	) : (
+		<WorkspaceRouteLoader label={loaderLabel} />
+	)
 	const [navOpen, setNavOpen] = useState(false)
 	const [notifOpen, setNotifOpen] = useState(false)
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -238,7 +247,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		}
 	}, [location.pathname, user?.role, reminderDismissed, reminderSuppressed])
 
-	const showProfileModal =
+	const showProfileBanner =
 		user?.role === ROLES.USER &&
 		profileIncomplete &&
 		!reminderDismissed &&
@@ -449,15 +458,21 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 							</div>
 						</div>
 					</header>
+					{showProfileBanner ? (
+						<ProfileCompletionBanner
+							onComplete={handleCompleteProfile}
+							onDismiss={handleDismissProfileReminder}
+						/>
+					) : null}
 					<div
 						className="ws-main"
 						id="dashboard-primary-content"
 						tabIndex={-1}
 						aria-label="Workspace content"
 					>
-						{routeLoading ? <WorkspaceRouteLoader label={loaderLabel} /> : null}
+						{routeLoading ? pageFallback : null}
 						{/* Catch page-chunk suspend here so App Suspense cannot unmount sidebar / a11y chrome */}
-						<Suspense fallback={<WorkspaceRouteLoader label={loaderLabel} />}>
+						<Suspense fallback={pageFallback}>
 							<Outlet context={{ user, onLogout, onUserUpdate }} />
 						</Suspense>
 					</div>
@@ -559,14 +574,6 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 						</div>
 					</div>
 				</div>
-			) : null}
-
-			{user?.role === ROLES.USER ? (
-				<ProfileCompletionModal
-					open={showProfileModal}
-					onComplete={handleCompleteProfile}
-					onDismiss={handleDismissProfileReminder}
-				/>
 			) : null}
 		</div>
 	)

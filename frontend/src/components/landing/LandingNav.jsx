@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import AuthNavLink from './AuthNavLink'
@@ -15,25 +15,35 @@ import { useLanguage } from '../../i18n'
 function LandingNav({ variant = 'static' }) {
 	const [menuOpen, setMenuOpen] = useState(false)
 	const location = useLocation()
+	const navigate = useNavigate()
 	const { t } = useLanguage()
 	const { user, onLogout } = useAuthSession()
 	const isStatic = variant === 'static'
 
-	const shellLinkClass = (path, exact = true) => {
-		const active = exact
-			? location.pathname === path
-			: location.pathname.startsWith(path)
-		return `landing-nav-shell-link${active ? ' is-active' : ''}`
-	}
+	const isCurrentPath = (path, exact = true) =>
+		exact ? location.pathname === path : location.pathname.startsWith(path)
 
-	const drawerLinkClass = (path, exact = true) => {
-		const active = exact
-			? location.pathname === path
-			: location.pathname.startsWith(path)
-		return `landing-nav-drawer-link${active ? ' is-active' : ''}`
-	}
+	const shellLinkClass = (path, exact = true) =>
+		`landing-nav-shell-link${isCurrentPath(path, exact) ? ' is-active' : ''}`
+
+	const drawerLinkClass = (path, exact = true) =>
+		`landing-nav-drawer-link${isCurrentPath(path, exact) ? ' is-active' : ''}`
 
 	const closeMenu = () => setMenuOpen(false)
+
+	/** Already on this page: don't re-navigate (remounts landing + replays animations). */
+	const onNavClick = (path, exact = true) => (e) => {
+		closeMenu()
+		if (!isCurrentPath(path, exact)) return
+		e.preventDefault()
+		if (location.hash) {
+			navigate(
+				{ pathname: location.pathname, search: location.search, hash: '' },
+				{ replace: true },
+			)
+		}
+		window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+	}
 
 	const scrollToPortal = () => {
 		closeMenu()
@@ -108,31 +118,44 @@ function LandingNav({ variant = 'static' }) {
 										>
 											{t('nav.applySignIn')}
 										</button>
-										<Link to="/" onClick={closeMenu} className={drawerLinkClass('/')}>
+										<Link
+											to="/"
+											onClick={onNavClick('/')}
+											className={drawerLinkClass('/')}
+											aria-current={isCurrentPath('/') ? 'page' : undefined}
+										>
 											{t('nav.home')}
 										</Link>
-										<Link to="/about" onClick={closeMenu} className={drawerLinkClass('/about')}>
+										<Link
+											to="/about"
+											onClick={onNavClick('/about')}
+											className={drawerLinkClass('/about')}
+											aria-current={isCurrentPath('/about') ? 'page' : undefined}
+										>
 											{t('nav.about')}
 										</Link>
 										<Link
 											to="/services"
-											onClick={closeMenu}
+											onClick={onNavClick('/services')}
 											className={drawerLinkClass('/services')}
+											aria-current={isCurrentPath('/services') ? 'page' : undefined}
 										>
 											{t('nav.services')}
 										</Link>
 										<Link
 											to="/resources"
-											onClick={closeMenu}
+											onClick={onNavClick('/resources')}
 											className={drawerLinkClass('/resources')}
+											aria-current={isCurrentPath('/resources') ? 'page' : undefined}
 										>
 											{t('nav.resources')}
 										</Link>
 										<NavDashboardMenu variant="drawer" onNavigate={closeMenu} />
 										<Link
 											to="/contact"
-											onClick={closeMenu}
+											onClick={onNavClick('/contact')}
 											className={drawerLinkClass('/contact')}
+											aria-current={isCurrentPath('/contact') ? 'page' : undefined}
 										>
 											{t('nav.contact')}
 										</Link>
@@ -191,15 +214,14 @@ function LandingNav({ variant = 'static' }) {
 			: null
 
 	return (
-		<motion.nav
-			initial={false}
+		<nav
 			id="landing-primary-nav"
 			className={`landing-nav-host${isStatic ? ' landing-nav-host--static' : ' landing-nav-host--overlay'}${menuOpen ? ' is-menu-open' : ''}`}
 			aria-label={t('nav.main')}
 		>
 			<div className="landing-nav-mobile">
 				<div className="landing-nav-mobile-brand">
-					<Link to="/" onClick={closeMenu} className="landing-nav-brand">
+					<Link to="/" onClick={onNavClick('/')} className="landing-nav-brand">
 						<img src={tcpLogo} alt="" className="landing-nav-emblem" aria-hidden />
 						<span className="landing-nav-brand-text">
 							<span className="landing-nav-brand-line landing-nav-brand-line--strong">
@@ -244,7 +266,7 @@ function LandingNav({ variant = 'static' }) {
 			<div className="landing-nav-overlay">
 				<div className="landing-nav-shell">
 					<div className="landing-nav-shell-inner">
-						<Link to="/" className="landing-nav-shell-brand">
+						<Link to="/" onClick={onNavClick('/')} className="landing-nav-shell-brand">
 							<img
 								src={tcpLogo}
 								alt=""
@@ -269,20 +291,45 @@ function LandingNav({ variant = 'static' }) {
 						</Link>
 						<div className="landing-nav-shell-end">
 							<div className="landing-nav-shell-links">
-								<Link to="/" className={shellLinkClass('/')}>
+								<Link
+									to="/"
+									className={shellLinkClass('/')}
+									aria-current={isCurrentPath('/') ? 'page' : undefined}
+									onClick={onNavClick('/')}
+								>
 									{t('nav.home')}
 								</Link>
-								<Link to="/about" className={shellLinkClass('/about')}>
+								<Link
+									to="/about"
+									className={shellLinkClass('/about')}
+									aria-current={isCurrentPath('/about') ? 'page' : undefined}
+									onClick={onNavClick('/about')}
+								>
 									{t('nav.about')}
 								</Link>
-								<Link to="/services" className={shellLinkClass('/services')}>
+								<Link
+									to="/services"
+									className={shellLinkClass('/services')}
+									aria-current={isCurrentPath('/services') ? 'page' : undefined}
+									onClick={onNavClick('/services')}
+								>
 									{t('nav.services')}
 								</Link>
-								<Link to="/resources" className={shellLinkClass('/resources')}>
+								<Link
+									to="/resources"
+									className={shellLinkClass('/resources')}
+									aria-current={isCurrentPath('/resources') ? 'page' : undefined}
+									onClick={onNavClick('/resources')}
+								>
 									{t('nav.resources')}
 								</Link>
 								<NavDashboardMenu />
-								<Link to="/contact" className={shellLinkClass('/contact')}>
+								<Link
+									to="/contact"
+									className={shellLinkClass('/contact')}
+									aria-current={isCurrentPath('/contact') ? 'page' : undefined}
+									onClick={onNavClick('/contact')}
+								>
 									{t('nav.contact')}
 								</Link>
 							</div>
@@ -318,7 +365,7 @@ function LandingNav({ variant = 'static' }) {
 					</div>
 				</div>
 			</div>
-		</motion.nav>
+		</nav>
 	)
 }
 

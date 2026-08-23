@@ -99,8 +99,8 @@ input.admin-tenancy-panel__input {
 .admin-tenancy-panel__input:focus,
 .admin-tenancy-panel__select:focus {
 	outline: none;
-	border-color: var(--ws-accent, #0d47a1);
-	box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.12);
+	border-color: var(--ws-accent);
+	box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
 }
 
 .page.page-dashboard .ws-root .admin-tenancy-panel__filters,
@@ -168,7 +168,7 @@ input.admin-tenancy-panel__input {
 }
 
 .page.page-dashboard .ws-root .admin-tenancy-panel button.ws-admin-tenancy-pill.is-active {
-	background: #0d47a1 !important;
+	background: var(--gov-blue-dark) !important;
 	color: #fff !important;
 }
 
@@ -253,7 +253,7 @@ input.admin-tenancy-panel__input {
 	border: 1px solid #cbd5e1 !important;
 	border-radius: 8px !important;
 	background: #fff !important;
-	color: #0d47a1 !important;
+	color: var(--gov-blue-dark) !important;
 	font-size: 0.8125rem !important;
 	font-weight: 700 !important;
 	text-decoration: none !important;
@@ -262,9 +262,9 @@ input.admin-tenancy-panel__input {
 
 .page.page-dashboard .ws-root .admin-tenancy-panel button.admin-tenancy-panel__clear.ws-btn:hover:not(:disabled),
 .page.page-dashboard .ws-root button.admin-tenancy-panel__clear:hover:not(:disabled) {
-	background: #eff6ff !important;
-	border-color: #93c5fd !important;
-	color: #0d47a1 !important;
+	background: var(--ws-accent-soft) !important;
+	border-color: #90caf9 !important;
+	color: var(--gov-blue-dark) !important;
 	transform: none;
 	box-shadow: none !important;
 }

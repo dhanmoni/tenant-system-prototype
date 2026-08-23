@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { getFormServiceMeta } from '../../data/tenantServices'
 import { APPLICATION_TYPES } from '../../constants/application'
 import ServiceFormShell from '../../components/forms/ServiceFormShell'
@@ -40,21 +40,7 @@ function FormPortal() {
 	}, [formType])
 
 	if (!Panel) {
-		return (
-			<div className="service-form-page">
-				<p className="ws-breadcrumb">
-					<Link to="/dashboard/services">All services</Link>
-					<span className="ws-breadcrumb-sep" aria-hidden>
-						/
-					</span>
-					<span>Unavailable</span>
-				</p>
-				<p className="ws-muted">This form is not available.</p>
-				<Link to="/dashboard/services" className="ws-btn ws-btn--outline">
-					Back to services
-				</Link>
-			</div>
-		)
+		return <Navigate to="/404" replace />
 	}
 
 	return (

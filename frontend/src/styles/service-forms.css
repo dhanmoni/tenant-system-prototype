@@ -34,7 +34,7 @@
 }
 
 .service-form-breadcrumb a {
-	color: var(--landing-accent, #a85824);
+	color: var(--ws-accent);
 	font-weight: 600;
 	text-decoration: none;
 }
@@ -103,7 +103,7 @@
 
 .service-form-page--rent-court .service-form-kicker {
 	background: #dbeafe;
-	color: #1d4ed8;
+	color: var(--ws-accent-hover);
 }
 
 .service-form-page--rent-tribunal .service-form-kicker {
@@ -182,8 +182,8 @@
 }
 
 .service-form-step.is-active .service-form-step__dot {
-	border-color: var(--landing-accent, #a85824);
-	background: var(--landing-accent, #a85824);
+	border-color: var(--ws-accent);
+	background: var(--ws-accent);
 	color: #fff;
 }
 
@@ -282,7 +282,7 @@
 	font-size: 1rem;
 	font-weight: 800;
 	font-style: normal;
-	color: #0d47a1;
+	color: var(--gov-blue-dark);
 	letter-spacing: 0.01em;
 }
 
@@ -355,8 +355,8 @@
 .service-form-panel select:focus,
 .service-form-panel textarea:focus {
 	outline: none;
-	border-color: var(--landing-accent, #a85824);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--landing-accent, #a85824) 18%, transparent);
+	border-color: var(--ws-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-accent) 18%, transparent);
 }
 
 .service-form-page textarea,
@@ -445,8 +445,8 @@
 }
 
 .service-form-actions button:not(.secondary) {
-	border: 1px solid var(--landing-accent, #a85824);
-	background: var(--landing-accent, #a85824);
+	border: 1px solid var(--ws-accent);
+	background: var(--ws-accent);
 	color: #fff;
 }
 
@@ -489,8 +489,8 @@
 	font-size: 0.875rem;
 	font-weight: 700;
 	cursor: pointer;
-	border: 1px solid var(--gov-blue, #0d47a1);
-	background: var(--gov-blue, #0d47a1);
+	border: 1px solid var(--gov-blue);
+	background: var(--gov-blue);
 	color: #fff;
 	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 	transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -498,9 +498,9 @@
 
 .tenancy-uin-lookup__row button:hover:not(:disabled),
 .tenancy-uin-lookup__btn:hover:not(:disabled) {
-	background: var(--gov-blue-dark, #0a3d8f);
-	border-color: var(--gov-blue-dark, #0a3d8f);
-	box-shadow: 0 2px 6px rgba(13, 71, 161, 0.22);
+	background: var(--gov-blue-dark);
+	border-color: var(--gov-blue-dark);
+	box-shadow: 0 2px 6px rgba(21, 101, 192, 0.22);
 }
 
 .tenancy-uin-lookup__row button:disabled,

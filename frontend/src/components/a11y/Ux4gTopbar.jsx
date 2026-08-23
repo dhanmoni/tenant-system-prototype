@@ -19,6 +19,80 @@ export default function Ux4gTopbar({
 	const langWrapRef = useRef(null)
 	const listboxId = useId()
 
+	// NOTE: The UX4G UI uses Material Icons ligatures (e.g. "arrow_drop_down") for glyphs.
+	// When the accessibility widget enables Dyslexia Friendly mode, it overrides font/ligatures,
+	// causing those ligature strings to appear as broken text.
+	// To avoid that entirely, we render simple inline SVGs for the topbar icons.
+	const TopbarIcon = ({ kind, title }) => {
+		const common = {
+			width: 18,
+			height: 18,
+			viewBox: '0 0 24 24',
+			'aria-hidden': true,
+			focusable: 'false',
+		}
+
+		const strokeProps = { stroke: 'currentColor', strokeWidth: 1.8, fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
+		switch (kind) {
+			case 'text_decrease':
+				return (
+					<svg {...common}>
+						<circle cx="12" cy="12" r="9" {...strokeProps} />
+						<path d="M8.5 12.2h7" {...strokeProps} />
+						{title ? <title>{title}</title> : null}
+					</svg>
+				)
+			case 'text_increase':
+				return (
+					<svg {...common}>
+						<circle cx="12" cy="12" r="9" {...strokeProps} />
+						<path d="M8.5 12.2h7" {...strokeProps} />
+						<path d="M12 8.7v7" {...strokeProps} />
+						{title ? <title>{title}</title> : null}
+					</svg>
+				)
+			case 'font_download':
+				return (
+					<svg {...common}>
+						<circle cx="12" cy="12" r="9" {...strokeProps} />
+						<path d="M12 11v5" {...strokeProps} />
+						<path d="M8.8 13.9 12 17l3.2-3.1" {...strokeProps} />
+						<path d="M7.5 6.7h9" {...strokeProps} />
+						{title ? <title>{title}</title> : null}
+					</svg>
+				)
+			case 'accessibility_new':
+				return (
+					<svg {...common}>
+						<circle cx="12" cy="12" r="9" {...strokeProps} />
+						<path d="M9.2 10.3c1.1-1.2 4.5-1.2 5.6 0" {...strokeProps} />
+						<path d="M12 10.8c-1 0-2-.9-2-2s1-2 2-2 2 .9 2 2-1 2-2 2Z" {...strokeProps} />
+						<path d="M10.1 14.1 8.5 18" {...strokeProps} />
+						<path d="M13.9 14.1 15.5 18" {...strokeProps} />
+						{title ? <title>{title}</title> : null}
+					</svg>
+				)
+			case 'language':
+				return (
+					<svg {...common}>
+						<circle cx="12" cy="12" r="9" {...strokeProps} />
+						<path d="M3.6 12h16.8" {...strokeProps} />
+						<path d="M12 3.2c2.4 2.6 2.4 15 0 17.6" {...strokeProps} />
+						{title ? <title>{title}</title> : null}
+					</svg>
+				)
+			case 'arrow_drop_down':
+				return (
+					<svg {...common}>
+						<path d="M6.8 9.5 12 14.7l5.2-5.2" {...strokeProps} />
+						{title ? <title>{title}</title> : null}
+					</svg>
+				)
+			default:
+				return null
+		}
+	}
+
 	useEffect(() => {
 		if (!langOpen) return undefined
 		const onPointerDown = (event) => {
@@ -85,8 +159,8 @@ export default function Ux4gTopbar({
 								onClick={onDecreaseFont}
 								disabled={fontScale === 'normal'}
 							>
-								<span className="ux4g-icon-outlined ux4g-top-bar-icon" aria-hidden>
-									text_decrease
+								<span className="ux4g-top-bar-icon" aria-hidden>
+									<TopbarIcon kind="text_decrease" />
 								</span>
 							</button>
 							<button
@@ -96,8 +170,8 @@ export default function Ux4gTopbar({
 								onClick={onResetFont}
 								aria-pressed={fontScale === 'normal'}
 							>
-								<span className="ux4g-icon-outlined ux4g-top-bar-icon" aria-hidden>
-									font_download
+								<span className="ux4g-top-bar-icon" aria-hidden>
+									<TopbarIcon kind="font_download" />
 								</span>
 							</button>
 							<button
@@ -107,8 +181,8 @@ export default function Ux4gTopbar({
 								onClick={onIncreaseFont}
 								disabled={fontScale === 'xlarge'}
 							>
-								<span className="ux4g-icon-outlined ux4g-top-bar-icon" aria-hidden>
-									text_increase
+								<span className="ux4g-top-bar-icon" aria-hidden>
+									<TopbarIcon kind="text_increase" />
 								</span>
 							</button>
 						</div>
@@ -121,8 +195,8 @@ export default function Ux4gTopbar({
 							className="ux4g-topbar__iconbtn ux4g-d-flex ux4g-jc-center ux4g-ai-center"
 							onClick={openAccessibilityWidget}
 						>
-							<span className="ux4g-icon-outlined ux4g-top-bar-icon" aria-hidden>
-								accessibility_new
+							<span className="ux4g-top-bar-icon" aria-hidden>
+								<TopbarIcon kind="accessibility_new" />
 							</span>
 						</button>
 						<span className="ux4g-bl acc-top-divider ux4g-d-flex" aria-hidden />
@@ -135,12 +209,12 @@ export default function Ux4gTopbar({
 								type="button"
 								onClick={() => setLangOpen((open) => !open)}
 							>
-								<span className="ux4g-icon-outlined ux4g-top-bar-icon icon-language" aria-hidden>
-									language
+								<span className="ux4g-top-bar-icon icon-language" aria-hidden>
+									<TopbarIcon kind="language" />
 								</span>
 								<span className="ux4g-label-m-default">{languageLabel}</span>
-								<span className="ux4g-icon-outlined" aria-hidden>
-									arrow_drop_down
+								<span className="ux4g-top-bar-icon" aria-hidden>
+									<TopbarIcon kind="arrow_drop_down" />
 								</span>
 							</button>
 							{langOpen ? (

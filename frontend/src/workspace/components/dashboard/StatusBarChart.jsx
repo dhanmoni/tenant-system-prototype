@@ -9,7 +9,7 @@ import {
 } from './chartConfig'
 
 const DEFAULT_KEYS = ['SUBMITTED', 'IN_REVIEW', 'REJECTED', 'COMPLETED', 'OTHER']
-const FALLBACK_COLORS = ['#2563eb', '#d97706', '#dc2626', '#16a34a', '#7c3aed', '#0891b2', '#94a3b8']
+const FALLBACK_COLORS = ['#1565c0', '#d97706', '#dc2626', '#16a34a', '#7c3aed', '#0891b2', '#94a3b8']
 
 function StatusBarChart({
 	breakdown = {},

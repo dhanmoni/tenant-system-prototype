@@ -74,6 +74,10 @@ const publicPagesEn = {
 	'pd.link.services': 'Browse all services',
 	'pd.link.guide': 'How to register & apply',
 	'pd.link.login': 'Login or create account',
+	'pd.loading': 'Loading dashboard figures…',
+	'pd.loadError': 'Could not load public statistics.',
+	'pd.retry': 'Try again',
+	'pd.empty': 'No figures published for this period.',
 
 	// Services page
 	'services.title': 'Services',
@@ -190,6 +194,7 @@ const publicPagesEn = {
 		'Directorate of Town and Country Planning, Assam — helpdesk and office contact details.',
 	'contact.helpdesk': 'Helpdesk',
 	'contact.tollFree': 'Toll-free:',
+	'contact.phoneLabel': 'Phone:',
 	'contact.emailLabel': 'Email:',
 	'contact.hoursLabel': 'Hours (demo):',
 	'contact.hoursValue': 'Monday–Friday, 10:00–17:00 IST',
@@ -352,6 +357,32 @@ const publicPagesEn = {
 	'sitemap.tcpFull': 'Directorate of Town & Country Planning, Assam',
 	'sitemap.indiaGov': 'National Portal of India (India.gov.in)',
 	'sitemap.digitalIndia': 'Digital India',
+
+	'notFound.code': '404',
+	'notFound.title': 'Page not found',
+	'notFound.lead': 'This address is not a page on the Assam Tenancy Registration Portal.',
+	'notFound.body':
+		'The link may be mistyped, expired, or the page may have moved. Use the options below to continue.',
+	'notFound.home': 'Go to home',
+	'notFound.dashboard': 'Go to dashboard',
+	'notFound.contact': 'Contact us',
+	'notFound.help': 'Help centre',
+	'notFound.sitemap': 'Sitemap',
+	'notFound.services': 'Services',
+	'notFound.more': 'More ways to continue',
+
+	'forbidden.code': '403',
+	'forbidden.title': 'Access not allowed',
+	'forbidden.lead': 'You do not have permission to open this page with your current account.',
+	'forbidden.body':
+		'If you believe this is a mistake, sign in with the correct role or contact the help desk. Do not bookmark restricted staff addresses.',
+	'forbidden.home': 'Go to home',
+	'forbidden.dashboard': 'Go to dashboard',
+	'forbidden.contact': 'Contact us',
+	'forbidden.help': 'Help centre',
+	'forbidden.sitemap': 'Sitemap',
+	'forbidden.services': 'Services',
+	'forbidden.more': 'More ways to continue',
 }
 
 export default publicPagesEn

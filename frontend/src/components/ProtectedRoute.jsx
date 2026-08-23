@@ -3,7 +3,11 @@ import { Navigate, useLocation } from 'react-router-dom'
 function ProtectedRoute({ user, authLoading = false, children }) {
 	const location = useLocation()
 	if (authLoading) {
-		return null
+		return (
+			<div className="portal-status-page portal-status-page--boot" role="status" aria-live="polite">
+				<p className="portal-status-page__boot">Checking your session…</p>
+			</div>
+		)
 	}
 	if (!user) {
 		return (

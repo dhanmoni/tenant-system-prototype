@@ -526,6 +526,10 @@ const as = {
 	'ws.profile.notifTitle': 'প্ৰফাইল সম্পূৰ্ণ কৰক',
 	'ws.profile.notifBody':
 		'ঠিকনা, পিন কোড, PAN, আৰু ফটো দিয়ক যাতে আবেদন স্বয়ংক্ৰিয়ভাৱে ভৰিব পাৰে।',
+	'ws.profile.bannerText':
+		'প্ৰফাইল সম্পূৰ্ণ কৰক — ঠিকনা, পিন, PAN আৰু ফটো যোগ কৰক।',
+	'ws.profile.bannerAction': 'প্ৰফাইল সম্পূৰ্ণ কৰক',
+	'ws.profile.bannerDismiss': 'ৰিমাইণ্ডাৰ বন্ধ কৰক',
 	'ws.profile.notifTime': 'এতিয়া',
 	'ws.profile.loading': 'প্ৰ\'ফাইল লোড হৈ আছে…',
 	'ws.profile.saved': 'প্ৰ\'ফাইল সংৰক্ষিত হৈছে।',

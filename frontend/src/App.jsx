@@ -16,7 +16,9 @@ import Feedback from './pages/Feedback'
 import AccessibilityStatement from './pages/AccessibilityStatement'
 import HelpCentre from './pages/HelpCentre'
 import NotFound from './pages/NotFound'
+import Forbidden from './pages/Forbidden'
 import ProtectedRoute from './components/ProtectedRoute'
+import RoleProtectedRoute from './components/RoleProtectedRoute'
 import { AuthSessionProvider } from './context/AuthSessionContext'
 import { AuthPanelNavigationProvider } from './context/AuthPanelNavigationContext'
 import { ToastProvider } from './context/ToastContext'
@@ -30,6 +32,14 @@ import {
 } from './utils/skipNavigation'
 import { useLanguage } from './i18n'
 import { scrollToHashTarget } from './utils/scrollToHash'
+import {
+	CITIZEN_ROLES,
+	INBOX_STAFF_ROLES,
+	OFFICE_ADMIN_ROLES,
+	SERVICE_APPLICATION_ROLES,
+	SUPER_ADMIN_ROLES,
+	TENANCY_STAFF_ROLES,
+} from './constants/roles'
 
 const WorkspaceLayout = lazy(() => import('./workspace/layout/WorkspaceLayout'))
 const TenancyCertificate = lazy(() => import('./pages/dashboard/TenancyCertificate'))
@@ -114,7 +124,17 @@ function App() {
 	const [user, setUser] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const navigate = useNavigate()
-	const [fontScale, setFontScale] = useState('normal')
+	const [fontScale, setFontScale] = useState(() => {
+		// Prevent nav/pill reflow: apply saved font scale before first paint.
+		if (typeof window === 'undefined') return 'normal'
+		try {
+			const savedScale = localStorage.getItem('a11y-font-scale')
+			if (savedScale === 'normal' || savedScale === 'large' || savedScale === 'xlarge') return savedScale
+			return 'normal'
+		} catch {
+			return 'normal'
+		}
+	})
 
 	useEffect(() => {
 		let active = true
@@ -169,17 +189,6 @@ function App() {
 	const usesLandingChrome = isLandingHome || isPublicMarketingPage
 	const mainContentTargetId = getMainContentTargetId(location.pathname)
 	const navTargetId = getNavTargetId(location.pathname)
-
-	useEffect(() => {
-		try {
-			const savedScale = localStorage.getItem('a11y-font-scale')
-			if (savedScale === 'normal' || savedScale === 'large' || savedScale === 'xlarge') {
-				setFontScale(savedScale)
-			}
-		} catch {
-			// Ignore localStorage access errors.
-		}
-	}, [])
 
 	useEffect(() => {
 		try {
@@ -325,6 +334,8 @@ function App() {
 						<Route path="/accessibility" element={<AccessibilityStatement />} />
 						<Route path="/help-centre" element={<HelpCentre />} />
 						<Route path="/guidelines" element={<Navigate to="/help-centre" replace />} />
+						<Route path="/403" element={<Forbidden />} />
+						<Route path="/404" element={<NotFound />} />
 						<Route path="/admin" element={<Navigate to="/dashboard" replace />} />
 						<Route
 							path="/dashboard"
@@ -336,46 +347,60 @@ function App() {
 						>
 							<Route index element={<WorkspaceHome />} />
 							<Route path="profile" element={<WorkspaceProfile />} />
-							<Route path="tenancy-certificate" element={<TenancyCertificate />} />
-							<Route path="status" element={<WorkspaceUinStatus />} />
-							<Route
-								path="status/:type/:applicationNo"
-								element={<WorkspaceApplicationDetails />}
-							/>
-							<Route path="services" element={<WorkspaceServices />} />
-							<Route path="forms/:formType" element={<WorkspaceFormPortal />} />
-							<Route path="admin/users" element={<WorkspaceUsers />} />
-							<Route path="admin/users/:id" element={<WorkspaceUserDetail />} />
-							<Route path="admin/inbox" element={<WorkspaceServiceApplications />} />
-							<Route path="admin/applications" element={<WorkspaceServiceApplications />} />
-							<Route
-								path="admin/applications/:applicationNo"
-								element={<WorkspaceAdminApplicationDetails />}
-							/>
-							<Route path="admin/tenancy" element={<WorkspaceTenancyRecords />} />
-							<Route
-								path="admin/tenancy/:applicationNo"
-								element={<WorkspaceAdminApplicationDetails />}
-							/>
-							<Route
-								path="admin/districts"
-								element={<DistrictManagement />}
-							/>
-							<Route path="admin/states" element={<WorkspaceStates />} />
-							<Route path="admin/offices" element={<WorkspaceOffices />} />
-							<Route path="admin/roles" element={<WorkspaceRoles />} />
-							<Route path="admin/designations" element={<WorkspaceDesignations />} />
-							<Route path="admin/activity-log" element={<WorkspaceActivityLog />} />
-							<Route
-								path="join"
-								element={<JoinApplication user={user} />}
-							/>
+
+							<Route element={<RoleProtectedRoute roles={CITIZEN_ROLES} />}>
+								<Route path="tenancy-certificate" element={<TenancyCertificate />} />
+								<Route path="status" element={<WorkspaceUinStatus />} />
+								<Route
+									path="status/:type/:applicationNo"
+									element={<WorkspaceApplicationDetails />}
+								/>
+								<Route path="services" element={<WorkspaceServices />} />
+								<Route path="forms/:formType" element={<WorkspaceFormPortal />} />
+								<Route path="join" element={<JoinApplication user={user} />} />
+							</Route>
+
+							<Route element={<RoleProtectedRoute roles={TENANCY_STAFF_ROLES} />}>
+								<Route path="admin/tenancy" element={<WorkspaceTenancyRecords />} />
+								<Route
+									path="admin/tenancy/:applicationNo"
+									element={<WorkspaceAdminApplicationDetails />}
+								/>
+							</Route>
+
+							<Route element={<RoleProtectedRoute roles={INBOX_STAFF_ROLES} />}>
+								<Route path="admin/inbox" element={<WorkspaceServiceApplications />} />
+							</Route>
+
+							<Route element={<RoleProtectedRoute roles={SERVICE_APPLICATION_ROLES} />}>
+								<Route path="admin/applications" element={<WorkspaceServiceApplications />} />
+								<Route
+									path="admin/applications/:applicationNo"
+									element={<WorkspaceAdminApplicationDetails />}
+								/>
+							</Route>
+
+							<Route element={<RoleProtectedRoute roles={OFFICE_ADMIN_ROLES} />}>
+								<Route path="admin/users" element={<WorkspaceUsers />} />
+								<Route path="admin/users/:id" element={<WorkspaceUserDetail />} />
+							</Route>
+
+							<Route element={<RoleProtectedRoute roles={SUPER_ADMIN_ROLES} />}>
+								<Route path="admin/districts" element={<DistrictManagement />} />
+								<Route path="admin/states" element={<WorkspaceStates />} />
+								<Route path="admin/offices" element={<WorkspaceOffices />} />
+								<Route path="admin/roles" element={<WorkspaceRoles />} />
+								<Route path="admin/designations" element={<WorkspaceDesignations />} />
+								<Route path="admin/activity-log" element={<WorkspaceActivityLog />} />
+							</Route>
+
 							<Route path="admin" element={<Navigate to="/dashboard" replace />} />
 							<Route path=":formType" element={<LegacyFormRedirect />} />
+							<Route path="*" element={<Navigate to="/404" replace />} />
 						</Route>
 						<Route path="/join" element={<JoinEntryRedirect user={user} />} />
 						<Route path="/users/:id" element={<UserDetailRedirect />} />
-						<Route path="*" element={<NotFound />} />
+						<Route path="*" element={<Navigate to="/404" replace />} />
 					</Routes>
 				</Suspense>
 			</main>

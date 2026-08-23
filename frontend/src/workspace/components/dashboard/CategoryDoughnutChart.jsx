@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { doughnutChartOptions } from './chartConfig'
 
-const PALETTE = ['#0d47a1', '#c47a3a', '#2e7d32', '#5c6bc0', '#7c3aed', '#0891b2']
+const PALETTE = ['#1565c0', '#1976d2', '#2e7d32', '#5c6bc0', '#7c3aed', '#0891b2']
 
 function CategoryDoughnutChart({ categories = [], emptyLabel = 'No category data yet.' }) {
 	const chart = useMemo(() => {

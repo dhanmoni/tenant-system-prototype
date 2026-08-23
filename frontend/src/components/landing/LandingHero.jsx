@@ -153,6 +153,15 @@ function LandingHero() {
 
 	const displayIndex = looped ? trackIndex : 0
 
+	const isNearSlide = (realIndex) => {
+		if (!count) return false
+		const dist = Math.min(
+			Math.abs(realIndex - logicalIndex),
+			count - Math.abs(realIndex - logicalIndex),
+		)
+		return dist <= 1
+	}
+
 	return (
 		<section
 			id="landing-hero"
@@ -181,7 +190,9 @@ function LandingHero() {
 							<img
 								src={slide.src}
 								alt=""
-								fetchPriority={slide.lcp ? 'high' : 'low'}
+								loading={slide.lcp || isNearSlide(slide.realIndex) ? 'eager' : 'lazy'}
+								fetchPriority={slide.lcp ? 'high' : isNearSlide(slide.realIndex) ? 'auto' : 'low'}
+								decoding="async"
 								className="landing-hero-slide-img"
 								style={{ objectPosition: slide.objectPosition }}
 							/>

@@ -19,9 +19,9 @@ import {
 function fillForVolume(total, max) {
 	if (!max || !total) return '#eef2f7'
 	const ratio = total / max
-	if (ratio >= 0.75) return '#1d4ed8'
-	if (ratio >= 0.4) return '#3b82f6'
-	if (ratio > 0) return '#bfdbfe'
+	if (ratio >= 0.75) return '#0d47a1'
+	if (ratio >= 0.4) return '#1565c0'
+	if (ratio > 0) return '#e3f2fd'
 	return '#eef2f7'
 }
 
@@ -689,7 +689,7 @@ function AssamDistrictMap({
 				fillColor: isActive
 					? lockToDistrict
 						? '#166534'
-						: '#1e3a8a'
+						: '#0d47a1'
 					: fillForVolume(total, maxTotal),
 				weight: 0,
 				color: '#0f172a',
@@ -702,7 +702,7 @@ function AssamDistrictMap({
 			fillColor: isActive
 				? lockToDistrict
 					? '#166534'
-					: '#1e3a8a'
+					: '#0d47a1'
 				: fillForVolume(total, maxTotal),
 			weight: isActive ? 2.25 : 1.1,
 			color: isActive ? (lockToDistrict ? '#14532d' : '#0f172a') : '#475569',

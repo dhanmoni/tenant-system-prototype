@@ -72,6 +72,10 @@ const publicPagesAs = {
 	'pd.link.services': 'সকলো সেৱা চাওক',
 	'pd.link.guide': 'কেনেকৈ পঞ্জীয়ন আৰু আবেদন কৰিব',
 	'pd.link.login': 'লগইন বা একাউণ্ট সৃষ্টি',
+	'pd.loading': 'ডেশ্ববৰ্ডৰ তথ্য লোড হৈ আছে…',
+	'pd.loadError': 'ৰাজহুৱা পৰিসংখ্যা লোড কৰিব পৰা নগ’ল।',
+	'pd.retry': 'পুনৰ চেষ্টা কৰক',
+	'pd.empty': 'এই সময়ৰ বাবে কোনো তথ্য প্ৰকাশিত হোৱা নাই।',
 
 	'services.title': 'সেৱাসমূহ',
 	'services.lead':
@@ -184,6 +188,7 @@ const publicPagesAs = {
 		'নগৰ আৰু গ্ৰাম্য পৰিকল্পনা সঞ্চালকালয়, অসম — হেল্পডেস্ক আৰু কাৰ্যালয়ৰ যোগাযোগ।',
 	'contact.helpdesk': 'হেল্পডেস্ক',
 	'contact.tollFree': 'ট\'ল-ফ্ৰী:',
+	'contact.phoneLabel': 'ফোন:',
 	'contact.emailLabel': 'ইমেইল:',
 	'contact.hoursLabel': 'সময় (ডেম\'):',
 	'contact.hoursValue': 'সোমবাৰ–শুক্ৰবাৰ, ১০:০০–১৭:০০ IST',
@@ -343,6 +348,32 @@ const publicPagesAs = {
 	'sitemap.tcpFull': 'নগৰ আৰু গ্ৰাম্য পৰিকল্পনা সঞ্চালকালয়, অসম',
 	'sitemap.indiaGov': 'ভাৰতৰ ৰাষ্ট্ৰীয় পৰ্টেল (India.gov.in)',
 	'sitemap.digitalIndia': 'ডিজিটেল ইণ্ডিয়া',
+
+	'notFound.code': '404',
+	'notFound.title': 'পৃষ্ঠা পোৱা নগ\'ল',
+	'notFound.lead': 'এই ঠিকনা অসম ভাড়াঘৰ পঞ্জীয়ন পৰ্টেলৰ কোনো পৃষ্ঠা নহয়।',
+	'notFound.body':
+		'লিংক ভুল হ\'ব পাৰে, ম্যাদ উকলিব পাৰে, বা পৃষ্ঠা স্থানান্তৰিত হ\'ব পাৰে। আগবাঢ়িবলৈ তলৰ বিকল্প ব্যৱহাৰ কৰক।',
+	'notFound.home': 'গৃহপৃষ্ঠালৈ যাওক',
+	'notFound.dashboard': 'ডেশ্ববৰ্ডলৈ যাওক',
+	'notFound.contact': 'যোগাযোগ কৰক',
+	'notFound.help': 'সহায় কেন্দ্ৰ',
+	'notFound.sitemap': 'ছাইটমেপ',
+	'notFound.services': 'সেৱাসমূহ',
+	'notFound.more': 'আগবাঢ়িবলৈ অধিক উপায়',
+
+	'forbidden.code': '403',
+	'forbidden.title': 'প্ৰৱেশ অনুমোদিত নহয়',
+	'forbidden.lead': 'আপোনাৰ বৰ্তমানৰ একাউণ্টেৰে এই পৃষ্ঠা খোলিবলৈ অনুমতি নাই।',
+	'forbidden.body':
+		'যদি এইটো ভুল বুলি ভাৱে, সঠিক ভূমিকাৰে ছাইন ইন কৰক বা সহায় ডেস্কত যোগাযোগ কৰক। সীমিত কৰ্মচাৰী ঠিকনা বুকমাৰ্ক নকৰিব।',
+	'forbidden.home': 'গৃহপৃষ্ঠালৈ যাওক',
+	'forbidden.dashboard': 'ডেশ্ববৰ্ডলৈ যাওক',
+	'forbidden.contact': 'যোগাযোগ কৰক',
+	'forbidden.help': 'সহায় কেন্দ্ৰ',
+	'forbidden.sitemap': 'ছাইটমেপ',
+	'forbidden.services': 'সেৱাসমূহ',
+	'forbidden.more': 'আগবাঢ়িবলৈ অধিক উপায়',
 }
 
 export default publicPagesAs

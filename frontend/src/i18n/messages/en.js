@@ -323,7 +323,7 @@ const en = {
 
 	'home.support.title': 'Need support?',
 	'home.support.lead': 'Contact us for help and support.',
-	'home.support.cta': 'Get in touch',
+	'home.support.cta': 'Contact us',
 
 	'home.logos.aria': 'Related government websites',
 	'home.logos.srOnly':
@@ -527,6 +527,10 @@ const en = {
 	'ws.profile.notifTitle': 'Complete your profile',
 	'ws.profile.notifBody':
 		'Add address, PIN code, PAN, and photo so applications can be auto-filled.',
+	'ws.profile.bannerText':
+		'Complete your profile — add address, PIN, PAN, and photo for auto-fill.',
+	'ws.profile.bannerAction': 'Complete profile',
+	'ws.profile.bannerDismiss': 'Dismiss reminder',
 	'ws.profile.notifTime': 'Now',
 	'ws.profile.loading': 'Loading profile…',
 	'ws.profile.saved': 'Profile saved.',

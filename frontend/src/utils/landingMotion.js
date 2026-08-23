@@ -3,18 +3,29 @@
 export const easePlayful = [0.34, 1.45, 0.64, 1]
 export const easeOutExpo = [0.22, 1, 0.36, 1]
 
+/**
+ * Play intros when the section is actually on screen — not early.
+ * Early triggers stacked transform motion on top of wheel scroll and made the
+ * page feel like it sped up toward the footer.
+ */
+export const landingInView = {
+	once: true,
+	amount: 0.2,
+	margin: '0px 0px -8% 0px',
+}
+
 /** Shared landing section entrance — large fade-in-up */
 export const fadeInUpBigVariants = {
-	hidden: { opacity: 0, y: 80 },
+	hidden: { opacity: 0, y: 36 },
 	visible: {
 		opacity: 1,
 		y: 0,
 		transition: {
-			duration: 1.05,
+			duration: 0.7,
 			ease: easeOutExpo,
 			when: 'beforeChildren',
-			staggerChildren: 0.12,
-			delayChildren: 0.1,
+			staggerChildren: 0.1,
+			delayChildren: 0.06,
 		},
 	},
 }
@@ -137,20 +148,20 @@ export const servicesGridVariants = {
 }
 
 export const servicesCardVariants = {
-	hidden: (i = 0) => ({
+	hidden: {
 		opacity: 0,
-		y: 64 + (3 - i) * 36,
-		scale: 0.9,
-	}),
+		y: 32,
+		scale: 0.96,
+	},
 	visible: {
 		opacity: 1,
 		y: 0,
 		scale: 1,
 		transition: {
 			type: 'spring',
-			stiffness: 240,
-			damping: 20,
-			mass: 0.92,
+			stiffness: 280,
+			damping: 24,
+			mass: 0.85,
 		},
 	},
 }
@@ -501,8 +512,8 @@ export const faqListVariants = {
 export const faqItemVariants = {
 	hidden: {
 		opacity: 0,
-		y: -36,
-		scale: 0.96,
+		y: 18,
+		scale: 0.98,
 	},
 	visible: {
 		opacity: 1,
@@ -511,7 +522,7 @@ export const faqItemVariants = {
 		transition: {
 			type: 'spring',
 			stiffness: 280,
-			damping: 20,
+			damping: 24,
 			mass: 0.82,
 		},
 	},

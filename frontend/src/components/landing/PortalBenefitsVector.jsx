@@ -1,7 +1,8 @@
-import tcpLogo from '../../assets/img/TCP logo.png'
+import stateEmblem from '../../assets/img/TCP logo.png'
 
 /**
- * Portal Benefits vector — government / e-governance style (caramel palette).
+ * Portal Benefits vector — tenancy certificate + digital verification (caramel palette).
+ * Keeps the official state emblem as the focal mark.
  */
 function PortalBenefitsVector({ className = '' }) {
 	return (
@@ -16,118 +17,113 @@ function PortalBenefitsVector({ className = '' }) {
 			<ellipse
 				className="portal-benefits-vector__shadow"
 				cx="240"
-				cy="482"
-				rx="150"
+				cy="492"
+				rx="156"
 				ry="18"
 				fill="#f8cca0"
 				fillOpacity="0.42"
 			/>
 
-			{/* Institutional building */}
-			<g className="portal-benefits-vector__building" transform="translate(96 168)">
-				<rect x="20" y="248" width="248" height="14" rx="4" fill="#f9e4d4" />
-				<rect x="36" y="262" width="216" height="12" rx="4" fill="#f8cca0" />
-
-				<rect x="48" y="120" width="192" height="128" rx="6" fill="url(#gov-build)" />
-
-				<path d="M24 120L144 48L264 120H24Z" fill="#904400" />
-				<path d="M40 120L144 62L248 120H40Z" fill="#c66300" />
-				<path d="M56 120L144 76L232 120H56Z" fill="#e87400" />
-
-				<g className="portal-benefits-vector__windows">
-					<rect x="68" y="128" width="22" height="112" rx="4" fill="#fff" fillOpacity="0.55" />
-					<rect x="110" y="128" width="22" height="112" rx="4" fill="#fff" fillOpacity="0.55" />
-					<rect x="152" y="128" width="22" height="112" rx="4" fill="#fff" fillOpacity="0.55" />
-					<rect x="194" y="128" width="22" height="112" rx="4" fill="#fff" fillOpacity="0.55" />
-				</g>
-
-				<rect x="124" y="168" width="40" height="72" rx="6" fill="#904400" fillOpacity="0.45" />
-				<rect x="130" y="174" width="28" height="66" rx="4" fill="#fff" fillOpacity="0.35" />
-			</g>
-
-			{/* Official circular seal with TCP emblem */}
-			<g transform="translate(292 78)">
-				<g className="portal-benefits-vector__seal">
-					<circle cx="62" cy="62" r="62" fill="#904400" />
-					<circle cx="62" cy="62" r="56" fill="#fff" />
-					<circle
-						className="portal-benefits-vector__seal-ring"
-						cx="62"
-						cy="62"
-						r="50"
-						fill="none"
-						stroke="#c66300"
-						strokeWidth="3.5"
-						strokeDasharray="2.5 3.5"
-					/>
-					<circle cx="62" cy="62" r="40" fill="url(#gov-seal)" />
-					<circle cx="62" cy="62" r="34" fill="none" stroke="#f9e4d4" strokeWidth="1.75" opacity="0.85" />
-					<circle cx="62" cy="62" r="22" fill="#fff" />
-					<image
-						href={tcpLogo}
-						x="46"
-						y="44"
-						width="32"
-						height="36"
-						preserveAspectRatio="xMidYMid meet"
-					/>
-					<g className="portal-benefits-vector__seal-dots">
-						<circle cx="62" cy="16" r="2.2" fill="#e87400" />
-						<circle cx="26" cy="34" r="2" fill="#e87400" />
-						<circle cx="98" cy="34" r="2" fill="#e87400" />
-						<circle cx="26" cy="90" r="2" fill="#e87400" />
-						<circle cx="98" cy="90" r="2" fill="#e87400" />
-						<circle cx="62" cy="108" r="2.2" fill="#e87400" />
-					</g>
-				</g>
-			</g>
-
-			{/* Official certificate / UIN card */}
-			<g transform="translate(52 300)">
+			{/* Tenancy UIN certificate */}
+			<g transform="translate(62 42)">
 				<g className="portal-benefits-vector__card">
 					<rect
-						width="160"
-						height="112"
-						rx="12"
+						width="356"
+						height="408"
+						rx="16"
 						fill="#fff"
 						stroke="#c66300"
 						strokeWidth="2"
-						strokeOpacity="0.4"
+						strokeOpacity="0.35"
 					/>
-					<rect x="0" y="0" width="160" height="10" rx="12" fill="#e87400" />
-					<rect x="12" y="24" width="88" height="8" rx="4" fill="#f9e4d4" />
-					<rect x="12" y="40" width="64" height="6" rx="3" fill="#fdf4eb" />
-					<rect x="12" y="54" width="100" height="6" rx="3" fill="#fdf4eb" />
-					<circle cx="128" cy="72" r="22" fill="none" stroke="#e87400" strokeWidth="2" />
-					<circle cx="128" cy="72" r="14" fill="#f9e4d4" />
+					<rect width="356" height="14" rx="16" fill="#e87400" />
+					<rect x="18" y="22" width="320" height="364" rx="10" fill="#fffcf8" stroke="#f9e4d4" strokeWidth="1.5" />
+
+					{/* Ornate corner accents */}
 					<path
-						d="M122 72l4 4 8-10"
+						d="M34 38h36v3H34zM34 38v36h3V38zM322 38h36v3h-36zM355 38v36h-3V38zM34 374h36v3H34zM34 341v36h3v-36zM322 374h36v3h-36zM355 338v36h-3v-36z"
+						fill="#e87400"
+						fillOpacity="0.22"
+					/>
+
+					{/* Official state emblem */}
+					<g className="portal-benefits-vector__seal" transform="translate(118 54)">
+						<circle cx="60" cy="46" r="52" fill="#fff" stroke="#f9e4d4" strokeWidth="2" />
+						<circle
+							className="portal-benefits-vector__seal-ring"
+							cx="60"
+							cy="46"
+							r="46"
+							fill="none"
+							stroke="#c66300"
+							strokeWidth="2.5"
+							strokeDasharray="3 4"
+							strokeOpacity="0.55"
+						/>
+						<image
+							href={stateEmblem}
+							x="22"
+							y="4"
+							width="76"
+							height="84"
+							preserveAspectRatio="xMidYMid meet"
+						/>
+					</g>
+
+					{/* Certificate header lines */}
+					<rect x="88" y="168" width="180" height="8" rx="4" fill="#904400" fillOpacity="0.18" />
+					<rect x="108" y="184" width="140" height="6" rx="3" fill="#f9e4d4" />
+					<rect x="98" y="198" width="160" height="5" rx="2.5" fill="#fdf4eb" />
+
+					{/* UIN block */}
+					<rect x="44" y="224" width="268" height="54" rx="10" fill="#fff" stroke="#e87400" strokeWidth="1.5" strokeOpacity="0.35" />
+					<rect x="58" y="238" width="72" height="7" rx="3.5" fill="#f9e4d4" />
+					<rect x="58" y="254" width="196" height="10" rx="5" fill="#904400" fillOpacity="0.22" />
+
+					{/* Detail rows */}
+					<rect x="44" y="296" width="118" height="6" rx="3" fill="#fdf4eb" />
+					<rect x="44" y="312" width="148" height="6" rx="3" fill="#fdf4eb" />
+					<rect x="44" y="328" width="132" height="6" rx="3" fill="#fdf4eb" />
+					<rect x="44" y="344" width="160" height="6" rx="3" fill="#fdf4eb" />
+
+					{/* QR verification */}
+					<rect x="248" y="292" width="64" height="64" rx="8" fill="#fff" stroke="#c66300" strokeWidth="1.5" strokeOpacity="0.4" />
+					<rect x="258" y="302" width="12" height="12" rx="2" fill="#904400" fillOpacity="0.35" />
+					<rect x="290" y="302" width="12" height="12" rx="2" fill="#904400" fillOpacity="0.35" />
+					<rect x="258" y="334" width="12" height="12" rx="2" fill="#904400" fillOpacity="0.35" />
+					<rect x="274" y="318" width="8" height="8" rx="1.5" fill="#e87400" fillOpacity="0.45" />
+					<rect x="286" y="330" width="16" height="8" rx="2" fill="#c66300" fillOpacity="0.3" />
+
+					{/* Approved stamp */}
+					<circle cx="92" cy="368" r="24" fill="none" stroke="#e87400" strokeWidth="2" strokeOpacity="0.55" />
+					<circle cx="92" cy="368" r="17" fill="#f9e4d4" fillOpacity="0.65" />
+					<path
+						d="M84 368l6 6 12-14"
 						stroke="#904400"
 						strokeWidth="2.25"
 						strokeLinecap="round"
 						strokeLinejoin="round"
 					/>
-					<rect x="12" y="88" width="72" height="8" rx="3" fill="#904400" fillOpacity="0.2" />
 				</g>
 			</g>
 
-			{/* Digital service chip */}
-			<g transform="translate(280 360)">
+			{/* Digital verification chip */}
+			<g transform="translate(24 392)">
 				<g className="portal-benefits-vector__chip">
 					<rect
-						width="120"
-						height="56"
+						width="128"
+						height="58"
 						rx="12"
 						fill="url(#gov-chip)"
 						stroke="#904400"
 						strokeWidth="1.5"
 						strokeOpacity="0.25"
 					/>
-					<rect x="14" y="14" width="48" height="8" rx="4" fill="#fff" fillOpacity="0.85" />
-					<rect x="14" y="30" width="70" height="7" rx="3.5" fill="#fff" fillOpacity="0.5" />
-					<circle cx="98" cy="28" r="10" fill="#fff" fillOpacity="0.9" />
+					<rect x="14" y="14" width="52" height="8" rx="4" fill="#fff" fillOpacity="0.85" />
+					<rect x="14" y="30" width="74" height="7" rx="3.5" fill="#fff" fillOpacity="0.5" />
+					<circle cx="104" cy="29" r="10" fill="#fff" fillOpacity="0.9" />
 					<path
-						d="M94 28l3 3 6-7"
+						d="M100 29l3 3 6-7"
 						stroke="#e87400"
 						strokeWidth="2"
 						strokeLinecap="round"
@@ -136,19 +132,35 @@ function PortalBenefitsVector({ className = '' }) {
 				</g>
 			</g>
 
+			{/* Shield trust badge */}
+			<g transform="translate(352 88)">
+				<g className="portal-benefits-vector__chip">
+					<path
+						d="M52 8L88 22v28c0 18-14 30-36 36C30 80 16 68 16 50V22L52 8z"
+						fill="url(#gov-shield)"
+						stroke="#904400"
+						strokeWidth="1.5"
+						strokeOpacity="0.28"
+					/>
+					<path
+						d="M52 30l4 4 9-11"
+						stroke="#fff"
+						strokeWidth="2.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
+				</g>
+			</g>
+
 			<defs>
-				<linearGradient id="gov-build" x1="48" y1="120" x2="240" y2="248" gradientUnits="userSpaceOnUse">
-					<stop stopColor="#f5b370" />
-					<stop offset="0.55" stopColor="#e87400" />
-					<stop offset="1" stopColor="#c66300" />
-				</linearGradient>
-				<linearGradient id="gov-seal" x1="20" y1="20" x2="96" y2="96" gradientUnits="userSpaceOnUse">
-					<stop stopColor="#c66300" />
-					<stop offset="1" stopColor="#904400" />
-				</linearGradient>
 				<linearGradient id="gov-chip" x1="0" y1="0" x2="120" y2="56" gradientUnits="userSpaceOnUse">
 					<stop stopColor="#f29940" />
 					<stop offset="1" stopColor="#904400" />
+				</linearGradient>
+				<linearGradient id="gov-shield" x1="16" y1="8" x2="88" y2="86" gradientUnits="userSpaceOnUse">
+					<stop stopColor="#f5b370" />
+					<stop offset="0.55" stopColor="#e87400" />
+					<stop offset="1" stopColor="#c66300" />
 				</linearGradient>
 			</defs>
 		</svg>

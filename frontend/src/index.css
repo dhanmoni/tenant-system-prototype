@@ -33,9 +33,7 @@
 	-moz-osx-font-smoothing: grayscale;
 	scrollbar-gutter: stable;
 
-	/* NIC Theme Colors */
-	--nic-green: #4b8aea;
-	--nic-green-dark: #1c66d4;
+	/* Neutral / layout */
 	--nic-dark: #3c3d41;
 	--nic-text: #333;
 	--nic-text-light: #505050;
@@ -44,18 +42,11 @@
 	--nic-border: #e7e7e7;
 	--nic-card-shadow: 0 4px 6px rgba(50, 50, 93, .15), 0 1px 3px rgba(0, 0, 0, .08);
 	--nic-card-shadow-hover: 0 13px 27px -5px rgba(50, 50, 93, .25), 0 8px 16px -8px rgba(0, 0, 0, .3), 0 -6px 16px -6px rgba(0, 0, 0, .025);
-	--nic-link: #005776;
-	/* Government / NIC Dashboard */
-	--gov-blue: #0d47a1;
-	--gov-blue-dark: #0a3d8a;
-	--gov-blue-light: #e3f2fd;
-	--gov-heading: #1a237e;
 	--gov-border: #b0bec5;
 	--gov-bg: #f5f5f5;
-	/* Form fields: subtle grey (gov-style) */
 	--form-field-bg: #f1f3f5;
 	--form-field-border: #cfd8dc;
-	/* Landing page refined caramel palette */
+	/* Canonical brand palette (caramel) */
 	--color-light-caramel-50: #fdf4eb;
 	--color-light-caramel-100: #f9e4d4;
 	--color-light-caramel-200: #f3c69d;
@@ -76,6 +67,27 @@
 	--landing-ink-mid: color-mix(in srgb, var(--landing-ink) 42%, transparent);
 	--landing-on-dark: var(--color-light-caramel-50);
 	--landing-on-dark-muted: color-mix(in srgb, var(--color-light-caramel-50) 88%, transparent);
+	/* Workspace palette — classic portal blue */
+	--portal-accent: #2563eb;
+	--portal-accent-dark: #1e40af;
+	--portal-accent-hover: #1d4ed8;
+	--portal-accent-soft: #eff6ff;
+	--portal-accent-muted: #bfdbfe;
+	--portal-accent-focus: #93c5fd;
+	--portal-link: #2563eb;
+	--portal-heading: #0f172a;
+	/* Workspace shell accents */
+	--ws-accent: var(--portal-accent);
+	--ws-accent-soft: var(--portal-accent-soft);
+	--ws-accent-hover: var(--portal-accent-hover);
+	/* Legacy NIC / gov aliases → professional portal (dashboard CSS) */
+	--nic-green: var(--portal-accent);
+	--nic-green-dark: var(--portal-accent-dark);
+	--nic-link: var(--portal-link);
+	--gov-blue: var(--portal-accent);
+	--gov-blue-dark: var(--portal-accent-dark);
+	--gov-blue-light: var(--portal-accent-soft);
+	--gov-heading: var(--portal-heading);
 	--font-gov: 'Lato', 'Segoe UI', system-ui, sans-serif;
 	--font-hero: 'Lato', 'Segoe UI', system-ui, sans-serif;
 }
@@ -104,6 +116,13 @@ a {
 
 a:hover {
 	text-decoration: underline;
+}
+
+/* Marketing shell keeps caramel links via --nic-link remap */
+.page-landing,
+.page-public-site,
+.page-public-marketing {
+	--nic-link: var(--landing-accent);
 }
 
 button,

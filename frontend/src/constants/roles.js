@@ -35,3 +35,21 @@ export const TENANCY_STAFF_ROLES = [
 	ROLES.RENT_AUTHORITY,
 	ROLES.RA_ASSISTANT,
 ];
+
+export const CITIZEN_ROLES = [ROLES.USER]
+
+export const SUPER_ADMIN_ROLES = [ROLES.SUPER_ADMIN]
+
+/** Staff who manage users / service application queues. */
+export const OFFICE_ADMIN_ROLES = [...ADMIN_ROLES, ...PRINCIPAL_ROLES]
+
+/** Assistants, valuers, and principals who may open the inbox queue. */
+export const INBOX_STAFF_ROLES = [...ASSISTANT_ROLES, ...PRINCIPAL_ROLES, ROLES.VALUER]
+
+/** Anyone who may open the service-application list or an application record. */
+export const SERVICE_APPLICATION_ROLES = [
+	...ADMIN_ROLES,
+	...PRINCIPAL_ROLES,
+	...ASSISTANT_ROLES,
+	ROLES.VALUER,
+]

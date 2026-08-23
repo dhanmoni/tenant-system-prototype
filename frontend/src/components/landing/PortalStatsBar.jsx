@@ -9,6 +9,7 @@ import {
 	scrollStatLabelVariants,
 	scrollStatRailVariants,
 	scrollStatSectionVariants,
+	landingInView,
 } from '../../utils/landingMotion'
 import { useLanguage } from '../../i18n'
 
@@ -116,7 +117,7 @@ function AnimatedFigure({ stat, active }) {
 function PortalStatsBar() {
 	const { t } = useLanguage()
 	const stripRef = useRef(null)
-	const isInView = useInView(stripRef, { once: true, amount: 0.2 })
+	const isInView = useInView(stripRef, landingInView)
 	const reduceMotion = useReducedMotion()
 	const [kpis, setKpis] = useState(() => mapPortalKpis())
 	const [statsReady, setStatsReady] = useState(false)

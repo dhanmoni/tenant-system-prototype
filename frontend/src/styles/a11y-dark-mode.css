@@ -22,7 +22,7 @@ body.dark-mode {
 	--nic-text: #f3e6d8;
 	--nic-text-light: #cbb9a6;
 	--gov-bg: #0f1419;
-	--gov-blue-light: #1a2740;
+	--gov-blue-light: #2a1f14;
 	--gov-border: #3a4656;
 	--form-field-bg: #121820;
 	--form-field-border: #3a4656;
@@ -709,9 +709,9 @@ body.dark-mode .admin-user-role--super-admin {
 }
 
 body.dark-mode .admin-user-role--district-admin {
-	color: #93c5fd !important;
+	color: #f3c69d !important;
 	background: rgba(59, 130, 246, 0.18) !important;
-	border-color: #3b82f6 !important;
+	border-color: var(--landing-accent) !important;
 }
 
 body.dark-mode .admin-user-role--rent-authority,

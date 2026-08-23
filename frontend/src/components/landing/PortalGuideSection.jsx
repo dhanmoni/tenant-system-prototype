@@ -19,6 +19,7 @@ import {
 	guideTitleAccentVariants,
 	guideTitleWordVariants,
 	introLeadVariants,
+	landingInView,
 } from '../../utils/landingMotion'
 
 const GUIDE_FLOAT_MOTIFS = [
@@ -55,9 +56,9 @@ function GuideAnimatedTitle({ titleId, leadText, accentText, fullTitle, reduceMo
 			className="landing-section-title landing-section-title--playful"
 			aria-label={fullTitle}
 		>
-			{leadWords.map((word) => (
+			{leadWords.map((word, index) => (
 				<motion.span
-					key={word}
+					key={`${word}-${index}`}
 					className="landing-section-title__word"
 					variants={reduceMotion ? undefined : guideTitleWordVariants}
 				>
@@ -78,11 +79,7 @@ function PortalGuideSection() {
 	const { t } = useLanguage()
 	const sectionRef = useRef(null)
 	const reduceMotion = useReducedMotion()
-	const inView = useInView(sectionRef, {
-		once: true,
-		amount: 0.2,
-		margin: '0px 0px -8% 0px',
-	})
+	const inView = useInView(sectionRef, landingInView)
 	const reveal = Boolean(reduceMotion) || inView
 
 	const steps = useMemo(
@@ -157,7 +154,10 @@ function PortalGuideSection() {
 								>
 									{step.num}
 								</motion.span>
-								<motion.div variants={reduceMotion ? undefined : guideStepCopyVariants}>
+								<motion.div
+									className="portal-guide-step__copy"
+									variants={reduceMotion ? undefined : guideStepCopyVariants}
+								>
 									<h3 className="portal-guide-step__title">{step.title}</h3>
 									<p className="portal-guide-step__text">{step.text}</p>
 								</motion.div>
