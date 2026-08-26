@@ -554,7 +554,8 @@ const AdminApplicationDetails = () => {
 		if (!isRtAppeal) return null
 
 		const canAddProceeding =
-			user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL
+			(user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL) &&
+			application.status !== STATUS.SUBMITTED
 
 		const formatNoticeType = (type) =>
 			String(type || '')

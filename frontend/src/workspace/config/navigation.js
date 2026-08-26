@@ -52,7 +52,7 @@ export function getWorkspaceNavigation(user) {
 		}
 
 		applicationItems.push({
-			to: '/dashboard/admin/inbox',
+			to: '/dashboard/admin/applications',
 			labelKey: 'ws.nav.serviceApplications',
 			icon: 'services',
 		})

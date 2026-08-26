@@ -64,7 +64,7 @@
 .admin-app-details__back-icon {
 	width: 1rem;
 	height: 1rem;
-	transform: rotate(180deg);
+	transform: rotate(360deg);
 }
 
 .admin-app-details__edit-banner {
