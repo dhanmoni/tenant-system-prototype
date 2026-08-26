@@ -28,6 +28,7 @@ function WorkspaceProfile() {
 	const displayName = formatDisplayName(profileName || user?.name)
 	const displayEmail = formatDisplayEmail(profileEmail || user?.email)
 	const roleLabel = user?.role ? t(`role.${user.role}`) : '—'
+	const isCitizen = user?.role === 'user'
 
 	const showSaveToast = useCallback(
 		(message) => {
@@ -74,11 +75,12 @@ function WorkspaceProfile() {
 				setProfilePhotoPreview('')
 			}
 
-			const hasFullProfile =
-				profileUser.address &&
-				profileUser.pin_code &&
-				profileUser.pan_card &&
-				(photoUrl || photoPath)
+			const hasFullProfile = isCitizen
+				? (profileUser.address &&
+				  profileUser.pin_code &&
+				  profileUser.pan_card &&
+				  (photoUrl || photoPath))
+				: true
 
 			setProfileEditing(!hasFullProfile)
 		} catch (err) {
@@ -164,8 +166,9 @@ function WorkspaceProfile() {
 		}
 	}
 
-	const hasProfile =
-		!!profileAddress && !!profilePin && !!profilePan && !!profilePhotoPreview
+	const hasProfile = isCitizen
+		? !!profileAddress && !!profilePin && !!profilePan && !!profilePhotoPreview
+		: true
 
 	if (profileLoading && !profileName) {
 		return (
@@ -203,13 +206,15 @@ function WorkspaceProfile() {
 								{profileDistrict ? <span>{profileDistrict}</span> : null}
 							</div>
 						</div>
-						<button
-							type="button"
-							className="ws-btn ws-btn--primary ws-profile-minimal-edit"
-							onClick={startEditing}
-						>
-							{t('ws.profile.edit')}
-						</button>
+						{isCitizen && (
+							<button
+								type="button"
+								className="ws-btn ws-btn--primary ws-profile-minimal-edit"
+								onClick={startEditing}
+							>
+								{t('ws.profile.edit')}
+							</button>
+						)}
 					</header>
 
 					{error ? (
@@ -235,18 +240,28 @@ function WorkspaceProfile() {
 							<span className="ws-profile-field-label">{t('ws.profile.field.district')}</span>
 							<strong>{profileDistrict || '—'}</strong>
 						</div>
-						<div className="ws-profile-view-item ws-profile-view-item--full">
-							<span className="ws-profile-field-label">{t('ws.profile.field.address')}</span>
-							<strong>{profileAddress || '—'}</strong>
-						</div>
-						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">{t('ws.profile.field.pin')}</span>
-							<strong>{profilePin || '—'}</strong>
-						</div>
-						<div className="ws-profile-view-item">
-							<span className="ws-profile-field-label">{t('ws.profile.field.pan')}</span>
-							<strong>{profilePan || '—'}</strong>
-						</div>
+						{isCitizen && (
+							<>
+								<div className="ws-profile-view-item ws-profile-view-item--full">
+									<span className="ws-profile-field-label">{t('ws.profile.field.address')}</span>
+									<strong>{profileAddress || '—'}</strong>
+								</div>
+								<div className="ws-profile-view-item">
+									<span className="ws-profile-field-label">{t('ws.profile.field.pin')}</span>
+									<strong>{profilePin || '—'}</strong>
+								</div>
+								<div className="ws-profile-view-item">
+									<span className="ws-profile-field-label">{t('ws.profile.field.pan')}</span>
+									<strong>{profilePan || '—'}</strong>
+								</div>
+							</>
+						)}
+						{!isCitizen && user?.created_at && (
+							<div className="ws-profile-view-item">
+								<span className="ws-profile-field-label">Member Since</span>
+								<strong>{new Date(user.created_at).toLocaleDateString()}</strong>
+							</div>
+						)}
 					</div>
 				</section>
 			) : (
@@ -264,7 +279,7 @@ function WorkspaceProfile() {
 								<input
 									type="file"
 									accept="image/png,image/jpeg"
-									required={!profilePhotoPreview}
+									required={isCitizen && !profilePhotoPreview}
 									onChange={handlePhotoChange}
 								/>
 								{profilePhotoPreview ? t('ws.profile.change') : t('ws.profile.upload')}
@@ -303,46 +318,50 @@ function WorkspaceProfile() {
 							<span className="ws-profile-field-label">{t('ws.profile.field.district')}</span>
 							<input type="text" value={profileDistrict} readOnly />
 						</label>
-						<label className="ws-profile-field ws-profile-field--full">
-							<span className="ws-profile-field-label">{t('ws.profile.field.address')}</span>
-							<textarea
-								rows={3}
-								value={profileAddress}
-								onChange={(e) => setProfileAddress(e.target.value)}
-								maxLength={500}
-								required
-							/>
-						</label>
-						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">{t('ws.profile.field.pin')}</span>
-							<input
-								type="text"
-								inputMode="numeric"
-								value={profilePin}
-								onChange={(e) => {
-									if (/^\d*$/.test(e.target.value)) setProfilePin(e.target.value)
-								}}
-								pattern="^\d{6}$"
-								title={t('ws.profile.pinTitle')}
-								maxLength={6}
-								required
-							/>
-						</label>
-						<label className="ws-profile-field">
-							<span className="ws-profile-field-label">{t('ws.profile.field.pan')}</span>
-							<input
-								type="text"
-								value={profilePan}
-								onChange={(e) => {
-									const next = e.target.value.toUpperCase()
-									if (/^[A-Z0-9]*$/.test(next)) setProfilePan(next)
-								}}
-								pattern="^[A-Z]{5}[0-9]{4}[A-Z]$"
-								title={t('ws.profile.panTitle')}
-								maxLength={10}
-								required
-							/>
-						</label>
+						{isCitizen && (
+							<>
+								<label className="ws-profile-field ws-profile-field--full">
+									<span className="ws-profile-field-label">{t('ws.profile.field.address')}</span>
+									<textarea
+										rows={3}
+										value={profileAddress}
+										onChange={(e) => setProfileAddress(e.target.value)}
+										maxLength={500}
+										required
+									/>
+								</label>
+								<label className="ws-profile-field">
+									<span className="ws-profile-field-label">{t('ws.profile.field.pin')}</span>
+									<input
+										type="text"
+										inputMode="numeric"
+										value={profilePin}
+										onChange={(e) => {
+											if (/^\d*$/.test(e.target.value)) setProfilePin(e.target.value)
+										}}
+										pattern="^\d{6}$"
+										title={t('ws.profile.pinTitle')}
+										maxLength={6}
+										required
+									/>
+								</label>
+								<label className="ws-profile-field">
+									<span className="ws-profile-field-label">{t('ws.profile.field.pan')}</span>
+									<input
+										type="text"
+										value={profilePan}
+										onChange={(e) => {
+											const next = e.target.value.toUpperCase()
+											if (/^[A-Z0-9]*$/.test(next)) setProfilePan(next)
+										}}
+										pattern="^[A-Z]{5}[0-9]{4}[A-Z]$"
+										title={t('ws.profile.panTitle')}
+										maxLength={10}
+										required
+									/>
+								</label>
+							</>
+						)}
 					</div>
 
 					<div className="ws-profile-minimal-actions">

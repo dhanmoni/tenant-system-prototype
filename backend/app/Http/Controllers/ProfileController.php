@@ -12,8 +12,8 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'user') {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $user->load(['district.state']);
@@ -30,17 +30,19 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        if (!$user || $user->role !== 'user') {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
+
+        $isCitizen = $user->role === 'user';
 
         $data = $request->validate([
             'profile_type' => ['nullable', 'string', 'in:landlord,tenant'],
-            'address' => ['required', 'string', 'max:500'],
-            'pin_code' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
-            'pan_card' => ['required', 'string', 'size:10', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/i'],
+            'address' => [$isCitizen ? 'required' : 'nullable', 'string', 'max:500'],
+            'pin_code' => [$isCitizen ? 'required' : 'nullable', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
+            'pan_card' => [$isCitizen ? 'required' : 'nullable', 'string', 'size:10', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/i'],
             'passport_photo' => [
-                Rule::requiredIf(!$user->passport_photo_path),
+                $isCitizen ? Rule::requiredIf(!$user->passport_photo_path) : 'nullable',
                 'nullable',
                 'file',
                 'image',
@@ -66,9 +68,15 @@ class ProfileController extends Controller
         if (array_key_exists('profile_type', $data) && !is_null($data['profile_type'])) {
             $user->profile_type = $data['profile_type'];
         }
-        $user->address = $data['address'];
-        $user->pin_code = $data['pin_code'];
-        $user->pan_card = strtoupper($data['pan_card']);
+        if (array_key_exists('address', $data)) {
+            $user->address = $data['address'];
+        }
+        if (array_key_exists('pin_code', $data)) {
+            $user->pin_code = $data['pin_code'];
+        }
+        if (!empty($data['pan_card'])) {
+            $user->pan_card = strtoupper($data['pan_card']);
+        }
 
         if ($request->hasFile('passport_photo')) {
             if ($user->passport_photo_path) {
