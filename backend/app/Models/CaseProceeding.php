@@ -17,6 +17,7 @@ class CaseProceeding extends Model
         'hearing_date',
         'hearing_time',
         'venue',
+        'previous_hearing_date',
         'remarks',
         'additional_remarks',
         'sent_by_user_id',

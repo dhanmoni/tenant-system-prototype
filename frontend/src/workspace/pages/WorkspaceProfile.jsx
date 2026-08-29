@@ -4,12 +4,13 @@ import api, { csrf } from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../utils/formatters'
 import { useLanguage } from '../../i18n'
+import { useProfile } from '../../hooks/useProfile'
 
 function WorkspaceProfile() {
 	const { user, onUserUpdate } = useOutletContext()
 	const { t } = useLanguage()
+	const { data: profileUser, isLoading: profileLoading, isError, refetch: loadProfile } = useProfile()
 	const [error, setError] = useState('')
-	const [profileLoading, setProfileLoading] = useState(false)
 	const [profileEditing, setProfileEditing] = useState(false)
 	const [saveToast, setSaveToast] = useState('')
 	const saveToastTimerRef = useRef(null)
@@ -43,18 +44,7 @@ function WorkspaceProfile() {
 	)
 
 	useEffect(() => {
-		loadProfile()
-		return () => {
-			if (saveToastTimerRef.current) clearTimeout(saveToastTimerRef.current)
-		}
-	}, [])
-
-	const loadProfile = async () => {
-		setError('')
-		setProfileLoading(true)
-		try {
-			const { data } = await api.get('/api/profile')
-			const profileUser = data.user || {}
+		if (profileUser) {
 			setProfileName(profileUser.name || '')
 			setProfileEmail(profileUser.email || '')
 			setProfilePhone(profileUser.phone || '')
@@ -83,12 +73,12 @@ function WorkspaceProfile() {
 				: true
 
 			setProfileEditing(!hasFullProfile)
-		} catch (err) {
-			setError(err?.response?.data?.message || t('ws.profile.loadError'))
-		} finally {
-			setProfileLoading(false)
 		}
-	}
+	}, [profileUser, isCitizen, apiBaseUrl])
+	
+	useEffect(() => {
+		if (isError) setError(t('ws.profile.loadError'))
+	}, [isError, t])
 
 	const handlePhotoChange = (e) => {
 		const file = e.target.files?.[0] || null
@@ -152,6 +142,7 @@ function WorkspaceProfile() {
 			setProfilePhoto(null)
 			setProfileEditing(false)
 			showSaveToast(t('ws.profile.saved'))
+			loadProfile() // refresh cache
 		} catch (err) {
 			const data = err?.response?.data
 			const errors = data?.errors || {}

@@ -21,7 +21,7 @@ export default function NoticeDocumentViewer({ open, onClose, proceeding, applic
         window.location.reload() // Quick way to restore React bindings after print
     }
 
-    const { notice_type, hearing_date, hearing_time, venue, remarks, additional_remarks } = proceeding
+    const { notice_type, hearing_date, hearing_time, venue, previous_hearing_date, remarks, additional_remarks } = proceeding
 
     const applicantName = application.appellant_name || application.user?.name || 'Applicant'
     const applicantAddress = application.appellant_residential_address || 'Address'
@@ -38,7 +38,7 @@ export default function NoticeDocumentViewer({ open, onClose, proceeding, applic
     const data = {
         applicantName, applicantAddress, respondentName, respondentAddress, 
         propertyAddress, districtName, caseNo, dateStr,
-        hearing_date, hearing_time, venue, remarks, additional_remarks
+        hearing_date, hearing_time, venue, previous_hearing_date, remarks, additional_remarks
     }
 
     const renderContent = () => {

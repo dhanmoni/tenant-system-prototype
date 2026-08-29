@@ -4,6 +4,7 @@ import api from '../../../api'
 import { fetchAdminApplication, fetchValuers as fetchValuerUsers } from '../../../services/adminApplications'
 import { getApiErrorMessage } from '../../../services/errors'
 import { useLanguage } from '../../../i18n'
+import { useAdminProceedings, useValuers } from '../../../hooks/useAdminApplicationDetails'
 import { Icon } from '../../../components/dashboard/Icons'
 import WorkflowConfirmModal from '../../../components/dashboard/WorkflowConfirmModal'
 import { STATUS, STATUS_LABELS } from '../../../constants/status'
@@ -359,12 +360,14 @@ const AdminApplicationDetails = () => {
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
+	
+	const { data: valuers = [] } = useValuers()
+	const { data: proceedings = [], isLoading: proceedingsLoading, refetch: refetchProceedings } = useAdminProceedings(application?.form_type, application?.id)
 	const [actionLoading, setActionLoading] = useState(false)
 	const [superAdminControls, setSuperAdminControls] = useState({ status: '', assigned_to_role: '' })
 	const [isEditing, setIsEditing] = useState(false)
 	const [editForm, setEditForm] = useState({})
 	const [saveError, setSaveError] = useState('')
-	const [valuers, setValuers] = useState([])
 	const [selectedValuerId, setSelectedValuerId] = useState('')
 	const [valuerLoadError, setValuerLoadError] = useState('')
 	const [valuerReport, setValuerReport] = useState('')
@@ -378,8 +381,6 @@ const AdminApplicationDetails = () => {
 	const [paperHeight, setPaperHeight] = useState(1100)
 	
 	// Case Proceedings State
-	const [proceedings, setProceedings] = useState([])
-	const [proceedingsLoading, setProceedingsLoading] = useState(false)
 	const [showProceedingModal, setShowProceedingModal] = useState(false)
 	const [proceedingSubmitting, setProceedingSubmitting] = useState(false)
 	const [viewProceedingDoc, setViewProceedingDoc] = useState(null)
@@ -509,26 +510,13 @@ const AdminApplicationDetails = () => {
 		}
 	}
 
-	const fetchProceedings = async (app) => {
-		if (!app) return
-		const formType = app.form_type || APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL;
-		try {
-			setProceedingsLoading(true)
-			const res = await api.get(`/api/admin/applications/${formType}/${app.id}/proceedings`)
-			setProceedings(res.data.proceedings || [])
-		} catch {
-			setProceedings([])
-		} finally {
-			setProceedingsLoading(false)
-		}
-	}
 
 	const handleProceedingSubmit = async (formData) => {
 		try {
 			setProceedingSubmitting(true)
 			const formType = application.form_type || APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL;
-			const res = await api.post(`/api/admin/applications/${formType}/${application.id}/proceedings`, formData)
-			setProceedings([res.data.proceeding, ...proceedings])
+			await api.post(`/api/admin/applications/${formType}/${application.id}/proceedings`, formData)
+			refetchProceedings()
 			setShowProceedingModal(false)
 		} catch (err) {
 			showToast(err?.response?.data?.message || 'Failed to save proceeding', 'error')
@@ -540,12 +528,6 @@ const AdminApplicationDetails = () => {
 	useEffect(() => {
 		fetchDetails()
 	}, [applicationNo])
-
-	useEffect(() => {
-		if (application) {
-			fetchProceedings(application)
-		}
-	}, [application?.id])
 
 	const renderProceedings = () => {
 		if (!application) return null
@@ -714,29 +696,8 @@ const AdminApplicationDetails = () => {
 		}
 	}
 
-	const fetchValuers = async () => {
-		try {
-			const data = await fetchValuerUsers()
-			// Support both { users: [...] } and resource-wrapped { users: { data: [...] } } shapes.
-			const rawUsers = Array.isArray(data?.users)
-				? data.users
-				: Array.isArray(data?.users?.data)
-					? data.users.data
-					: []
-			const valuerUsers = rawUsers.filter((u) => u?.role === ROLES.VALUER)
-			setValuers(valuerUsers)
-			setValuerLoadError('')
-		} catch {
-			setValuers([])
-			setValuerLoadError(t('ws.adminDetail.loadError'))
-		}
-	}
 
-	useEffect(() => {
-		if (user?.role === ROLES.RENT_AUTHORITY && application?.form_type === APPLICATION_TYPES.VALUER_APPOINTMENT) {
-			fetchValuers()
-		}
-	}, [user?.role, application?.form_type])
+
 
 	const requestAssignValuer = () => {
 		if (!selectedValuerId) return showToast('Please select a valuer', 'error')

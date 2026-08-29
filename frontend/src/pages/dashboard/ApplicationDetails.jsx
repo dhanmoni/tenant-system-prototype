@@ -9,6 +9,7 @@ import NoticeDocumentViewer from '../../components/dashboard/NoticeDocumentViewe
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
 import { useToast } from '../../context/ToastContext'
 import { useLanguage } from '../../i18n'
+import { useTenantProceedings } from '../../hooks/useTenantProceedings'
 import './admin/ApplicationDetails.css'
 
 const FORM_ENDPOINTS = {
@@ -69,8 +70,10 @@ function ApplicationDetails() {
 	const [application, setApplication] = useState(null)
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
-	const [proceedings, setProceedings] = useState([])
-	const [proceedingsLoading, setProceedingsLoading] = useState(false)
+	const { data: proceedings = [], isLoading: proceedingsLoading } = useTenantProceedings(
+		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? (application?.form_type || type) : null,
+		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? application?.id : null
+	)
 	const [viewProceedingDoc, setViewProceedingDoc] = useState(null)
 	const [confirmWithdraw, setConfirmWithdraw] = useState(false)
 	const [withdrawing, setWithdrawing] = useState(false)
@@ -101,24 +104,7 @@ function ApplicationDetails() {
 		}
 	}
 
-	useEffect(() => {
-		if (application && type !== APPLICATION_TYPES.TENANCY_CERTIFICATE) {
-			fetchProceedings(application)
-		}
-	}, [application, type])
 
-	const fetchProceedings = async (app) => {
-		const formType = app.form_type || type
-		try {
-			setProceedingsLoading(true)
-			const res = await api.get(`/api/tenant-forms/${formType}/${app.id}/proceedings`)
-			setProceedings(res.data.proceedings || [])
-		} catch {
-			setProceedings([])
-		} finally {
-			setProceedingsLoading(false)
-		}
-	}
 
 	const handleWithdraw = async () => {
 		setWithdrawing(true)

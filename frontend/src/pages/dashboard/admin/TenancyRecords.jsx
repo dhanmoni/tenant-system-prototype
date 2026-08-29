@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
-import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useDistricts } from '../../../hooks/useDistricts'
+import { useTenancyRecords } from '../../../hooks/useTenancyRecords'
 import { formatDate } from '../../../utils/formatters'
 import { APPLICATION_TYPES } from '../../../constants/application'
 import { ROLES, TENANCY_STAFF_ROLES } from '../../../constants/roles'
@@ -35,12 +36,7 @@ function buildSortOptions(t) {
 const TenancyRecords = ({ user }) => {
 	const { t } = useLanguage()
 	const navigate = useNavigate()
-	const [records, setRecords] = useState([])
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState('')
-	const [reloadKey, setReloadKey] = useState(0)
 	const [page, setPage] = useState(1)
-	const [paginationInfo, setPaginationInfo] = useState(null)
 	
 	const shouldFetchDistricts = user?.role === ROLES.SUPER_ADMIN
 	const { districts } = useDistricts(shouldFetchDistricts)
@@ -52,48 +48,15 @@ const TenancyRecords = ({ user }) => {
 	})
 	const [searchInput, setSearchInput] = useState('')
 	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
-	const recordsRefHasData = useRef(false)
-
-	useEffect(() => {
-		if (user?.role && !TENANCY_STAFF_ROLES.includes(user.role)) {
-			navigate('/dashboard', { replace: true })
-		}
-	}, [user?.role, navigate])
-
-
-
-	const fetchRecords = useCallback(async () => {
-		setLoading((prev) => (recordsRefHasData.current ? prev : true))
-		setError('')
-		try {
-			const params = { page, per_page: 15 }
-			if (filters.search) params.search = filters.search
-			if (filters.status) params.status = filters.status
-			if (filters.district_id) params.district_id = filters.district_id
-
-			const { data } = await api.get('/api/admin/tenancy-records', { params })
-			// Tenancy / UIN page — never show service form applications
-			const uinOnly = (data.records || [])
-				.map((row) => ({
-					...row,
-					form_type: row.form_type || APPLICATION_TYPES.TENANCY_CERTIFICATE,
-				}))
-				.filter((row) => row.form_type === APPLICATION_TYPES.TENANCY_CERTIFICATE)
-			setRecords(uinOnly)
-			recordsRefHasData.current = true
-			setPaginationInfo(data.pagination || null)
-		} catch {
-			setError(t('ws.adminTenancy.error'))
-		} finally {
-			setLoading(false)
-		}
-	}, [page, filters, reloadKey, t])
-
-	useEffect(() => {
-		if (TENANCY_STAFF_ROLES.includes(user?.role)) {
-			fetchRecords()
-		}
-	}, [fetchRecords, user?.role])
+	const { data, isLoading: loading, isError, refetch } = useTenancyRecords({
+		page,
+		filters,
+		enabled: TENANCY_STAFF_ROLES.includes(user?.role)
+	})
+	
+	const records = data?.records || []
+	const paginationInfo = data?.paginationInfo || null
+	const error = isError ? t('ws.adminTenancy.error') : ''
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -318,7 +281,7 @@ const TenancyRecords = ({ user }) => {
 					<button
 						type="button"
 						className="ws-btn ws-btn--outline ws-btn--sm"
-						onClick={() => setReloadKey((key) => key + 1)}
+						onClick={() => refetch()}
 					>
 						{t('ws.adminTenancy.retry')}
 					</button>

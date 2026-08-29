@@ -27,7 +27,7 @@ export default function ApplicantAbsentNotice({ data }) {
             </div>
 
             <div style={{ fontWeight: 'bold', marginBottom: '1rem' }}>ORDER</div>
-            <p style={{ marginBottom: '1rem' }}>The matter was fixed for hearing on {data.dateStr} and was called on that date. The Opposite Party appeared before the Rent Authority. However, the Applicant/Petitioner was absent, and no intimation or sufficient cause for the absence was placed on record.</p>
+            <p style={{ marginBottom: '1rem' }}>The matter was fixed for hearing on {data.previous_hearing_date || data.dateStr} and was called on that date. The Opposite Party appeared before the Rent Authority. However, the Applicant/Petitioner was absent, and no intimation or sufficient cause for the absence was placed on record.</p>
             <p style={{ marginBottom: '1rem' }}>In the interest of justice, and to give the Applicant/Petitioner a further opportunity to be heard, the matter is adjourned and re-fixed for hearing on:</p>
             <div style={{ marginLeft: '2rem', marginBottom: '1rem' }}>
                 <div><strong>Date:</strong> {data.hearing_date}</div>

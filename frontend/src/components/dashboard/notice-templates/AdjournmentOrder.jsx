@@ -27,7 +27,7 @@ export default function AdjournmentOrder({ data }) {
             </div>
 
             <div style={{ fontWeight: 'bold', marginBottom: '1rem' }}>ADJOURNMENT ORDER</div>
-            <p style={{ marginBottom: '1rem' }}>During the hearing held on {data.dateStr}, both parties requested additional time to place further documents on record and/or to continue their settlement discussions.</p>
+            <p style={{ marginBottom: '1rem' }}>During the hearing held on {data.previous_hearing_date || data.dateStr}, both parties requested additional time to place further documents on record and/or to continue their settlement discussions.</p>
             <p style={{ marginBottom: '1rem' }}>Having considered the submissions of both parties, and to allow them a reasonable opportunity to place the relevant material on record and, if possible, resolve the dispute, the matter is adjourned and re-fixed on:</p>
             
             <div style={{ marginLeft: '2rem', marginBottom: '1rem' }}>

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useDistricts } from '../../../hooks/useDistricts'
+import { useUsers } from '../../../hooks/useUsers'
 import { createPortal } from 'react-dom'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import api from '../../../api'
@@ -34,9 +35,8 @@ function UserManagement({ user: currentUser }) {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const mode = searchParams.get('mode') || 'office'
-	const [users, setUsers] = useState([])
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState('')
+	const { data: users = [], isLoading: loading, isError, refetch: loadUsers } = useUsers()
+	const error = isError ? t('ws.users.error.load') : ''
 	const [showAddForm, setShowAddForm] = useState(false)
 	const [formError, setFormError] = useState('')
 	const [creating, setCreating] = useState(false)
@@ -93,23 +93,7 @@ function UserManagement({ user: currentUser }) {
 			navigate('/dashboard')
 			return
 		}
-		loadUsers()
-	}, [mode, currentUser.role, navigate])
-
-
-
-	const loadUsers = async () => {
-		setLoading(true)
-		setError('')
-		try {
-			const { data } = await api.get('/api/users')
-			setUsers(data.users || [])
-		} catch {
-			setError(t('ws.users.error.load'))
-		} finally {
-			setLoading(false)
-		}
-	}
+	}, [currentUser.role, navigate])
 
 	useEffect(() => {
 		const timer = setTimeout(() => {

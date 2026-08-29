@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { csrf } from '../../../api'
-import { fetchDistricts, createDistrict, toggleDistrictActive } from '../../../services/districts'
+import { createDistrict, toggleDistrictActive } from '../../../services/districts'
+import { useMasterData } from '../../../hooks/useMasterData'
 import { getApiErrorMessage } from '../../../services/errors'
 import { useLanguage } from '../../../i18n'
 import DataTable from '../../../components/dashboard/DataTable'
@@ -23,12 +24,11 @@ const STATUS_PILLS = [
 function DistrictManagement({ user }) {
 	const { t } = useLanguage()
 	const navigate = useNavigate()
-	const [districts, setDistricts] = useState([])
+	const { data: districts = [], isLoading: loading, isError, refetch: loadDistricts } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? '/api/districts' : null)
 	const [districtName, setDistrictName] = useState('')
-	const [error, setError] = useState('')
+	const [error, setError] = useState(isError ? t('ws.districts.loadError') : '')
 	const [formError, setFormError] = useState('')
 	const [successModal, setSuccessModal] = useState(null)
-	const [loading, setLoading] = useState(true)
 	const [page, setPage] = useState(1)
 	const [searchInput, setSearchInput] = useState('')
 	const [filters, setFilters] = useState({ search: '', status: '' })
@@ -43,7 +43,6 @@ function DistrictManagement({ user }) {
 			navigate('/dashboard')
 			return
 		}
-		loadDistricts()
 	}, [user?.role, navigate])
 
 	useEffect(() => {
@@ -79,18 +78,7 @@ function DistrictManagement({ user }) {
 		setFormError('')
 	}
 
-	const loadDistricts = async () => {
-		setLoading(true)
-		setError('')
-		try {
-			const list = await fetchDistricts()
-			setDistricts(list)
-		} catch {
-			setError(t('ws.districts.loadError'))
-		} finally {
-			setLoading(false)
-		}
-	}
+
 
 	const handleFilterChange = (key, value) => {
 		setFilters((prev) => ({ ...prev, [key]: value }))

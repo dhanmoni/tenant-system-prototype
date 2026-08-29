@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
+import { useMasterData } from '../../../hooks/useMasterData'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
@@ -13,11 +14,7 @@ import './MasterData.css'
 const PER_PAGE = 15
 const EMPTY_FORM = { name: '', address: '', district_id: '' }
 
-function parseList(data) {
-	if (Array.isArray(data)) return data
-	if (Array.isArray(data?.data)) return data.data
-	return []
-}
+
 
 function fieldError(err, fallback) {
 	const apiErrors = err?.response?.data?.errors
@@ -27,13 +24,13 @@ function fieldError(err, fallback) {
 
 function OfficeManagement({ user }) {
 	const navigate = useNavigate()
-	const [offices, setOffices] = useState([])
-	const [districts, setDistricts] = useState([])
+	const { data: offices = [], isLoading: officesLoading, isError: officesError, refetch: loadOffices } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? '/api/offices' : null)
+	const { data: districts = [], isLoading: districtsLoading, isError: districtsError } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? '/api/districts' : null)
 	const [form, setForm] = useState(EMPTY_FORM)
-	const [error, setError] = useState('')
+	const error = (officesError || districtsError) ? 'Failed to load offices' : ''
+	const loading = officesLoading || districtsLoading
 	const [formError, setFormError] = useState('')
 	const [successModal, setSuccessModal] = useState(null)
-	const [loading, setLoading] = useState(true)
 	const [page, setPage] = useState(1)
 	const [searchInput, setSearchInput] = useState('')
 	const [search, setSearch] = useState('')
@@ -81,27 +78,7 @@ function OfficeManagement({ user }) {
 		setFormError('')
 	}
 
-	const load = async () => {
-		setLoading(true)
-		setError('')
-		try {
-			const [officeRes, districtRes] = await Promise.all([
-				api.get('/api/offices', { params: { all: true } }),
-				api.get('/api/districts', { params: { all: true } }),
-			])
-			setOffices(parseList(officeRes.data))
-			setDistricts(parseList(districtRes.data))
-		} catch {
-			setError('Failed to load offices')
-		} finally {
-			setLoading(false)
-		}
-	}
 
-	useEffect(() => {
-		if (user?.role === ROLES.SUPER_ADMIN) load()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user?.role])
 
 	const filtered = useMemo(() => {
 		let list = offices
@@ -187,7 +164,7 @@ function OfficeManagement({ user }) {
 			}
 			setModal(null)
 			setForm(EMPTY_FORM)
-			await load()
+			await loadOffices()
 		} catch (err) {
 			setFormError(fieldError(err, 'Failed to save office'))
 		} finally {
@@ -207,7 +184,7 @@ function OfficeManagement({ user }) {
 				message: `"${deleteTarget.name}" was deleted.`,
 			})
 			setDeleteTarget(null)
-			await load()
+			await loadOffices()
 		} catch (err) {
 			setError(fieldError(err, 'Failed to delete office'))
 			setDeleteTarget(null)
