@@ -13,6 +13,7 @@ const noticeTypes = [
 
 const emptyForm = {
 	notice_type: 'appearance',
+	previous_hearing_date: '',
 	hearing_date: '',
 	hearing_time: '',
 	venue: '',
@@ -121,10 +122,26 @@ export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting 
 					</select>
 				</div>
 
+				{['applicant_absent', 'respondent_absent', 'adjournment'].includes(formData.notice_type) && (
+					<div className="proceeding-modal__field proceeding-modal__field--full">
+						<label className="proceeding-modal__label" htmlFor="proceeding-previous-hearing-date">
+							Previous Hearing date
+						</label>
+						<input
+							id="proceeding-previous-hearing-date"
+							type="date"
+							className="proceeding-modal__control"
+							name="previous_hearing_date"
+							value={formData.previous_hearing_date}
+							onChange={handleChange}
+						/>
+					</div>
+				)}
+
 				<div className="proceeding-modal__row">
 					<div className="proceeding-modal__field">
 						<label className="proceeding-modal__label" htmlFor="proceeding-hearing-date">
-							Hearing date
+							{['applicant_absent', 'respondent_absent', 'adjournment'].includes(formData.notice_type) ? 'Next Hearing date' : 'Hearing date'}
 						</label>
 						<input
 							id="proceeding-hearing-date"

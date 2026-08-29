@@ -27,7 +27,7 @@ export default function RespondentAbsentNotice({ data }) {
             </div>
 
             <div style={{ fontWeight: 'bold', marginBottom: '1rem' }}>ORDER RE-FIXING THE HEARING</div>
-            <p style={{ marginBottom: '1rem' }}>The case was taken up for hearing on {data.dateStr}.</p>
+            <p style={{ marginBottom: '1rem' }}>The case was taken up for hearing on {data.previous_hearing_date || data.dateStr}.</p>
             <p style={{ marginBottom: '1rem' }}>The Applicant/Petitioner appeared physically/online. The Opposite Party/Respondent, however, remained absent despite service of notice through the Assam Tenancy Portal/e-mail/SMS, as recorded on the portal.</p>
             <p style={{ marginBottom: '1rem' }}>In the interest of justice, and subject to law, the Opposite Party/Respondent is given one further opportunity to appear and place its/his/her response on record.</p>
             <p style={{ marginBottom: '1rem' }}>Accordingly, the matter is re-fixed for hearing on:</p>

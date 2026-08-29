@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useOutletContext } from 'react-router-dom'
-import api from '../../../api'
 import { Icon } from '../../../components/dashboard/Icons'
 import { formatDate } from '../../../utils/formatters'
 import { parseTenantFormsResponse } from '../../../utils/tenantFormsApi'
@@ -8,6 +7,7 @@ import { STATUS } from '../../../constants/status'
 import { APPLICATION_TYPES } from '../../../constants/application'
 import { tenantServiceGroups } from '../../../data/tenantServices'
 import { useLanguage } from '../../../i18n'
+import { useCitizenApplications } from '../../../hooks/useCitizenApplications'
 import CitizenStatusChart from '../../components/dashboard/CitizenStatusChart'
 import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
 import {
@@ -57,14 +57,16 @@ function UserOverview() {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const [flashMessage, setFlashMessage] = useState('')
-	const [applications, setApplications] = useState([])
-	const [totalCount, setTotalCount] = useState(0)
-	const [loading, setLoading] = useState(true)
-	const [loadError, setLoadError] = useState('')
+	
+	const { data: appsRes, isLoading: loading, isError } = useCitizenApplications('/api/tenant-forms/my', { page: 1, per_page: 50, sort_by: 'created_at', sort_order: 'desc' })
 
-	useEffect(() => {
-		loadData()
-	}, [])
+	const { items: applications = [], total: totalCount = 0 } = useMemo(() => {
+		if (!appsRes) return { items: [], total: 0 }
+		const parsed = parseTenantFormsResponse(appsRes)
+		return { items: parsed.items.slice(0, 8), total: parsed.total }
+	}, [appsRes])
+
+	const loadError = isError ? t('ws.citizen.recent.loadError') : ''
 
 	useEffect(() => {
 		const message = location.state?.successMessage
@@ -72,25 +74,6 @@ function UserOverview() {
 		setFlashMessage(message)
 		navigate(location.pathname, { replace: true, state: {} })
 	}, [location.pathname, location.state, navigate])
-
-	const loadData = async () => {
-		setLoading(true)
-		setLoadError('')
-		try {
-			const appsRes = await api.get('/api/tenant-forms/my', {
-				params: { page: 1, per_page: 50, sort_by: 'created_at', sort_order: 'desc' },
-			})
-			const { items, total } = parseTenantFormsResponse(appsRes.data)
-			setApplications(items.slice(0, 8))
-			setTotalCount(total)
-		} catch (err) {
-			setApplications([])
-			setTotalCount(0)
-			setLoadError(err?.response?.data?.message || t('ws.citizen.recent.loadError'))
-		} finally {
-			setLoading(false)
-		}
-	}
 
 	const stats = useMemo(() => {
 		let completed = 0

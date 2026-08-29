@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
+import { useMasterData } from '../../../hooks/useMasterData'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import SubmissionSuccessModal from '../../../components/dashboard/SubmissionSuccessModal'
@@ -13,11 +14,7 @@ import './MasterData.css'
 const PER_PAGE = 15
 const NAME_PATTERN = /^[A-Za-z\s]+$/
 
-function parseList(data) {
-	if (Array.isArray(data)) return data
-	if (Array.isArray(data?.data)) return data.data
-	return []
-}
+
 
 function fieldError(err, fallback) {
 	const apiErrors = err?.response?.data?.errors
@@ -35,12 +32,11 @@ function MasterNameCrud({
 	placeholder,
 }) {
 	const navigate = useNavigate()
-	const [rows, setRows] = useState([])
+	const { data: rows = [], isLoading: loading, isError, refetch: loadRows } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? endpoint : null)
 	const [name, setName] = useState('')
-	const [error, setError] = useState('')
+	const error = isError ? `Failed to load ${itemLabelPlural?.toLowerCase()}` : ''
 	const [formError, setFormError] = useState('')
 	const [successModal, setSuccessModal] = useState(null)
-	const [loading, setLoading] = useState(true)
 	const [page, setPage] = useState(1)
 	const [searchInput, setSearchInput] = useState('')
 	const [search, setSearch] = useState('')
@@ -88,23 +84,7 @@ function MasterNameCrud({
 		setFormError('')
 	}
 
-	const loadRows = async () => {
-		setLoading(true)
-		setError('')
-		try {
-			const { data } = await api.get(endpoint, { params: { all: true } })
-			setRows(parseList(data))
-		} catch {
-			setError(`Failed to load ${itemLabelPlural.toLowerCase()}`)
-		} finally {
-			setLoading(false)
-		}
-	}
 
-	useEffect(() => {
-		if (user?.role === ROLES.SUPER_ADMIN) loadRows()
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user?.role, endpoint])
 
 	const filtered = useMemo(() => {
 		let list = rows

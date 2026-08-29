@@ -158,11 +158,7 @@ export function getWorkspaceNavigation(user) {
 						labelKey: 'ws.nav.districts',
 						icon: 'map',
 					},
-					{
-						to: '/dashboard/admin/states',
-						labelKey: 'ws.nav.states',
-						icon: 'chart',
-					},
+
 					{
 						to: '/dashboard/admin/offices',
 						labelKey: 'ws.nav.offices',

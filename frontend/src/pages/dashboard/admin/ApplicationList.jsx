@@ -3,8 +3,9 @@ import api from '../../../api'
 import DataTable from '../../../components/dashboard/DataTable'
 import { Icon } from '../../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../../components/dashboard/StatusProgressViewButton'
-import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { useDistricts } from '../../../hooks/useDistricts'
+import { useAdminApplications } from '../../../hooks/useAdminApplications'
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES, ADMIN_ROLES } from '../../../constants/roles'
 import { APPLICATION_TYPES, SERVICE_APPLICATION_TYPES, getApplicationLabel } from '../../../constants/application'
 import { STATUS } from '../../../constants/status'
@@ -56,12 +57,7 @@ function getApplicantName(row) {
 const ApplicationList = ({ user }) => {
 	const { t } = useLanguage()
 	const navigate = useNavigate()
-	const [applications, setApplications] = useState([])
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState('')
-	const [reloadKey, setReloadKey] = useState(0)
 	const [page, setPage] = useState(1)
-	const [paginationInfo, setPaginationInfo] = useState(null)
 	
 	const shouldFetchDistricts = user?.role === ROLES.SUPER_ADMIN
 	const { districts, loading: districtsLoading } = useDistricts(shouldFetchDistricts)
@@ -74,7 +70,6 @@ const ApplicationList = ({ user }) => {
 	})
 	const [searchInput, setSearchInput] = useState('')
 	const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' })
-	const applicationsRefHasData = useRef(false)
 
 	const location = useLocation()
 	const isInboxPage = location.pathname.includes('/admin/inbox')
@@ -89,47 +84,22 @@ const ApplicationList = ({ user }) => {
 
 
 
-	const fetchApplications = useCallback(async () => {
-		setLoading((prev) => (applicationsRefHasData.current ? prev : true))
-		setError('')
-		try {
-			let endpoint = '/api/admin/applications/all'
-			if (user?.role === ROLES.VALUER) {
-				endpoint = '/api/admin/applications/valuer-inbox'
-			} else if (isInboxPage) {
-				if (ASSISTANT_ROLES.includes(user?.role)) {
-					endpoint = '/api/admin/applications/inbox'
-				} else if (PRINCIPAL_ROLES.includes(user?.role)) {
-					endpoint = '/api/admin/applications/principal-inbox'
-				}
-			}
-
-			const params = { page, per_page: 15 }
-			if (showFilters) {
-				if (filters.search) params.search = filters.search
-				if (filters.status) params.status = filters.status
-				if (filters.form_type) params.form_type = filters.form_type
-				if (filters.district_id) params.district_id = filters.district_id
-			}
-
-			const { data } = await api.get(endpoint, { params })
-			// Service applications page — never show UIN / tenancy certificate rows
-			const serviceOnly = (data.applications || []).filter((row) =>
-				SERVICE_APPLICATION_TYPES.includes(row?.form_type)
-			)
-			setApplications(serviceOnly)
-			applicationsRefHasData.current = true
-			setPaginationInfo(data.pagination || null)
-		} catch {
-			setError(t('ws.adminApps.error'))
-		} finally {
-			setLoading(false)
-		}
-	}, [user?.role, page, filters, showFilters, isInboxPage, reloadKey, t])
-
-	useEffect(() => {
-		fetchApplications()
-	}, [fetchApplications])
+	const {
+		data,
+		isLoading: loading,
+		isError,
+		refetch
+	} = useAdminApplications({
+		userRole: user?.role,
+		isInboxPage,
+		page,
+		filters,
+		showFilters
+	})
+	
+	const applications = data?.applications || []
+	const paginationInfo = data?.paginationInfo || null
+	const error = isError ? t('ws.adminApps.error') : ''
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -400,7 +370,7 @@ const ApplicationList = ({ user }) => {
 					<button
 						type="button"
 						className="ws-btn ws-btn--outline ws-btn--sm"
-						onClick={() => setReloadKey((key) => key + 1)}
+						onClick={() => refetch()}
 					>
 						{t('ws.adminApps.retry')}
 					</button>

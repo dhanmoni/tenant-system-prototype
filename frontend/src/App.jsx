@@ -52,7 +52,7 @@ const WorkspaceApplicationDetails = lazy(
 )
 const WorkspaceFormPortal = lazy(() => import('./workspace/pages/WorkspaceFormPortal'))
 const DistrictManagement = lazy(() => import('./workspace/pages/admin/WorkspaceDistricts'))
-const WorkspaceStates = lazy(() => import('./workspace/pages/admin/WorkspaceStates'))
+
 const WorkspaceOffices = lazy(() => import('./workspace/pages/admin/WorkspaceOffices'))
 const WorkspaceRoles = lazy(() => import('./workspace/pages/admin/WorkspaceRoles'))
 const WorkspaceDesignations = lazy(() => import('./workspace/pages/admin/WorkspaceDesignations'))
@@ -387,7 +387,7 @@ function App() {
 
 							<Route element={<RoleProtectedRoute roles={SUPER_ADMIN_ROLES} />}>
 								<Route path="admin/districts" element={<DistrictManagement />} />
-								<Route path="admin/states" element={<WorkspaceStates />} />
+
 								<Route path="admin/offices" element={<WorkspaceOffices />} />
 								<Route path="admin/roles" element={<WorkspaceRoles />} />
 								<Route path="admin/designations" element={<WorkspaceDesignations />} />

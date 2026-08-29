@@ -69,6 +69,7 @@ class CaseProceedingController extends Controller
             'hearing_date' => 'nullable|date',
             'hearing_time' => 'nullable|date_format:H:i',
             'venue' => 'nullable|string',
+            'previous_hearing_date' => 'nullable|date',
             'remarks' => 'nullable|string',
             'additional_remarks' => 'nullable|string',
         ]);
@@ -84,6 +85,7 @@ class CaseProceedingController extends Controller
             'hearing_date' => $request->hearing_date,
             'hearing_time' => $request->hearing_time,
             'venue' => $request->venue,
+            'previous_hearing_date' => $request->previous_hearing_date,
             'remarks' => $request->remarks,
             'additional_remarks' => $request->additional_remarks,
             'sent_by_user_id' => $request->user()->id,

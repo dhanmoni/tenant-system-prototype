@@ -10,6 +10,7 @@ import { APPLICATION_TYPES } from '../../constants/application'
 import { getAllServiceForms, tenantServiceGroups } from '../../data/tenantServices'
 import { useLanguage } from '../../i18n'
 import { useToast } from '../../context/ToastContext'
+import { useCitizenApplications } from '../../hooks/useCitizenApplications'
 
 const TAB_TENANCY = 'tenancy'
 const TAB_SERVICE = 'service'
@@ -449,15 +450,10 @@ function WorkspaceUinStatus() {
 	const { t } = useLanguage()
 	const { showToast } = useToast()
 
-	const [applications, setApplications] = useState([])
 	const [withdrawApp, setWithdrawApp] = useState(null)
 	const [withdrawing, setWithdrawing] = useState(false)
 
-	const [loading, setLoading] = useState(false)
 	const [page, setPage] = useState(1)
-	const [totalPages, setTotalPages] = useState(1)
-	const [totalResults, setTotalResults] = useState(0)
-	const [error, setError] = useState('')
 	const [copiedRefCode, setCopiedRefCode] = useState('')
 
 	const [activeTab, setActiveTab] = useState(TAB_TENANCY)
@@ -467,56 +463,34 @@ function WorkspaceUinStatus() {
 
 	const [searchAppNo, setSearchAppNo] = useState(searchParams.get('app_no') || '')
 	const [searchUid, setSearchUid] = useState('')
+	const [submittedSearch, setSubmittedSearch] = useState({ appNo: '', uid: '' })
 	const [searchKeyword, setSearchKeyword] = useState('')
 	const [sortBy, setSortBy] = useState('created_at')
 	const [sortOrder, setSortOrder] = useState('desc')
 
+	const endpoint = user?.role === 'user' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
+	const queryParams = {
+		page,
+		application_no: submittedSearch.appNo || undefined,
+		uid: submittedSearch.uid || undefined,
+		sort_by: sortBy,
+		sort_order: sortOrder,
+		type: activeTab,
+		status_filter: statusFilter,
+	}
+
+	const { data, isLoading: loading, isError, refetch } = useCitizenApplications(endpoint, queryParams)
+	const error = isError ? t('ws.uinStatus.error.load') : ''
+	const applications = useMemo(() => {
+		if (!data) return []
+		return Array.isArray(data) ? data : data?.data ?? []
+	}, [data])
+	const totalPages = Number(data?.last_page) || 1
+	const totalResults = Number(data?.total) || applications.length
+
 	const tenancyStatusFilters = useMemo(() => buildTenancyStatusFilters(t), [t])
 	const serviceStatusFilters = useMemo(() => buildServiceStatusFilters(t), [t])
 	const serviceGroups = useMemo(() => buildServiceGroups(t), [t])
-
-	const loadApplications = useCallback(
-		async (pageNum = 1, overrides = {}) => {
-			setLoading(true)
-			setError('')
-			try {
-				const tab = overrides.tab ?? activeTab
-				const params = {
-					page: pageNum,
-					application_no:
-						overrides.application_no !== undefined
-							? overrides.application_no
-							: searchAppNo || undefined,
-					uid: overrides.uid !== undefined ? overrides.uid : searchUid || undefined,
-					sort_by: overrides.sort_by || sortBy,
-					sort_order: overrides.sort_order || sortOrder,
-					type: tab,
-					status_filter:
-						overrides.status_filter !== undefined
-							? overrides.status_filter
-							: statusFilter,
-				}
-				const endpoint =
-					user?.role === 'user' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
-				const { data } = await api.get(endpoint, { params })
-				const list = Array.isArray(data) ? data : data?.data ?? []
-				setApplications(list)
-				setPage(Number(data?.current_page) || 1)
-				setTotalPages(Number(data?.last_page) || 1)
-				setTotalResults(Number(data?.total) || list.length)
-			} catch (err) {
-				setError(err?.response?.data?.message || t('ws.uinStatus.error.load'))
-				setApplications([])
-			} finally {
-				setLoading(false)
-			}
-		},
-		[activeTab, searchAppNo, searchUid, sortBy, sortOrder, statusFilter, user?.role, t]
-	)
-
-	useEffect(() => {
-		loadApplications(1)
-	}, [activeTab, statusFilter, sortBy, sortOrder])
 
 	const serviceFormFilters = useMemo(
 		() => getServiceFormFilters(serviceGroup, t),
@@ -546,7 +520,8 @@ function WorkspaceUinStatus() {
 
 	const handleSearch = (e) => {
 		e.preventDefault()
-		loadApplications(1)
+		setSubmittedSearch({ appNo: searchAppNo, uid: searchUid })
+		setPage(1)
 	}
 
 	const handleClearSearch = () => {
@@ -556,11 +531,8 @@ function WorkspaceUinStatus() {
 		setStatusFilter('all')
 		setServiceGroup('all')
 		setFormFilter('all')
-		loadApplications(1, {
-			application_no: '',
-			uid: '',
-			status_filter: 'all',
-		})
+		setSubmittedSearch({ appNo: '', uid: '' })
+		setPage(1)
 	}
 
 	const handleTabChange = (tab) => {
@@ -627,7 +599,7 @@ function WorkspaceUinStatus() {
 			printWindow.document.write(response.data)
 			printWindow.document.close()
 		} catch (err) {
-			setError(err?.response?.data?.message || t('ws.uinStatus.error.ack'))
+			showToast(err?.response?.data?.message || t('ws.uinStatus.error.ack'), 'error')
 		}
 	}
 
@@ -639,7 +611,7 @@ function WorkspaceUinStatus() {
 			await api.post(`/api/tenant-forms/${type}/${withdrawApp.id}/withdraw`)
 			showToast(t('ws.withdraw.success'), 'success')
 			setWithdrawApp(null)
-			await loadApplications(page)
+			refetch()
 		} catch (err) {
 			showToast(err?.response?.data?.message || t('ws.withdraw.error'), 'error')
 		} finally {
@@ -904,7 +876,7 @@ function WorkspaceUinStatus() {
 					<button
 						type="button"
 						className="ws-btn ws-btn--outline"
-						onClick={() => loadApplications(page - 1)}
+						onClick={() => setPage(page - 1)}
 						disabled={page <= 1 || loading}
 					>
 						{t('ws.uinStatus.pagination.prev')}
@@ -915,7 +887,7 @@ function WorkspaceUinStatus() {
 					<button
 						type="button"
 						className="ws-btn ws-btn--outline"
-						onClick={() => loadApplications(page + 1)}
+						onClick={() => setPage(page + 1)}
 						disabled={page >= totalPages || loading}
 					>
 						{t('ws.uinStatus.pagination.next')}
