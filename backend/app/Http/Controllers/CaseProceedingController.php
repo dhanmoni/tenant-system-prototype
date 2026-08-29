@@ -70,6 +70,7 @@ class CaseProceedingController extends Controller
             'hearing_time' => 'nullable|date_format:H:i',
             'venue' => 'nullable|string',
             'remarks' => 'nullable|string',
+            'additional_remarks' => 'nullable|string',
         ]);
 
         // Find the application class based on type
@@ -84,6 +85,7 @@ class CaseProceedingController extends Controller
             'hearing_time' => $request->hearing_time,
             'venue' => $request->venue,
             'remarks' => $request->remarks,
+            'additional_remarks' => $request->additional_remarks,
             'sent_by_user_id' => $request->user()->id,
         ]);
 

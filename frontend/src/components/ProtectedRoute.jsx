@@ -5,6 +5,7 @@ function ProtectedRoute({ user, authLoading = false, children }) {
 	if (authLoading) {
 		return (
 			<div className="portal-status-page portal-status-page--boot" role="status" aria-live="polite">
+				<div className="loader-spinner" style={{ marginBottom: '1rem' }} aria-hidden></div>
 				<p className="portal-status-page__boot">Checking your session…</p>
 			</div>
 		)

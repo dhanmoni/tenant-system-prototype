@@ -17,6 +17,7 @@ const emptyForm = {
 	hearing_time: '',
 	venue: '',
 	remarks: '',
+	additional_remarks: '',
 }
 
 export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting }) {
@@ -33,6 +34,58 @@ export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting 
 	const handleSubmit = () => {
 		if (!formData.notice_type) return
 		onSubmit(formData)
+	}
+
+	const getRemarksLabel = (type) => {
+		switch (type) {
+			case 'proceeding_sheet':
+				return 'Facts emerged'
+			case 'final_order':
+				return 'Agreed terms and conditions'
+			case 'ex_parte':
+				return 'Findings / Reasons for ex-parte order'
+			case 'adjournment':
+				return 'Reasons for adjournment / Remarks'
+			default:
+				return 'Remarks / Additional details'
+		}
+	}
+
+	const getRemarksPlaceholder = (type) => {
+		switch (type) {
+			case 'proceeding_sheet':
+				return 'Enter the facts emerged during discussion...\n1.\n2.\n3.'
+			case 'final_order':
+				return 'Enter the terms and conditions agreed upon by both parties...\n1.\n2.\n3.'
+			case 'ex_parte':
+				return 'Enter the findings and reasons for the ex-parte disposal...\n1.\n2.\n3.'
+			case 'adjournment':
+				return 'Enter the reasons for adjournment...'
+			default:
+				return 'Enter any additional details required for the notice or order…'
+		}
+	}
+
+	const getAdditionalRemarksLabel = (type) => {
+		switch (type) {
+			case 'proceeding_sheet':
+				return 'Terms of settlement'
+			case 'ex_parte':
+				return 'Orders passed'
+			default:
+				return 'Additional Remarks'
+		}
+	}
+
+	const getAdditionalRemarksPlaceholder = (type) => {
+		switch (type) {
+			case 'proceeding_sheet':
+				return 'Enter the terms of settlement agreed upon...\n1.\n2.\n3.'
+			case 'ex_parte':
+				return 'Enter the orders passed...\n1.\n2.\n3.'
+			default:
+				return 'Enter any additional remarks…'
+		}
 	}
 
 	return (
@@ -116,18 +169,35 @@ export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting 
 
 				<div className="proceeding-modal__field proceeding-modal__field--full">
 					<label className="proceeding-modal__label" htmlFor="proceeding-remarks">
-						Remarks / settlement terms
+						{getRemarksLabel(formData.notice_type)}
 					</label>
 					<textarea
 						id="proceeding-remarks"
 						className="proceeding-modal__control proceeding-modal__control--textarea"
 						name="remarks"
 						rows={5}
-						placeholder="Enter any additional details required for the notice or order…"
+						placeholder={getRemarksPlaceholder(formData.notice_type)}
 						value={formData.remarks}
 						onChange={handleChange}
 					/>
 				</div>
+
+				{(formData.notice_type === 'proceeding_sheet' || formData.notice_type === 'ex_parte') && (
+					<div className="proceeding-modal__field proceeding-modal__field--full">
+						<label className="proceeding-modal__label" htmlFor="proceeding-additional-remarks">
+							{getAdditionalRemarksLabel(formData.notice_type)}
+						</label>
+						<textarea
+							id="proceeding-additional-remarks"
+							className="proceeding-modal__control proceeding-modal__control--textarea"
+							name="additional_remarks"
+							rows={5}
+							placeholder={getAdditionalRemarksPlaceholder(formData.notice_type)}
+							value={formData.additional_remarks}
+							onChange={handleChange}
+						/>
+					</div>
+				)}
 			</div>
 		</WorkflowConfirmModal>
 	)
