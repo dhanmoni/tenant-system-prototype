@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import DocumentUploadSlot from '../components/forms/DocumentUploadSlot'
 import { cleanOptionalValue } from '../utils/tenancyDraft'
@@ -13,6 +14,7 @@ function JoinApplication() {
 	const { t, language } = useLanguage()
 	const [searchParams] = useSearchParams()
 	const navigate = useNavigate()
+	const queryClient = useQueryClient()
 	const refCode = searchParams.get('ref') || ''
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
@@ -242,6 +244,41 @@ function JoinApplication() {
 		return true
 	}
 
+	const joinMutation = useMutation({
+		mutationFn: async (formData) => {
+			await csrf()
+			const { data } = await api.post('/api/tenancy-applications/join', formData, {
+				headers: { 'Content-Type': 'multipart/form-data' },
+			})
+			return data
+		},
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+			setJoinResult({
+				application_no: data.application_no || application?.application_no,
+				ref_code: data.ref_code,
+				uid: data.uid,
+				status: data.status,
+				message: data.message,
+			})
+			scrollFormToTop()
+		},
+		onError: (err) => {
+			const data = err?.response?.data
+			const errors = data?.errors
+			let msg = data?.message || t('ws.join.error.submitFailed')
+			if (errors && typeof errors === 'object') {
+				const list = Object.entries(errors).flatMap(([field, messages]) =>
+					(Array.isArray(messages) ? messages : [messages]).map((m) => `${field}: ${m}`)
+				)
+				if (list.length) msg = list.join('. ')
+			}
+			setError(msg)
+		}
+	})
+
 	const submitJoinApplication = async () => {
 		setError('')
 		setSubmitting(true)
@@ -262,28 +299,9 @@ function JoinApplication() {
 			if (signatureFile) formData.append('signature', signatureFile)
 			if (panDocumentFile) formData.append('pan_document', panDocumentFile)
 
-			const { data } = await api.post('/api/tenancy-applications/join', formData, {
-				headers: { 'Content-Type': 'multipart/form-data' },
-			})
-			setJoinResult({
-				application_no: data.application_no || application?.application_no,
-				ref_code: data.ref_code,
-				uid: data.uid,
-				status: data.status,
-				message: data.message,
-			})
-			scrollFormToTop()
+			await joinMutation.mutateAsync(formData)
 		} catch (err) {
-			const data = err?.response?.data
-			const errors = data?.errors
-			let msg = data?.message || t('ws.join.error.submitFailed')
-			if (errors && typeof errors === 'object') {
-				const list = Object.entries(errors).flatMap(([field, messages]) =>
-					(Array.isArray(messages) ? messages : [messages]).map((m) => `${field}: ${m}`)
-				)
-				if (list.length) msg = list.join('. ')
-			}
-			setError(msg)
+			return false
 		} finally {
 			setSubmitting(false)
 		}

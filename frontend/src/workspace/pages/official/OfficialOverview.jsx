@@ -12,36 +12,19 @@ import DistrictAdminDashboard from './DistrictAdminDashboard'
 import StaffOfficeDashboard from './StaffOfficeDashboard'
 import AssistantOfficeDashboard from './AssistantOfficeDashboard'
 import ValuerDashboard from './ValuerDashboard'
+import { useDashboardStats } from '../../../hooks/useDashboardStats'
 
 function OfficialOverview() {
 	const { user } = useOutletContext()
-	const [stats, setStats] = useState(null)
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState('')
-
 	const isSuperAdmin = user?.role === ROLES.SUPER_ADMIN
 	const isDistrictAdmin = user?.role === ROLES.DISTRICT_ADMIN
 	const isAssistant = isAssistantOfficeRole(user?.role)
 	const isPrincipal = isPrincipalOfficeRole(user?.role)
 	const isValuer = isValuerRole(user?.role)
 
-	useEffect(() => {
-		loadStats()
-	}, [user?.role])
-
-	const loadStats = async () => {
-		setLoading(true)
-		setError('')
-		try {
-			const url = isSuperAdmin ? '/api/dashboard-stats' : '/api/staff-dashboard-stats'
-			const { data } = await api.get(url)
-			setStats(data || {})
-		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to load dashboard')
-		} finally {
-			setLoading(false)
-		}
-	}
+	const url = isSuperAdmin ? '/api/dashboard-stats' : '/api/staff-dashboard-stats'
+	const { data: stats, isLoading: loading, isError } = useDashboardStats(url)
+	const error = isError ? 'Failed to load dashboard' : ''
 
 	if (isSuperAdmin) {
 		return (

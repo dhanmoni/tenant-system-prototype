@@ -3,6 +3,8 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api'
 import ProfileCompletionBanner from '../../components/dashboard/ProfileCompletionBanner'
 import { Icon } from '../../components/dashboard/Icons'
+import NavDashboardMenu from '../../components/landing/NavDashboardMenu'
+import { useProfile } from '../../hooks/useProfile'
 import useDashboardRouteLoader from '../../hooks/useDashboardRouteLoader'
 import { ROLES } from '../../constants/roles'
 import { getRoleLabel } from '../../constants/roleLabels'
@@ -202,50 +204,21 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		}
 	}, [profilePickerOpen])
 
-	// Check profile once per login — not on every page navigation
+	const { data: profileData } = useProfile()
+
 	useEffect(() => {
 		setReminderDismissed(sessionStorage.getItem(PROFILE_REMINDER_DISMISSED_KEY) === '1')
+	}, [])
 
+	useEffect(() => {
 		if (user?.role !== ROLES.USER) {
 			setProfileIncomplete(false)
-			return undefined
+			return
 		}
-
-		let active = true
-
-		const checkProfile = async () => {
-			try {
-				const { data } = await api.get('/api/profile')
-				if (!active) return
-				setProfileIncomplete(!isProfileComplete(data?.user))
-			} catch {
-				if (active) setProfileIncomplete(false)
-			}
+		if (profileData) {
+			setProfileIncomplete(!isProfileComplete(profileData))
 		}
-
-		checkProfile()
-		return () => {
-			active = false
-		}
-	}, [user?.id, user?.role])
-
-	// After profile is saved, stop reminding without waiting for re-login
-	useEffect(() => {
-		if (user?.role !== ROLES.USER || reminderDismissed || reminderSuppressed) return undefined
-		if (location.pathname === '/dashboard/profile') return undefined
-
-		let active = true
-		api.get('/api/profile').then(({ data }) => {
-			if (!active) return
-			setProfileIncomplete(!isProfileComplete(data?.user))
-		}).catch(() => {
-			if (active) setProfileIncomplete(false)
-		})
-
-		return () => {
-			active = false
-		}
-	}, [location.pathname, user?.role, reminderDismissed, reminderSuppressed])
+	}, [user?.role, profileData])
 
 	const showProfileBanner =
 		user?.role === ROLES.USER &&

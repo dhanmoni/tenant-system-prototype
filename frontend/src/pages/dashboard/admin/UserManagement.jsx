@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDistricts } from '../../../hooks/useDistricts'
 import { useUsers } from '../../../hooks/useUsers'
 import { createPortal } from 'react-dom'
@@ -35,7 +36,19 @@ function UserManagement({ user: currentUser }) {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const mode = searchParams.get('mode') || 'office'
-	const { data: users = [], isLoading: loading, isError, refetch: loadUsers } = useUsers()
+	const { data: users = [], isLoading: loading, isError } = useUsers()
+	const queryClient = useQueryClient()
+	
+	const userMutation = useMutation({
+		mutationFn: async ({ url, payload }) => {
+			const { data } = await api.post(url, payload)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+		}
+	})
+
 	const error = isError ? t('ws.users.error.load') : ''
 	const [showAddForm, setShowAddForm] = useState(false)
 	const [formError, setFormError] = useState('')
@@ -259,7 +272,7 @@ function UserManagement({ user: currentUser }) {
 
 		setCreating(true)
 		try {
-			await api.post('/api/users', payload)
+			await userMutation.mutateAsync({ url: '/api/users', payload })
 			setShowAddForm(false)
 			setFormError('')
 			setFormData({
@@ -273,7 +286,6 @@ function UserManagement({ user: currentUser }) {
 				title: t('ws.users.create.successTitle'),
 				description: t('ws.users.create.successDesc', { name: payload.name }),
 			})
-			loadUsers()
 		} catch (err) {
 			const errors = err?.response?.data?.errors
 			const fieldMsg = errors
@@ -303,10 +315,10 @@ function UserManagement({ user: currentUser }) {
 		setStatusLoading(true)
 		setError('')
 		try {
-			await api.post(
-				`/api/users/${targetUser.id}/toggle-block`,
-				deactivating ? { reason } : {}
-			)
+			await userMutation.mutateAsync({
+				url: `/api/users/${targetUser.id}/toggle-block`,
+				payload: deactivating ? { reason } : {}
+			})
 			closeStatusModal()
 			setSuccessModal({
 				title: deactivating
@@ -321,7 +333,6 @@ function UserManagement({ user: currentUser }) {
 						: t('ws.users.toast.deactivatedDesc', { name: targetUser.name })
 					: t('ws.users.toast.activatedDesc', { name: targetUser.name }),
 			})
-			loadUsers()
 		} catch (err) {
 			setError(
 				err.response?.data?.message ||

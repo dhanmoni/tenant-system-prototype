@@ -23,13 +23,15 @@ export default function NoticeDocumentViewer({ open, onClose, proceeding, applic
 
     const { notice_type, hearing_date, hearing_time, venue, previous_hearing_date, remarks, additional_remarks } = proceeding
 
-    const applicantName = application.appellant_name || application.user?.name || 'Applicant'
-    const applicantAddress = application.appellant_residential_address || 'Address'
+    const isLandlordApp = application.signed_by === 'landlord' || application.signed_by === 'landlord_manager'
     
-    const respondentName = application.respondent_name || 'Respondent'
-    const respondentAddress = application.respondent_residential_address || 'Address'
+    const applicantName = application.appellant_name || application.applicant_name || (isLandlordApp ? application.landlord_name : application.tenant_name) || application.user?.name || 'Applicant'
+    const applicantAddress = application.appellant_residential_address || application.applicant_residential_address || (isLandlordApp ? application.landlord_address : application.tenant_address) || 'Address'
     
-    const propertyAddress = application.rent_tribunal_at || application.district?.name || 'Assam'
+    const respondentName = application.respondent_name || (isLandlordApp ? application.tenant_name : application.landlord_name) || 'Respondent'
+    const respondentAddress = application.respondent_residential_address || (isLandlordApp ? application.tenant_address : application.landlord_address) || 'Address'
+    
+    const propertyAddress = application.rent_tribunal_at || application.rent_court_at || application.before_rent_court || application.district?.name || 'Assam'
     const districtName = application.district?.name || ''
     
     const caseNo = application.application_no

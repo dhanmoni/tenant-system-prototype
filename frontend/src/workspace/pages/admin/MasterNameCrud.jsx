@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
@@ -13,8 +14,6 @@ import './MasterData.css'
 
 const PER_PAGE = 15
 const NAME_PATTERN = /^[A-Za-z\s]+$/
-
-
 
 function fieldError(err, fallback) {
 	const apiErrors = err?.response?.data?.errors
@@ -32,9 +31,38 @@ function MasterNameCrud({
 	placeholder,
 }) {
 	const navigate = useNavigate()
-	const { data: rows = [], isLoading: loading, isError, refetch: loadRows } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? endpoint : null)
+	const { data: rows = [], isLoading: loading, isError } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? endpoint : null)
+	const queryClient = useQueryClient()
+
+	const saveMutation = useMutation({
+		mutationFn: async ({ mode, rowId, trimmed }) => {
+			await csrf()
+			if (mode === 'edit' && rowId) {
+				const { data } = await api.put(`${endpoint}/${rowId}`, { name: trimmed })
+				return data
+			}
+			const { data } = await api.post(endpoint, { name: trimmed })
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['master-data', endpoint] })
+		}
+	})
+
+	const deleteMutation = useMutation({
+		mutationFn: async (id) => {
+			await csrf()
+			const { data } = await api.delete(`${endpoint}/${id}`)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['master-data', endpoint] })
+		}
+	})
+
 	const [name, setName] = useState('')
-	const error = isError ? `Failed to load ${itemLabelPlural?.toLowerCase()}` : ''
+	const [error, setError] = useState('')
+	const errorMsg = isError ? `Failed to load ${itemLabelPlural?.toLowerCase()}` : ''
 	const [formError, setFormError] = useState('')
 	const [successModal, setSuccessModal] = useState(null)
 	const [page, setPage] = useState(1)
@@ -141,15 +169,14 @@ function MasterNameCrud({
 		setError('')
 		setSaving(true)
 		try {
-			await csrf()
 			if (modal?.mode === 'edit' && modal.row?.id) {
-				await api.put(`${endpoint}/${modal.row.id}`, { name: trimmed })
+				await saveMutation.mutateAsync({ mode: 'edit', rowId: modal.row.id, trimmed })
 				setSuccessModal({
 					title: `${itemLabel} updated`,
 					message: `"${trimmed}" was saved.`,
 				})
 			} else {
-				await api.post(endpoint, { name: trimmed })
+				await saveMutation.mutateAsync({ mode: 'create', trimmed })
 				setSuccessModal({
 					title: `${itemLabel} added`,
 					message: `"${trimmed}" is now available across the portal.`,
@@ -157,7 +184,6 @@ function MasterNameCrud({
 			}
 			setName('')
 			setModal(null)
-			await loadRows()
 		} catch (err) {
 			setFormError(fieldError(err, `Failed to save ${itemLabel.toLowerCase()}`))
 		} finally {
@@ -170,14 +196,12 @@ function MasterNameCrud({
 		setDeleting(true)
 		setError('')
 		try {
-			await csrf()
-			await api.delete(`${endpoint}/${deleteTarget.id}`)
+			await deleteMutation.mutateAsync(deleteTarget.id)
 			setDeleteTarget(null)
 			setSuccessModal({
 				title: `${itemLabel} removed`,
 				message: `"${deleteTarget.name}" was deleted.`,
 			})
-			await loadRows()
 		} catch (err) {
 			setError(fieldError(err, `Failed to delete ${itemLabel.toLowerCase()}`))
 			setDeleteTarget(null)
@@ -235,9 +259,9 @@ function MasterNameCrud({
 
 	return (
 		<div className="ws-districts ws-master">
-			{error ? (
+			{errorMsg ? (
 				<div className="ws-profile-alert ws-profile-alert--error" role="alert">
-					{error}
+					{errorMsg}
 				</div>
 			) : null}
 

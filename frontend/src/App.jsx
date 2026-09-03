@@ -1,6 +1,7 @@
 import './App.css'
 import './styles/a11y-dark-mode.css'
 import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import api from './api'
 import { PROFILE_REMINDER_DISMISSED_KEY } from './utils/profileCompleteness'
@@ -225,12 +226,14 @@ function App() {
 	}
 
 	const logoutLock = useRef(false)
+	const queryClient = useQueryClient()
 
 	const handleLogout = async () => {
 		if (logoutLock.current) return
 		logoutLock.current = true
 		sessionStorage.removeItem(PROFILE_REMINDER_DISMISSED_KEY)
 		setUser(null)
+		queryClient.clear()
 		navigate('/login', { replace: true })
 		try {
 			await api.post('/api/logout', null, { skipAuthRedirect: true })
@@ -243,6 +246,7 @@ function App() {
 		const handleUnauthorized = () => {
 			sessionStorage.removeItem(PROFILE_REMINDER_DISMISSED_KEY)
 			setUser(null)
+			queryClient.clear()
 			const path = window.location.pathname || ''
 			/* Stay put on public marketing / auth pages — a guest session probe must not bounce About → home */
 			if (

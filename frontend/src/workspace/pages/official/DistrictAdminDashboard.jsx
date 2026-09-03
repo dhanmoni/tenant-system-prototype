@@ -12,20 +12,14 @@ import DailyApplicationsPanel, {
 	resolveActivityDateRange,
 } from '../../components/dashboard/DailyApplicationsPanel'
 import DistrictCoverageMap from '../../components/dashboard/DistrictCoverageMap'
+import { useDistrictBreakdown } from '../../../hooks/useDistrictBreakdown'
 
 function DistrictAdminDashboard({ user, stats, loading, error }) {
 	const navigate = useNavigate()
 	const s = stats || {}
 	const [selectedDate, setSelectedDate] = useState(null)
 	const [periodDays, setPeriodDays] = useState(7)
-	const [mapDistricts, setMapDistricts] = useState(null)
-	const [mapMeta, setMapMeta] = useState({
-		total: null,
-		forms: null,
-		uin: null,
-	})
-	const [mapLoading, setMapLoading] = useState(false)
-	const [mapError, setMapError] = useState('')
+
 
 	const displayName = formatDisplayName(user?.name)
 	const displayEmail = formatDisplayEmail(user?.email)
@@ -37,48 +31,20 @@ function DistrictAdminDashboard({ user, stats, loading, error }) {
 		[selectedDate, periodDays]
 	)
 
+	const { data: mapData, isLoading: mapLoading, isError: mapIsError } = useDistrictBreakdown(dateRange)
+	const mapError = mapIsError ? 'Failed to load map counts' : ''
+
+	const mapDistricts = mapData?.district_breakdown ?? null
+	const mapMeta = {
+		total: mapData?.total_applications ?? null,
+		forms: mapData?.service_applications ?? null,
+		uin: mapData?.tenancy_applications ?? null,
+	}
+
 	const districtsForMap = mapDistricts ?? s.district_breakdown ?? []
 	const showFormBreakdown = (s.form_type_breakdown?.length ?? 0) > 0
 	const showDistrictMap =
 		(s.district_breakdown?.length ?? 0) > 0 || districtsForMap.length > 0
-
-	useEffect(() => {
-		let cancelled = false
-
-		const loadMapBreakdown = async () => {
-			setMapLoading(true)
-			setMapError('')
-			try {
-				const params = {}
-				if (dateRange.from && dateRange.to) {
-					params.from = dateRange.from
-					params.to = dateRange.to
-				}
-				const { data } = await api.get('/api/dashboard-stats/district-breakdown', {
-					params,
-				})
-				if (cancelled) return
-				setMapDistricts(data?.district_breakdown || [])
-				setMapMeta({
-					total: data?.total_applications ?? 0,
-					forms: data?.service_applications ?? 0,
-					uin: data?.tenancy_applications ?? 0,
-				})
-			} catch (err) {
-				if (cancelled) return
-				setMapError(err?.response?.data?.message || 'Failed to load map counts')
-				setMapDistricts((prev) => prev ?? s.district_breakdown ?? [])
-			} finally {
-				if (!cancelled) setMapLoading(false)
-			}
-		}
-
-		loadMapBreakdown()
-		return () => {
-			cancelled = true
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- only refetch when the selected range changes
-	}, [dateRange.from, dateRange.to])
 
 	const kpiCards = useMemo(() => {
 		const totalApps =

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -11,6 +12,7 @@ import { applyTenancyAutofill } from '../utils/tenancyUinAutofill'
 
 export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
+	const queryClient = useQueryClient()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
 
@@ -35,11 +37,36 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 	const [signatureName, setSignatureName] = useState('')
 	const [signatureImage, setSignatureImage] = useState(null)
 
+	const mutation = useMutation({
+		mutationFn: async (formData) => {
+			await csrf()
+			const { data } = await api.post('/api/other-charges-revision-applications', formData, {
+				headers: { 'Content-Type': 'multipart/form-data' },
+			})
+			return data
+		},
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
+			completeServiceFormSubmit(
+				navigate,
+				getServiceFormSuccessMessage(data, 'Form I-A submitted successfully.')
+			)
+		},
+		onError: (err) => {
+			const msg =
+				err?.response?.data?.message ||
+				(err?.response?.data?.errors
+					? Object.values(err.response.data.errors).flat().join('. ')
+					: 'Failed to submit Form I-A')
+			setError(msg)
+		}
+	})
+
 	const submit = useCallback(async () => {
 		setError('')
 		setSubmitting(true)
 		try {
-			await csrf()
 			const formData = new FormData()
 			formData.append('tenancy_uin', tenancyUIN.trim())
 			if (tenancyAgreementDocumentNo.trim()) {
@@ -62,25 +89,9 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 			formData.append('signature_name', signatureName.trim())
 			if (signatureImage) formData.append('signature_image', signatureImage)
 
-			const { data } = await api.post('/api/other-charges-revision-applications', formData, {
-				headers: { 'Content-Type': 'multipart/form-data' },
-			})
-
-			completeServiceFormSubmit(
-				navigate,
-				getServiceFormSuccessMessage(
-					data,
-					'Form-I-A (Other charges revision/fixation) submitted successfully.'
-				)
-			)
+			await mutation.mutateAsync(formData)
 			return true
 		} catch (err) {
-			const msg =
-				err?.response?.data?.message ||
-				(err?.response?.data?.errors
-					? Object.values(err.response.data.errors).flat().join('. ')
-					: 'Failed to submit Form-I-A')
-			setError(msg)
 			return false
 		} finally {
 			setSubmitting(false)
@@ -91,6 +102,7 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 		landlordName,
 		managerAddress,
 		managerName,
+		mutation,
 		proposedOtherChargesDetails,
 		reasonForOtherChargesRevision,
 		rentedPremisesDescription,

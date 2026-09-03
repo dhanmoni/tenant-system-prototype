@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -11,6 +12,7 @@ import { applyTenancyAutofill } from '../utils/tenancyUinAutofill'
 
 export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
+	const queryClient = useQueryClient()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
 
@@ -47,11 +49,36 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 	const [verificationBeliefParasFrom, setVerificationBeliefParasFrom] = useState('')
 	const [verificationBeliefParasTo, setVerificationBeliefParasTo] = useState('')
 
+	const mutation = useMutation({
+		mutationFn: async (formData) => {
+			await csrf()
+			const { data } = await api.post('/api/rent-tribunal-appeal-applications', formData, {
+				headers: { 'Content-Type': 'multipart/form-data' },
+			})
+			return data
+		},
+		onSuccess: (data) => {
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
+			completeServiceFormSubmit(
+				navigate,
+				getServiceFormSuccessMessage(data, 'Form VI submitted successfully.')
+			)
+		},
+		onError: (err) => {
+			const msg =
+				err?.response?.data?.message ||
+				(err?.response?.data?.errors
+					? Object.values(err.response.data.errors).flat().join('. ')
+					: 'Failed to submit Form VI')
+			setError(msg)
+		}
+	})
+
 	const submit = useCallback(async () => {
 		setError('')
 		setSubmitting(true)
 		try {
-			await csrf()
 			const formData = new FormData()
 
 			formData.append('rent_tribunal_at', rentTribunalAt.trim())
@@ -86,22 +113,9 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 			formData.append('signature_name', signatureName.trim())
 			if (signatureImage) formData.append('signature_image', signatureImage)
 
-			const { data } = await api.post('/api/rent-tribunal-appeal-applications', formData, {
-				headers: { 'Content-Type': 'multipart/form-data' },
-			})
-
-			completeServiceFormSubmit(
-				navigate,
-				getServiceFormSuccessMessage(data, 'Form VI submitted successfully.')
-			)
+			await mutation.mutateAsync(formData)
 			return true
 		} catch (err) {
-			const msg =
-				err?.response?.data?.message ||
-				(err?.response?.data?.errors
-					? Object.values(err.response.data.errors).flat().join('. ')
-					: 'Failed to submit Form VI')
-			setError(msg)
 			return false
 		} finally {
 			setSubmitting(false)

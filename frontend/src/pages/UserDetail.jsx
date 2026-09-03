@@ -7,6 +7,9 @@ import { formatDateTime } from '../utils/formatters'
 import { useToast } from '../context/ToastContext'
 import WorkflowConfirmModal from '../components/dashboard/WorkflowConfirmModal'
 import { useLanguage } from '../i18n'
+import { useUserDetail } from '../hooks/useUserDetail'
+import { useMasterData } from '../hooks/useMasterData'
+import { useQueryClient } from '@tanstack/react-query'
 
 function isCitizenRole(role) {
 	return String(role || '').toLowerCase().trim() === ROLES.USER
@@ -26,7 +29,19 @@ function UserDetail({ user: currentUserProp }) {
 	const { id } = useParams()
 	const { showToast } = useToast()
 	const { t } = useLanguage()
-	const [user, setUser] = useState(null)
+	const { data: userDetail, isLoading, isError } = useUserDetail(id)
+	const queryClient = useQueryClient()
+
+	const { data: officesData } = useMasterData('offices')
+	const { data: designationsData } = useMasterData('designations')
+	const { data: rolesData } = useMasterData('roles')
+
+	const offices = officesData || []
+	const designations = designationsData || []
+	const roles = rolesData || []
+
+	const user = userDetail || null
+
 	const [editMode, setEditMode] = useState(false)
 	const [form, setForm] = useState({
 		name: '',
@@ -36,64 +51,52 @@ function UserDetail({ user: currentUserProp }) {
 		designation_id: '',
 		role: '',
 	})
-	const [offices, setOffices] = useState([])
-	const [designations, setDesignations] = useState([])
-	const [roles, setRoles] = useState([])
 	const [error, setError] = useState('')
 	const [saving, setSaving] = useState(false)
 	const [statusModal, setStatusModal] = useState(null)
 	const [statusReason, setStatusReason] = useState('')
 	const [statusLoading, setStatusLoading] = useState(false)
 
-	const loadUser = async () => {
-		try {
-			const { data } = await api.get(`/api/users/${id}`)
-			setUser(data.user)
+	useEffect(() => {
+		if (user && !editMode) {
 			setForm({
-				name: data.user?.name || '',
-				email: data.user?.email || '',
-				phone: data.user?.phone || '',
-				office_id: data.user?.office_id ? String(data.user.office_id) : '',
-				designation_id: data.user?.designation_id
-					? String(data.user.designation_id)
-					: '',
-				role: data.user?.role || '',
+				name: user.name || '',
+				email: user.email || '',
+				phone: user.phone || '',
+				office_id: user.office_id ? String(user.office_id) : '',
+				designation_id: user.designation_id ? String(user.designation_id) : '',
+				role: user.role || '',
 			})
-		} catch (err) {
-			setError(err?.response?.data?.message || t('ws.userDetail.error.load'))
 		}
-	}
-
-	const loadOptions = async () => {
-		try {
-			const [officeRes, designationRes, roleRes] = await Promise.all([
-				api.get('/api/offices', { params: { page: 1 } }),
-				api.get('/api/designations', { params: { page: 1 } }),
-				api.get('/api/roles', { params: { page: 1 } }),
-			])
-			setOffices(officeRes.data?.data || [])
-			setDesignations(designationRes.data?.data || [])
-			setRoles(roleRes.data?.data || [])
-		} catch (err) {
-			setError(err?.response?.data?.message || t('ws.userDetail.error.options'))
-		}
-	}
+	}, [user, editMode])
 
 	useEffect(() => {
-		loadUser()
-		loadOptions()
-	}, [id])
+		if (isError) {
+			setError(t('ws.userDetail.error.load'))
+		}
+	}, [isError, t])
 
 	const listPath = isCitizenRole(user?.role)
 		? '/dashboard/admin/users?mode=tenant'
 		: '/dashboard/admin/users?mode=office'
 
+	const updateMutation = useMutation({
+		mutationFn: async (payload) => {
+			await csrf()
+			const { data } = await api.put(`/api/users/${id}`, payload)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['user-detail', id] })
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+		}
+	})
+
 	const handleUpdate = async () => {
 		setError('')
 		setSaving(true)
 		try {
-			await csrf()
-			await api.put(`/api/users/${id}`, {
+			await updateMutation.mutateAsync({
 				name: form.name,
 				email: form.email,
 				phone: form.phone || null,
@@ -103,7 +106,6 @@ function UserDetail({ user: currentUserProp }) {
 			})
 			setEditMode(false)
 			showToast(t('ws.userDetail.toast.updated'), 'success')
-			await loadUser()
 		} catch (err) {
 			setError(err?.response?.data?.message || t('ws.userDetail.error.update'))
 		} finally {
@@ -111,13 +113,23 @@ function UserDetail({ user: currentUserProp }) {
 		}
 	}
 
+	const approveMutation = useMutation({
+		mutationFn: async () => {
+			await csrf()
+			const { data } = await api.post(`/api/users/${id}/approve`)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['user-detail', id] })
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+		}
+	})
+
 	const handleApprove = async () => {
 		setError('')
 		try {
-			await csrf()
-			await api.post(`/api/users/${id}/approve`)
+			await approveMutation.mutateAsync()
 			showToast(t('ws.userDetail.toast.approved'), 'success')
-			await loadUser()
 		} catch (err) {
 			setError(err?.response?.data?.message || t('ws.userDetail.error.approve'))
 		}
@@ -134,6 +146,18 @@ function UserDetail({ user: currentUserProp }) {
 		setStatusReason('')
 	}
 
+	const toggleBlockMutation = useMutation({
+		mutationFn: async (payload) => {
+			await csrf()
+			const { data } = await api.post(`/api/users/${user.id}/toggle-block`, payload)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['user-detail', id] })
+			queryClient.invalidateQueries({ queryKey: ['users'] })
+		}
+	})
+
 	const handleToggleBlock = async () => {
 		if (!user || !statusModal) return
 		const deactivating = statusModal.deactivating
@@ -142,21 +166,17 @@ function UserDetail({ user: currentUserProp }) {
 		setError('')
 		setStatusLoading(true)
 		try {
-			await csrf()
-			await api.post(
-				`/api/users/${user.id}/toggle-block`,
-				deactivating ? { reason } : {},
-			)
-			closeStatusModal()
+			await toggleBlockMutation.mutateAsync(deactivating ? { reason } : {})
 			showToast(
-				deactivating
-					? t('ws.userDetail.toast.deactivated')
-					: t('ws.userDetail.toast.activated'),
-				'success',
+				t('ws.userDetail.toast.statusUpdate', {
+					action: deactivating ? t('ws.userDetail.suspended') : t('ws.userDetail.activated'),
+				}),
+				'success'
 			)
-			await loadUser()
+			setStatusModal(null)
+			setStatusReason('')
 		} catch (err) {
-			setError(err?.response?.data?.message || t('ws.userDetail.error.status'))
+			setError(err?.response?.data?.message || t('ws.userDetail.error.statusUpdate'))
 		} finally {
 			setStatusLoading(false)
 		}

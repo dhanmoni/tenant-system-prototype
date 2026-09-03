@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import api, { csrf } from '../../../api'
@@ -24,7 +25,34 @@ function fieldError(err, fallback) {
 
 function OfficeManagement({ user }) {
 	const navigate = useNavigate()
-	const { data: offices = [], isLoading: officesLoading, isError: officesError, refetch: loadOffices } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? '/api/offices' : null)
+	const { data: offices = [], isLoading: officesLoading, isError: officesError } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? '/api/offices' : null)
+	const queryClient = useQueryClient()
+	
+	const saveMutation = useMutation({
+		mutationFn: async ({ mode, rowId, payload }) => {
+			await csrf()
+			if (mode === 'edit' && rowId) {
+				const { data } = await api.put(`/api/offices/${rowId}`, payload)
+				return data
+			}
+			const { data } = await api.post('/api/offices', payload)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['master-data', '/api/offices'] })
+		}
+	})
+
+	const deleteMutation = useMutation({
+		mutationFn: async (id) => {
+			await csrf()
+			const { data } = await api.delete(`/api/offices/${id}`)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['master-data', '/api/offices'] })
+		}
+	})
 	const { data: districts = [], isLoading: districtsLoading, isError: districtsError } = useMasterData(user?.role === ROLES.SUPER_ADMIN ? '/api/districts' : null)
 	const [form, setForm] = useState(EMPTY_FORM)
 	const error = (officesError || districtsError) ? 'Failed to load offices' : ''
@@ -151,20 +179,21 @@ function OfficeManagement({ user }) {
 		setError('')
 		setSaving(true)
 		try {
-			await csrf()
 			if (modal?.mode === 'edit' && modal.row?.id) {
-				await api.put(`/api/offices/${modal.row.id}`, payload)
-				setSuccessModal({ title: 'Office updated', message: `"${name}" was saved.` })
+				await saveMutation.mutateAsync({ mode: 'edit', rowId: modal.row.id, payload })
+				setSuccessModal({
+					title: 'Office updated',
+					message: `"${payload.name}" was saved.`,
+				})
 			} else {
-				await api.post('/api/offices', payload)
+				await saveMutation.mutateAsync({ mode: 'create', payload })
 				setSuccessModal({
 					title: 'Office added',
-					message: `"${name}" is now available across the portal.`,
+					message: `"${payload.name}" is now available across the portal.`,
 				})
 			}
-			setModal(null)
 			setForm(EMPTY_FORM)
-			await loadOffices()
+			setModal(null)
 		} catch (err) {
 			setFormError(fieldError(err, 'Failed to save office'))
 		} finally {
@@ -177,14 +206,12 @@ function OfficeManagement({ user }) {
 		setDeleting(true)
 		setError('')
 		try {
-			await csrf()
-			await api.delete(`/api/offices/${deleteTarget.id}`)
+			await deleteMutation.mutateAsync(deleteTarget.id)
+			setDeleteTarget(null)
 			setSuccessModal({
 				title: 'Office removed',
 				message: `"${deleteTarget.name}" was deleted.`,
 			})
-			setDeleteTarget(null)
-			await loadOffices()
 		} catch (err) {
 			setError(fieldError(err, 'Failed to delete office'))
 			setDeleteTarget(null)

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../api'
 import { formatDateTime, formatDate } from '../../utils/formatters'
@@ -7,6 +8,7 @@ import { STATUS } from '../../constants/status'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../utils/adminStatusBadge'
 import NoticeDocumentViewer from '../../components/dashboard/NoticeDocumentViewer'
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
+import { useApplicationDetail } from '../../hooks/useApplicationDetail'
 import { useToast } from '../../context/ToastContext'
 import { useLanguage } from '../../i18n'
 import { useTenantProceedings } from '../../hooks/useTenantProceedings'
@@ -67,9 +69,11 @@ function ApplicationDetails() {
 	const statusPath = '/dashboard/status'
 	const typeLabel = APPLICATION_LABELS[type] || 'Application'
 
-	const [application, setApplication] = useState(null)
-	const [loading, setLoading] = useState(false)
-	const [error, setError] = useState('')
+
+	const { data: application, isLoading: loading, isError } = useApplicationDetail(type, applicationNo)
+	const error = isError ? 'Failed to load application details' : ''
+	const queryClient = useQueryClient()
+
 	const { data: proceedings = [], isLoading: proceedingsLoading } = useTenantProceedings(
 		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? (application?.form_type || type) : null,
 		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? application?.id : null
@@ -81,44 +85,46 @@ function ApplicationDetails() {
 	const [cancelReason, setCancelReason] = useState('')
 	const [cancellingUin, setCancellingUin] = useState(false)
 
-	useEffect(() => {
-		loadApplication()
-	}, [type, applicationNo])
 
-	const loadApplication = async () => {
-		setLoading(true)
-		setError('')
-		try {
-			if (type === APPLICATION_TYPES.TENANCY_CERTIFICATE) {
-				const { data } = await api.get(`/api/tenancy-applications/${applicationNo}`)
-				setApplication(data.application || null)
-			} else {
-				const endpoint = FORM_ENDPOINTS[type] || '/api/forms'
-				const { data } = await api.get(`${endpoint}/${applicationNo}`)
-				setApplication(data.application || null)
-			}
-		} catch (err) {
-			setError(err?.response?.data?.message || 'Failed to load application details')
-		} finally {
-			setLoading(false)
+
+
+
+	const withdrawMutation = useMutation({
+		mutationFn: async () => {
+			const { data } = await api.post(`/api/tenant-forms/${type}/${application.id}/withdraw`)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['application-detail', type, applicationNo] })
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
 		}
-	}
-
-
+	})
 
 	const handleWithdraw = async () => {
 		setWithdrawing(true)
 		try {
-			await api.post(`/api/tenant-forms/${type}/${application.id}/withdraw`)
+			await withdrawMutation.mutateAsync()
 			showToast(t('ws.withdraw.success'), 'success')
 			setConfirmWithdraw(false)
-			await loadApplication()
 		} catch (err) {
 			showToast(err?.response?.data?.message || t('ws.withdraw.error'), 'error')
 		} finally {
 			setWithdrawing(false)
 		}
 	}
+
+	const cancelMutation = useMutation({
+		mutationFn: async (reason) => {
+			const { data } = await api.post(`/api/tenancy-applications/${application.application_no}/cancel`, { reason })
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['application-detail', type, applicationNo] })
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+		}
+	})
 
 	const handleCancelUin = async () => {
 		const reason = cancelReason.trim()
@@ -128,11 +134,10 @@ function ApplicationDetails() {
 		}
 		setCancellingUin(true)
 		try {
-			await api.post(`/api/tenancy-applications/${application.application_no}/cancel`, { reason })
+			await cancelMutation.mutateAsync(reason)
 			showToast(t('ws.uinCancel.success'), 'success')
 			setConfirmCancelUin(false)
 			setCancelReason('')
-			await loadApplication()
 		} catch (err) {
 			showToast(err?.response?.data?.message || t('ws.uinCancel.error'), 'error')
 		} finally {
@@ -183,7 +188,7 @@ function ApplicationDetails() {
 	const isCancelled = String(application.status || '').toUpperCase() === STATUS.CANCELLED
 
 	const renderProceedings = () => {
-		if (type !== APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL) return null
+		if (type === APPLICATION_TYPES.TENANCY_CERTIFICATE || type === APPLICATION_TYPES.VALUER_APPOINTMENT) return null
 
 		const formatNoticeType = (noticeType) =>
 			String(noticeType || '')
@@ -196,7 +201,7 @@ function ApplicationDetails() {
 					<div className="admin-app-details__proceedings-head-text">
 						<h3 className="admin-app-details__section-title">Case proceedings & notices</h3>
 						<p className="admin-app-details__proceedings-desc">
-							Hearing notices and orders issued for your appeal
+							Hearing notices and orders issued for your application
 						</p>
 					</div>
 				</div>
@@ -205,7 +210,7 @@ function ApplicationDetails() {
 						<p className="admin-app-details__proceedings-empty">Loading proceedings…</p>
 					) : proceedings.length === 0 ? (
 						<p className="admin-app-details__proceedings-empty">
-							No proceedings or notices have been recorded for this appeal yet.
+							No proceedings or notices have been recorded for this application yet.
 						</p>
 					) : (
 						<ul className="admin-app-details__proceedings-list">

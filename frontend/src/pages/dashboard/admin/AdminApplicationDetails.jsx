@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Link, useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../../api'
 import { fetchAdminApplication, fetchValuers as fetchValuerUsers } from '../../../services/adminApplications'
 import { getApiErrorMessage } from '../../../services/errors'
@@ -363,7 +364,21 @@ const AdminApplicationDetails = () => {
 	
 	const { data: valuers = [] } = useValuers()
 	const { data: proceedings = [], isLoading: proceedingsLoading, refetch: refetchProceedings } = useAdminProceedings(application?.form_type, application?.id)
+	
+	const queryClient = useQueryClient()
 	const [actionLoading, setActionLoading] = useState(false)
+	const adminActionMutation = useMutation({
+		mutationFn: async ({ url, payload, isMultipart = false }) => {
+			const headers = isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined
+			const { data } = await api.post(url, payload, { headers })
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+		}
+	})
+
 	const [superAdminControls, setSuperAdminControls] = useState({ status: '', assigned_to_role: '' })
 	const [isEditing, setIsEditing] = useState(false)
 	const [editForm, setEditForm] = useState({})
@@ -458,15 +473,12 @@ const AdminApplicationDetails = () => {
 	const handlePrintTenancyForm = async () => {
 		if (!application?.application_no) return
 		try {
-			setActionLoading(true)
 			const res = await api.get(
 				`/api/tenancy-applications/${application.application_no}/application-details?print=1`
 			)
 			openInPrintWindow(res.data)
 		} catch (err) {
 			showToast(err?.response?.data?.message || 'Failed to open printable application.', 'error')
-		} finally {
-			setActionLoading(false)
 		}
 	}
 
@@ -515,7 +527,11 @@ const AdminApplicationDetails = () => {
 		try {
 			setProceedingSubmitting(true)
 			const formType = application.form_type || APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL;
-			await api.post(`/api/admin/applications/${formType}/${application.id}/proceedings`, formData)
+			await adminActionMutation.mutateAsync({
+				url: `/api/admin/applications/${formType}/${application.id}/proceedings`,
+				payload: formData,
+				isMultipart: true
+			})
 			refetchProceedings()
 			setShowProceedingModal(false)
 		} catch (err) {
@@ -532,11 +548,11 @@ const AdminApplicationDetails = () => {
 	const renderProceedings = () => {
 		if (!application) return null
 
-		const isRtAppeal = application.form_type === APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL
-		if (!isRtAppeal) return null
+		const isHearingApplicable = application.form_type !== APPLICATION_TYPES.TENANCY_CERTIFICATE && application.form_type !== APPLICATION_TYPES.VALUER_APPOINTMENT
+		if (!isHearingApplicable) return null
 
 		const canAddProceeding =
-			(user?.role === ROLES.RT_ASSISTANT || user?.role === ROLES.RENT_TRIBUNAL) &&
+			(ASSISTANT_ROLES.includes(user?.role) || PRINCIPAL_ROLES.includes(user?.role)) &&
 			application.status !== STATUS.SUBMITTED
 
 		const formatNoticeType = (type) =>
@@ -550,7 +566,7 @@ const AdminApplicationDetails = () => {
 					<div className="admin-app-details__proceedings-head-text">
 						<h3 className="admin-app-details__section-title">Case Proceedings & Notices</h3>
 						<p className="admin-app-details__proceedings-desc">
-							Hearing notices, adjournments, and tribunal orders for this appeal
+							Hearing notices, adjournments, and orders for this application
 						</p>
 					</div>
 					{canAddProceeding ? (
@@ -711,8 +727,9 @@ const AdminApplicationDetails = () => {
 
 		setActionLoading(true)
 		try {
-			const { data } = await api.post(`/api/admin/applications/${application.id}/assign-valuer`, {
-				assigned_valuer_id: Number(selectedValuerId),
+			const data = await adminActionMutation.mutateAsync({
+				url: `/api/admin/applications/${application.id}/assign-valuer`,
+				payload: { assigned_valuer_id: Number(selectedValuerId) }
 			})
 			showToast(data?.message || (isReassign ? 'Valuer reassigned successfully' : 'Valuer assigned successfully'), 'success')
 			setValuerLoadError('')
@@ -728,7 +745,9 @@ const AdminApplicationDetails = () => {
 	const handleRemoveValuer = async () => {
 		setActionLoading(true)
 		try {
-			const { data } = await api.post(`/api/admin/applications/${application.id}/remove-valuer`)
+			const data = await adminActionMutation.mutateAsync({
+				url: `/api/admin/applications/${application.id}/remove-valuer`
+			})
 			showToast(data?.message || 'Valuer removed successfully', 'success')
 			setSelectedValuerId('')
 			setWorkflowModal(null)
@@ -744,8 +763,9 @@ const AdminApplicationDetails = () => {
 		if (!valuerReport.trim()) return showToast('Please enter the report', 'error')
 		setActionLoading(true)
 		try {
-			const { data } = await api.post(`/api/admin/applications/${application.id}/submit-valuer-report`, {
-				valuer_report: valuerReport,
+			const data = await adminActionMutation.mutateAsync({
+				url: `/api/admin/applications/${application.id}/submit-valuer-report`,
+				payload: { valuer_report: valuerReport }
 			})
 			showToast(data?.message || 'Report submitted successfully', 'success')
 			setValuerReport('')
@@ -782,10 +802,10 @@ const AdminApplicationDetails = () => {
 
 		try {
 			setActionLoading(true)
-			await api.post(
-				`/api/admin/applications/${application.form_type}/${application.id}/${workflowModal}`,
+			await adminActionMutation.mutateAsync({
+				url: `/api/admin/applications/${application.form_type}/${application.id}/${workflowModal}`,
 				payload
-			)
+			})
 			const labels = {
 				forward: 'moved to review',
 				approve: 'approved',
@@ -828,10 +848,10 @@ const AdminApplicationDetails = () => {
 
 		try {
 			setActionLoading(true)
-			await api.post(
-				`/api/admin/applications/${application.form_type}/${application.id}/superadmin-move`,
-				superAdminControls
-			)
+			await adminActionMutation.mutateAsync({
+				url: `/api/admin/applications/${application.form_type}/${application.id}/superadmin-move`,
+				payload: superAdminControls
+			})
 			setWorkflowModal(null)
 			showToast('Application moved successfully.', 'success')
 			fetchDetails()

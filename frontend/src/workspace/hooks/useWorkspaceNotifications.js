@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import api from '../../api'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../constants/application'
 import { ASSISTANT_ROLES, PRINCIPAL_ROLES, ROLES } from '../../constants/roles'
@@ -94,48 +95,40 @@ function staffInboxUrl(role) {
 
 export function useWorkspaceNotifications(user) {
 	const [notifications, setNotifications] = useState([])
-	const [loading, setLoading] = useState(false)
+
+	const { data: rawRows, isLoading: loading } = useQuery({
+		queryKey: ['notifications', user?.id, user?.role],
+		queryFn: async () => {
+			if (!user?.id) return []
+			const isCitizen = user.role === ROLES.USER
+			if (isCitizen) {
+				const { data } = await api.get('/api/tenant-forms/my', {
+					params: { page: 1, per_page: MAX_ITEMS, sort_by: 'updated_at', sort_order: 'desc' },
+				})
+				return parseTenantFormsResponse(data).items
+			} else {
+				const url = staffInboxUrl(user.role)
+				if (url) {
+					const { data } = await api.get(url, { params: { page: 1, per_page: MAX_ITEMS } })
+					return data.applications || data.data || []
+				}
+				return []
+			}
+		},
+		enabled: !!user?.id,
+		refetchInterval: 1000 * 60, // Poll every minute
+	})
 
 	useEffect(() => {
 		if (!user?.id) {
 			setNotifications([])
-			return undefined
+			return
 		}
-
-		let cancelled = false
+		const currentRows = rawRows || []
+		const isCitizen = user.role === ROLES.USER
 		const readIds = readStoredIds()
-		const role = user.role
-		const isCitizen = role === ROLES.USER
-
-		const load = async () => {
-			setLoading(true)
-			try {
-				let rows = []
-				if (isCitizen) {
-					const { data } = await api.get('/api/tenant-forms/my', {
-						params: { page: 1, per_page: MAX_ITEMS, sort_by: 'updated_at', sort_order: 'desc' },
-					})
-					rows = parseTenantFormsResponse(data).items
-				} else {
-					const url = staffInboxUrl(role)
-					if (url) {
-						const { data } = await api.get(url, { params: { page: 1, per_page: MAX_ITEMS } })
-						rows = data.applications || data.data || []
-					}
-				}
-				if (!cancelled) setNotifications(mapRows(rows, isCitizen, readIds))
-			} catch {
-				if (!cancelled) setNotifications([])
-			} finally {
-				if (!cancelled) setLoading(false)
-			}
-		}
-
-		load()
-		return () => {
-			cancelled = true
-		}
-	}, [user?.id, user?.role])
+		setNotifications(mapRows(currentRows, isCitizen, readIds))
+	}, [rawRows, user?.id, user?.role])
 
 	const markAllRead = useCallback(() => {
 		setNotifications((prev) => {

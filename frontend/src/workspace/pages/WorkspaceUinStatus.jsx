@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api'
 import { Icon } from '../../components/dashboard/Icons'
 import StatusProgressViewButton from '../../components/dashboard/StatusProgressViewButton'
@@ -443,7 +444,8 @@ function ApplicationsTable({
 	)
 }
 
-function WorkspaceUinStatus() {
+export default function WorkspaceUinStatus() {
+	const queryClient = useQueryClient()
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
@@ -603,12 +605,23 @@ function WorkspaceUinStatus() {
 		}
 	}
 
+	const withdrawMutation = useMutation({
+		mutationFn: async ({ type, id }) => {
+			const { data } = await api.post(`/api/tenant-forms/${type}/${id}/withdraw`)
+			return data
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+		}
+	})
+
 	const confirmWithdraw = async () => {
 		if (!withdrawApp) return
 		setWithdrawing(true)
 		try {
 			const type = getWithdrawType(withdrawApp)
-			await api.post(`/api/tenant-forms/${type}/${withdrawApp.id}/withdraw`)
+			await withdrawMutation.mutateAsync({ type, id: withdrawApp.id })
 			showToast(t('ws.withdraw.success'), 'success')
 			setWithdrawApp(null)
 			refetch()
@@ -912,5 +925,3 @@ function WorkspaceUinStatus() {
 		</div>
 	)
 }
-
-export default WorkspaceUinStatus

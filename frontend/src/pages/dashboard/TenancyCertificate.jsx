@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { Link, useLocation, useOutletContext, useNavigate, useSearchParams } from 'react-router-dom'
 import api, { csrf } from '../../api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { buildTenancyFormData, applyDraftToForm, applyInitiatorProfileAutofill, cleanOptionalValue } from '../../utils/tenancyDraft'
 import { formatDate, formatDateTime } from '../../utils/formatters'
 import { Icon } from '../../components/dashboard/Icons'
@@ -32,8 +33,11 @@ function TenancyCertificate() {
 	const [success, setSuccess] = useState('')
 	const [saveToast, setSaveToast] = useState('')
 	const [errorToast, setErrorToast] = useState('')
+	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [tenancySubmitting, setTenancySubmitting] = useState(false)
 	const [draftSaving, setDraftSaving] = useState(false)
+	const queryClient = useQueryClient()
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 	const [draftApplicationNo, setDraftApplicationNo] = useState(null)
 	const [savedWizardStep, setSavedWizardStep] = useState(0)
 	const [pageReady, setPageReady] = useState(true)
@@ -129,6 +133,34 @@ function TenancyCertificate() {
 	const [profileAddress, setProfileAddress] = useState('')
 	const [profilePin, setProfilePin] = useState('')
 	const [profilePan, setProfilePan] = useState('')
+
+	const saveDraftMutation = useMutation({
+		mutationFn: async ({ formData, isDraftApplicationNo }) => {
+			if (isDraftApplicationNo) {
+				formData.append('_method', 'PUT')
+				return await api.post(`/api/tenancy-applications/${draftApplicationNo}/draft`, formData)
+			}
+			return await api.post('/api/tenancy-applications/draft', formData)
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
+		}
+	})
+
+	const submitMutation = useMutation({
+		mutationFn: async ({ formData, isDraftApplicationNo, forceNew }) => {
+			if (isDraftApplicationNo) {
+				return await api.post(`/api/tenancy-applications/${draftApplicationNo}/submit`, formData)
+			}
+			return await api.post('/api/tenancy-applications', formData)
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['citizen-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['admin-applications'] })
+			queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+		}
+	})
 
 	const applyProfileUser = useCallback((profileUser = {}) => {
 		if (!profileUser) return
@@ -1008,27 +1040,14 @@ function TenancyCertificate() {
 		setDraftSaving(true)
 		try {
 			await csrf()
-			// Include all stages up to the furthest reached so going back to edit
-			// stage 1 does not drop data saved in later stages.
 			const throughStep = Math.max(step, savedWizardStep || 0)
 			const formData = buildTenancyFormData(getFormState(), {
 				wizardStep: step,
 				includeThroughStep: throughStep,
 				profile: getProfileSnapshot(),
 			})
-			let data
-			if (!draftApplicationNo) {
-				const res = await api.post('/api/tenancy-applications/draft', formData)
-				data = res.data
-			} else {
-				// PHP does not parse multipart bodies on PUT; use POST + method spoofing.
-				formData.append('_method', 'PUT')
-				const res = await api.post(
-					`/api/tenancy-applications/${draftApplicationNo}/draft`,
-					formData
-				)
-				data = res.data
-			}
+			const res = await saveDraftMutation.mutateAsync({ formData, isDraftApplicationNo: !!draftApplicationNo })
+			const data = res.data
 			const draft = data.draft || data
 			if (draft?.application_no) {
 				setDraftApplicationNo(draft.application_no)
@@ -1075,17 +1094,8 @@ function TenancyCertificate() {
 			formData.append('apply_type', applyType || 'Individual')
 			if (forceNew) formData.append('force_new', '1')
 
-			let data
-			if (draftApplicationNo) {
-				const res = await api.post(
-					`/api/tenancy-applications/${draftApplicationNo}/submit`,
-					formData
-				)
-				data = res.data
-			} else {
-				const res = await api.post('/api/tenancy-applications', formData)
-				data = res.data
-			}
+			const res = await submitMutation.mutateAsync({ formData, isDraftApplicationNo: !!draftApplicationNo, forceNew })
+			const data = res.data
 			setConflictData(null)
 			const refCode = data.ref_code
 			setSubmittedApp({
