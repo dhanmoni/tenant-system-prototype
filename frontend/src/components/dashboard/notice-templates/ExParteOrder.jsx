@@ -3,7 +3,7 @@ export default function ExParteOrder({ data }) {
         <>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                 <h3 style={{ margin: 0, fontWeight: 'bold' }}>GOVERNMENT OF ASSAM</h3>
-                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE RENT AUTHORITY</h3>
+                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE {data.officeName.toUpperCase()}</h3>
                 <div>{data.districtName}</div>
                 <div style={{ borderBottom: '1px solid black', marginTop: '1rem', marginBottom: '1rem', width: '100%' }}></div>
                 <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '1rem' }}>EX-PARTE ORDER</div>
@@ -27,9 +27,9 @@ export default function ExParteOrder({ data }) {
                 <div>Address: {data.respondentAddress}</div>
             </div>
 
-            <p style={{ marginBottom: '1rem' }}>Despite service of notice through the Assam Tenancy Portal and other available electronic means, the Opposite Party did not appear before the Rent Authority on the dates fixed for hearing.</p>
+            <p style={{ marginBottom: '1rem' }}>Despite service of notice through the Assam Tenancy Portal and other available electronic means, the Opposite Party did not appear before the {data.officeName} on the dates fixed for hearing.</p>
             <p style={{ marginBottom: '1rem' }}>After recording the absence of the Opposite Party, the matter was taken up ex-parte on the basis of the available records and the submissions and documents placed on record by the Applicant.</p>
-            <p style={{ marginBottom: '1rem' }}>Having considered the records, documents and submissions available, the Rent Authority is satisfied, to the extent necessary for disposal of the proceeding, that:</p>
+            <p style={{ marginBottom: '1rem' }}>Having considered the records, documents and submissions available, the {data.officeName} is satisfied, to the extent necessary for disposal of the proceeding, that:</p>
             
             <div style={{ marginBottom: '1rem', whiteSpace: 'pre-wrap', marginLeft: '2rem' }}>{data.remarks || '1.\n2.\n3.'}</div>
 
@@ -41,7 +41,7 @@ export default function ExParteOrder({ data }) {
             <p style={{ marginBottom: '2rem' }}>Issued digitally through Assam Tenancy Portal.</p>
 
             <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 'bold' }}>Rent Authority</div>
+                <div style={{ fontWeight: 'bold' }}>{data.officeName}</div>
             </div>
         </>
     )

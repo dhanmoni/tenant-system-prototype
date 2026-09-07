@@ -6,7 +6,7 @@ export default function ApplicantAbsentNotice({ data }) {
                 <div style={{ fontStyle: 'italic', marginBottom: '1rem' }}>(When Applicant absent)</div>
                 <div style={{ borderBottom: '1px solid black', width: '100%', marginBottom: '1rem' }}></div>
                 <h3 style={{ margin: 0, fontWeight: 'bold' }}>GOVERNMENT OF ASSAM</h3>
-                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE RENT AUTHORITY</h3>
+                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE {data.officeName.toUpperCase()}</h3>
                 <div style={{ borderBottom: '1px solid black', marginTop: '1rem', width: '100%' }}></div>
             </div>
 
@@ -27,7 +27,7 @@ export default function ApplicantAbsentNotice({ data }) {
             </div>
 
             <div style={{ fontWeight: 'bold', marginBottom: '1rem' }}>ORDER</div>
-            <p style={{ marginBottom: '1rem' }}>The matter was fixed for hearing on {data.previous_hearing_date || data.dateStr} and was called on that date. The Opposite Party appeared before the Rent Authority. However, the Applicant/Petitioner was absent, and no intimation or sufficient cause for the absence was placed on record.</p>
+            <p style={{ marginBottom: '1rem' }}>The matter was fixed for hearing on {data.previous_hearing_date || data.dateStr} and was called on that date. The Opposite Party appeared before the {data.officeName}. However, the Applicant/Petitioner was absent, and no intimation or sufficient cause for the absence was placed on record.</p>
             <p style={{ marginBottom: '1rem' }}>In the interest of justice, and to give the Applicant/Petitioner a further opportunity to be heard, the matter is adjourned and re-fixed for hearing on:</p>
             <div style={{ marginLeft: '2rem', marginBottom: '1rem' }}>
                 <div><strong>Date:</strong> {data.hearing_date}</div>
@@ -39,7 +39,7 @@ export default function ApplicantAbsentNotice({ data }) {
             <p style={{ marginBottom: '2rem' }}>If the Applicant/Petitioner does not appear on the next date without sufficient cause, the petition may be dealt with or disposed of in accordance with law on the basis of the materials available on record.</p>
 
             <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 'bold' }}>Rent Authority</div>
+                <div style={{ fontWeight: 'bold' }}>{data.officeName}</div>
                 <div>{data.districtName}</div>
             </div>
         </>

@@ -5,7 +5,7 @@ export default function ProceedingSheet({ data }) {
                 <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '1rem' }}>PROCEEDING SHEET / MINUTES OF JOINT DISCUSSION</div>
                 <div style={{ borderBottom: '1px solid black', width: '100%', marginBottom: '1rem' }}></div>
                 <h3 style={{ margin: 0, fontWeight: 'bold' }}>GOVERNMENT OF ASSAM</h3>
-                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE RENT AUTHORITY</h3>
+                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE {data.officeName.toUpperCase()}</h3>
                 <div style={{ borderBottom: '1px solid black', marginTop: '1rem', width: '100%' }}></div>
             </div>
 
@@ -25,7 +25,7 @@ export default function ProceedingSheet({ data }) {
                 <div>{data.respondentName}</div>
             </div>
 
-            <p style={{ marginBottom: '1rem' }}>before the undersigned Rent Authority on {data.hearing_date}.</p>
+            <p style={{ marginBottom: '1rem' }}>before the undersigned {data.officeName} on {data.hearing_date}.</p>
             <p style={{ marginBottom: '1rem' }}>The following persons appeared:</p>
             
             <table style={{ width: '100%', marginBottom: '1rem', textAlign: 'left', borderCollapse: 'collapse' }}>
@@ -63,10 +63,10 @@ export default function ProceedingSheet({ data }) {
             <div style={{ marginBottom: '1rem', whiteSpace: 'pre-wrap', marginLeft: '2rem' }}>{data.additional_remarks || '1.\n2.\n3.'}</div>
 
             <p style={{ marginBottom: '1rem' }}>The parties stated and confirmed that the settlement was reached voluntarily, of their own free will, and without coercion, undue influence, misrepresentation or pressure.</p>
-            <p style={{ marginBottom: '2rem' }}>The matter is accordingly placed before the Rent Authority for consideration and for passing an appropriate order in accordance with law.</p>
+            <p style={{ marginBottom: '2rem' }}>The matter is accordingly placed before the {data.officeName} for consideration and for passing an appropriate order in accordance with law.</p>
 
             <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 'bold' }}>Rent Authority</div>
+                <div style={{ fontWeight: 'bold' }}>{data.officeName}</div>
                 <div>{data.districtName}</div>
             </div>
         </>
