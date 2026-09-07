@@ -6,7 +6,7 @@ export default function RespondentAbsentNotice({ data }) {
                 <div style={{ fontStyle: 'italic', marginBottom: '1rem' }}>(When Opposite Party absent)</div>
                 <div style={{ borderBottom: '1px solid black', width: '100%', marginBottom: '1rem' }}></div>
                 <h3 style={{ margin: 0, fontWeight: 'bold' }}>GOVERNMENT OF ASSAM</h3>
-                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE RENT AUTHORITY</h3>
+                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE {data.officeName.toUpperCase()}</h3>
                 <div style={{ borderBottom: '1px solid black', marginTop: '1rem', width: '100%' }}></div>
             </div>
 
@@ -41,7 +41,7 @@ export default function RespondentAbsentNotice({ data }) {
             <p style={{ marginBottom: '2rem' }}>The Opposite Party/Respondent shall appear on the next date and place its/his/her response and supporting documents on record. If the party fails to do so, the matter may proceed ex-parte and may be disposed of on the basis of the available record.</p>
 
             <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 'bold' }}>Rent Authority</div>
+                <div style={{ fontWeight: 'bold' }}>{data.officeName}</div>
                 <div>{data.districtName}</div>
             </div>
         </>

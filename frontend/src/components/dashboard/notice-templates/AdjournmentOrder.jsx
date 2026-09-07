@@ -6,7 +6,7 @@ export default function AdjournmentOrder({ data }) {
                 <div style={{ fontStyle: 'italic', marginBottom: '1rem' }}>(For further document submission / settlement discussion)</div>
                 <div style={{ borderBottom: '1px solid black', width: '100%', marginBottom: '1rem' }}></div>
                 <h3 style={{ margin: 0, fontWeight: 'bold' }}>GOVERNMENT OF ASSAM</h3>
-                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE RENT AUTHORITY</h3>
+                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE {data.officeName.toUpperCase()}</h3>
                 <div style={{ borderBottom: '1px solid black', marginTop: '1rem', width: '100%' }}></div>
             </div>
 
@@ -39,7 +39,7 @@ export default function AdjournmentOrder({ data }) {
             <p style={{ marginBottom: '2rem' }}>No further adjournment will ordinarily be granted unless sufficient cause is shown and the request is found justified in the circumstances of the case.</p>
 
             <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 'bold' }}>Rent Authority</div>
+                <div style={{ fontWeight: 'bold' }}>{data.officeName}</div>
                 <div>{data.districtName}</div>
             </div>
         </>

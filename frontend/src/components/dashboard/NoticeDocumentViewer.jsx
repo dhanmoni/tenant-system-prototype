@@ -37,10 +37,19 @@ export default function NoticeDocumentViewer({ open, onClose, proceeding, applic
     const caseNo = application.application_no
     const dateStr = new Date(proceeding.created_at).toLocaleDateString()
 
+    let officeName = 'Rent Authority'
+    if (application.form_type) {
+        if (application.form_type.includes('rent-court')) {
+            officeName = 'Rent Court'
+        } else if (application.form_type.includes('rent-tribunal')) {
+            officeName = 'Rent Tribunal'
+        }
+    }
+
     const data = {
         applicantName, applicantAddress, respondentName, respondentAddress, 
         propertyAddress, districtName, caseNo, dateStr,
-        hearing_date, hearing_time, venue, previous_hearing_date, remarks, additional_remarks
+        hearing_date, hearing_time, venue, previous_hearing_date, remarks, additional_remarks, officeName
     }
 
     const renderContent = () => {

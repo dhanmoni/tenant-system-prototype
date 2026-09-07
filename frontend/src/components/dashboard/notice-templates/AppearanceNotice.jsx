@@ -3,7 +3,7 @@ export default function AppearanceNotice({ data }) {
         <>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                 <h3 style={{ margin: 0, fontWeight: 'bold' }}>GOVERNMENT OF ASSAM</h3>
-                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE RENT AUTHORITY</h3>
+                <h3 style={{ margin: 0, fontWeight: 'bold' }}>OFFICE OF THE {data.officeName.toUpperCase()}</h3>
                 <div>[{data.districtName}]</div>
                 <div style={{ borderBottom: '1px solid black', marginTop: '1rem', marginBottom: '1rem', width: '100%' }}></div>
                 <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
@@ -36,8 +36,8 @@ export default function AppearanceNotice({ data }) {
             <p style={{ marginBottom: '1rem' }}><strong>Property Address:</strong><br />{data.propertyAddress}</p>
 
             <p style={{ marginBottom: '1rem' }}>Whereas an application/petition has been received through the Assam Tenancy Portal in relation to a tenancy dispute between the above-named parties under the Assam Tenancy Act, 2021 and the Rules made thereunder;</p>
-            <p style={{ marginBottom: '1rem' }}>And whereas, having regard to the nature of the dispute, the undersigned Rent Authority considers it appropriate to give both parties a fair and reasonable opportunity to be heard and, where possible, to facilitate a mutually acceptable settlement;</p>
-            <p style={{ marginBottom: '1rem' }}>Accordingly, both parties are required to appear before the Rent Authority on the date, at the time and at the venue specified below:</p>
+            <p style={{ marginBottom: '1rem' }}>And whereas, having regard to the nature of the dispute, the undersigned {data.officeName} considers it appropriate to give both parties a fair and reasonable opportunity to be heard and, where possible, to facilitate a mutually acceptable settlement;</p>
+            <p style={{ marginBottom: '1rem' }}>Accordingly, both parties are required to appear before the {data.officeName} on the date, at the time and at the venue specified below:</p>
 
             <ul style={{ marginBottom: '1rem', listStyleType: 'disc', marginLeft: '2rem' }}>
                 <li><strong>Date:</strong> {data.hearing_date}</li>
@@ -54,11 +54,11 @@ export default function AppearanceNotice({ data }) {
                 <li>Supporting documents relating to dispute</li>
             </ol>
 
-            <p style={{ marginBottom: '1rem' }}>If either party fails to appear on the date fixed without sufficient cause, the Rent Authority may proceed with the matter in accordance with law, including by taking up the matter ex-parte, and may decide the case on the basis of the records and materials available.</p>
+            <p style={{ marginBottom: '1rem' }}>If either party fails to appear on the date fixed without sufficient cause, the {data.officeName} may proceed with the matter in accordance with law, including by taking up the matter ex-parte, and may decide the case on the basis of the records and materials available.</p>
             <p style={{ marginBottom: '2rem' }}>This notice has been generated digitally through the Assam Tenancy Portal and, accordingly, does not require a physical signature.</p>
 
             <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 'bold' }}>Rent Authority</div>
+                <div style={{ fontWeight: 'bold' }}>{data.officeName}</div>
                 <div>{data.districtName}</div>
                 <div>Government of Assam</div>
             </div>
