@@ -412,6 +412,79 @@ body.dark-mode .service-form-page label {
 	color: var(--ws-text, #e8eef6) !important;
 }
 
+body.dark-mode .service-form-page .schedule-part__title,
+body.dark-mode .service-form-panel .schedule-part__title {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .prior-proceeding,
+body.dark-mode .service-form-panel .prior-proceeding {
+	background: #151c26 !important;
+	border-color: #3a4656 !important;
+}
+
+body.dark-mode .service-form-page .prior-proceeding > legend,
+body.dark-mode .service-form-panel .prior-proceeding > legend {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .declaration__box,
+body.dark-mode .service-form-panel .declaration__box {
+	background: #151c26 !important;
+	border-color: #3a4656 !important;
+	border-left-color: #60a5fa !important;
+}
+
+body.dark-mode .service-form-page .declaration__box:has(input:checked),
+body.dark-mode .service-form-panel .declaration__box:has(input:checked) {
+	background: #172032 !important;
+}
+
+body.dark-mode .service-form-page .declaration__text,
+body.dark-mode .service-form-panel .declaration__text {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .declaration__note,
+body.dark-mode .service-form-panel .declaration__note {
+	color: var(--ws-text-muted, #a8b4c4) !important;
+}
+
+body.dark-mode .service-form-page .ground-choice,
+body.dark-mode .service-form-panel .ground-choice {
+	background: #151c26 !important;
+	border-color: #3a4656 !important;
+}
+
+body.dark-mode .service-form-page .ground-choice:has(input:checked),
+body.dark-mode .service-form-panel .ground-choice:has(input:checked) {
+	border-color: #60a5fa !important;
+	background: #172032 !important;
+}
+
+body.dark-mode .service-form-page .ground-choice__cite,
+body.dark-mode .service-form-panel .ground-choice__cite {
+	color: #93b4fb !important;
+}
+
+body.dark-mode .service-form-page .ground-choice__label,
+body.dark-mode .service-form-panel .ground-choice__label {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .ground-choice__text,
+body.dark-mode .service-form-panel .ground-choice__text,
+body.dark-mode .service-form-page .ground-choice__explanation,
+body.dark-mode .service-form-panel .ground-choice__explanation {
+	color: var(--ws-text-muted, #a8b4c4) !important;
+}
+
+
+body.dark-mode .service-form-page .field-note,
+body.dark-mode .service-form-panel .field-note {
+	color: var(--ws-text-muted, #a8b4c4) !important;
+}
+
 body.dark-mode .service-form-page input:not([type='checkbox']):not([type='radio']),
 body.dark-mode .service-form-page select,
 body.dark-mode .service-form-page textarea {
@@ -768,4 +841,115 @@ body.dark-mode .gov-feedback-form__error {
 
 body.dark-mode .auth-panel-field-error {
 	color: #fca5a5 !important;
+}
+
+/*
+ * Statutory clauses set as running prose - the VERIFICATION of Forms II to VI and Form I-B's
+ * recital and undertaking.
+ *
+ * These are the sentences a filer swears to, so legibility here is not a nicety. The blanks in
+ * particular need to stay visible as blanks: the generic dark input rule below gives every control
+ * a box, which would put a box around each word of the sentence and undo the whole layout.
+ */
+body.dark-mode .service-form-page .clause,
+body.dark-mode .service-form-panel .clause {
+	background: #151c26 !important;
+	border-color: #3a4656 !important;
+	border-left-color: #60a5fa !important;
+}
+
+body.dark-mode .service-form-page .clause__heading,
+body.dark-mode .service-form-panel .clause__heading {
+	color: #93c5fd !important;
+}
+
+body.dark-mode .service-form-page .clause__sentence,
+body.dark-mode .service-form-panel .clause__sentence {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .clause .clause__blank,
+body.dark-mode .service-form-panel .clause .clause__blank {
+	background: #1b2430 !important;
+	border: 0 !important;
+	border-bottom: 1px solid #7c8ba1 !important;
+	border-radius: 0 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .service-form-page .clause .clause__blank--relation,
+body.dark-mode .service-form-panel .clause .clause__blank--relation {
+	background: transparent !important;
+	border-bottom-style: dashed !important;
+}
+
+body.dark-mode .service-form-page .clause .clause__blank:focus,
+body.dark-mode .service-form-panel .clause .clause__blank:focus {
+	outline: 2px solid #60a5fa !important;
+	outline-offset: 2px;
+	background: #202b3a !important;
+}
+
+/* Derived, not typed: reads as ink on the rule rather than as another control. */
+body.dark-mode .service-form-page .clause__filled,
+body.dark-mode .service-form-panel .clause__filled {
+	background: #1e2a3d !important;
+	border-bottom-color: #7c8ba1 !important;
+	color: #e8eef6 !important;
+}
+
+body.dark-mode .service-form-page .clause__note,
+body.dark-mode .service-form-panel .clause__note {
+	color: var(--ws-text-muted, #a8b4c4) !important;
+}
+
+body.dark-mode .service-form-page .verification__paras,
+body.dark-mode .service-form-panel .verification__paras {
+	background: #121820 !important;
+	border-color: #3a4656 !important;
+}
+
+body.dark-mode .service-form-page .verification__paras legend,
+body.dark-mode .service-form-panel .verification__paras legend {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .verification__paras-hint,
+body.dark-mode .service-form-panel .verification__paras-hint,
+body.dark-mode .service-form-page .verification__table thead th,
+body.dark-mode .service-form-panel .verification__table thead th,
+body.dark-mode .service-form-page .verification__table tbody td::before,
+body.dark-mode .service-form-panel .verification__table tbody td::before,
+body.dark-mode .service-form-page .verification__para-number,
+body.dark-mode .service-form-panel .verification__para-number,
+body.dark-mode .service-form-page .verification__date-value,
+body.dark-mode .service-form-panel .verification__date-value {
+	color: var(--ws-text-muted, #a8b4c4) !important;
+}
+
+body.dark-mode .service-form-page .verification__table tbody th,
+body.dark-mode .service-form-panel .verification__table tbody th {
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .verification__table th,
+body.dark-mode .service-form-page .verification__table td,
+body.dark-mode .service-form-panel .verification__table th,
+body.dark-mode .service-form-panel .verification__table td,
+body.dark-mode .service-form-page .verification__table tr,
+body.dark-mode .service-form-panel .verification__table tr {
+	border-bottom-color: #2c3746 !important;
+}
+
+body.dark-mode .service-form-page .verification__foot,
+body.dark-mode .service-form-panel .verification__foot {
+	border-top-color: #2c3746 !important;
+	color: var(--ws-text, #e8eef6) !important;
+}
+
+body.dark-mode .service-form-page .clause__note--prefilled,
+body.dark-mode .service-form-panel .clause__note--prefilled {
+	background: #2a2110 !important;
+	border-left-color: #f59e0b !important;
+	color: #fcd34d !important;
 }

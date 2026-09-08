@@ -170,7 +170,9 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        return response()->json(['user' => $request->user()]);
+        // The district is loaded because the service forms fill their district blank from it. Only
+        // id and name: this payload is the session user and goes out on every page load.
+        return response()->json(['user' => $request->user()->load('district:id,name')]);
     }
 
     public function userProfiles(Request $request)

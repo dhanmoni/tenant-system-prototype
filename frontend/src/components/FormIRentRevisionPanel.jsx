@@ -5,6 +5,7 @@ import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
+import { profileDefaults } from '../utils/profileAutofill'
 import { APPLICATION_TYPES } from '../constants/application'
 import { previewItem, previewSection, previewSections } from '../utils/serviceFormPreview'
 import { completeServiceFormSubmit, getServiceFormSuccessMessage } from '../utils/serviceFormSubmit'
@@ -27,11 +28,16 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 	const [tenancyUIN, setTenancyUIN] = useState('')
 	const [tenancyAgreementDocumentNo, setTenancyAgreementDocumentNo] = useState('')
 
-	const [landlordName, setLandlordName] = useState('')
-	const [landlordAddress, setLandlordAddress] = useState('')
+	// Both parties are named on this form, so only the filer's own side is seeded from the
+	// account. Which side that is comes from the profile type; all of it stays editable.
+	const profile = useMemo(() => profileDefaults(user), [user])
+	const filesAsTenant = profile.side === 'TENANT'
 
-	const [tenantName, setTenantName] = useState('')
-	const [tenantAddress, setTenantAddress] = useState('')
+	const [landlordName, setLandlordName] = useState(filesAsTenant ? '' : profile.name)
+	const [landlordAddress, setLandlordAddress] = useState(filesAsTenant ? '' : profile.address)
+
+	const [tenantName, setTenantName] = useState(filesAsTenant ? profile.name : '')
+	const [tenantAddress, setTenantAddress] = useState(filesAsTenant ? profile.address : '')
 
 	const [managerName, setManagerName] = useState('')
 	const [managerAddress, setManagerAddress] = useState('')
@@ -43,7 +49,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 	const [reasonForRentRevision, setReasonForRentRevision] = useState('')
 
 	const [signedBy, setSignedBy] = useState('landlord')
-	const [signatureName, setSignatureName] = useState('')
+	const [signatureName, setSignatureName] = useState(profile.name)
 	const [signatureImage, setSignatureImage] = useState(null)
 
 	const mutation = useMutation({
@@ -194,10 +200,11 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 					value={tenancyUIN}
 					onChange={setTenancyUIN}
 					onLoaded={handleTenancyLoaded}
+					label="1. Unique Identification Number issued by the Rent Authority"
 				/>
 
 				<label>
-					<span className="label-text">Document No. of tenancy agreement (before Sub-Registrar, if any)</span>
+					<span className="label-text">2. Document No. of tenancy agreement registered before the Sub-Registrar (if any)</span>
 					<input
 						type="text"
 						value={tenancyAgreementDocumentNo}
@@ -206,10 +213,10 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend>Landlord / Tenant details</legend>
+					<legend>Parties</legend>
 
 					<label>
-						<span className="label-text required">Landlord name</span>
+						<span className="label-text required">3. Name of the Landlord</span>
 						<input
 							type="text"
 							value={landlordName}
@@ -218,7 +225,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						/>
 					</label>
 					<label>
-						<span className="label-text required">Tenant name</span>
+						<span className="label-text required">4. Name(s) of the Tenant</span>
 						<input
 							type="text"
 							value={tenantName}
@@ -228,7 +235,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 					</label>
 
 					<label className="tenancy-field-full">
-						<span className="label-text required">Landlord address</span>
+						<span className="label-text required">Address of the Landlord</span>
 						<textarea
 							value={landlordAddress}
 							onChange={(e) => setLandlordAddress(e.target.value)}
@@ -237,7 +244,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						/>
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text required">Tenant address</span>
+						<span className="label-text required">Address of the Tenant</span>
 						<textarea
 							value={tenantAddress}
 							onChange={(e) => setTenantAddress(e.target.value)}
@@ -247,17 +254,17 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 					</label>
 
 					<label>
-						<span className="label-text">Property manager name (if any)</span>
+						<span className="label-text">5. Name of the Property Manager (if any)</span>
 						<input type="text" value={managerName} onChange={(e) => setManagerName(e.target.value)} />
 					</label>
 					<label>
-						<span className="label-text">Property manager address (if any)</span>
+						<span className="label-text">Address of the Property Manager (if any)</span>
 						<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} rows={2} />
 					</label>
 				</fieldset>
 
 				<label>
-					<span className="label-text required">Description of rented premises</span>
+					<span className="label-text required">6. Description of rented premises</span>
 					<textarea
 						value={rentedPremisesDescription}
 						onChange={(e) => setRentedPremisesDescription(e.target.value)}
@@ -268,7 +275,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 
 				<div className="service-form-fields">
 					<label>
-						<span className="label-text required">Present monthly rent</span>
+						<span className="label-text required">7. Present monthly rent</span>
 						<input
 							type="text"
 							value={presentMonthlyRent}
@@ -279,7 +286,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						/>
 					</label>
 					<label>
-						<span className="label-text required">Proposed monthly rent</span>
+						<span className="label-text required">8. Proposed monthly rent</span>
 						<input
 							type="text"
 							value={proposedMonthlyRent}
@@ -292,7 +299,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 				</div>
 
 				<label>
-					<span className="label-text required">Reason for fixation / revision of rent</span>
+					<span className="label-text required">9. Reason for fixation or revision of rent</span>
 					<textarea
 						value={reasonForRentRevision}
 						onChange={(e) => setReasonForRentRevision(e.target.value)}
@@ -302,11 +309,12 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 				</label>
 
 				<fieldset className="tenancy-fieldset">
-					<legend>Signature</legend>
+					<legend>Name and Signature of landlord or tenant</legend>
 
 					<label>
-						<span className="label-text">Signed by</span>
-						<select value={signedBy} onChange={(e) => setSignedBy(e.target.value)}>
+						<span className="label-text required">Signed by</span>
+						<select
+							required value={signedBy} onChange={(e) => setSignedBy(e.target.value)}>
 							<option value="landlord">Landlord</option>
 							<option value="tenant">Tenant</option>
 						</select>

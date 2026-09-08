@@ -14,7 +14,12 @@ class RentTribunalAppealApplication extends Model
     use GeneratesApplicationNo;
 
     protected $casts = [
+        'verification_personal_knowledge_paras' => 'array',
+        'verification_legal_advice_paras' => 'array',
+        'verified_on' => 'date',
         'edit_history' => 'array',
+        'has_prior_proceedings' => 'boolean',
+        'prior_proceedings' => 'array',
     ];
 
     protected $table = 'rent_tribunal_form_8_applications';
@@ -37,10 +42,23 @@ class RentTribunalAppealApplication extends Model
         'limitation',
         'memorandum_of_appeal',
         'matters_not_previously_filed_or_pending',
+        'has_prior_proceedings',
+        'prior_proceedings',
 
         'relief_sought',
         'interim_order_sought',
         'list_of_enclosures',
+
+        'verification_name',
+        'verification_relation',
+        'verification_relative_name',
+        'verification_age',
+        'verification_address',
+        'verification_place',
+        'verification_personal_knowledge_paras',
+        'verification_legal_advice_paras',
+        'verified_on',
+        'verification_statement',
 
         'signature_name',
         'signature_image_path',
@@ -71,6 +89,16 @@ class RentTribunalAppealApplication extends Model
     public function district()
     {
         return $this->belongsTo(District::class);
+    }
+
+    /**
+     * Sworn declarations accepted on this filing. Written once at submission and never edited, so
+     * the wording a filer actually accepted stays reproducible.
+     */
+    public function attestations()
+    {
+        return $this->hasMany(FilingAttestation::class, 'application_id')
+            ->where('application_type', \App\Constants\ApplicationTypes::RENT_TRIBUNAL_APPEAL);
     }
 
     public function forwardedBy()

@@ -33,9 +33,16 @@ function TenancyUinLookup({
 						: 'UIN verified. No matching fields were available to auto-fill.',
 			})
 		} catch (err) {
+			// The server answers "no such UIN" and "not your UIN" identically, on purpose - see
+			// Rule 4(4) and App\Support\TenancyAccess on the backend. Do not try to tell them
+			// apart here, or to soften the wording into something that hints at which one it was.
+			const fallback =
+				err?.response?.status === 429
+					? 'Too many lookups. Wait a minute and try again.'
+					: 'Could not fetch tenancy details for this UIN.'
 			setStatus({
 				type: 'error',
-				message: err?.response?.data?.message || 'Could not find a tenancy record for this UIN.',
+				message: err?.response?.data?.message || fallback,
 			})
 		} finally {
 			setLoading(false)
@@ -81,7 +88,8 @@ function TenancyUinLookup({
 				</p>
 			) : (
 				<p className="tenancy-uin-lookup__hint">
-					Enter a valid Tenancy UIN and fetch details to auto-fill matching fields below.
+					Enter the Tenancy UIN issued for your tenancy and fetch details to auto-fill matching
+					fields below. Tenancy details can only be fetched by a party to that tenancy.
 				</p>
 			)}
 		</div>

@@ -38,7 +38,7 @@ class OtherChargesRevisionApplicationController extends Controller
             'proposed_other_charges_details' => ['required', 'string'],
             'reason_for_other_charges_revision' => ['required', 'string'],
 
-            'signed_by' => ['nullable', 'string', 'in:landlord,tenant,Landlord,Tenant,LANDLORD,TENANT'],
+            'signed_by' => ['required', 'string', 'in:landlord,tenant'],
             'signature_name' => ['required', 'string', 'max:255'],
             'signature_image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ]);
@@ -48,9 +48,12 @@ class OtherChargesRevisionApplicationController extends Controller
             $signaturePath = $request->file('signature_image')->store('tenancy/signatures/other-charges-revision', 'public');
         }
 
-        [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin']);
+        [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin'], $user);
         if ($uinError) {
-            return response()->json(['message' => $uinError], 422);
+            return response()->json([
+                'message' => $uinError,
+                'errors' => ['tenancy_uin' => [$uinError]],
+            ], 422);
         }
 
         $application = OtherChargesRevisionApplication::create([

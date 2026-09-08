@@ -38,7 +38,7 @@ class RentRevisionApplicationController extends Controller
             'proposed_monthly_rent' => ['required', 'numeric', 'min:0'],
             'reason_for_rent_revision' => ['required', 'string'],
 
-            'signed_by' => ['nullable', 'string', 'in:landlord,tenant,Landlord,Tenant,LANDLORD,TENANT'],
+            'signed_by' => ['required', 'string', 'in:landlord,tenant'],
             'signature_name' => ['required', 'string', 'max:255'],
             'signature_image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ], [
@@ -50,9 +50,12 @@ class RentRevisionApplicationController extends Controller
             $signaturePath = $request->file('signature_image')->store('tenancy/signatures/rent-revision', 'public');
         }
 
-        [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin']);
+        [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin'], $user);
         if ($uinError) {
-            return response()->json(['message' => $uinError], 422);
+            return response()->json([
+                'message' => $uinError,
+                'errors' => ['tenancy_uin' => [$uinError]],
+            ], 422);
         }
 
         $application = RentRevisionApplication::create([

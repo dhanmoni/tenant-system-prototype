@@ -59,5 +59,14 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
         });
+
+        // UIN lookup is the one endpoint that answers a guess about a tenancy identifier. The
+        // reply is now identical whether or not the UIN exists (Rule 4(4), see
+        // App\Support\TenancyAccess), but a signed-in account could still time or bulk-probe it,
+        // so it gets a tighter budget than the rest of the API. A party looking up their own
+        // tenancies needs a handful of calls, not sixty.
+        RateLimiter::for('uin-lookup', function (Request $request) {
+            return Limit::perMinute(10)->by(optional($request->user())->id ?: $request->ip());
+        });
     }
 }

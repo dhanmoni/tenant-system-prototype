@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Office;
 use App\Models\TenancyApplication;
 use App\Models\User;
+use App\Models\UserActivityLog;
 use App\Constants\Roles;
 use App\Constants\Status;
+use App\Support\TenancyAccess;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -246,21 +248,55 @@ class TenancyApplicationController extends Controller
             'uid' => ['required', 'string', 'max:64'],
         ]);
 
-        $application = TenancyApplication::where('uid', trim($request->input('uid')))
-            ->with('office', 'villageWard', 'district')
-            ->first();
+        $uid = trim((string) $request->input('uid'));
 
-        if (!$application) {
-            return response()->json(['message' => 'No tenancy record found for this UIN.'], 404);
-        }
+        // Rule 4(4): tenancy details go to concerned Parties only. resolveForServiceForm decides
+        // that, and answers "no such UIN" and "not your UIN" with one and the same string.
+        [$application, $uinError] = TenancyApplication::resolveForServiceForm($uid, $user);
 
-        [, $uinError] = TenancyApplication::resolveForServiceForm($application->uid);
         if ($uinError) {
-            return response()->json(['message' => $uinError], 422);
+            // Those two cases must share a status code as well as a message, otherwise the code
+            // alone tells a caller which UINs exist and the record stays enumerable.
+            $status = $uinError === TenancyAccess::NOT_AVAILABLE ? 404 : 422;
+            $this->auditUinLookup($request, $uid, $status === 404 ? 'refused' : 'not_usable');
+
+            return response()->json(['message' => $uinError], $status);
         }
+
+        $this->auditUinLookup($request, $uid, 'disclosed');
+
+        $application->load('office', 'villageWard', 'district');
 
         return response()->json([
             'tenancy' => $this->serializeTenancyForAutofill($application),
+        ]);
+    }
+
+    /**
+     * Record every attempt to read a tenancy by UIN.
+     *
+     * Rule 4(3) puts the Rent Authority under a duty to "take all the measures for maintaining
+     * privacy and security of data", and a disclosure rule that nobody can review afterwards is
+     * not a measure. The generic middleware skips GET requests, so this endpoint logs itself.
+     *
+     * The outcome is recorded, never the reason for it - a log that separates "no such UIN" from
+     * "not a party" would reintroduce, for anyone who can read logs, exactly the distinction the
+     * response body refuses to draw.
+     */
+    private function auditUinLookup(Request $request, string $uid, string $outcome): void
+    {
+        UserActivityLog::create([
+            'user_id' => $request->user()->id,
+            'session_id' => $request->hasSession() ? $request->session()->getId() : null,
+            'action' => 'GET ' . $request->path(),
+            'ip_address' => $request->ip(),
+            'ip_location' => null,
+            'user_agent' => substr((string) $request->userAgent(), 0, 500),
+            'meta' => [
+                'uid' => $uid,
+                'outcome' => $outcome,
+            ],
+            'logged_at' => now(),
         ]);
     }
 

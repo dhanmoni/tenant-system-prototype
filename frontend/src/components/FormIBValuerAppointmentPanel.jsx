@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
+import ValuerApplicationClause from './forms/ValuerApplicationClause'
+import { hasProfileDefaults, profileDefaults } from '../utils/profileAutofill'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { APPLICATION_TYPES } from '../constants/application'
@@ -18,17 +20,23 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 
 	const [tenancyUIN, setTenancyUIN] = useState('')
 
-	const [applicantName, setApplicantName] = useState('')
+	// The account already holds these. Seeded at mount, not fixed: every one stays editable, and
+	// the filer is the one making the application on them.
+	const profile = useMemo(() => profileDefaults(user), [user])
+
+	const [applicantName, setApplicantName] = useState(profile.name)
 	const [applicantRelationType, setApplicantRelationType] = useState('Son')
 	const [applicantRelationTargetName, setApplicantRelationTargetName] = useState('')
-	const [applicantResidentPlace, setApplicantResidentPlace] = useState('')
+	const [applicantResidentPlace, setApplicantResidentPlace] = useState(profile.address)
 
-	const [applicantLandlordOrTenant, setApplicantLandlordOrTenant] = useState('landlord')
+	const [applicantLandlordOrTenant, setApplicantLandlordOrTenant] = useState(
+		profile.side === 'TENANT' ? 'tenant' : 'landlord'
+	)
 	const [premisesSituatedAddress, setPremisesSituatedAddress] = useState('')
-	const [district, setDistrict] = useState('')
+	const [district, setDistrict] = useState(profile.district)
 
-	const [signedBy, setSignedBy] = useState('landlord')
-	const [signatureName, setSignatureName] = useState('')
+	const [signedBy, setSignedBy] = useState(profile.side === 'TENANT' ? 'tenant' : 'landlord')
+	const [signatureName, setSignatureName] = useState(profile.name)
 	const [signatureImage, setSignatureImage] = useState(null)
 
 	const mutation = useMutation({
@@ -156,6 +164,22 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 			setSignatureName,
 		})
 
+	// The recital's blanks are named for the sentence, not for this panel's state. One place to
+	// map between the two.
+	const setClauseField = useCallback(
+		(field, value) =>
+			({
+				name: setApplicantName,
+				relation: setApplicantRelationType,
+				relativeName: setApplicantRelationTargetName,
+				residence: setApplicantResidentPlace,
+				capacity: setApplicantLandlordOrTenant,
+				premises: setPremisesSituatedAddress,
+				district: setDistrict,
+			})[field](value),
+		[]
+	)
+
 	return (
 		<div className="dashboard-card service-form-panel">
 			{error ? <div className="error" role="alert">{error}</div> : null}
@@ -165,94 +189,30 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 					value={tenancyUIN}
 					onChange={setTenancyUIN}
 					onLoaded={handleTenancyLoaded}
+					label="Ref: Unique Identification Number issued by the Rent Authority"
+				/>
+
+				<ValuerApplicationClause
+					prefilled={hasProfileDefaults(profile)}
+					values={{
+						name: applicantName,
+						relation: applicantRelationType,
+						relativeName: applicantRelationTargetName,
+						residence: applicantResidentPlace,
+						capacity: applicantLandlordOrTenant,
+						premises: premisesSituatedAddress,
+						district,
+					}}
+					onChange={setClauseField}
 				/>
 
 				<fieldset className="tenancy-fieldset">
-					<legend>Applicant details</legend>
+					<legend>Name and Signature of landlord or tenant</legend>
 
 					<label>
-						<span className="label-text required">Applicant name (I, ...)</span>
-						<input
-							type="text"
-							value={applicantName}
-							onChange={(e) => setApplicantName(e.target.value)}
-							required
-						/>
-					</label>
-
-					<label>
-						<span className="label-text required">Landlord or tenant</span>
+						<span className="label-text required">Signed by</span>
 						<select
-							value={applicantLandlordOrTenant}
-							onChange={(e) => setApplicantLandlordOrTenant(e.target.value)}
-							required
-						>
-							<option value="landlord">Landlord</option>
-							<option value="tenant">Tenant</option>
-						</select>
-					</label>
-
-					<label>
-						<span className="label-text required">Relation type (Son / Daughter / Wife)</span>
-						<select
-							value={applicantRelationType}
-							onChange={(e) => setApplicantRelationType(e.target.value)}
-							required
-						>
-							<option value="Son">Son</option>
-							<option value="Daughter">Daughter</option>
-							<option value="Wife">Wife</option>
-						</select>
-					</label>
-
-					<label>
-						<span className="label-text required">Relation target name (of ...)</span>
-						<input
-							type="text"
-							value={applicantRelationTargetName}
-							onChange={(e) => setApplicantRelationTargetName(e.target.value)}
-							required
-						/>
-					</label>
-
-					<label className="tenancy-field-full">
-						<span className="label-text required">Resident of (place)</span>
-						<input
-							type="text"
-							value={applicantResidentPlace}
-							onChange={(e) => setApplicantResidentPlace(e.target.value)}
-							required
-						/>
-					</label>
-				</fieldset>
-
-				<div className="service-form-fields">
-					<label className="service-form-fields__full">
-						<span className="label-text required">Premises situated at</span>
-						<textarea
-							value={premisesSituatedAddress}
-							onChange={(e) => setPremisesSituatedAddress(e.target.value)}
-							required
-							rows={3}
-						/>
-					</label>
-					<label>
-						<span className="label-text required">District</span>
-						<input
-							type="text"
-							value={district}
-							onChange={(e) => setDistrict(e.target.value)}
-							required
-						/>
-					</label>
-				</div>
-
-				<fieldset className="tenancy-fieldset">
-					<legend>Signature</legend>
-
-					<label>
-						<span className="label-text">Signed by</span>
-						<select value={signedBy} onChange={(e) => setSignedBy(e.target.value)}>
+							required value={signedBy} onChange={(e) => setSignedBy(e.target.value)}>
 							<option value="landlord">Landlord</option>
 							<option value="tenant">Tenant</option>
 						</select>

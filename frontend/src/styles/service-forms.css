@@ -330,6 +330,254 @@
 	color: #dc2626;
 }
 
+/*
+ * Parenthetical text printed under a label in the Gazette forms. It is guidance the filer needs
+ * while typing, so it stays visible instead of being a placeholder that disappears on focus.
+ */
+/*
+ * Form II grounds. Section 21(2) is a closed list of eight clauses, so the grounds are chosen from
+ * the statute rather than typed. Each row shows the clause citation and the statutory text.
+ */
+.service-form-page .ground-choice-group,
+.service-form-panel .ground-choice-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.service-form-page .ground-choice,
+.service-form-panel .ground-choice {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.65rem;
+	align-items: start;
+	margin: 0;
+	padding: 0.75rem 0.9rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.service-form-page .ground-choice:focus-within,
+.service-form-panel .ground-choice:focus-within {
+	border-color: #1d4ed8;
+	box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+}
+
+.service-form-page .ground-choice:has(input:checked),
+.service-form-panel .ground-choice:has(input:checked) {
+	border-color: #1d4ed8;
+	background: #f5f8ff;
+}
+
+.service-form-page .ground-choice input,
+.service-form-panel .ground-choice input {
+	width: 1.05rem;
+	height: 1.05rem;
+	margin: 0.15rem 0 0;
+	flex: none;
+	accent-color: #1d4ed8;
+}
+
+.service-form-page .ground-choice__body,
+.service-form-panel .ground-choice__body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+.service-form-page .ground-choice__cite,
+.service-form-panel .ground-choice__cite {
+	font-size: 0.8125rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	color: #1d4ed8;
+}
+
+.service-form-page .ground-choice__label,
+.service-form-panel .ground-choice__label {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: #334155;
+	line-height: 1.35;
+}
+
+.service-form-page .ground-choice__text,
+.service-form-panel .ground-choice__text {
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: #52607a;
+}
+
+.service-form-page .ground-choice__explanation,
+.service-form-panel .ground-choice__explanation {
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: #52607a;
+	padding-left: 0.7rem;
+	border-left: 2px solid #cbd5e1;
+}
+
+/*
+ * Compact variant for long statutory lists: the Second Schedule repair items and the essential
+ * services enumerated in the Explanation to section 20. One line of text each, so the citation
+ * eyebrow and the extra padding of the full row are dropped.
+ */
+.service-form-page .ground-choice--compact,
+.service-form-panel .ground-choice--compact {
+	padding: 0.5rem 0.7rem;
+	align-items: center;
+}
+
+.service-form-page .schedule-part,
+.service-form-panel .schedule-part {
+	margin-top: 0.9rem;
+}
+
+.service-form-page .schedule-part__title,
+.service-form-panel .schedule-part__title {
+	margin: 0 0 0.5rem;
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: #334155;
+}
+
+.service-form-page .schedule-other,
+.service-form-panel .schedule-other {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-top: 0.9rem;
+}
+
+/*
+ * A sworn declaration. Given more visual weight than an ordinary field because the filer is making
+ * an assertion, not answering a question, and because under Act s. 36(2) these proceedings are
+ * deemed judicial proceedings for the false-evidence provisions of the Penal Code.
+ */
+.service-form-page .declaration,
+.service-form-panel .declaration {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.service-form-page .declaration__box,
+.service-form-panel .declaration__box {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.7rem;
+	align-items: start;
+	margin: 0;
+	padding: 0.9rem 1rem;
+	border: 1px solid #cbd5e1;
+	border-left: 3px solid #1d4ed8;
+	border-radius: 0 8px 8px 0;
+	background: #fff;
+	cursor: pointer;
+}
+
+.service-form-page .declaration__box:focus-within,
+.service-form-panel .declaration__box:focus-within {
+	box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+}
+
+.service-form-page .declaration__box:has(input:checked),
+.service-form-panel .declaration__box:has(input:checked) {
+	background: #f5f8ff;
+}
+
+.service-form-page .declaration__box input,
+.service-form-panel .declaration__box input {
+	width: 1.15rem;
+	height: 1.15rem;
+	margin: 0.1rem 0 0;
+	flex: none;
+	accent-color: #1d4ed8;
+}
+
+.service-form-page .declaration__text,
+.service-form-panel .declaration__text {
+	font-size: 0.9375rem;
+	line-height: 1.55;
+	color: #1e293b;
+}
+
+.service-form-page .declaration__note,
+.service-form-panel .declaration__note {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #52607a;
+}
+
+/*
+ * Paragraph 5's affirmative branch: one block per proceeding disclosed. Indented under the
+ * declaration so it reads as a consequence of the answer given, not as a separate question.
+ */
+.service-form-page .prior-proceedings,
+.service-form-panel .prior-proceedings {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	margin-top: 0.9rem;
+	padding-left: 1rem;
+	border-left: 2px solid #cbd5e1;
+}
+
+.service-form-page .prior-proceeding,
+.service-form-panel .prior-proceeding {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 0.75rem 1rem;
+	margin: 0;
+	padding: 0.9rem 1rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #fff;
+}
+
+.service-form-page .prior-proceeding > legend,
+.service-form-panel .prior-proceeding > legend {
+	padding: 0 0.4rem;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	color: #334155;
+}
+
+/* The nested fieldset is not .tenancy-fieldset, so its labels need the column layout stated. */
+.service-form-page .prior-proceeding > label,
+.service-form-panel .prior-proceeding > label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin: 0;
+	min-width: 0;
+}
+
+.service-form-page .prior-proceeding__actions,
+.service-form-panel .prior-proceeding__actions {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.service-form-page .prior-proceedings > .ws-btn,
+.service-form-panel .prior-proceedings > .ws-btn {
+	align-self: flex-start;
+}
+
+
+.service-form-page .field-note,
+.service-form-panel .field-note {
+	font-size: 0.8125rem;
+	font-weight: 400;
+	line-height: 1.45;
+	color: #52607a;
+	margin: -0.1rem 0 0.1rem;
+}
+
 .service-form-page input:not([type='checkbox']):not([type='radio']),
 .service-form-page select,
 .service-form-page textarea,
@@ -667,5 +915,416 @@
 
 	.service-form-panel > h1 {
 		font-size: 1.15rem;
+	}
+}
+
+/*
+ * The VERIFICATION clause of Forms II to VI.
+ *
+ * The Gazette prints one sworn sentence with blanks, so it is set as running prose with the inputs
+ * sitting in the line rather than as a grid of labelled boxes. The filer reads the sentence they
+ * are swearing. Line height is generous because inline controls are taller than the text they sit
+ * among, and the sentence has to stay readable when it wraps.
+ */
+.service-form-page .clause,
+.service-form-panel .clause {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	max-width: 100%;
+	/* Set apart from the field above it: this is a sworn statement, not the next question. */
+	margin: 2rem 0 1.4rem;
+	padding: 1.2rem 1.3rem 1.3rem;
+	border: 1px solid #cbd5e1;
+	border-left: 3px solid #1d4ed8;
+	border-radius: 0 8px 8px 0;
+	background: #fff;
+}
+
+.service-form-page .clause__heading,
+.service-form-panel .clause__heading {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	color: #1d4ed8;
+}
+
+/*
+ * The sentence itself. Set as prose: the blanks sit on the baseline and the line wraps around them
+ * like any other run of text, which is the whole point - a filer reads what they are swearing.
+ */
+.service-form-page .clause__sentence,
+.service-form-panel .clause__sentence {
+	margin: 0;
+	/*
+	 * Full width of the panel. A measure cap would be right for a paragraph of body copy, but this
+	 * is a form: capping it wastes the right-hand side and forces blanks onto extra lines, which is
+	 * what makes text end up sitting directly under an input box.
+	 */
+	font-size: 0.9375rem;
+	/*
+	 * Inline controls are taller than the text they sit among. This is the gap that stops a wrapped
+	 * line of the sentence from crowding the underside of a blank on the line above.
+	 */
+	line-height: 2.6;
+	color: #1e293b;
+	/* A long unbroken address must wrap rather than widen the panel. */
+	overflow-wrap: anywhere;
+}
+
+/*
+ * A sentence in the clause with no blanks in it - Form I-B's fee undertaking. It needs none of the
+ * line spacing the others need, so it is set as ordinary prose and separated from the sentence
+ * above rather than run on from it.
+ */
+.service-form-page .clause__sentence--undertaking,
+.service-form-panel .clause__sentence--undertaking {
+	line-height: 1.7;
+}
+
+/*
+ * A blank in the sentence.
+ *
+ * Underlined rather than boxed, because on the printed form these are ruled lines; a full input box
+ * at every blank would break the sentence back into a grid.
+ *
+ * The selectors carry the element name and the :not() so they outrank the general control rule
+ * above, which sets width:100% on every input in a service form. Without that these go
+ * full-width and the sentence collapses into a stack of boxes - which is the layout this whole
+ * component exists to replace, so it is worth the extra specificity.
+ */
+.service-form-page .clause input.clause__blank:not([type='checkbox']),
+.service-form-page .clause select.clause__blank,
+.service-form-panel .clause input.clause__blank:not([type='checkbox']),
+.service-form-panel .clause select.clause__blank {
+	display: inline;
+	width: auto;
+	max-width: 100%;
+	/*
+	 * No horizontal margin: the template carries its own spaces between the placeholders, and a
+	 * margin on top of them detaches the punctuation that follows a blank - "Guwahati ," instead
+	 * of "Guwahati,".
+	 */
+	margin: 0;
+	/*
+	 * Tight horizontally so punctuation in the template hugs the blank it follows - otherwise the
+	 * address blank renders as "Guwahati , do hereby" with the comma adrift.
+	 */
+	padding: 0.05rem 0.2rem;
+	border: 0;
+	border-bottom: 1px solid #64748b;
+	border-radius: 0;
+	background: #f1f5f9;
+	font: inherit;
+	line-height: inherit;
+	color: #0f172a;
+	vertical-align: baseline;
+
+	/*
+	 * Grows with what is typed, so a blank takes the width of the answer rather than a width
+	 * guessed here. Chromium-based browsers only for now; everywhere else the min-widths below
+	 * hold the blank open and it simply scrolls internally once it is full.
+	 */
+	field-sizing: content;
+}
+
+.service-form-page .clause .clause__blank:focus,
+.service-form-panel .clause .clause__blank:focus {
+	outline: 2px solid var(--ws-accent, #1d4ed8);
+	outline-offset: 2px;
+	border-bottom-color: transparent;
+	background: #fff;
+	box-shadow: none;
+}
+
+/*
+ * Minimum widths, so an empty form still reads as a sentence with ruled gaps in it rather than as
+ * a line of hyphens. These are floors, not fixed sizes.
+ */
+.service-form-page .clause .clause__blank--name,
+.service-form-panel .clause .clause__blank--name {
+	min-width: 9rem;
+}
+
+.service-form-page .clause .clause__blank--age,
+.service-form-panel .clause .clause__blank--age {
+	min-width: 3.5rem;
+}
+
+.service-form-page .clause .clause__blank--address,
+.service-form-panel .clause .clause__blank--address {
+	min-width: 12rem;
+}
+
+.service-form-page .clause .clause__blank--relation,
+.service-form-panel .clause .clause__blank--relation {
+	min-width: 0;
+	padding-right: 0.1rem;
+	background: transparent;
+	border-bottom-style: dashed;
+}
+
+/* The two paragraph blanks: filled from the table below, so shown rather than typed. */
+/*
+ * The two derived blanks. Filled from the table below rather than typed, so they are styled as ink
+ * on the ruled line - no control affordance, because there is nothing here to click.
+ */
+.service-form-page .clause__filled,
+.service-form-panel .clause__filled {
+	display: inline;
+	margin: 0;
+	padding: 0.05rem 0.35rem;
+	border-bottom: 1px solid #64748b;
+	background: #eef2ff;
+	font-weight: 600;
+	color: #1e293b;
+	white-space: nowrap;
+}
+
+.service-form-page .verification__paras,
+.service-form-panel .verification__paras {
+	margin: 0;
+	padding: 0.9rem 1rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #f8fafc;
+}
+
+.service-form-page .verification__paras legend,
+.service-form-panel .verification__paras legend {
+	padding: 0 0.4rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #1e293b;
+}
+
+.service-form-page .verification__paras-hint,
+.service-form-panel .verification__paras-hint {
+	margin: 0 0 0.7rem;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #52607a;
+}
+
+.service-form-page .verification__table,
+.service-form-panel .verification__table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+}
+
+.service-form-page .verification__table th,
+.service-form-page .verification__table td,
+.service-form-panel .verification__table th,
+.service-form-panel .verification__table td {
+	padding: 0.5rem 0.4rem;
+	border-bottom: 1px solid #e2e8f0;
+	text-align: left;
+	vertical-align: top;
+}
+
+.service-form-page .verification__table thead th,
+.service-form-panel .verification__table thead th {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #52607a;
+}
+
+/* The three answer columns are narrow and centred; the paragraph heading takes the rest. */
+.service-form-page .verification__table thead th:not(:first-child),
+.service-form-page .verification__table tbody td,
+.service-form-panel .verification__table thead th:not(:first-child),
+.service-form-panel .verification__table tbody td {
+	width: 8.5rem;
+	text-align: center;
+}
+
+.service-form-page .verification__table tbody th,
+.service-form-panel .verification__table tbody th {
+	font-weight: 500;
+	color: #1e293b;
+}
+
+.service-form-page .verification__para-number,
+.service-form-panel .verification__para-number {
+	font-weight: 700;
+	color: #52607a;
+}
+
+/*
+ * The radio's own label. Off-screen rather than display:none, so it is still announced: visually
+ * the column heading supplies the meaning, and a screen reader moving cell to cell would not have
+ * it. No global .sr-only exists in this project, hence the scoped one.
+ */
+.service-form-page .verification__sr-only,
+.service-form-panel .verification__sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* The whole cell is the hit area, so the radio is not a pinpoint target on touch. */
+.service-form-page .verification__radio,
+.service-form-panel .verification__radio {
+	display: block;
+	padding: 0.35rem;
+	cursor: pointer;
+}
+
+.service-form-page .verification__radio input,
+.service-form-panel .verification__radio input {
+	width: 1.15rem;
+	height: 1.15rem;
+	margin: 0;
+	accent-color: #1d4ed8;
+}
+
+/*
+ * The Gazette prints "Date:......... / Place:........" on one line under the sentence, so they are
+ * set inline as label-and-blank pairs rather than as two stacked form fields.
+ */
+.service-form-page .verification__foot,
+.service-form-panel .verification__foot {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 2rem;
+	align-items: baseline;
+	padding-top: 0.9rem;
+	border-top: 1px dashed #e2e8f0;
+	font-size: 0.9375rem;
+	color: #1e293b;
+}
+
+.service-form-page .verification__place,
+.service-form-page .verification__date,
+.service-form-panel .verification__place,
+.service-form-panel .verification__date {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	margin: 0;
+}
+
+.service-form-page .verification__foot .label-text,
+.service-form-panel .verification__foot .label-text {
+	margin: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.service-form-page .verification__date-value,
+.service-form-panel .verification__date-value {
+	font-size: 0.875rem;
+	font-style: italic;
+	color: #52607a;
+}
+
+/*
+ * Says that blanks were filled in for the filer. Given a little more weight than the note below it,
+ * because a filer who does not notice a value was prefilled has not checked what they are swearing.
+ */
+.service-form-page .clause__note--prefilled,
+.service-form-panel .clause__note--prefilled {
+	padding: 0.55rem 0.7rem;
+	border-left: 3px solid #f59e0b;
+	border-radius: 0 6px 6px 0;
+	background: #fffbeb;
+	color: #713f12 !important;
+}
+
+.service-form-page .clause__note,
+.service-form-panel .clause__note {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #52607a;
+}
+
+/*
+ * Narrow screens: the answer table stops being a table of columns and the headings would be lost,
+ * so each row carries its own label. The sentence keeps its inline blanks - it just wraps more.
+ */
+/*
+ * Narrow screens. The answer table stops being a table of columns - the headings would be lost - so
+ * each answer becomes its own full-width row carrying its own label. That also turns three pinpoint
+ * radios into three comfortable touch targets.
+ *
+ * The sentence keeps its inline blanks. It just wraps more.
+ */
+@media (max-width: 640px) {
+	.service-form-page .verification__table thead,
+	.service-form-panel .verification__table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+
+	.service-form-page .verification__table tr,
+	.service-form-panel .verification__table tr {
+		display: block;
+		margin-bottom: 0.9rem;
+		padding-bottom: 0.6rem;
+		border-bottom: 1px solid #e2e8f0;
+	}
+
+	.service-form-page .verification__table tbody th,
+	.service-form-panel .verification__table tbody th {
+		display: block;
+		padding: 0 0 0.35rem;
+		border: 0;
+	}
+
+	.service-form-page .verification__table tbody td,
+	.service-form-panel .verification__table tbody td {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		width: auto;
+		padding: 0.15rem 0.1rem;
+		border: 0;
+		text-align: left;
+	}
+
+	.service-form-page .verification__table tbody td::before,
+	.service-form-panel .verification__table tbody td::before {
+		font-size: 0.8125rem;
+		color: #52607a;
+		content: attr(data-answer);
+	}
+
+	.service-form-page .verification__radio,
+	.service-form-panel .verification__radio {
+		padding: 0.4rem 0.5rem;
+	}
+
+	/*
+	 * Specificity has to match the base rule above, which is scoped through .verification.
+	 * Without the extra class this override silently loses and the blank overflows the panel.
+	 */
+	.service-form-page .clause .clause__blank--address,
+	.service-form-panel .clause .clause__blank--address {
+		min-width: 8rem;
+	}
+
+	.service-form-page .clause .clause__blank--name,
+	.service-form-panel .clause .clause__blank--name {
+		min-width: 7rem;
+	}
+
+	.service-form-page .clause__sentence,
+	.service-form-panel .clause__sentence {
+		line-height: 2;
 	}
 }

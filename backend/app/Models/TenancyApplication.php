@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
 use App\Constants\Status;
+use App\Support\TenancyAccess;
 
 class TenancyApplication extends Model
 {
@@ -230,15 +231,27 @@ class TenancyApplication extends Model
     }
 
     /**
-     * Resolve an issued UIN for service-form apply / lookup.
+     * Resolve an issued UIN for service-form apply / lookup, for a given account.
+     *
+     * The account must be a party to the tenancy: Rule 4(4) confines tenancy details to "concerned
+     * Parties only", so signing in is not by itself authority to read a record. A UIN that does not
+     * exist and a UIN that belongs to somebody else are answered identically, so that the endpoint
+     * cannot be used to discover which UINs have been issued. See App\Support\TenancyAccess.
+     *
+     * The status messages below are the only ones that say anything specific, and they are reached
+     * only once party membership is established - a party is entitled to know why their own tenancy
+     * cannot be used.
      *
      * @return array{0: ?self, 1: ?string}
      */
-    public static function resolveForServiceForm(string $uid): array
+    public static function resolveForServiceForm(string $uid, ?User $actor): array
     {
         $application = self::where('uid', trim($uid))->first();
         if (!$application) {
-            return [null, 'Invalid Tenancy UID'];
+            return [null, TenancyAccess::NOT_AVAILABLE];
+        }
+        if (!TenancyAccess::isConcernedParty($application, $actor)) {
+            return [null, TenancyAccess::NOT_AVAILABLE];
         }
         if ($application->status === Status::CANCELLED) {
             return [null, 'This UIN has been cancelled and cannot be used to apply for service forms.'];
