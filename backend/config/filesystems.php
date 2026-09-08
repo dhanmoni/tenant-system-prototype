@@ -42,6 +42,24 @@ return [
             'visibility' => 'public',
         ],
 
+        /*
+         * Everything a filer uploads: passport photographs, signatures, PAN cards, the tenancy
+         * agreement. Rule 4(4) of the Assam Tenancy Rules, 2025 confines tenancy details to the
+         * concerned Parties, and an identity document is the last thing that should be readable by
+         * URL alone. This disk lives outside public/ and has no `url`, so nothing here is web
+         * served: App\Support\DocumentStore is the only way in and out, and every file leaves
+         * through a signed, expiring route.
+         *
+         * The `public` disk is retained because files written before 8 Sep 2026 are still on it.
+         * DocumentStore reads through to it; `php artisan documents:secure` moves them across.
+         */
+        'documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/documents'),
+            'visibility' => 'private',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

@@ -5,6 +5,7 @@ import { Icon } from '../../components/dashboard/Icons'
 import { formatDisplayEmail, formatDisplayName } from '../../utils/formatters'
 import { useLanguage } from '../../i18n'
 import { useProfile } from '../../hooks/useProfile'
+import { isProfileComplete } from '../../utils/profileCompleteness'
 
 function WorkspaceProfile() {
 	const { user, onUserUpdate } = useOutletContext()
@@ -25,7 +26,6 @@ function WorkspaceProfile() {
 	const [profilePhoto, setProfilePhoto] = useState(null)
 	const [profilePhotoPreview, setProfilePhotoPreview] = useState('')
 
-	const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 	const displayName = formatDisplayName(profileName || user?.name)
 	const displayEmail = formatDisplayEmail(profileEmail || user?.email)
 	const roleLabel = user?.role ? t(`role.${user.role}`) : '—'
@@ -53,28 +53,15 @@ function WorkspaceProfile() {
 			setProfilePin(profileUser.pin_code || '')
 			setProfilePan(profileUser.pan_card || '')
 
-			const photoUrl = profileUser.passport_photo_url
-			const photoPath =
-				profileUser.passport_photo_path || profileUser.user_passport_photo_path
+			// Signed and expiring; the documents disk is not web-served, so there is no
+			// `{apiBase}/storage/{path}` to fall back to any more.
+			setProfilePhotoPreview(profileUser.passport_photo_url || '')
 
-			if (photoUrl) {
-				setProfilePhotoPreview(photoUrl)
-			} else if (photoPath) {
-				setProfilePhotoPreview(`${apiBaseUrl}/storage/${photoPath}`)
-			} else {
-				setProfilePhotoPreview('')
-			}
-
-			const hasFullProfile = isCitizen
-				? (profileUser.address &&
-				  profileUser.pin_code &&
-				  profileUser.pan_card &&
-				  (photoUrl || photoPath))
-				: true
+			const hasFullProfile = isCitizen ? isProfileComplete(profileUser) : true
 
 			setProfileEditing(!hasFullProfile)
 		}
-	}, [profileUser, isCitizen, apiBaseUrl])
+	}, [profileUser, isCitizen])
 	
 	useEffect(() => {
 		if (isError) setError(t('ws.profile.loadError'))
@@ -125,14 +112,8 @@ function WorkspaceProfile() {
 			setProfilePin(profileUser.pin_code || '')
 			setProfilePan(profileUser.pan_card || '')
 
-			const photoUrl = profileUser.passport_photo_url
-			const photoPath =
-				profileUser.passport_photo_path || profileUser.user_passport_photo_path
-
-			if (photoUrl) {
-				setProfilePhotoPreview(photoUrl)
-			} else if (photoPath) {
-				setProfilePhotoPreview(`${apiBaseUrl}/storage/${photoPath}`)
+			if (profileUser.passport_photo_url) {
+				setProfilePhotoPreview(profileUser.passport_photo_url)
 			}
 
 			if (typeof onUserUpdate === 'function') {

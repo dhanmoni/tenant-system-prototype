@@ -12,6 +12,7 @@ use App\Services\AttestationRecorder;
 use App\Support\PriorProceedings;
 use App\Support\Verification;
 use Carbon\Carbon;
+use App\Support\DocumentStore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -76,8 +77,7 @@ class RentTribunalAppealApplicationController extends Controller
 
         $signaturePath = null;
         if ($request->hasFile('signature_image')) {
-            $signaturePath = $request->file('signature_image')
-                ->store('tenancy/signatures/rent-tribunal-appeal', 'public');
+            $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/rent-tribunal-appeal');
         }
 
         $priorProceedings = PriorProceedings::normalise($data);

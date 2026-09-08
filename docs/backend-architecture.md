@@ -112,8 +112,12 @@ sequenceDiagram
 | GET | `/api/public/districts` | `DistrictController@publicIndex` |
 | GET | `/api/public/offices` | `OfficeController@publicIndex` |
 | GET | `/api/public/village-wards` | `VillageWardController@publicIndex` |
-| GET | `/api/tenancy-applications/{id}/receipt` | `TenancyApplicationController@receipt` |
-| GET | `/api/tenancy-applications/{id}/application-details` | `TenancyApplicationController@applicationDetails` |
+
+No tenancy route is public. The four that render a tenancy record — receipt, acknowledgement,
+application details, agreement — all sit inside the `auth:sanctum` group and go through
+`TenancyApplicationController::guardTenancyDocument()`, which applies rule 4(4) and writes a
+`user_activity_logs` row for every read. `tests/Unit/TenancyDocumentRoutesTest.php` fails if any
+`api/tenancy-applications/*` route is declared outside that group.
 
 ### Authenticated profile
 
@@ -471,13 +475,48 @@ Service tables also have `user_id` → `users` (citizen applicant).
 
 ```mermaid
 flowchart LR
-    UPLOAD[Multipart upload in controller] --> STORE["storage/app/public"]
+    UPLOAD[Multipart upload in controller] --> DS["DocumentStore::store()"]
+    DS --> STORE["storage/app/documents (private, no URL)"]
     STORE --> PATH["*_path columns in DB"]
-    PATH --> URL["VITE_API_URL/storage/{path}"]
-    URL --> FE[Frontend View Document]
+    PATH --> MINT["DocumentStore::urlsFor() beside an access-checked record"]
+    MINT --> SIGNED["*_url — signed, expires in 60 min"]
+    SIGNED --> ROUTE["GET /api/documents/{scope}/{id}/{field} — middleware: signed"]
+    ROUTE --> FE[Frontend img / window.open]
 ```
 
-**Examples:** `passport_photo_path`, `signature_image_path`, `agreement_pdf_path`, PAN/Aadhaar paths on `tenancy_applications`.
+**Examples:** `passport_photo_path`, `signature_image_path`, `agreement_pdf_path`, PAN paths on
+`tenancy_applications`.
+
+Until 8 September 2026 every one of these went to `storage/app/public`, which `storage:link`
+publishes at `/storage/<path>`, and the API handed the paths out for the SPA to build
+`<img src="{API}/storage/{path}">`. That made both parties' passport photographs, signatures and PAN
+cards permanently readable by anyone who had ever seen the URL — rule 4(4) says tenancy details
+"shall not be accessible to public or any unauthorised person" under any circumstances.
+
+What replaced it:
+
+- `App\Support\DocumentStore` is the only way in and out. It owns the `documents` disk, the field
+  registry, and URL minting. Nothing else calls `->store(..., 'public')`.
+- A signed URL names a **scope, record id and column** — never the stored path — and the column must
+  be in the registry, so a signed URL can only ever reach a field that holds a file.
+- The API emits `<field>_url` wherever it used to emit only `<field>_path`: `ApplicationResource`
+  (all eight service forms and the admin views), `TenancyApplicationController::show()`,
+  `formatDraftApplication()`, `lookupByRefCode()`, and `User::getPassportPhotoUrlAttribute()`.
+- The printable application view embeds photographs as `data:` URIs read off the private disk, so a
+  printed copy carries no address back to the file.
+- `documents.show` sits outside the auth group with `signed` as its only middleware. Why not
+  authenticated: `<img>` and `window.open` cannot carry a bearer token, and the SPA and API are on
+  different origins here, so a session cookie is not reliably sent on a subresource request either.
+
+> **Deploying this:** run `php artisan documents:secure` on every environment. Making the code write
+> somewhere private does nothing for the files already on the public disk; that command moves them,
+> keeping the relative path so no column changes. `--dry-run` lists what would move. Until it has
+> run, `DocumentStore` reads through to the old disk, so the application works either way — but the
+> old files stay world-readable at `/storage/<path>` until it does.
+
+Tests: `tests/Unit/DocumentStoreTest.php` (the disk stays unserved, the registry stays honest, the
+URLs stay signed) and `tests/Feature/DocumentRouteTest.php` (unsigned, tampered, expired and
+off-registry requests are all turned away).
 
 ---
 

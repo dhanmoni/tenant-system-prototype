@@ -7,6 +7,7 @@ use App\Http\Resources\ApplicationResource;
 use App\Constants\Roles;
 use App\Constants\Status;
 use Carbon\Carbon;
+use App\Support\DocumentStore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -45,7 +46,7 @@ class OtherChargesRevisionApplicationController extends Controller
 
         $signaturePath = null;
         if ($request->hasFile('signature_image')) {
-            $signaturePath = $request->file('signature_image')->store('tenancy/signatures/other-charges-revision', 'public');
+            $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/other-charges-revision');
         }
 
         [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin'], $user);

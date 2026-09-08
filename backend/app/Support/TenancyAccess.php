@@ -43,6 +43,21 @@ class TenancyAccess
     public const NOT_AVAILABLE = 'No tenancy record is available for this UIN under your account. Check the UIN, and note that tenancy details can only be fetched by a party to that tenancy.';
 
     /**
+     * The same answer for a tenancy addressed by its application number.
+     *
+     * Every route under /api/tenancy-applications/{applicationNo} used to answer 403 for a real
+     * record the account may not see and 404 for a number that does not exist. Those two answers
+     * are a directory: application numbers run APP-YYYYMM-NNNNNN, so walking them told any
+     * signed-in account exactly which applications had been filed and when - the enumeration
+     * Rule 4(4) forbids, arrived at without reading a single record.
+     *
+     * Both cases now answer 404 with this string. App\Exceptions\Handler gives route-model
+     * binding the same body, so a miss in the router and a refusal in the controller are one
+     * response.
+     */
+    public const APPLICATION_NOT_AVAILABLE = 'No tenancy record is available for this application number under your account. Check the number, and note that tenancy details are available only to a party to that tenancy and to the office handling it.';
+
+    /**
      * Is this account a party to this tenancy?
      */
     public static function isConcernedParty(TenancyApplication $tenancy, ?User $user): bool

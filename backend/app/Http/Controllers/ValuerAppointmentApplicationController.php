@@ -9,6 +9,7 @@ use App\Constants\Declarations;
 use App\Constants\Roles;
 use App\Constants\Status;
 use Carbon\Carbon;
+use App\Support\DocumentStore;
 use Illuminate\Http\Request;
 use App\Services\AttestationRecorder;
 use App\Support\ValuerApplication;
@@ -51,7 +52,7 @@ class ValuerAppointmentApplicationController extends Controller
 
         $signaturePath = null;
         if ($request->hasFile('signature_image')) {
-            $signaturePath = $request->file('signature_image')->store('tenancy/signatures/valuer-appointment', 'public');
+            $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/valuer-appointment');
         }
 
         [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin'], $user);

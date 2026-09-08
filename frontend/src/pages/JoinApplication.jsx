@@ -524,8 +524,8 @@ function JoinApplication() {
 
 	const hasManager = Boolean(cleanOptionalValue(application.manager_name))
 
-	const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-	const storageUrl = (path) => (path ? `${apiBase}/storage/${path}` : '')
+	// The other party's photograph and signature arrive from the API as signed, expiring URLs;
+	// they used to be built as `{apiBase}/storage/{path}`, a permanent public address for both.
 
 	// Merge initiator data with second-party form for full-form preview
 	const previewLandlordName = isLandlord ? name : application.landlord_name
@@ -534,10 +534,10 @@ function JoinApplication() {
 	const previewLandlordPhone = isLandlord ? phone : application.landlord_phone
 	const previewLandlordPan = isLandlord ? pan : application.landlord_pan
 	const previewLandlordAadhar = isLandlord ? aadhar : application.landlord_aadhar
-	const previewLandlordPhoto = isLandlord ? photoPreview : storageUrl(application.landlord_photo_path)
+	const previewLandlordPhoto = isLandlord ? photoPreview : application.landlord_photo_url
 	const previewLandlordSignature = isLandlord
 		? signaturePreview
-		: storageUrl(application.landlord_signature_path)
+		: application.landlord_signature_url
 
 	const previewTenantName = isLandlord ? application.tenant_name : name
 	const previewTenantAddress = isLandlord ? application.tenant_address : address
@@ -546,9 +546,9 @@ function JoinApplication() {
 	const previewTenantPan = isLandlord ? application.tenant_pan : pan
 	const previewTenantAadhar = isLandlord ? application.tenant_aadhar : aadhar
 	const previewTenantPrevious = isLandlord ? application.tenant_previous_tenancy : previousTenancy
-	const previewTenantPhoto = isLandlord ? storageUrl(application.tenant_photo_path) : photoPreview
+	const previewTenantPhoto = isLandlord ? application.tenant_photo_url : photoPreview
 	const previewTenantSignature = isLandlord
-		? storageUrl(application.tenant_signature_path)
+		? application.tenant_signature_url
 		: signaturePreview
 
 	const managerPan = cleanOptionalValue(application.manager_pan)

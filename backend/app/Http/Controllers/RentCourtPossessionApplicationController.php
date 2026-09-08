@@ -13,6 +13,7 @@ use App\Services\AttestationRecorder;
 use App\Support\PriorProceedings;
 use App\Support\Verification;
 use Carbon\Carbon;
+use App\Support\DocumentStore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -79,7 +80,7 @@ class RentCourtPossessionApplicationController extends Controller
 
         $signaturePath = null;
         if ($request->hasFile('signature_image')) {
-            $signaturePath = $request->file('signature_image')->store('tenancy/signatures/rent-court-possession', 'public');
+            $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/rent-court-possession');
         }
 
         // Section 22 is a single basis with no clause list; drop any clauses posted alongside it.

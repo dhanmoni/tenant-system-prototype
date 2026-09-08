@@ -29,6 +29,30 @@ class ApplicationTypes
         ];
     }
 
+    /**
+     * The Eloquent model behind an application type.
+     *
+     * ApplicationWorkflowController carried this map privately, and DocumentStore needs the same
+     * one to know which record a signed document URL belongs to. Two copies of it would be one
+     * copy too many - a type present in one and missing from the other fails silently, as a
+     * 404 on a document that exists.
+     */
+    public static function modelFor(string $type): ?string
+    {
+        return match ($type) {
+            self::TENANCY_CERTIFICATE => \App\Models\TenancyApplication::class,
+            self::RENT_REVISION => \App\Models\RentRevisionApplication::class,
+            self::OTHER_CHARGES_REVISION => \App\Models\OtherChargesRevisionApplication::class,
+            self::VALUER_APPOINTMENT => \App\Models\ValuerAppointmentApplication::class,
+            self::RENT_COURT_POSSESSION => \App\Models\RentCourtPossessionApplication::class,
+            self::RENT_COURT_FILING => \App\Models\RentCourtFilingApplication::class,
+            self::RENT_AUTHORITY_FILING => \App\Models\RentAuthorityFilingApplication::class,
+            self::RENT_COURT_APPEAL => \App\Models\RentCourtAppealApplication::class,
+            self::RENT_TRIBUNAL_APPEAL => \App\Models\RentTribunalAppealApplication::class,
+            default => null,
+        };
+    }
+
     /** Rent Authority / Court / Tribunal form applications (excludes UIN / tenancy certificate). */
     public static function serviceForms(): array
     {

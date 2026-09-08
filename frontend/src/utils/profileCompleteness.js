@@ -1,14 +1,13 @@
+// The API sends `passport_photo_url` already signed and expiring. It used to fall back to
+// `{apiBaseUrl}/storage/{path}` when the URL was absent; that address no longer resolves, and a
+// passport photograph should never have had a permanent public one.
 export function resolvePassportPhotoUrl(profileUser = {}) {
-	if (!profileUser) return null
-	if (profileUser.passport_photo_url) return profileUser.passport_photo_url
-	const photoPath =
-		profileUser.passport_photo_path || profileUser.user_passport_photo_path
-	if (!photoPath) return null
-	const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-	return `${apiBaseUrl}/storage/${photoPath}`
+	return profileUser?.passport_photo_url || null
 }
 
 export function isProfileComplete(profileUser = {}) {
+	// A path with no URL still means a photograph was uploaded, so completeness keeps looking at
+	// both. Only the rendering had to change.
 	const photoUrl = profileUser.passport_photo_url
 	const photoPath = profileUser.passport_photo_path || profileUser.user_passport_photo_path
 

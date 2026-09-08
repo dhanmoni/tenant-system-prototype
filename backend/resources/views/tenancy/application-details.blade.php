@@ -131,12 +131,16 @@
     @php
       $embedImages = ($embedImages ?? true) === true;
 
+      // Photographs and signatures are read off the private documents disk through DocumentStore -
+      // public_path('storage/...') no longer reaches them, and that is the point. Embedding them as
+      // data URIs keeps this page self-contained: the printed copy carries no address that anyone
+      // could follow back to the file.
       $toDataUri = function ($path) use ($embedImages) {
-          if (!$embedImages) {
+          if (!$embedImages || !$path) {
               return null;
           }
-          $full = $path ? public_path('storage/' . $path) : null;
-          if (!$full || !is_file($full) || !is_readable($full)) {
+          $full = \App\Support\DocumentStore::absolutePath($path);
+          if (!$full || !is_readable($full)) {
               return null;
           }
           $mime = mime_content_type($full) ?: '';

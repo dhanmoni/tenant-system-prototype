@@ -80,13 +80,20 @@ class User extends Authenticatable
         'passport_photo_url',
     ];
 
+    /**
+     * The account holder's photograph.
+     *
+     * Was `url('storage/' . $path)` - a permanent, unauthenticated address for a passport
+     * photograph of a named person. It is now a signed URL that expires; see App\Support\DocumentStore.
+     */
     public function getPassportPhotoUrlAttribute(): ?string
     {
-        if (empty($this->passport_photo_path)) {
-            return null;
-        }
-
-        return url('storage/' . $this->passport_photo_path);
+        return \App\Support\DocumentStore::url(
+            \App\Support\DocumentStore::USER_SCOPE,
+            $this->getKey(),
+            'passport_photo_path',
+            $this->passport_photo_path
+        );
     }
 
     public static function roles(): array

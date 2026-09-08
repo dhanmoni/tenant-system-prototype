@@ -177,7 +177,6 @@ function ApplicationDetails() {
 		)
 	}
 
-	const baseUrl = (api.defaults.baseURL || 'http://localhost:8000').replace(/\/$/, '')
 	const canWithdraw = application.status === STATUS.SUBMITTED
 	const isTenancy = type === APPLICATION_TYPES.TENANCY_CERTIFICATE
 	const canCancelUin =
@@ -263,14 +262,17 @@ function ApplicationDetails() {
 
 	const detailFields = Object.entries(application).filter(([key, value]) => {
 		if (DETAIL_SKIP_KEYS.has(key)) return false
+		// The signed document URLs are rendered as the image or the link they point at, never as a
+		// field of the application.
+		if (key.endsWith('_url')) return false
 		if (value === null || value === undefined || value === '') return false
 		if (typeof value === 'object') return false
 		return true
 	})
 
-	const signatureUrl = application.signature_image_path
-		? `${baseUrl}/storage/${application.signature_image_path}`
-		: ''
+	// Signed and expiring, minted by the API next to the record. The documents disk is not
+	// web-served any more, so the old `{apiBase}/storage/{path}` reaches nothing.
+	const signatureUrl = application.signature_image_url || ''
 
 	return (
 		<div className={`admin-app-details${isTenancy ? ' admin-tenancy-doc' : ''}`}>
@@ -294,16 +296,11 @@ function ApplicationDetails() {
 							>
 								Print / Save PDF
 							</button>
-							{application.agreement_pdf_path ? (
+							{application.agreement_pdf_url ? (
 								<button
 									type="button"
 									className="ws-btn ws-btn--primary ws-btn--sm"
-									onClick={() =>
-										window.open(
-											`${baseUrl}/storage/${application.agreement_pdf_path}`,
-											'_blank',
-										)
-									}
+									onClick={() => window.open(application.agreement_pdf_url, '_blank')}
 								>
 									View agreement
 								</button>
@@ -516,9 +513,9 @@ function ApplicationDetails() {
 										backgroundColor: '#fff',
 									}}
 								>
-									{application.landlord_photo_path ? (
+									{application.landlord_photo_url ? (
 										<img
-											src={`${baseUrl}/storage/${application.landlord_photo_path}`}
+											src={application.landlord_photo_url}
 											alt="Landlord photograph"
 											style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'cover' }}
 										/>
@@ -533,9 +530,9 @@ function ApplicationDetails() {
 									)}
 								</div>
 								<div style={{ height: '50px', marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
-									{application.landlord_signature_path ? (
+									{application.landlord_signature_url ? (
 										<img
-											src={`${baseUrl}/storage/${application.landlord_signature_path}`}
+											src={application.landlord_signature_url}
 											alt="Landlord signature"
 											style={{ maxHeight: '100%', maxWidth: '150px' }}
 										/>
@@ -557,9 +554,9 @@ function ApplicationDetails() {
 										backgroundColor: '#fff',
 									}}
 								>
-									{application.tenant_photo_path ? (
+									{application.tenant_photo_url ? (
 										<img
-											src={`${baseUrl}/storage/${application.tenant_photo_path}`}
+											src={application.tenant_photo_url}
 											alt="Tenant photograph"
 											style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'cover' }}
 										/>
@@ -574,9 +571,9 @@ function ApplicationDetails() {
 									)}
 								</div>
 								<div style={{ height: '50px', marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
-									{application.tenant_signature_path ? (
+									{application.tenant_signature_url ? (
 										<img
-											src={`${baseUrl}/storage/${application.tenant_signature_path}`}
+											src={application.tenant_signature_url}
 											alt="Tenant signature"
 											style={{ maxHeight: '100%', maxWidth: '150px' }}
 										/>

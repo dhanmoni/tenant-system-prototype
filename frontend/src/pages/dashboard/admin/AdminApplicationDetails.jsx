@@ -961,7 +961,12 @@ const AdminApplicationDetails = () => {
 			return { detailFields: [] }
 		}
 
-		const entries = Object.entries(application).filter(([key]) => !EXCLUDED_FIELDS.has(key))
+		// `_url` keys are the signed companions of the `_path` rows, which renderValue already
+		// turns into the image or the link. Listing them as well would put a long signed URL on
+		// screen as though it were a field of the application.
+		const entries = Object.entries(application).filter(
+			([key]) => !EXCLUDED_FIELDS.has(key) && !key.endsWith('_url')
+		)
 		const details = []
 
 		for (const [key, value] of entries) {
@@ -993,7 +998,11 @@ const AdminApplicationDetails = () => {
 			key.toLowerCase().includes('pdf')
 		) {
 			if (typeof value === 'string' && (value.includes('/') || value.includes('\\'))) {
-				const url = `${import.meta.env.VITE_API_URL}/storage/${value}`
+				// The documents disk is private, so `${API}/storage/${path}` reaches nothing. The API
+				// sends a signed, expiring URL beside every path column; without one there is
+				// nothing to link to.
+				const url = application?.[key.replace(/_path$/, '_url')]
+				if (!url) return <span className="admin-app-details__empty">—</span>
 				if (value.match(/\.(jpg|jpeg|png|gif)$/i)) {
 					return (
 						<div className="admin-app-details__media">
@@ -1043,7 +1052,7 @@ const AdminApplicationDetails = () => {
 		}
 
 		return String(value)
-	}, [])
+	}, [application])
 
 	const renderEditInput = (key, value) => {
 		const raw = editForm[key] ?? value ?? ''
@@ -1642,7 +1651,6 @@ const AdminApplicationDetails = () => {
 	const statusClass = adminStatusBadgeClass(application.status)
 	const statusText = adminStatusLabel(application.status)
 	const detailSections = groupDetailFields(detailFields, application.form_type, t)
-	const storageBase = (api.defaults.baseURL || '').replace(/\/$/, '')
 	const hasManager =
 		hasDisplayValue(application.manager_name) &&
 		String(application.manager_name).toUpperCase() !== 'NA'
@@ -1651,7 +1659,6 @@ const AdminApplicationDetails = () => {
 				application.district?.name ? `, ${application.district.name}` : ''
 			}`
 		: application.district?.name || '________________________'
-	const storageUrl = (path) => (path ? `${storageBase}/storage/${path}` : '')
 
 	return (
 		<div
@@ -2035,9 +2042,9 @@ const AdminApplicationDetails = () => {
 												Name and signature of landlord
 											</div>
 											<div className="admin-tenancy-doc__photo-box">
-												{application.landlord_photo_path ? (
+												{application.landlord_photo_url ? (
 													<img
-														src={storageUrl(application.landlord_photo_path)}
+														src={application.landlord_photo_url}
 														alt="Landlord photograph"
 													/>
 												) : (
@@ -2051,9 +2058,9 @@ const AdminApplicationDetails = () => {
 												)}
 											</div>
 											<div className="admin-tenancy-doc__sign-line">
-												{application.landlord_signature_path ? (
+												{application.landlord_signature_url ? (
 													<img
-														src={storageUrl(application.landlord_signature_path)}
+														src={application.landlord_signature_url}
 														alt="Landlord signature"
 													/>
 												) : null}
@@ -2064,9 +2071,9 @@ const AdminApplicationDetails = () => {
 												Name and signature of tenant
 											</div>
 											<div className="admin-tenancy-doc__photo-box">
-												{application.tenant_photo_path ? (
+												{application.tenant_photo_url ? (
 													<img
-														src={storageUrl(application.tenant_photo_path)}
+														src={application.tenant_photo_url}
 														alt="Tenant photograph"
 													/>
 												) : (
@@ -2080,9 +2087,9 @@ const AdminApplicationDetails = () => {
 												)}
 											</div>
 											<div className="admin-tenancy-doc__sign-line">
-												{application.tenant_signature_path ? (
+												{application.tenant_signature_url ? (
 													<img
-														src={storageUrl(application.tenant_signature_path)}
+														src={application.tenant_signature_url}
 														alt="Tenant signature"
 													/>
 												) : null}
@@ -2270,9 +2277,9 @@ const AdminApplicationDetails = () => {
 													{serviceFormDoc.signature.caption}
 												</div>
 												<div className="admin-tenancy-doc__sign-line">
-													{serviceFormDoc.signature.imagePath ? (
+													{serviceFormDoc.signature.imageUrl ? (
 														<img
-															src={storageUrl(serviceFormDoc.signature.imagePath)}
+															src={serviceFormDoc.signature.imageUrl}
 															alt="Applicant signature"
 														/>
 													) : (

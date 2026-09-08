@@ -243,6 +243,58 @@ who filed it.
 rule 5(3) order reference required before filing. Who may appear on that register is a departmental
 matter.
 
+### D3 — Rule 4(4)'s second limb has no mechanism — **open, and a decision is needed**
+
+Rule 4(4) admits two classes of reader: the concerned Parties, and "the person authorized by Rent
+Authority". Only the first is implemented. `App\Support\TenancyAccess::isConcernedParty()` answers
+the first and denies everything else, because there is nothing in the system that records an
+authorisation of the second kind, and Rule 4(4) closes by forbidding access to "any unauthorised
+person" — so the safe reading is to deny until there is something to check against.
+
+Two people are shut out by that, and both are people the Rules expect to act:
+
+- **Rule 7** — on the death of a landlord, "the legal heirs of landlord may submit an application to
+  the Rent Court" in Form II. An heir is not on the tenancy record, so they cannot look the tenancy
+  up, and Form II needs the UIN.
+- **Rule 9** — a party "may either appear in person or authorize in writing one or more
+  representative or legal practitioner". That representative cannot see the tenancy under their own
+  account.
+
+**Why this is not simply a matter of building it.** Nothing in the Act or the Rules prescribes the
+mechanism, and the two limbs do not even point at the same actor. Rule 9's authorisation is written
+by *the party*, and it authorises representation "before the Rent Authority, Rent Court and Rent
+Tribunal" — a right of audience in proceedings, not a grant of access to the digital platform.
+Rule 4(4)'s authorisation is given by *the Rent Authority*. So a rule 9 representative is not
+automatically a rule 4(4) authorised person; somebody at the Rent Authority still has to admit them.
+Rule 7 says even less: the heirs file "along with relevant document and available evidence", and
+that evidence goes to the **Rent Court** with the Form II application, not to the Rent Authority.
+No form, no register and no verification standard is prescribed for either.
+
+Every remaining question is therefore departmental, not technical:
+
+1. Who records an authorisation — the Rent Authority of the district, or the Rent Court/Tribunal
+   before which the representation is to be made?
+2. What evidence is required? For rule 9, presumably the written authorisation itself, and a bar
+   enrolment number where the representative is a legal practitioner. For rule 7 the Rules name
+   nothing at all — a legal heir certificate, a succession certificate, and the death certificate
+   are the obvious candidates, but that is an assumption, not a rule.
+3. What does the authorisation reach — one tenancy, or every filing on it? Read-only, or may the
+   representative file and sign? Rule 9 says "represent their case", which reads wider than reading.
+4. How long does it last, and how is it revoked? A party who dismisses their advocate must be able
+   to end it, and a representation granted for one proceeding should not outlive it.
+
+**Recommended shape, if the department agrees it.** A `tenancy_representations` table
+(`tenancy_application_id`, `representative_user_id`, `basis` = rule 7 | rule 9, evidence documents
+through `DocumentStore`, `granted_by_user_id` = the Rent Authority officer, `scope`, `granted_at`,
+`expires_at`, `revoked_at`), a request-and-approve flow on the officer side, and a second limb in
+`TenancyAccess::isConcernedParty()` — or better, a sibling `isAuthorisedRepresentative()` so the two
+limbs of Rule 4(4) stay visibly distinct in the code as they are in the rule.
+
+**Not started deliberately.** Building it on assumed answers would hand tenancy details — including
+the identity documents secured on 8 September 2026 — to people who are not parties, on a
+verification standard nobody has approved. That is the precise failure Rule 4(4) exists to prevent,
+and it is the one defect in this list where a wrong implementation is worse than no implementation.
+
 ---
 
 ## E. Typesetting slips in the Gazette
@@ -296,5 +348,24 @@ now `App\Support\TenancyAccess::isConcernedParty()`, applied by
 `TenancyApplication::resolveForServiceForm()` before any status check, so it covers form submission
 as well as lookup. See [statutory-forms-engine-plan.md](statutory-forms-engine-plan.md).
 
-Still open under the same rule: `GET /api/tenancy-applications/{no}/receipt` and
-`…/application-details` are unauthenticated and render the full tenancy.
+**Closed, 8 September 2026.** `GET /api/tenancy-applications/{no}/receipt` and
+`…/application-details` were declared above the auth group and rendered the whole tenancy — both
+parties' names, addresses and phone numbers, the premises, the rent — to anyone who could guess an
+application number. Both now sit inside the `auth:sanctum` group and share one guard,
+`TenancyApplicationController::guardTenancyDocument()`, with the acknowledgement and the agreement;
+each read, allowed or refused, is written to `user_activity_logs` under rule 4(3). No frontend
+change was needed: all three call sites already fetched through the authenticated axios client, so
+the "signed URLs" that earlier notes treated as the necessary fix were never required.
+`tests/Unit/TenancyDocumentRoutesTest.php` reads the router and fails if any tenancy route is
+declared outside the group again.
+
+**Closed, 8 September 2026.** Every uploaded file — both parties' passport photographs, their
+signatures, their PAN cards, the executed agreement, the signature on each of the eight service
+forms — was written to the `public` disk and served at `/storage/<path>` with no authentication at
+all, and the API handed out the paths for the SPA to build those URLs from. A permanent,
+unauthenticated address for a named person's PAN card is the plainest possible breach of rule 4(4).
+Uploads now go to a private `documents` disk that nothing web-serves, and leave only through
+`GET /api/documents/{scope}/{id}/{field}`, which carries `signed` and expires within the hour;
+`App\Support\DocumentStore` mints those URLs beside records the caller has already been authorised
+to read. `php artisan documents:secure` moves the files already on the public disk. See
+[backend-architecture.md §10](backend-architecture.md).

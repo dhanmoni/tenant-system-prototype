@@ -105,10 +105,102 @@ and one of `disclosed` / `refused` / `not_usable`. The same gate now also guards
 submission, which had the same hole: all eight form controllers pass the filer through it.
 
 Still open from this workstream, both tracked in §3.8: OTP (rule 4(5)) and read-only rendering of
-prefilled values. Separately, `GET /api/tenancy-applications/{no}/receipt` and
-`…/application-details` are **unauthenticated** and render the full tenancy — the same rule 4(4)
-breach by a different door, and not addressed here because the fix (signed URLs) changes the print
-flow in three pages.
+prefilled values.
+
+`GET /api/tenancy-applications/{no}/receipt` and `…/application-details` were the same rule 4(4)
+breach by a different door — declared above the auth group, they returned the full tenancy to an
+unauthenticated caller. **Closed 8 September 2026.** Both were moved inside the `auth:sanctum` group
+and now share a single guard with the acknowledgement and the agreement:
+`TenancyApplicationController::guardTenancyDocument()` resolves the account, applies
+`userCanAccess()`, and records the read in `user_activity_logs` as `disclosed` or `refused`. Four
+copies of the same check were what let two of them drift out from behind auth, so there is now one.
+
+Two notes on the earlier reading of this item. The fix was expected to need signed URLs because the
+documents were thought to be opened by `window.open` on a bare URL; they are not — all three call
+sites (`TenancyCertificate.jsx`, `JoinApplication.jsx`, `AdminApplicationDetails.jsx`) fetch through
+the authenticated axios client and write the returned HTML into a blank window, so the frontend
+needed no change at all. `receipt` turned out to have no caller anywhere in the repo; it is kept and
+guarded rather than deleted. Separately, `Authenticate::redirectTo()` still returned
+`route('login')`, and this application has no `login` route — a browser pointed straight at one of
+these URLs would have raised RouteNotFoundException and got a 500 instead of a 401. It now returns
+null, so every unauthenticated request fails as 401 whatever it asked for.
+
+A second limb had to be added alongside `userCanAccess()`. Its staff test turns on `office_id`,
+while `ApplicationWorkflowController::show()` — the screen the print buttons sit on — tests district.
+An officer could therefore open a file and be refused when they pressed Print. `officeHolderCanAccess()`
+applies the workflow controller's own test so the two agree; the Valuer is excluded, as it is there.
+
+Two residual defects were left open at the time; both were closed on 8 September 2026, below.
+
+### Uploaded files — closed 8 September 2026
+
+The same rule 4(4) breach through a third door, and the worst of the three. Every file a filer
+uploads went to the `public` disk: both parties' passport photographs, their signatures, their PAN
+cards, the executed tenancy agreement, and the signature on each of the eight service forms. That
+disk is symlinked into `public/storage` and served by the web server to anybody, and the API handed
+the paths out (`landlord_pan_url`, `agreement_pdf_path`) for the SPA to build
+`<img src="{API}/storage/{path}">` from. Once a URL had been seen it worked for ever, signed in or
+not. 447 files were exposed in the development database alone.
+
+Uploads now go to a private `documents` disk with no `url` and no symlink, and leave only through
+`GET /api/documents/{scope}/{id}/{field}` — `signed` middleware, expiring within the hour, minted by
+`App\Support\DocumentStore` beside a record the caller has already been authorised to read. The URL
+names a scope, a record id and a **column from a fixed registry**, never the stored path, so a
+signed URL cannot be edited into a request for a column that holds something other than a file.
+
+Signed URLs rather than an authenticated route because these files are consumed by `<img src>` and
+`window.open`, neither of which carries a bearer token, and the SPA and API are on different origins
+in this deployment (`SESSION_SAME_SITE`), so a session cookie is not reliably sent on a subresource
+request either. A signed URL is a capability issued to somebody who has just passed the record's own
+access check; the thing it replaces was a public address.
+
+Two smaller things fell out of it. `Authenticate::redirectTo()` was returning `route('login')` in an
+application with no `login` route; it now returns null, so an unauthenticated request fails as 401
+rather than 500. And `ApplicationWorkflowController`'s private type→model map moved to
+`ApplicationTypes::modelFor()`, because the document registry needs the same map and a second copy
+would fail silently as a 404 on a document that exists.
+
+**Deployment step:** `php artisan documents:secure` must run on every environment. `DocumentStore`
+reads through to the old disk so nothing breaks before it runs, but the existing files stay
+world-readable until it does.
+
+### Application-number enumeration — closed 8 September 2026
+
+Every route under `/api/tenancy-applications/{applicationNo}` answered **403** for a real record the
+account may not see and **404** for a number that was never issued. Application numbers run
+`APP-YYYYMM-NNNNNN`, so walking the sequence told any signed-in account which applications had been
+filed and in which month, without reading one of them. That is the enumeration Rule 4(4) forbids,
+and `TenancyAccess::NOT_AVAILABLE` had already applied the opposite reasoning to UIN lookup.
+
+Both cases now answer 404 with `TenancyAccess::APPLICATION_NOT_AVAILABLE`. Two halves had to agree:
+`TenancyApplicationController::tenancyNotAvailable()` for the controller's refusal, and a
+`renderable` in `App\Exceptions\Handler` giving route-model binding the identical body — binding
+raises its own 404 before any controller runs, so without that half the router itself stayed the
+oracle. The rewrite is scoped to `api/tenancy-applications/*`; a 404 elsewhere discloses nothing
+about a tenancy.
+
+`cancel()` keeps two gates rather than one. "You may not see this at all" and "you may see it but
+only the landlord may cancel it" are different answers to different people, and collapsing them
+would tell a tenant their own tenancy does not exist. `lookupByRefCode` keeps its explanatory
+refusals too: a ref code is hash-derived rather than sequential, so it is not cheaply enumerable,
+and the joining party needs to be told why they were turned away.
+
+While fixing this, the 401-that-was-a-500 turned out **not** to have been fixed by the earlier
+change. Overriding `Authenticate::redirectTo()` to return null is not enough — Laravel's own handler
+ends with `redirect()->guest($exception->redirectTo($request) ?? route('login'))`, so null is
+precisely what triggers the `route('login')` fallback. `App\Exceptions\Handler::unauthenticated()`
+now returns 401 unconditionally, and `tests/Feature/TenancyEnumerationTest.php` asserts it for an
+`Accept: text/html` request — the case a typed-in document URL actually produces.
+
+### The office_id limb — closed 8 September 2026
+
+`userCanAccess()` returned true for any account whose `office_id` matched the tenancy's, without
+looking at the role. No citizen has an `office_id` — only `UserManagementController` sets one, and
+registration does not — but nothing stopped an administrator creating a `user`-role account with
+one, and that account would then have read every tenancy filed at that office. The limb now also
+requires an office-holding role through `isOfficeHolderRole()`, which is the single definition
+`officeHolderCanAccess()` uses as well. The Valuer is excluded from it, as it is in
+`ApplicationWorkflowController`.
 
 ### Hearing pipeline (out of scope)
 
@@ -450,6 +542,12 @@ Carried in [gazette-divergences.md](gazette-divergences.md); repeated here becau
 3. **C2 — Form III scope.** Blocks Form III only. Suggested: Gazetted fields, s. 27(1) cited,
    vacant-land group declared but disabled.
 4. **D1 — Act s. 19(2).** Blocks nothing; can be deferred.
+5. **D3 — Rule 4(4)'s second limb.** Who records an authorisation, on what evidence, with what scope
+   and what expiry? Nothing in the Act or the Rules prescribes a mechanism, and the rule 7 heir and
+   the rule 9 representative are shut out of the platform until one exists. Blocks nothing else, but
+   it is the one item where guessing is worse than waiting: a wrong verification standard hands
+   tenancy details to non-parties, which is what Rule 4(4) exists to prevent. Proposed shape and the
+   four open questions are in [gazette-divergences.md §D3](gazette-divergences.md).
 
 Settled: **B1** — Tribunal disposal computed from Act s. 37(2) at 60 days, rule 13(8) recorded as a
 competing authority. **Form IV affidavit** — enforced as a named, switchable portal policy

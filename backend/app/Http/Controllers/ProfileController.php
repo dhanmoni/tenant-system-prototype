@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\DocumentStore;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -19,9 +19,6 @@ class ProfileController extends Controller
         $user->load(['district.state']);
 
         $userData = $user->toArray();
-        if (!empty($user->passport_photo_path)) {
-            $userData['passport_photo_url'] = url('storage/' . $user->passport_photo_path);
-        }
 
         return response()->json(['user' => $userData]);
     }
@@ -79,11 +76,8 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('passport_photo')) {
-            if ($user->passport_photo_path) {
-                Storage::disk('public')->delete($user->passport_photo_path);
-            }
-            $path = $request->file('passport_photo')->store('profile-photos', 'public');
-            $user->passport_photo_path = $path;
+            DocumentStore::delete($user->passport_photo_path);
+            $user->passport_photo_path = DocumentStore::store($request->file('passport_photo'), 'profile-photos');
         }
 
         $user->save();
@@ -91,9 +85,6 @@ class ProfileController extends Controller
         $user->load(['district.state']);
 
         $userData = $user->toArray();
-        if (!empty($user->passport_photo_path)) {
-            $userData['passport_photo_url'] = url('storage/' . $user->passport_photo_path);
-        }
 
         return response()->json(['user' => $userData]);
     }

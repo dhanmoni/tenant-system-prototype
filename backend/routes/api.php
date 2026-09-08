@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\DistrictController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -45,8 +46,20 @@ Route::get('/public/districts', [DistrictController::class, 'publicIndex']);
 Route::get('/public/offices', [OfficeController::class, 'publicIndex']);
 Route::get('/public/village-wards', [VillageWardController::class, 'publicIndex']);
 Route::get('/public/portal-stats', [DashboardController::class, 'publicStats']);
-Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplicationController::class, 'receipt']);
-Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
+
+/*
+ * Uploaded files - photographs, signatures, PAN cards, agreements.
+ *
+ * Outside the auth group on purpose, and not public: `signed` is the gate. An <img> tag and a
+ * window.open cannot carry a bearer token, and the SPA is served from a different origin than the
+ * API here, so a session cookie is not reliably sent on a subresource request either. The URL is
+ * instead minted by App\Support\DocumentStore next to a record the caller has already been
+ * authorised to read, names one file, and expires within the hour. Before 8 Sep 2026 these
+ * files were simply on public/storage with no gate at all.
+ */
+Route::get('/documents/{scope}/{id}/{field}', [DocumentController::class, 'show'])
+    ->middleware('signed')
+    ->name('documents.show');
 
 Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])->group(function () use ($allStaffRoles, $adminRoles, $managementRoles, $principalRoles, $allAdminStaffRoles, $tenancyViewerRoles) {
     // Joint tenancy routes — literal paths must stay before {tenancyApplication}
@@ -66,6 +79,11 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
     Route::get('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'show']);
     Route::get('/tenancy-applications/{tenancyApplication}/acknowledgement', [TenancyApplicationController::class, 'downloadAcknowledgement']);
     Route::get('/tenancy-applications/{tenancyApplication}/agreement', [TenancyApplicationController::class, 'downloadAgreement']);
+    // Rule 4(4): these two render the whole tenancy, so they belong behind the same gate as the
+    // acknowledgement. They must never be moved back out of this group - see the note on
+    // TenancyApplicationController::receipt().
+    Route::get('/tenancy-applications/{tenancyApplication}/receipt', [TenancyApplicationController::class, 'receipt']);
+    Route::get('/tenancy-applications/{tenancyApplication}/application-details', [TenancyApplicationController::class, 'applicationDetails']);
     Route::put('/tenancy-applications/{tenancyApplication}', [TenancyApplicationController::class, 'update']);
     Route::post('/tenancy-applications/{tenancyApplication}/cancel', [TenancyApplicationController::class, 'cancel']);
 

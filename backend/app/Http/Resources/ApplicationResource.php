@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\DocumentStore;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ApplicationResource extends JsonResource
@@ -121,6 +122,11 @@ class ApplicationResource extends JsonResource
                     'phone' => $this->assignedValuer->phone,
                 ];
             }),
+            // Signed, expiring URLs for whatever files this record holds - the service forms carry
+            // a signature image, a tenancy carries photographs, signatures, PAN cards and the
+            // agreement. The `_path` columns come through in $specificFields as before, but a path
+            // is no longer an address: nothing web-serves the documents disk.
+            ...DocumentStore::urlsFor($this->resource),
         ], $specificFields);
     }
 }

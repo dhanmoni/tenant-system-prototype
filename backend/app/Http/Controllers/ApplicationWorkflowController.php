@@ -22,18 +22,7 @@ class ApplicationWorkflowController extends Controller
 {
     public function getModel($type)
     {
-        return match ($type) {
-            ApplicationTypes::RENT_REVISION => RentRevisionApplication::class,
-            ApplicationTypes::OTHER_CHARGES_REVISION => OtherChargesRevisionApplication::class,
-            ApplicationTypes::VALUER_APPOINTMENT => ValuerAppointmentApplication::class,
-            ApplicationTypes::RENT_COURT_POSSESSION => RentCourtPossessionApplication::class,
-            ApplicationTypes::RENT_COURT_FILING => RentCourtFilingApplication::class,
-            ApplicationTypes::RENT_AUTHORITY_FILING => RentAuthorityFilingApplication::class,
-            ApplicationTypes::RENT_COURT_APPEAL => RentCourtAppealApplication::class,
-            ApplicationTypes::RENT_TRIBUNAL_APPEAL => RentTribunalAppealApplication::class,
-            ApplicationTypes::TENANCY_CERTIFICATE => \App\Models\TenancyApplication::class,
-            default => null,
-        };
+        return ApplicationTypes::modelFor((string) $type);
     }
 
     // Oldest first (created_at ASC), tie-broken by application_no so the order is stable

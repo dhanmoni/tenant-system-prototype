@@ -6,8 +6,10 @@ use App\Models\Office;
 use App\Models\TenancyApplication;
 use App\Models\User;
 use App\Models\UserActivityLog;
+use App\Constants\ApplicationTypes;
 use App\Constants\Roles;
 use App\Constants\Status;
+use App\Support\DocumentStore;
 use App\Support\TenancyAccess;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,7 +27,7 @@ class TenancyApplicationController extends Controller
         }
 
         if (!$this->userCanAccess($user, $tenancyApplication)) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return $this->tenancyNotAvailable();
         }
 
         $tenancyApplication->load('office.district', 'villageWard');
@@ -37,7 +39,12 @@ class TenancyApplicationController extends Controller
             return response()->json(['application' => $this->formatDraftApplication($tenancyApplication)]);
         }
 
-        return response()->json(['application' => $tenancyApplication]);
+        return response()->json([
+            // The `_path` columns are opaque now that the disk is private; what the browser needs
+            // is the signed, expiring URL beside each of them.
+            'application' => $tenancyApplication->toArray()
+                + DocumentStore::urlsFor($tenancyApplication, ApplicationTypes::TENANCY_CERTIFICATE),
+        ]);
     }
 
     public function store(Request $request)
@@ -387,6 +394,7 @@ class TenancyApplicationController extends Controller
                 'tenant_previous_tenancy' => $application->tenant_previous_tenancy,
                 'tenant_photo_path' => $application->tenant_photo_path,
                 'tenant_signature_path' => $application->tenant_signature_path,
+                ...DocumentStore::urlsFor($application, ApplicationTypes::TENANCY_CERTIFICATE),
                 'property_premises_description' => $application->property_premises_description,
                 'property_rent_payable' => $application->property_rent_payable,
                 'property_furniture_description' => $application->property_furniture_description,
@@ -604,6 +612,15 @@ class TenancyApplicationController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
+        // Two gates, not one. "You may not see this at all" and "you may see it but only the
+        // landlord may cancel it" are different answers to different people, and collapsing them
+        // would tell a tenant their own tenancy does not exist. The first is the anonymous 404
+        // that every tenancy route gives; the second names the reason, because by then the caller
+        // has already been shown the record.
+        if (!$this->userCanAccess($user, $tenancyApplication)) {
+            return $this->tenancyNotAvailable();
+        }
+
         if (!$this->userIsLandlord($user, $tenancyApplication)) {
             return response()->json(['message' => 'Only the landlord can cancel this UIN.'], 403);
         }
@@ -655,7 +672,7 @@ class TenancyApplicationController extends Controller
         }
 
         if (!$this->userCanAccess($user, $tenancyApplication)) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return $this->tenancyNotAvailable();
         }
 
         if (strtolower($tenancyApplication->status) !== 'reverted') {
@@ -813,8 +830,22 @@ class TenancyApplicationController extends Controller
         return response()->json($applications);
     }
 
+    /**
+     * The registration receipt.
+     *
+     * Until 8 Sep 2026 this route, and applicationDetails() below, sat outside the auth group: the
+     * whole tenancy - both parties' names, addresses, phone numbers, the premises, the rent - came
+     * back to anyone who could guess an application number, and the format is sequential enough to
+     * guess. Rule 4(4) confines those details to the concerned Parties, so both now carry the same
+     * guard as the acknowledgement. Every caller in the frontend already went through the
+     * authenticated axios client, so nothing had to change on that side.
+     */
     public function receipt(Request $request, TenancyApplication $tenancyApplication)
     {
+        if ($refusal = $this->guardTenancyDocument($request, $tenancyApplication, 'receipt')) {
+            return $refusal;
+        }
+
         $tenancyApplication->load('office');
         $html = view('tenancy.receipt', [
             'application' => $tenancyApplication,
@@ -837,13 +868,8 @@ class TenancyApplicationController extends Controller
 
     public function downloadAcknowledgement(Request $request, TenancyApplication $tenancyApplication)
     {
-        $user = $request->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        if (!$this->userCanAccess($user, $tenancyApplication)) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if ($refusal = $this->guardTenancyDocument($request, $tenancyApplication, 'acknowledgement')) {
+            return $refusal;
         }
 
         $tenancyApplication->load('office');
@@ -858,6 +884,10 @@ class TenancyApplicationController extends Controller
 
     public function applicationDetails(Request $request, TenancyApplication $tenancyApplication)
     {
+        if ($refusal = $this->guardTenancyDocument($request, $tenancyApplication, 'application-details')) {
+            return $refusal;
+        }
+
         $tenancyApplication->load(['office', 'district']);
         $wantPdf = $request->query('format') === 'pdf' && class_exists('Dompdf\\Dompdf');
         $embedImages = !$wantPdf || extension_loaded('gd');
@@ -914,13 +944,8 @@ class TenancyApplicationController extends Controller
 
     public function downloadAgreement(Request $request, TenancyApplication $tenancyApplication)
     {
-        $user = $request->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        if (!$this->userCanAccess($user, $tenancyApplication)) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if ($refusal = $this->guardTenancyDocument($request, $tenancyApplication, 'agreement')) {
+            return $refusal;
         }
 
         $agreementPath = $this->getAgreementPdfPath($tenancyApplication);
@@ -1092,7 +1117,7 @@ class TenancyApplicationController extends Controller
         }
 
         if ((int) $tenancyApplication->user_id !== (int) $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return $this->tenancyNotAvailable();
         }
 
         if ($tenancyApplication->status !== Status::DRAFT) {
@@ -1142,7 +1167,7 @@ class TenancyApplicationController extends Controller
         }
 
         if ((int) $tenancyApplication->user_id !== (int) $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return $this->tenancyNotAvailable();
         }
 
         if ($tenancyApplication->status !== Status::DRAFT) {
@@ -1163,7 +1188,7 @@ class TenancyApplicationController extends Controller
         }
 
         if ((int) $tenancyApplication->user_id !== (int) $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return $this->tenancyNotAvailable();
         }
 
         if ($tenancyApplication->status !== Status::DRAFT) {
@@ -1607,12 +1632,6 @@ class TenancyApplicationController extends Controller
 
     private function formatDraftApplication(TenancyApplication $application): array
     {
-        $storageBase = rtrim(config('app.url', ''), '/') . '/storage/';
-
-        $fileUrl = static function (?string $path) use ($storageBase) {
-            return $path ? $storageBase . ltrim($path, '/') : null;
-        };
-
         return [
             'id' => $application->id,
             'application_no' => $application->application_no,
@@ -1655,17 +1674,12 @@ class TenancyApplicationController extends Controller
             'property_charge_furnishing' => $application->property_charge_furnishing,
             'property_charge_other_services' => $application->property_charge_other_services,
             'property_tenancy_duration' => $application->property_tenancy_duration,
-            'agreement_pdf_url' => $fileUrl($application->agreement_pdf_path),
-            'landlord_photo_url' => $fileUrl($application->landlord_photo_path),
-            'landlord_signature_url' => $fileUrl($application->landlord_signature_path),
-            'landlord_pan_url' => $fileUrl($application->landlord_pan_path),
-            'tenant_photo_url' => $fileUrl($application->tenant_photo_path),
-            'tenant_signature_url' => $fileUrl($application->tenant_signature_path),
-            'tenant_pan_url' => $fileUrl($application->tenant_pan_path),
             'office' => $application->office,
             'village_ward' => $application->villageWard,
             'updated_at' => $application->updated_at?->toDateTimeString(),
-        ];
+            // agreement_pdf_url, landlord_photo_url, … — signed and expiring. These were built as
+            // "{app.url}/storage/{path}", which is a permanent public address for a PAN card.
+        ] + DocumentStore::urlsFor($application, ApplicationTypes::TENANCY_CERTIFICATE);
     }
 
     private function storeUpload(Request $request, string $key, string $path): ?string
@@ -1674,7 +1688,7 @@ class TenancyApplicationController extends Controller
             return null;
         }
 
-        return $request->file($key)->store($path, 'public');
+        return DocumentStore::store($request->file($key), $path);
     }
 
     private function getAgreementPdfPath(TenancyApplication $application): ?string
@@ -1684,8 +1698,8 @@ class TenancyApplicationController extends Controller
         }
 
         try {
-            $path = Storage::disk('public')->path($application->agreement_pdf_path);
-            if (!is_file($path)) {
+            $path = DocumentStore::absolutePath($application->agreement_pdf_path);
+            if (!$path) {
                 return null;
             }
 
@@ -1728,6 +1742,113 @@ class TenancyApplicationController extends Controller
         }
     }
 
+    /**
+     * The one gate in front of every rendering of a tenancy record - receipt, acknowledgement,
+     * application details, agreement.
+     *
+     * They are four separate doors into the same disclosure, so they share one guard rather than
+     * four copies of it; the copies are what let the receipt and the application details drift out
+     * from behind auth in the first place. Returns the refusal response, or null to proceed.
+     *
+     * Rule 4(3) puts the Rent Authority under a duty to "take all the measures for maintaining
+     * privacy and security of data", so each read is recorded. CheckIfBlocked's activity logging
+     * skips GET, and all four of these are GETs.
+     */
+    private function guardTenancyDocument(Request $request, TenancyApplication $application, string $document)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!$this->userCanAccess($user, $application) && !$this->officeHolderCanAccess($user, $application)) {
+            $this->auditTenancyDocument($request, $application, $document, 'refused');
+
+            return $this->tenancyNotAvailable();
+        }
+
+        $this->auditTenancyDocument($request, $application, $document, 'disclosed');
+
+        return null;
+    }
+
+    /**
+     * Rule 4(4)'s second limb, as far as it is presently implemented: the officers of the Rent
+     * Authority who handle the file.
+     *
+     * The print buttons in the admin UI hang off records the officer has just opened through
+     * ApplicationWorkflowController::show(), so this applies that controller's test rather than a
+     * second, narrower one - Super Admin sees everything, anyone else is confined to their own
+     * district. userCanAccess() alone would let an officer open a tenancy and then refuse to print
+     * it, because its staff limb turns on office_id rather than district.
+     *
+     * The Valuer is excluded on purpose: the workflow controller lets that role near valuer
+     * appointment applications only, never a tenancy.
+     */
+    private function officeHolderCanAccess($user, TenancyApplication $application): bool
+    {
+        if ($user->role === Roles::SUPER_ADMIN) {
+            return true;
+        }
+
+        if (!self::isOfficeHolderRole($user->role)) {
+            return false;
+        }
+
+        return empty($user->district_id) || (int) $application->district_id === (int) $user->district_id;
+    }
+
+    /**
+     * Does this role hold an office under the Act - an administrator, a Rent Authority / Rent Court
+     * / Rent Tribunal, or one of their assistants?
+     *
+     * The Valuer is deliberately absent: ApplicationWorkflowController lets that role near valuer
+     * appointment applications only, never a tenancy. So is `user`, which is a filer.
+     */
+    private static function isOfficeHolderRole(?string $role): bool
+    {
+        return in_array(
+            (string) $role,
+            array_merge(Roles::allAdmin(), Roles::principals(), Roles::assistants()),
+            true
+        );
+    }
+
+    private function auditTenancyDocument(Request $request, TenancyApplication $application, string $document, string $outcome): void
+    {
+        UserActivityLog::create([
+            'user_id' => $request->user()->id,
+            'session_id' => $request->hasSession() ? $request->session()->getId() : null,
+            'action' => 'GET ' . $request->path(),
+            'ip_address' => $request->ip(),
+            'ip_location' => null,
+            'user_agent' => substr((string) $request->userAgent(), 0, 500),
+            'meta' => [
+                'application_no' => $application->application_no,
+                'document' => $document,
+                'outcome' => $outcome,
+            ],
+            'logged_at' => now(),
+        ]);
+    }
+
+    /**
+     * The one answer every tenancy route gives when it will not produce a record.
+     *
+     * A number that was never issued and a number belonging to somebody else must be
+     * indistinguishable: application numbers run APP-YYYYMM-NNNNNN, so a 403/404 split would let
+     * any signed-in account walk the sequence and learn which applications exist and when they
+     * were filed, without reading one of them. That is the enumeration Rule 4(4) forbids, and it
+     * is the same reasoning TenancyAccess::NOT_AVAILABLE already applies to UIN lookup.
+     *
+     * App\Exceptions\Handler gives route-model binding this identical body, so the router and the
+     * controller cannot be told apart either.
+     */
+    private function tenancyNotAvailable()
+    {
+        return response()->json(['message' => TenancyAccess::APPLICATION_NOT_AVAILABLE], 404);
+    }
+
     private function userCanAccess($user, TenancyApplication $application): bool
     {
         if ($user->role === \App\Constants\Roles::SUPER_ADMIN) {
@@ -1754,7 +1875,14 @@ class TenancyApplicationController extends Controller
             return true;
         }
 
-        if (!empty($user->office_id) && (int) $application->office_id === (int) $user->office_id) {
+        // An office_id records the office an officer serves in. Only UserManagementController ever
+        // sets one, and registration does not, so no citizen has one today - but nothing stops an
+        // administrator creating a `user` account with an office_id, and without the role test that
+        // account would silently read every tenancy filed at that office. Rule 4(4) admits the
+        // parties and the Rent Authority, not everybody who shares an office number with them.
+        if (!empty($user->office_id)
+            && (int) $application->office_id === (int) $user->office_id
+            && self::isOfficeHolderRole($user->role)) {
             return true;
         }
 

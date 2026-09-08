@@ -1,11 +1,3 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
-export function storageUrl(path) {
-	if (!path) return ''
-	if (path.startsWith('http')) return path
-	return `${API_BASE}/storage/${path}`
-}
-
 /** Strip legacy optional placeholders so empty fields stay blank in the UI. */
 export function cleanOptionalValue(value) {
 	if (value == null) return ''

@@ -39,7 +39,9 @@ function signatureBlock(app, caption = 'Signature of applicant') {
 		caption,
 		name: text(app.signature_name),
 		signedBy: text(app.signed_by),
-		imagePath: text(app.signature_image_path),
+		// The signed, expiring URL the API sends. The raw path stopped being an address when the
+		// documents disk was taken out of public/storage.
+		imageUrl: text(app.signature_image_url),
 	}
 }
 
