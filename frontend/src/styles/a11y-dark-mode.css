@@ -691,6 +691,14 @@ body.dark-mode .admin-app-details__valuer-textarea {
 }
 
 body.dark-mode .admin-app-details__proceedings-card,
+body.dark-mode .ws-text-success {
+	color: #4ade80;
+}
+
+body.dark-mode .ws-link-btn {
+	color: #93c5fd;
+}
+
 body.dark-mode .admin-app-details__proceeding-item {
 	background: #1a222d !important;
 	border-color: #2a3544 !important;

@@ -17,7 +17,7 @@ import { formatDate, formatDateTime } from '../../../utils/formatters'
 import { getAssistantForwardOfficeLabel } from '../../../utils/applicationStatusProgress'
 import { buildServiceFormDocument } from '../../../utils/buildServiceFormDocument'
 import ProceedingModal from '../../../components/dashboard/ProceedingModal'
-import NoticeDocumentViewer from '../../../components/dashboard/NoticeDocumentViewer'
+import { useNoticeSigning } from '../../../hooks/useNoticeSigning'
 import { useToast } from '../../../context/ToastContext'
 import './ApplicationDetails.css'
 
@@ -398,7 +398,14 @@ const AdminApplicationDetails = () => {
 	// Case Proceedings State
 	const [showProceedingModal, setShowProceedingModal] = useState(false)
 	const [proceedingSubmitting, setProceedingSubmitting] = useState(false)
-	const [viewProceedingDoc, setViewProceedingDoc] = useState(null)
+	const {
+		agent: dscAgent,
+		checkingAgent,
+		refreshAgent,
+		signingId,
+		signProceeding,
+		fetchDocument: fetchNoticeDocument,
+	} = useNoticeSigning(application?.form_type, application?.id)
 
 	const viewerStageRef = useRef(null)
 	const paperRef = useRef(null)
@@ -523,6 +530,31 @@ const AdminApplicationDetails = () => {
 	}
 
 
+	/** Open the notice PDF the server holds - the signed one where it exists, else the draft. */
+	const handleViewNotice = async (proceeding) => {
+		try {
+			const blob = await fetchNoticeDocument(proceeding.id)
+			setDocPreview({
+				title: proceeding.is_signed ? 'Signed notice' : 'Notice (draft — not yet signed)',
+				url: URL.createObjectURL(blob),
+				isPdf: true,
+				revokeOnClose: true,
+			})
+		} catch (err) {
+			showToast(err?.message || 'Could not open the notice.', 'error')
+		}
+	}
+
+	const handleSignNotice = async (proceeding) => {
+		try {
+			await signProceeding(proceeding)
+			showToast('Notice signed and issued to the parties.', 'success')
+			refetchProceedings()
+		} catch (err) {
+			showToast(err?.message || 'The notice could not be signed.', 'error')
+		}
+	}
+
 	const handleProceedingSubmit = async (formData) => {
 		try {
 			setProceedingSubmitting(true)
@@ -567,6 +599,27 @@ const AdminApplicationDetails = () => {
 						<h3 className="admin-app-details__section-title">Case Proceedings & Notices</h3>
 						<p className="admin-app-details__proceedings-desc">
 							Hearing notices, adjournments, and orders for this application
+						</p>
+						{/* A notice is served on the parties only once it is signed, so the state of
+						    the officer's token reader belongs on this screen rather than behind a
+						    failed click. */}
+						<p className="admin-app-details__proceedings-desc">
+							{checkingAgent ? (
+								<>Checking for the DSC Agent&hellip;</>
+							) : dscAgent?.connected ? (
+								dscAgent.tokenPresent ? (
+									<span className="ws-text-success">DSC Agent connected · token detected</span>
+								) : (
+									<>DSC Agent connected · <strong>no token detected</strong> — insert your DSC token to sign.</>
+								)
+							) : (
+								<>
+									DSC Agent not running on this machine. Start it to sign notices.{' '}
+									<button type="button" className="ws-link-btn" onClick={refreshAgent}>
+										Check again
+									</button>
+								</>
+							)}
 						</p>
 					</div>
 					{canAddProceeding ? (
@@ -621,14 +674,47 @@ const AdminApplicationDetails = () => {
 										<p className="admin-app-details__proceeding-meta">
 											Sent by: {p.sent_by?.name || 'Unknown'}
 										</p>
+										<p className="admin-app-details__proceeding-meta">
+											{p.is_signed ? (
+												<span className="ws-text-success">
+													Signed{p.signature_authority ? ` · ${p.signature_authority}` : ''}
+													{p.signed_at
+														? ` · ${new Date(p.signed_at).toLocaleDateString('en-IN', {
+																day: '2-digit',
+																month: 'short',
+																year: 'numeric',
+															})}`
+														: ''}
+												</span>
+											) : (
+												<strong>Draft — not signed, not yet visible to the parties</strong>
+											)}
+										</p>
 									</div>
-									<button
-										type="button"
-										className="ws-btn ws-btn--outline ws-btn--sm"
-										onClick={() => setViewProceedingDoc(p)}
-									>
-										View Document
-									</button>
+									<div className="admin-app-details__proceeding-actions">
+										<button
+											type="button"
+											className="ws-btn ws-btn--outline ws-btn--sm"
+											onClick={() => handleViewNotice(p)}
+										>
+											{p.is_signed ? 'View Notice' : 'View Draft'}
+										</button>
+										{!p.is_signed && canAddProceeding ? (
+											<button
+												type="button"
+												className="ws-btn ws-btn--primary ws-btn--sm"
+												disabled={signingId === p.id || !dscAgent?.connected}
+												title={
+													dscAgent?.connected
+														? 'Sign this notice with your DSC token'
+														: 'The DSC Agent is not running on this machine'
+												}
+												onClick={() => handleSignNotice(p)}
+											>
+												{signingId === p.id ? 'Signing…' : 'Sign with DSC'}
+											</button>
+										) : null}
+									</div>
 								</li>
 							))}
 						</ul>
@@ -2805,13 +2891,6 @@ const AdminApplicationDetails = () => {
 				onClose={() => setShowProceedingModal(false)}
 				onSubmit={handleProceedingSubmit}
 				isSubmitting={proceedingSubmitting}
-			/>
-
-			<NoticeDocumentViewer
-				open={!!viewProceedingDoc}
-				onClose={() => setViewProceedingDoc(null)}
-				proceeding={viewProceedingDoc}
-				application={application}
 			/>
 		</div>
 	)

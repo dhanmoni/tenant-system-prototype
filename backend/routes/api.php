@@ -92,6 +92,9 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
         Route::get('/tenant-forms/my', [TenantFormsStatusController::class, 'my']);
         Route::post('/tenant-forms/{type}/{id}/withdraw', [TenantFormsStatusController::class, 'withdraw']);
         Route::get('/tenant-forms/{type}/{id}/proceedings', [\App\Http\Controllers\CaseProceedingController::class, 'citizenIndex']);
+        // The signed notice or order, for the party it concerns. Drafts are not served here: an
+        // unsigned notice is not a notice. See CaseProceedingController::citizenDocument().
+        Route::get('/tenant-forms/{type}/{id}/proceedings/{proceeding}/document', [\App\Http\Controllers\CaseProceedingController::class, 'citizenDocument']);
         Route::post('/rent-revision-applications', [RentRevisionApplicationController::class, 'store']);
         Route::get('/rent-revision-applications/{application}', [RentRevisionApplicationController::class, 'show']);
         Route::post('/other-charges-revision-applications', [OtherChargesRevisionApplicationController::class, 'store']);
@@ -143,6 +146,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
         // Case Proceedings
         Route::get('/admin/applications/{type}/{id}/proceedings', [\App\Http\Controllers\CaseProceedingController::class, 'index']);
         Route::post('/admin/applications/{type}/{id}/proceedings', [\App\Http\Controllers\CaseProceedingController::class, 'store']);
+        // The notice PDF - signed where it exists, otherwise the frozen draft that the officer's
+        // local DSC agent is about to sign - and the endpoint that records the signed result.
+        Route::get('/admin/applications/{type}/{id}/proceedings/{proceeding}/document', [\App\Http\Controllers\CaseProceedingController::class, 'document']);
+        Route::post('/admin/applications/{type}/{id}/proceedings/{proceeding}/signature', [\App\Http\Controllers\CaseProceedingController::class, 'signature']);
     });
 
     // Admin user management

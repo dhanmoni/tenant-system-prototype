@@ -6,7 +6,6 @@ import { formatDateTime, formatDate } from '../../utils/formatters'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../constants/application'
 import { STATUS } from '../../constants/status'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../utils/adminStatusBadge'
-import NoticeDocumentViewer from '../../components/dashboard/NoticeDocumentViewer'
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
 import { useApplicationDetail } from '../../hooks/useApplicationDetail'
 import { useToast } from '../../context/ToastContext'
@@ -78,7 +77,28 @@ function ApplicationDetails() {
 		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? (application?.form_type || type) : null,
 		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? application?.id : null
 	)
-	const [viewProceedingDoc, setViewProceedingDoc] = useState(null)
+	/**
+	 * Open the signed notice.
+	 *
+	 * The document is fetched rather than rendered here: it is the PDF the issuing authority actually
+	 * signed. Re-rendering it in the browser would show the party something that is not the signed
+	 * instrument, and the two could drift. Only signed proceedings reach this list at all.
+	 */
+	const openNoticeDocument = async (proceeding) => {
+		try {
+			const response = await api.get(
+				`/api/tenant-forms/${type}/${application.id}/proceedings/${proceeding.id}/document`,
+				{ responseType: 'blob' },
+			)
+			const url = URL.createObjectURL(response.data)
+			window.open(url, '_blank', 'noopener')
+			// The tab holds its own reference once opened; releasing ours shortly after keeps a long
+			// session from accumulating blobs.
+			setTimeout(() => URL.revokeObjectURL(url), 60000)
+		} catch {
+			showToast('Could not open this notice. Please try again.', 'error')
+		}
+	}
 	const [confirmWithdraw, setConfirmWithdraw] = useState(false)
 	const [withdrawing, setWithdrawing] = useState(false)
 	const [confirmCancelUin, setConfirmCancelUin] = useState(false)
@@ -247,7 +267,7 @@ function ApplicationDetails() {
 									<button
 										type="button"
 										className="ws-btn ws-btn--outline ws-btn--sm"
-										onClick={() => setViewProceedingDoc(p)}
+										onClick={() => openNoticeDocument(p)}
 									>
 										View document
 									</button>
@@ -655,15 +675,6 @@ function ApplicationDetails() {
 					{renderProceedings()}
 				</>
 			)}
-
-			{viewProceedingDoc ? (
-				<NoticeDocumentViewer
-					open
-					onClose={() => setViewProceedingDoc(null)}
-					proceeding={viewProceedingDoc}
-					application={{ ...application, form_type: type }}
-				/>
-			) : null}
 
 			<WorkflowConfirmModal
 				open={confirmWithdraw}

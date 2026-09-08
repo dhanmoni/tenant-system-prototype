@@ -965,6 +965,38 @@
 	align-self: center;
 }
 
+/* A proceeding now carries two actions - view the notice, and sign it - so they stack on a narrow
+   card rather than pushing the meta text into a single cramped column. */
+.admin-app-details__proceeding-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	flex-shrink: 0;
+	align-self: center;
+}
+
+/* Signed / connected states in the proceedings card. */
+.ws-text-success {
+	color: var(--ws-success, #15803d);
+	font-weight: 600;
+}
+
+/* "Check again" for the DSC Agent: an action, but not important enough to be a button. */
+.ws-link-btn {
+	border: 0;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: var(--ws-primary, #2563eb);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.ws-link-btn:hover {
+	text-decoration: none;
+}
+
 @media (max-width: 640px) {
 	.admin-app-details__proceedings-head {
 		flex-direction: column;

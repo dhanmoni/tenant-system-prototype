@@ -35,17 +35,8 @@ class LogUserActivity
             return $response;
         }
 
-        UserActivityLog::create([
-            'user_id' => $user->id,
-            'session_id' => $request->session()->getId(),
-            'action' => $method . ' ' . $path,
-            'ip_address' => $request->ip(),
-            'ip_location' => null,
-            'user_agent' => substr((string) $request->userAgent(), 0, 500),
-            'meta' => [
-                'status' => $response->status(),
-            ],
-            'logged_at' => now(),
+        UserActivityLog::record($request, $method . ' ' . $path, [
+            'status' => $response->status(),
         ]);
 
         return $response;

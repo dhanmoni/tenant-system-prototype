@@ -520,6 +520,64 @@ off-registry requests are all turned away).
 
 ---
 
+## 10a. Hearing notices and digital signatures
+
+A notice or order exists as a **PDF the server renders and freezes**, and is served on the parties
+only once the issuing authority has affixed a Digital Signature Certificate to it.
+
+```mermaid
+sequenceDiagram
+    participant O as Officer's browser
+    participant S as Portal server
+    participant A as DSC Agent (127.0.0.1)
+    participant T as USB token
+
+    O->>S: POST .../proceedings  (record the proceeding)
+    S->>S: NoticeDocument::pdf() -> documents disk, document_path frozen
+    O->>S: GET .../proceedings/{id}/document
+    S-->>O: draft PDF (marked NOT YET SIGNED)
+    O->>A: POST /sign/pdf {pdfBase64, apiKey, requirePin}
+    A->>T: PKCS#11, agent prompts for the PIN itself
+    T-->>A: signature
+    A-->>O: {ok, signedPdfBase64}
+    O->>S: POST .../proceedings/{id}/signature
+    S->>S: verify /ByteRange, store, record signer + authority
+    Note over S: only now does citizenIndex return it
+```
+
+**Why the signing is client-side.** The token is a physical device in the officer's machine and the
+PIN is theirs. The agent is a small local HTTP service that owns the PKCS#11 driver; the browser
+talks to it on `127.0.0.1:18080` (or 18081/18082). Neither the PIN nor the private key ever reaches
+this server, and the server holds no key with which it could sign anything itself. All it does is
+hand out the bytes to be signed and record what comes back.
+
+| Piece | Where |
+|---|---|
+| PDF rendering, forum derivation | `App\Support\NoticeDocument`, `resources/views/notices/*.blade.php` |
+| Document + signature endpoints | `CaseProceedingController::document/citizenDocument/signature` |
+| Agent client | `frontend/src/utils/dscAgent.js` (module port of the vendor IIFE) |
+| Signing flow | `frontend/src/hooks/useNoticeSigning.js` |
+| Agent key | `VITE_DSC_API_KEY` — see `frontend/.env.example` |
+
+**Two facts, recorded separately.** `signature_authority` is the office the notice issues from —
+Rent Court, Rent Tribunal or Rent Authority, with the district — derived from the application type,
+because an order of the Rent Court is the Rent Court's whether the presiding officer or their
+assistant prepared it. `signed_by_user_id` plus `signature_metadata` is who actually operated the
+token and what certificate the agent reported. Both roles may sign; presenting either fact as the
+other would put a false statement in the record.
+
+**Gates.** Officers see the draft and can sign it; `citizenIndex` and `citizenDocument` return
+signed proceedings only, because an unsigned notice is a draft and says so on its face. Re-signing
+is refused (409) — a notice that must change is a fresh proceeding. `CaseProceedingController` also
+gained the district check its `index()`/`store()` previously carried only as a comment.
+
+**What is not done here.** The server does not verify the certificate chain; it checks structurally
+that a signature dictionary is present (`/ByteRange`), which catches the case that actually occurs —
+the unsigned draft being posted back after the token step failed. Real verification belongs in a
+reader, or in a later pass with a PDF signature library.
+
+---
+
 ## 11. Controller quick reference
 
 | Area | Controller | Keywords |

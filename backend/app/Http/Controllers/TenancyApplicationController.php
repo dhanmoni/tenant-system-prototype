@@ -292,18 +292,9 @@ class TenancyApplicationController extends Controller
      */
     private function auditUinLookup(Request $request, string $uid, string $outcome): void
     {
-        UserActivityLog::create([
-            'user_id' => $request->user()->id,
-            'session_id' => $request->hasSession() ? $request->session()->getId() : null,
-            'action' => 'GET ' . $request->path(),
-            'ip_address' => $request->ip(),
-            'ip_location' => null,
-            'user_agent' => substr((string) $request->userAgent(), 0, 500),
-            'meta' => [
-                'uid' => $uid,
-                'outcome' => $outcome,
-            ],
-            'logged_at' => now(),
+        UserActivityLog::record($request, 'GET ' . $request->path(), [
+            'uid' => $uid,
+            'outcome' => $outcome,
         ]);
     }
 
@@ -1816,19 +1807,10 @@ class TenancyApplicationController extends Controller
 
     private function auditTenancyDocument(Request $request, TenancyApplication $application, string $document, string $outcome): void
     {
-        UserActivityLog::create([
-            'user_id' => $request->user()->id,
-            'session_id' => $request->hasSession() ? $request->session()->getId() : null,
-            'action' => 'GET ' . $request->path(),
-            'ip_address' => $request->ip(),
-            'ip_location' => null,
-            'user_agent' => substr((string) $request->userAgent(), 0, 500),
-            'meta' => [
-                'application_no' => $application->application_no,
-                'document' => $document,
-                'outcome' => $outcome,
-            ],
-            'logged_at' => now(),
+        UserActivityLog::record($request, 'GET ' . $request->path(), [
+            'application_no' => $application->application_no,
+            'document' => $document,
+            'outcome' => $outcome,
         ]);
     }
 

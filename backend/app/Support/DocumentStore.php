@@ -3,10 +3,12 @@
 namespace App\Support;
 
 use App\Constants\ApplicationTypes;
+use App\Models\FilingEnclosure;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -81,10 +83,21 @@ class DocumentStore
         self::USER_SCOPE => [
             'passport_photo_path',
         ],
+        /*
+         * An enclosure is a row rather than a column on the application, so its scope points at
+         * filing_enclosures and its one field is that row's own `file_path`. The registry shape -
+         * scope, record id, column - did not have to change to hold it.
+         */
+        self::ENCLOSURE_SCOPE => [
+            'file_path',
+        ],
     ];
 
     /** The account holder's own photograph, which is not tied to any one application. */
     public const USER_SCOPE = 'user';
+
+    /** One document filed with a service form; see App\Models\FilingEnclosure. */
+    public const ENCLOSURE_SCOPE = 'enclosure';
 
     /** The one file every service form carries. */
     private const SERVICE_FORM_FIELDS = ['signature_image_path'];
@@ -107,11 +120,11 @@ class DocumentStore
 
     public static function modelFor(string $scope): ?string
     {
-        if ($scope === self::USER_SCOPE) {
-            return User::class;
-        }
-
-        return ApplicationTypes::modelFor($scope);
+        return match ($scope) {
+            self::USER_SCOPE => User::class,
+            self::ENCLOSURE_SCOPE => FilingEnclosure::class,
+            default => ApplicationTypes::modelFor($scope),
+        };
     }
 
     /**
@@ -132,6 +145,23 @@ class DocumentStore
     public static function store(UploadedFile $file, string $directory): string
     {
         return $file->store($directory, self::DISK);
+    }
+
+    /**
+     * Store bytes this application produced rather than a file somebody uploaded - a rendered
+     * hearing notice, a signed PDF handed back by an officer's local DSC agent.
+     *
+     * The name is random for the same reason Laravel's own store() randomises one: a predictable
+     * name on a shared disk is a way to guess at other people's documents, and nothing here needs
+     * the path to carry meaning. The record that points at it carries the meaning.
+     */
+    public static function putContents(string $contents, string $directory, string $extension = 'pdf'): string
+    {
+        $path = trim($directory, '/') . '/' . Str::random(40) . '.' . ltrim($extension, '.');
+
+        Storage::disk(self::DISK)->put($path, $contents);
+
+        return $path;
     }
 
     public static function delete(?string $path): void
