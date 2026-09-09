@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
-import ServiceFormSection from './forms/ServiceFormSection'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { APPLICATION_TYPES } from '../constants/application'
@@ -335,34 +334,27 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 		})
 
 	return (
-		<div className="service-form-panel">
-			{error ? <div className="service-form-alert service-form-alert--error" role="alert">{error}</div> : null}
+		<div className="dashboard-card service-form-panel">
+			{error ? <div className="error" role="alert">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<ServiceFormSection
-					number={1}
-					title="Tenancy reference"
-					description="Identify the tenancy and the Rent Court where this application is filed."
-				>
-					<TenancyUinLookup
-						value={tenancyUIN}
-						onChange={setTenancyUIN}
-						onLoaded={handleTenancyLoaded}
-						label="In the matter of Tenancy of Unique Identification Number"
-					/>
-					<label className="tenancy-field-full">
-						<span className="label-text required">In the Rent Court at</span>
-						<input type="text" value={rentCourtAt} onChange={(e) => setRentCourtAt(e.target.value)} required />
-					</label>
-				</ServiceFormSection>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+					label="In the matter of Tenancy of Unique Identification Number"
+				/>
 
-				<ServiceFormSection
-					number={2}
-					title="A. Name of the Applicant"
-					description="Add the residential address on which notices are to be served on the applicant."
-				>
-					<label className="tenancy-field-full">
+				<label>
+					<span className="label-text required">In the Rent Court at</span>
+					<input type="text" value={rentCourtAt} onChange={(e) => setRentCourtAt(e.target.value)} required />
+				</label>
+
+				<fieldset className="tenancy-fieldset">
+					<legend>A. Name of the Applicant</legend>
+					<label>
 						<span className="label-text required">Name of the Applicant</span>
+						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Applicant</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -371,18 +363,16 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 							value={applicantResidentialAddress}
 							onChange={(e) => setApplicantResidentialAddress(e.target.value)}
 							required
-							rows={2}
+							rows={3}
 						/>
 					</label>
-				</ServiceFormSection>
+				</fieldset>
 
-				<ServiceFormSection
-					number={3}
-					title="B. Name of the Respondent"
-					description="Add the residential address on which notices are to be served on the respondent."
-				>
-					<label className="tenancy-field-full">
+				<fieldset className="tenancy-fieldset">
+					<legend>B. Name of the Respondent</legend>
+					<label>
 						<span className="label-text required">Name of the Respondent</span>
+						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Respondent(s)</span>
 						<input type="text" value={respondentName} onChange={(e) => setRespondentName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -391,16 +381,13 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 							value={respondentResidentialAddress}
 							onChange={(e) => setRespondentResidentialAddress(e.target.value)}
 							required
-							rows={2}
+							rows={3}
 						/>
 					</label>
-				</ServiceFormSection>
+				</fieldset>
 
-				<ServiceFormSection
-					number={4}
-					title="Details of application"
-					description="Particulars, jurisdiction declaration, facts, grounds, and the relief you seek."
-				>
+				<fieldset className="tenancy-fieldset">
+					<legend>Details of application</legend>
 					<label className="tenancy-field-full">
 						<span className="label-text required">1. Particulars of application</span>
 						<textarea
@@ -446,28 +433,20 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 						<span className="label-text">8. List of enclosures</span>
 						<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
 					</label>
-				</ServiceFormSection>
+				</fieldset>
 
-				<ServiceFormSection
-					number={5}
-					title="Verification"
-					description="Read the sworn sentence, mark each paragraph, and confirm place of verification."
-					className="service-form-block--verification"
-				>
-					<VerificationClause
-						prefilled={hasProfileDefaults(profile)}
-						fieldId={VERIFICATION.FORM_III}
-						values={verification}
-						onChange={setVerificationField}
-						onParagraphChange={setParagraphAnswer}
-					/>
-				</ServiceFormSection>
+				<VerificationClause
+					prefilled={hasProfileDefaults(profile)}
+					fieldId={VERIFICATION.FORM_III}
+					values={verification}
+					onChange={setVerificationField}
+					onParagraphChange={setParagraphAnswer}
+				/>
 
-				<ServiceFormSection
-					number={6}
-					title="Signature of the Applicant"
-					description="Name against the signature as printed in the Gazette form."
-				>
+				<fieldset className="tenancy-fieldset">
+					{/* The Gazette prints "Signature of the Applicant" on all five forms, including the
+					  * two appeal forms. Reproduced as printed. */}
+					<legend>Signature of the Applicant</legend>
 					<label>
 						<span className="label-text required">Name against the signature</span>
 						<input
@@ -485,10 +464,10 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</ServiceFormSection>
+				</fieldset>
 
 				<div className="form-actions">
-					<button type="button" className="ws-btn ws-btn--secondary" onClick={onBack} disabled={submitting}>
+					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>
 						Back
 					</button>
 					<button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>

@@ -1,15 +1,9 @@
-/* Service application forms — citizen portal (inspired by UIN apply) */
+/* Service application forms — citizen portal */
 
 .service-form-page {
 	width: 100%;
-	max-width: 64rem;
-	margin-inline: auto;
-	margin-block: 0;
-}
-
-.service-form-main {
-	width: 100%;
-	min-width: 0;
+	max-width: none;
+	margin: 0;
 }
 
 .page.page-dashboard .ws-root .service-form-page a.ws-btn {
@@ -24,33 +18,78 @@
 }
 
 .page.page-dashboard .ws-root .service-form-page a.ws-btn--outline {
-	border: 1px solid var(--ws-border-strong, #d5deea);
+	border: 1px solid #cbd5e1;
 	background: #fff;
 	color: #334155;
 }
 
-.service-form-head {
-	margin: 0 0 1.25rem;
-}
-
-.service-form-head__row {
+.service-form-breadcrumb {
 	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 1rem 1.25rem;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem 0.5rem;
+	margin-bottom: 1rem;
+	font-size: 0.8125rem;
+	color: #64748b;
 }
 
-.service-form-head__copy {
-	min-width: 0;
+.service-form-breadcrumb a {
+	color: var(--ws-accent);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.service-form-breadcrumb a:hover {
+	text-decoration: underline;
+}
+
+.service-form-breadcrumb-sep {
+	color: #cbd5e1;
+}
+
+.service-form-header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem 1.25rem;
+	align-items: flex-start;
+	margin-bottom: 1.25rem;
+	padding-bottom: 1.25rem;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.service-form-back {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.45rem 0.85rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+	color: #475569;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.service-form-back:hover {
+	border-color: #cbd5e1;
+	color: #0f172a;
+}
+
+.service-form-heading {
 	flex: 1 1 auto;
+	min-width: 0;
+	width: 100%;
 }
 
 .service-form-kicker {
 	display: inline-flex;
 	align-items: center;
-	padding: 0.22rem 0.6rem;
-	margin-bottom: 0.55rem;
-	border-radius: 999px;
+	padding: 0.2rem 0.55rem;
+	margin-bottom: 0.5rem;
+	border-radius: 6px;
 	font-size: 0.6875rem;
 	font-weight: 800;
 	letter-spacing: 0.04em;
@@ -64,7 +103,7 @@
 
 .service-form-page--rent-court .service-form-kicker {
 	background: #dbeafe;
-	color: var(--ws-accent-hover, #1d4ed8);
+	color: var(--ws-accent-hover);
 }
 
 .service-form-page--rent-tribunal .service-form-kicker {
@@ -73,312 +112,38 @@
 }
 
 .service-form-title {
-	margin: 0 0 8px;
-	font-size: 1.2rem;
-	font-weight: 800;
+	margin: 0 0 0.35rem;
+	font-size: 1.375rem;
+	font-weight: 700;
 	line-height: 1.3;
-	color: var(--ws-text, #0f172a);
+	color: #0f172a;
 	border: none;
 	padding: 0;
 }
 
 .service-form-lead {
-	margin: 0 0 0.75rem;
-	font-size: 0.875rem;
+	margin: 0 0 0.65rem;
+	font-size: 0.9375rem;
 	line-height: 1.5;
-	color: var(--ws-muted, #64748b);
-	max-width: 44rem;
+	color: #64748b;
 }
 
 .service-form-meta {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.45rem;
+	gap: 0.5rem;
 }
 
 .service-form-meta span {
 	display: inline-flex;
 	align-items: center;
-	padding: 0.22rem 0.6rem;
+	padding: 0.25rem 0.6rem;
 	border-radius: 999px;
-	border: 1px solid var(--ws-border, #e8edf3);
-	background: #fff;
+	border: 1px solid #e2e8f0;
+	background: #f8fafc;
 	font-size: 0.75rem;
 	font-weight: 600;
 	color: #475569;
-}
-
-/* Legacy aliases kept for older markup */
-.service-form-header {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1rem 1.25rem;
-	align-items: flex-start;
-	margin-bottom: 1.25rem;
-	padding-bottom: 1.25rem;
-	border-bottom: 1px solid var(--ws-border, #e2e8f0);
-}
-
-.service-form-heading {
-	flex: 1 1 auto;
-	min-width: 0;
-	width: 100%;
-}
-
-.service-form-breadcrumb {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 0.35rem 0.5rem;
-	margin-bottom: 1rem;
-	font-size: 0.8125rem;
-	color: #64748b;
-}
-
-.service-form-alert {
-	margin-bottom: 1rem;
-	padding: 0.75rem 1rem;
-	border-radius: 8px;
-	font-size: 0.875rem;
-	line-height: 1.45;
-}
-
-.service-form-alert--error {
-	border: 1px solid #fecaca;
-	background: #fef2f2;
-	color: #991b1b;
-}
-
-.service-form-alert--success {
-	border: 1px solid #bbf7d0;
-	background: #f0fdf4;
-	color: #166534;
-}
-
-/* Outer panel: flush; the form card carries chrome (like UIN apply) */
-.dashboard-card.service-form-panel,
-.service-form-panel {
-	padding: 0;
-	border: none;
-	background: transparent;
-	box-shadow: none;
-	border-radius: 0;
-	width: 100%;
-	margin: 0;
-}
-
-.service-form-page .tenancy-form,
-.service-form-panel .tenancy-form,
-.service-form-card {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	width: 100%;
-	background: var(--ws-surface, #fff);
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: var(--ws-radius, 16px);
-	padding: 18px 20px;
-	box-shadow: var(--ws-shadow, 0 2px 8px rgba(15, 23, 42, 0.04), 0 12px 28px rgba(15, 23, 42, 0.05));
-	box-sizing: border-box;
-}
-
-/* Numbered section blocks — same language as UIN party blocks */
-.service-form-block {
-	margin: 0;
-	padding: 1rem 1.1rem 0.95rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 12px;
-	background: #fff;
-	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-}
-
-.service-form-block.is-autofilled {
-	border-color: #bbf7d0;
-	background: #f8fffb;
-}
-
-.service-form-block__head {
-	display: flex;
-	align-items: flex-start;
-	gap: 0.75rem;
-	margin: 0 0 0.9rem;
-	padding-bottom: 0.7rem;
-	border-bottom: 1px solid #eef2f7;
-}
-
-.service-form-block__num {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	width: 1.85rem;
-	height: 1.85rem;
-	border-radius: 999px;
-	background: var(--ws-accent-soft, #eff6ff);
-	color: var(--ws-accent, #2563eb);
-	font-size: 0.8125rem;
-	font-weight: 800;
-}
-
-.service-form-page--rent-authority .service-form-block__num {
-	background: #ede9fe;
-	color: #6d28d9;
-}
-
-.service-form-page--rent-tribunal .service-form-block__num {
-	background: #fef3c7;
-	color: #b45309;
-}
-
-.service-form-block__copy {
-	min-width: 0;
-	flex: 1 1 auto;
-}
-
-.service-form-block__title {
-	margin: 0 0 0.2rem;
-	font-size: 1rem;
-	font-weight: 800;
-	color: var(--ws-text, #0f172a);
-	line-height: 1.3;
-}
-
-.service-form-block__lead {
-	margin: 0;
-	font-size: 0.8125rem;
-	line-height: 1.45;
-	color: var(--ws-muted, #64748b);
-}
-
-.service-form-block__fields {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.85rem 1.15rem;
-	width: 100%;
-}
-
-.service-form-block__fields > .tenancy-field-full,
-.service-form-block__fields > .service-form-fields__full,
-.service-form-block__fields > .declaration,
-.service-form-block__fields > .ground-choice-group,
-.service-form-block__fields > .schedule-part,
-.service-form-block__fields > .clause,
-.service-form-block__fields > .tenancy-uin-lookup,
-.service-form-block__fields > .field-note,
-.service-form-block__fields > .matter-choice-grid,
-.service-form-block__fields > .matter-choice-detail,
-.service-form-block__fields > .service-form-followup {
-	grid-column: 1 / -1;
-}
-
-.service-form-block__fields > .tenancy-uin-lookup {
-	padding: 0;
-	border: none;
-	background: transparent;
-	box-shadow: none;
-}
-
-.service-form-block__fields > label,
-.service-form-page .tenancy-fieldset > label,
-.service-form-panel .tenancy-fieldset > label,
-.service-form-page .service-form-fields > label,
-.service-form-panel .service-form-fields > label,
-.service-form-page .tenancy-form > label,
-.service-form-panel .tenancy-form > label {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
-	margin: 0;
-	min-width: 0;
-}
-
-/* Keep legacy fieldset look aligned with blocks when still used */
-.service-form-page .tenancy-fieldset,
-.service-form-panel .tenancy-fieldset {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 1rem 1.25rem;
-	width: 100%;
-	margin: 0;
-	padding: 1.15rem 1.2rem 1.05rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 12px;
-	background: #fff;
-	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-}
-
-.service-form-page .tenancy-fieldset legend,
-.service-form-panel .tenancy-fieldset legend {
-	grid-column: 1 / -1;
-	margin: 0 0 0.15rem;
-	padding: 0 0 0.75rem;
-	border-bottom: 1px solid #eef2f7;
-	width: 100%;
-	font-size: 1rem;
-	font-weight: 800;
-	font-style: normal;
-	color: var(--ws-text, #0f172a);
-	letter-spacing: -0.01em;
-}
-
-.service-form-page .tenancy-field-full,
-.service-form-panel .tenancy-field-full,
-.service-form-page .service-form-fields__full,
-.service-form-panel .service-form-fields__full {
-	grid-column: 1 / -1;
-}
-
-.service-form-page .service-form-fields,
-.service-form-panel .service-form-fields {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 1rem 1.25rem;
-	width: 100%;
-}
-
-.service-form-page .label-text,
-.service-form-panel .label-text {
-	font-size: 0.875rem;
-	font-weight: 600;
-	color: #334155;
-	text-transform: none;
-	letter-spacing: normal;
-	line-height: 1.35;
-}
-
-.service-form-page .label-text.required::after,
-.service-form-panel .label-text.required::after {
-	content: ' *';
-	color: #dc2626;
-}
-
-/* Legacy section helper */
-.service-form-section {
-	padding: 1.15rem 1.2rem 1.05rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 12px;
-	background: #fff;
-	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-}
-
-.service-form-section__head {
-	margin-bottom: 1rem;
-	padding-bottom: 0.65rem;
-	border-bottom: 1px solid #eef2f7;
-}
-
-.service-form-section__title {
-	margin: 0 0 0.25rem;
-	font-size: 1rem;
-	font-weight: 800;
-	color: var(--ws-text, #0f172a);
-}
-
-.service-form-section__desc {
-	margin: 0;
-	font-size: 0.8125rem;
-	line-height: 1.45;
-	color: var(--ws-muted, #64748b);
 }
 
 .service-form-steps {
@@ -432,6 +197,143 @@
 	color: #166534;
 }
 
+.service-form-alert {
+	margin-bottom: 1rem;
+	padding: 0.75rem 1rem;
+	border-radius: 8px;
+	font-size: 0.875rem;
+	line-height: 1.45;
+}
+
+.service-form-alert--error {
+	border: 1px solid #fecaca;
+	background: #fef2f2;
+	color: #991b1b;
+}
+
+.service-form-alert--success {
+	border: 1px solid #bbf7d0;
+	background: #f0fdf4;
+	color: #166534;
+}
+
+.service-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.service-form-section {
+	padding: 1.15rem 1.25rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.service-form-section__head {
+	margin-bottom: 1rem;
+	padding-bottom: 0.65rem;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.service-form-section__title {
+	margin: 0 0 0.25rem;
+	font-size: 0.9375rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.service-form-section__desc {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+/* Form layout: stack sections; 2-col only inside field groups */
+.service-form-page .tenancy-form,
+.service-form-panel .tenancy-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1.15rem;
+	width: 100%;
+}
+
+.service-form-page .tenancy-fieldset,
+.service-form-panel .tenancy-fieldset {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.9rem 1.25rem;
+	width: 100%;
+	margin: 0;
+	padding: 1.1rem 1.2rem 1.15rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.service-form-page .tenancy-fieldset legend,
+.service-form-panel .tenancy-fieldset legend {
+	grid-column: 1 / -1;
+	margin: 0 0 0.15rem;
+	padding: 0;
+	font-size: 1rem;
+	font-weight: 800;
+	font-style: normal;
+	color: var(--gov-blue-dark);
+	letter-spacing: 0.01em;
+}
+
+.service-form-page .tenancy-field-full,
+.service-form-panel .tenancy-field-full,
+.service-form-page .service-form-fields__full,
+.service-form-panel .service-form-fields__full {
+	grid-column: 1 / -1;
+}
+
+.service-form-page .service-form-fields,
+.service-form-panel .service-form-fields {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.9rem 1.25rem;
+	width: 100%;
+}
+
+.service-form-page .tenancy-fieldset > label,
+.service-form-panel .tenancy-fieldset > label,
+.service-form-page .service-form-fields > label,
+.service-form-panel .service-form-fields > label,
+.service-form-page .tenancy-form > label,
+.service-form-panel .tenancy-form > label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin: 0;
+	min-width: 0;
+}
+
+.service-form-page .label-text,
+.service-form-panel .label-text {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: #334155;
+	text-transform: none;
+	letter-spacing: normal;
+	line-height: 1.35;
+}
+
+.service-form-page .label-text.required::after,
+.service-form-panel .label-text.required::after {
+	content: ' *';
+	color: #dc2626;
+}
+
+/*
+ * Parenthetical text printed under a label in the Gazette forms. It is guidance the filer needs
+ * while typing, so it stays visible instead of being a placeholder that disappears on focus.
+ */
 /*
  * Form II grounds. Section 21(2) is a closed list of eight clauses, so the grounds are chosen from
  * the statute rather than typed. Each row shows the clause citation and the statutory text.
@@ -550,200 +452,16 @@
 	margin-top: 0.9rem;
 }
 
-/* Form IV — matter picker (compact 2×2, detail on select) */
-.service-form-page .matter-choice-grid,
-.service-form-panel .matter-choice-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.65rem;
-}
-
-.service-form-page .matter-choice,
-.service-form-panel .matter-choice {
-	display: flex;
-	flex-direction: column;
-	gap: 0.25rem;
-	margin: 0;
-	padding: 0.75rem 0.85rem 0.8rem 2.1rem;
-	border: 1px solid var(--ws-border-strong, #d5deea);
-	border-radius: 10px;
-	background: #fff;
-	cursor: pointer;
-	position: relative;
-	transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-}
-
-.service-form-page .matter-choice input,
-.service-form-panel .matter-choice input {
-	position: absolute;
-	left: 0.75rem;
-	top: 0.9rem;
-	width: 1rem;
-	height: 1rem;
-	margin: 0;
-	accent-color: var(--ws-accent, #2563eb);
-}
-
-.service-form-page .matter-choice:hover,
-.service-form-panel .matter-choice:hover {
-	border-color: #93c5fd;
-}
-
-.service-form-page .matter-choice:focus-within,
-.service-form-panel .matter-choice:focus-within {
-	border-color: var(--ws-accent, #2563eb);
-	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
-}
-
-.service-form-page .matter-choice.is-selected,
-.service-form-panel .matter-choice.is-selected {
-	border-color: var(--ws-accent, #2563eb);
-	background: var(--ws-accent-soft, #eff6ff);
-}
-
-.service-form-page .matter-choice__cite,
-.service-form-panel .matter-choice__cite {
-	font-size: 0.75rem;
-	font-weight: 800;
-	letter-spacing: 0.02em;
-	color: var(--ws-accent, #2563eb);
-}
-
-.service-form-page .matter-choice__label,
-.service-form-panel .matter-choice__label {
-	font-size: 0.875rem;
-	font-weight: 600;
-	line-height: 1.35;
-	color: var(--ws-text, #0f172a);
-}
-
-.service-form-page .matter-choice-detail,
-.service-form-panel .matter-choice-detail {
-	margin: 0;
-	padding: 0.75rem 0.9rem;
-	border: 1px solid color-mix(in srgb, var(--ws-accent, #2563eb) 18%, var(--ws-border, #e8edf3));
-	border-radius: 10px;
-	background: #f8fafc;
-}
-
-.service-form-page .matter-choice-detail__title,
-.service-form-panel .matter-choice-detail__title {
-	margin: 0 0 0.3rem;
-	font-size: 0.8125rem;
-	font-weight: 700;
-	color: var(--ws-text, #0f172a);
-}
-
-.service-form-page .matter-choice-detail__text,
-.service-form-panel .matter-choice-detail__text {
-	margin: 0;
-	font-size: 0.8125rem;
-	line-height: 1.5;
-	color: #475569;
-}
-
-.service-form-page .service-form-followup,
-.service-form-panel .service-form-followup {
-	margin: 0;
-	padding: 0.85rem 0.95rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 10px;
-	background: #f8fafc;
-}
-
-.service-form-page .matter-check-grid,
-.service-form-panel .matter-check-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.45rem 0.65rem;
-}
-
-.service-form-page .matter-check,
-.service-form-panel .matter-check {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 0.5rem;
-	align-items: start;
-	margin: 0;
-	padding: 0.45rem 0.55rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 8px;
-	background: #fff;
-	cursor: pointer;
-	font-size: 0.8125rem;
-	line-height: 1.4;
-	color: #334155;
-}
-
-.service-form-page .matter-check:has(input:checked),
-.service-form-panel .matter-check:has(input:checked) {
-	border-color: #93c5fd;
-	background: #f5f8ff;
-}
-
-.service-form-page .matter-check-grid--wide,
-.service-form-panel .matter-check-grid--wide {
-	grid-template-columns: 1fr;
-}
-
-.service-form-page .matter-check--detail,
-.service-form-panel .matter-check--detail {
-	align-items: start;
-	padding: 0.55rem 0.7rem;
-}
-
-.service-form-page .matter-check__cite,
-.service-form-panel .matter-check__cite {
-	display: block;
-	margin-bottom: 0.15rem;
-	font-size: 0.75rem;
-	font-weight: 800;
-	color: var(--ws-accent, #2563eb);
-}
-
-.service-form-page .matter-check__text,
-.service-form-panel .matter-check__text {
-	display: block;
-	font-size: 0.8125rem;
-	line-height: 1.45;
-	color: #334155;
-}
-
-.service-form-page .matter-check__note,
-.service-form-panel .matter-check__note {
-	display: block;
-	margin-top: 0.35rem;
-	padding-left: 0.55rem;
-	border-left: 2px solid #e2e8f0;
-	font-size: 0.75rem;
-	line-height: 1.4;
-	color: #64748b;
-}
-
-.service-form-page .schedule-part,
-.service-form-panel .schedule-part {
-	margin-top: 0.75rem;
-}
-
-.service-form-page .schedule-part:first-of-type,
-.service-form-panel .schedule-part:first-of-type {
-	margin-top: 0.55rem;
-}
-
 /*
- * A sworn declaration. Soft panel like the UIN apply declaration — readable assertion,
- * not a heavy legal banner.
+ * A sworn declaration. Given more visual weight than an ordinary field because the filer is making
+ * an assertion, not answering a question, and because under Act s. 36(2) these proceedings are
+ * deemed judicial proceedings for the false-evidence provisions of the Penal Code.
  */
 .service-form-page .declaration,
 .service-form-panel .declaration {
 	display: flex;
 	flex-direction: column;
 	gap: 0.45rem;
-}
-
-.service-form-page .declaration__label,
-.service-form-panel .declaration__label {
-	margin: 0;
 }
 
 .service-form-page .declaration__box,
@@ -753,65 +471,46 @@
 	gap: 0.7rem;
 	align-items: start;
 	margin: 0;
-	padding: 0.85rem 0.95rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 10px;
-	background: #f8fafc;
+	padding: 0.9rem 1rem;
+	border: 1px solid #cbd5e1;
+	border-left: 3px solid #1d4ed8;
+	border-radius: 0 8px 8px 0;
+	background: #fff;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-}
-
-.service-form-page .declaration__box:hover,
-.service-form-panel .declaration__box:hover {
-	border-color: #93c5fd;
 }
 
 .service-form-page .declaration__box:focus-within,
 .service-form-panel .declaration__box:focus-within {
-	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
-	border-color: var(--ws-accent, #2563eb);
+	box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
 }
 
-.service-form-page .declaration__box.is-checked,
 .service-form-page .declaration__box:has(input:checked),
-.service-form-panel .declaration__box.is-checked,
 .service-form-panel .declaration__box:has(input:checked) {
-	background: var(--ws-accent-soft, #eff6ff);
-	border-color: #93c5fd;
+	background: #f5f8ff;
 }
 
 .service-form-page .declaration__box input,
 .service-form-panel .declaration__box input {
 	width: 1.15rem;
 	height: 1.15rem;
-	margin: 0.15rem 0 0;
+	margin: 0.1rem 0 0;
 	flex: none;
-	accent-color: var(--ws-accent, #2563eb);
-}
-
-.service-form-page .declaration__body,
-.service-form-panel .declaration__body {
-	display: flex;
-	flex-direction: column;
-	gap: 0.3rem;
-	min-width: 0;
+	accent-color: #1d4ed8;
 }
 
 .service-form-page .declaration__text,
 .service-form-panel .declaration__text {
-	font-size: 0.875rem;
-	line-height: 1.5;
+	font-size: 0.9375rem;
+	line-height: 1.55;
 	color: #1e293b;
-	font-weight: 500;
 }
 
 .service-form-page .declaration__note,
 .service-form-panel .declaration__note {
 	margin: 0;
-	font-size: 0.75rem;
-	line-height: 1.4;
-	color: #64748b;
-	font-weight: 500;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #52607a;
 }
 
 /*
@@ -944,18 +643,12 @@
 .service-form-panel .form-actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 10px;
+	gap: 0.65rem;
 	justify-content: flex-end;
 	align-items: center;
-	margin-top: 0.5rem;
-	padding-top: 16px;
-	border-top: 1px solid var(--ws-border, #e8edf3);
-}
-
-.page.page-dashboard .ws-root .service-form-page .form-actions .ws-btn--primary,
-.page.page-dashboard .ws-root .service-form-panel .form-actions .ws-btn--primary {
-	min-width: 10rem;
-	font-weight: 700;
+	margin-top: 0.25rem;
+	padding-top: 0.85rem;
+	border-top: 1px solid #e2e8f0;
 }
 
 .service-form-file-hint {
@@ -1011,24 +704,15 @@
 }
 
 .tenancy-uin-lookup {
-	padding: 1.15rem 1.2rem 1.1rem;
-	border: 1px solid color-mix(in srgb, var(--ws-accent, #2563eb) 22%, var(--ws-border, #e8edf3));
-	border-radius: 12px;
-	background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+	padding: 1.15rem 1.25rem;
+	border: 1px solid #dbeafe;
+	border-radius: 10px;
+	background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .tenancy-uin-lookup .label-text {
 	color: #1e3a5f;
-}
-
-.tenancy-uin-lookup__hint {
-	display: block;
-	margin: 0.55rem 0 0;
-	font-size: 0.75rem;
-	line-height: 1.4;
-	color: var(--ws-muted, #64748b);
-	font-weight: 500;
 }
 
 .tenancy-uin-lookup__row {
@@ -1071,6 +755,13 @@
 .tenancy-uin-lookup__btn:disabled {
 	opacity: 0.65;
 	cursor: not-allowed;
+}
+
+.tenancy-uin-lookup__hint {
+	margin: 0.5rem 0 0;
+	font-size: 0.8125rem;
+	color: #64748b;
+	line-height: 1.45;
 }
 
 .tenancy-uin-lookup__status {
@@ -1131,17 +822,12 @@
 
 @media (max-width: 1279px) {
 	.service-form-page {
-		max-width: min(64rem, 100%);
-		margin-inline: auto;
+		max-width: none;
 		padding-inline: 0;
 	}
 
 	.service-form-title {
 		font-size: 1.2rem;
-	}
-
-	.service-form-head {
-		margin-bottom: 1rem;
 	}
 
 	.service-form-header {
@@ -1157,31 +843,24 @@
 	}
 
 	.service-form-lead {
-		margin-bottom: 0.55rem;
+		margin-bottom: 0.45rem;
 	}
 
 	.service-form-panel {
-		padding: 0;
-		border-radius: 0;
+		padding: 0.85rem 0.75rem 1rem;
+		border-radius: 10px;
 	}
 
 	.dashboard-card.service-form-panel {
-		padding: 0;
+		padding: 0.85rem 0.75rem 1rem;
 	}
 
-	.service-form-page .tenancy-form,
-	.service-form-panel .tenancy-form,
-	.service-form-card {
-		padding: 1rem 0.9rem 1.15rem;
-	}
-
-	.service-form-block,
 	.service-form-section {
-		padding: 1rem 0.95rem 0.95rem;
+		padding: 0.85rem 0.75rem;
 	}
 
 	.tenancy-uin-lookup {
-		padding: 1rem 0.95rem 0.95rem;
+		padding: 0.85rem 0.75rem;
 	}
 
 	.service-form-actions,
@@ -1190,13 +869,6 @@
 		flex-direction: column-reverse;
 		align-items: stretch;
 		gap: 0.65rem;
-		position: sticky;
-		bottom: 0;
-		z-index: 4;
-		margin-top: 1rem;
-		padding: 0.85rem 0 0.15rem;
-		background: linear-gradient(to top, var(--ws-surface, #fff) 70%, transparent);
-		border-top: none;
 	}
 
 	.service-form-actions button,
@@ -1209,30 +881,16 @@
 }
 
 @media (max-width: 720px) {
-	.service-form-block__fields,
 	.service-form-page .tenancy-fieldset,
 	.service-form-panel .tenancy-fieldset,
 	.service-form-page .service-form-fields,
-	.service-form-panel .service-form-fields,
-	.service-form-page .matter-choice-grid,
-	.service-form-panel .matter-choice-grid,
-	.service-form-page .matter-check-grid,
-	.service-form-panel .matter-check-grid {
+	.service-form-panel .service-form-fields {
 		grid-template-columns: 1fr;
 	}
 
 	.service-form-page .tenancy-fieldset,
 	.service-form-panel .tenancy-fieldset {
 		padding: 0.95rem 0.85rem 1rem;
-	}
-
-	.tenancy-uin-lookup__row {
-		flex-direction: column;
-	}
-
-	.tenancy-uin-lookup__row button,
-	.tenancy-uin-lookup__btn {
-		width: 100%;
 	}
 }
 
@@ -1245,10 +903,6 @@
 		font-size: 1.1rem;
 	}
 
-	.service-form-head {
-		margin-bottom: 0.85rem;
-	}
-
 	.service-form-header {
 		margin-bottom: 0.6rem;
 		padding-bottom: 0.6rem;
@@ -1256,7 +910,7 @@
 
 	.service-form-panel,
 	.dashboard-card.service-form-panel {
-		padding: 0;
+		padding: 0.75rem 0.7rem 0.9rem;
 	}
 
 	.service-form-panel > h1 {
@@ -1265,34 +919,35 @@
 }
 
 /*
- * The VERIFICATION / application clause of Forms I-B and II to VI.
+ * The VERIFICATION clause of Forms II to VI.
  *
  * The Gazette prints one sworn sentence with blanks, so it is set as running prose with the inputs
- * sitting in the line rather than as a grid of labelled boxes. Chrome matches the rest of the
- * service form blocks — even border, no accent side-strip.
+ * sitting in the line rather than as a grid of labelled boxes. The filer reads the sentence they
+ * are swearing. Line height is generous because inline controls are taller than the text they sit
+ * among, and the sentence has to stay readable when it wraps.
  */
 .service-form-page .clause,
 .service-form-panel .clause {
 	display: flex;
 	flex-direction: column;
-	gap: 0.9rem;
+	gap: 1rem;
 	max-width: 100%;
-	margin: 0;
-	padding: 0.9rem 1rem 1rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 10px;
-	background: #f8fafc;
-	box-shadow: none;
+	/* Set apart from the field above it: this is a sworn statement, not the next question. */
+	margin: 2rem 0 1.4rem;
+	padding: 1.2rem 1.3rem 1.3rem;
+	border: 1px solid #cbd5e1;
+	border-left: 3px solid #1d4ed8;
+	border-radius: 0 8px 8px 0;
+	background: #fff;
 }
 
 .service-form-page .clause__heading,
 .service-form-panel .clause__heading {
 	margin: 0;
-	font-size: 0.75rem;
-	font-weight: 800;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-	color: #475569;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	color: #1d4ed8;
 }
 
 /*
@@ -1302,13 +957,19 @@
 .service-form-page .clause__sentence,
 .service-form-panel .clause__sentence {
 	margin: 0;
-	padding: 0.75rem 0.85rem;
-	border: 1px solid var(--ws-border, #e8edf3);
-	border-radius: 8px;
-	background: #fff;
+	/*
+	 * Full width of the panel. A measure cap would be right for a paragraph of body copy, but this
+	 * is a form: capping it wastes the right-hand side and forces blanks onto extra lines, which is
+	 * what makes text end up sitting directly under an input box.
+	 */
 	font-size: 0.9375rem;
-	line-height: 2.45;
+	/*
+	 * Inline controls are taller than the text they sit among. This is the gap that stops a wrapped
+	 * line of the sentence from crowding the underside of a blank on the line above.
+	 */
+	line-height: 2.6;
 	color: #1e293b;
+	/* A long unbroken address must wrap rather than widen the panel. */
 	overflow-wrap: anywhere;
 }
 
@@ -1340,28 +1001,45 @@
 	display: inline;
 	width: auto;
 	max-width: 100%;
+	/*
+	 * No horizontal margin: the template carries its own spaces between the placeholders, and a
+	 * margin on top of them detaches the punctuation that follows a blank - "Guwahati ," instead
+	 * of "Guwahati,".
+	 */
 	margin: 0;
-	padding: 0.1rem 0.35rem;
-	border: 1px solid var(--ws-border-strong, #d5deea);
-	border-radius: 6px;
-	background: #fff;
+	/*
+	 * Tight horizontally so punctuation in the template hugs the blank it follows - otherwise the
+	 * address blank renders as "Guwahati , do hereby" with the comma adrift.
+	 */
+	padding: 0.05rem 0.2rem;
+	border: 0;
+	border-bottom: 1px solid #64748b;
+	border-radius: 0;
+	background: #f1f5f9;
 	font: inherit;
-	line-height: 1.35;
+	line-height: inherit;
 	color: #0f172a;
 	vertical-align: baseline;
+
+	/*
+	 * Grows with what is typed, so a blank takes the width of the answer rather than a width
+	 * guessed here. Chromium-based browsers only for now; everywhere else the min-widths below
+	 * hold the blank open and it simply scrolls internally once it is full.
+	 */
 	field-sizing: content;
 }
 
 .service-form-page .clause .clause__blank:focus,
 .service-form-panel .clause .clause__blank:focus {
-	outline: none;
-	border-color: var(--ws-accent, #2563eb);
+	outline: 2px solid var(--ws-accent, #1d4ed8);
+	outline-offset: 2px;
+	border-bottom-color: transparent;
 	background: #fff;
-	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+	box-shadow: none;
 }
 
 /*
- * Minimum widths, so an empty form still reads as a sentence with gaps rather than as
+ * Minimum widths, so an empty form still reads as a sentence with ruled gaps in it rather than as
  * a line of hyphens. These are floors, not fixed sizes.
  */
 .service-form-page .clause .clause__blank--name,
@@ -1381,23 +1059,26 @@
 
 .service-form-page .clause .clause__blank--relation,
 .service-form-panel .clause .clause__blank--relation {
-	min-width: 4.5rem;
-	padding-right: 0.35rem;
+	min-width: 0;
+	padding-right: 0.1rem;
+	background: transparent;
+	border-bottom-style: dashed;
 }
 
+/* The two paragraph blanks: filled from the table below, so shown rather than typed. */
 /*
- * The two derived blanks. Filled from the table below rather than typed.
+ * The two derived blanks. Filled from the table below rather than typed, so they are styled as ink
+ * on the ruled line - no control affordance, because there is nothing here to click.
  */
 .service-form-page .clause__filled,
 .service-form-panel .clause__filled {
 	display: inline;
 	margin: 0;
-	padding: 0.1rem 0.4rem;
-	border: 1px solid #bfdbfe;
-	border-radius: 6px;
-	background: var(--ws-accent-soft, #eff6ff);
+	padding: 0.05rem 0.35rem;
+	border-bottom: 1px solid #64748b;
+	background: #eef2ff;
 	font-weight: 600;
-	color: #1e3a8a;
+	color: #1e293b;
 	white-space: nowrap;
 }
 
@@ -1547,13 +1228,14 @@
 }
 
 /*
- * Says that blanks were filled in for the filer. Soft note — no accent side-strip.
+ * Says that blanks were filled in for the filer. Given a little more weight than the note below it,
+ * because a filer who does not notice a value was prefilled has not checked what they are swearing.
  */
 .service-form-page .clause__note--prefilled,
 .service-form-panel .clause__note--prefilled {
 	padding: 0.55rem 0.7rem;
-	border: 1px solid #fde68a;
-	border-radius: 8px;
+	border-left: 3px solid #f59e0b;
+	border-radius: 0 6px 6px 0;
 	background: #fffbeb;
 	color: #713f12 !important;
 }
@@ -1564,41 +1246,6 @@
 	font-size: 0.8125rem;
 	line-height: 1.45;
 	color: #52607a;
-}
-
-/* Inside a numbered section block: no nested outer clause card */
-.service-form-page .service-form-block__fields > .clause,
-.service-form-panel .service-form-block__fields > .clause {
-	margin: 0;
-	padding: 0;
-	border: none;
-	border-radius: 0;
-	background: transparent;
-	box-shadow: none;
-	gap: 0.85rem;
-}
-
-.service-form-page .service-form-block__fields > .clause .clause__heading,
-.service-form-panel .service-form-block__fields > .clause .clause__heading {
-	display: none;
-}
-
-.service-form-page .service-form-block--verification .verification__paras,
-.service-form-panel .service-form-block--verification .verification__paras {
-	padding: 0.75rem 0.85rem;
-	border-radius: 10px;
-	border: 1px solid var(--ws-border, #e8edf3);
-	background: #fff;
-}
-
-.service-form-page .service-form-block--verification .clause__note,
-.service-form-panel .service-form-block--verification .clause__note,
-.service-form-page .service-form-block__fields > .clause .clause__note,
-.service-form-panel .service-form-block__fields > .clause .clause__note {
-	padding: 0.55rem 0.7rem;
-	border-radius: 8px;
-	background: #f8fafc;
-	border: 1px solid var(--ws-border, #e8edf3);
 }
 
 /*

@@ -432,6 +432,7 @@ body.dark-mode .service-form-page .declaration__box,
 body.dark-mode .service-form-panel .declaration__box {
 	background: #151c26 !important;
 	border-color: #3a4656 !important;
+	border-left-color: #60a5fa !important;
 }
 
 body.dark-mode .service-form-page .declaration__box:has(input:checked),
@@ -862,48 +863,46 @@ body.dark-mode .service-form-page .clause,
 body.dark-mode .service-form-panel .clause {
 	background: #151c26 !important;
 	border-color: #3a4656 !important;
+	border-left-color: #60a5fa !important;
 }
 
 body.dark-mode .service-form-page .clause__heading,
 body.dark-mode .service-form-panel .clause__heading {
-	color: #94a3b8 !important;
+	color: #93c5fd !important;
 }
 
 body.dark-mode .service-form-page .clause__sentence,
 body.dark-mode .service-form-panel .clause__sentence {
 	color: var(--ws-text, #e8eef6) !important;
-	background: #121820 !important;
-	border-color: #3a4656 !important;
 }
 
 body.dark-mode .service-form-page .clause .clause__blank,
 body.dark-mode .service-form-panel .clause .clause__blank {
 	background: #1b2430 !important;
-	border: 1px solid #3a4656 !important;
-	border-radius: 6px !important;
-	color: var(--ws-text, #e8eef6) !important;
+	border: 0 !important;
+	border-bottom: 1px solid #7c8ba1 !important;
+	border-radius: 0 !important;
+	color: #e8eef6 !important;
 }
 
 body.dark-mode .service-form-page .clause .clause__blank--relation,
 body.dark-mode .service-form-panel .clause .clause__blank--relation {
-	background: #1b2430 !important;
-	border: 1px solid #3a4656 !important;
+	background: transparent !important;
+	border-bottom-style: dashed !important;
 }
 
 body.dark-mode .service-form-page .clause .clause__blank:focus,
 body.dark-mode .service-form-panel .clause .clause__blank:focus {
-	outline: none !important;
-	border-color: #60a5fa !important;
-	box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25) !important;
+	outline: 2px solid #60a5fa !important;
+	outline-offset: 2px;
 	background: #202b3a !important;
 }
 
-/* Derived, not typed */
+/* Derived, not typed: reads as ink on the rule rather than as another control. */
 body.dark-mode .service-form-page .clause__filled,
 body.dark-mode .service-form-panel .clause__filled {
 	background: #1e2a3d !important;
-	border: 1px solid #3a4656 !important;
-	border-radius: 6px !important;
+	border-bottom-color: #7c8ba1 !important;
 	color: #e8eef6 !important;
 }
 
@@ -959,6 +958,6 @@ body.dark-mode .service-form-panel .verification__foot {
 body.dark-mode .service-form-page .clause__note--prefilled,
 body.dark-mode .service-form-panel .clause__note--prefilled {
 	background: #2a2110 !important;
-	border-color: #92400e !important;
+	border-left-color: #f59e0b !important;
 	color: #fcd34d !important;
 }

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
-import ServiceFormSection from './forms/ServiceFormSection'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { profileDefaults } from '../utils/profileAutofill'
@@ -185,81 +184,70 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 		})
 
 	return (
-		<div className="service-form-panel">
-			{error ? <div className="service-form-alert service-form-alert--error" role="alert">{error}</div> : null}
+		<div className="dashboard-card service-form-panel">
+			{error ? <div className="error" role="alert">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<ServiceFormSection
-					number={1}
-					title="Tenancy reference"
-					description="Enter the Tenancy UIN to auto-fill matching landlord, tenant, and premises details."
-				>
-					<TenancyUinLookup
-						value={tenancyUIN}
-						onChange={setTenancyUIN}
-						onLoaded={handleTenancyLoaded}
-						label="Unique Identification Number issued by the Rent Authority"
-					/>
-					<label className="tenancy-field-full">
-						<span className="label-text">Document No. of tenancy agreement registered before the Sub-Registrar (if any)</span>
-						<input
-							type="text"
-							value={tenancyAgreementDocumentNo}
-							onChange={(e) => setTenancyAgreementDocumentNo(e.target.value)}
-						/>
-					</label>
-				</ServiceFormSection>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+					label="1. Unique Identification Number issued by the Rent Authority"
+				/>
 
-				<ServiceFormSection
-					number={2}
-					title="Parties"
-					description="Landlord, tenant, and property manager details for this application."
-				>
+				<label>
+					<span className="label-text">2. Document No. of tenancy agreement registered before the Sub-Registrar (if any)</span>
+					<input
+						type="text"
+						value={tenancyAgreementDocumentNo}
+						onChange={(e) => setTenancyAgreementDocumentNo(e.target.value)}
+					/>
+				</label>
+
+				<fieldset className="tenancy-fieldset">
+					<legend>Parties</legend>
+
 					<label>
-						<span className="label-text required">Name of the Landlord</span>
+						<span className="label-text required">3. Name of the Landlord</span>
 						<input type="text" value={landlordName} onChange={(e) => setLandlordName(e.target.value)} required />
 					</label>
 					<label>
-						<span className="label-text required">Name(s) of the Tenant</span>
+						<span className="label-text required">4. Name(s) of the Tenant</span>
 						<input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} required />
 					</label>
 
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Address of the Landlord</span>
 						<textarea value={landlordAddress} onChange={(e) => setLandlordAddress(e.target.value)} required rows={3} />
 					</label>
-					<label>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Address of the Tenant</span>
 						<textarea value={tenantAddress} onChange={(e) => setTenantAddress(e.target.value)} required rows={3} />
 					</label>
 
 					<label>
-						<span className="label-text">Name of the Property Manager (if any)</span>
+						<span className="label-text">5. Name of the Property Manager (if any)</span>
 						<input type="text" value={managerName} onChange={(e) => setManagerName(e.target.value)} />
 					</label>
 					<label>
 						<span className="label-text">Address of the Property Manager (if any)</span>
 						<textarea value={managerAddress} onChange={(e) => setManagerAddress(e.target.value)} rows={2} />
 					</label>
-				</ServiceFormSection>
+				</fieldset>
 
-				<ServiceFormSection
-					number={3}
-					title="Other charges revision"
-					description="Describe the premises and the existing and proposed other charges."
-				>
-					<label className="tenancy-field-full">
-						<span className="label-text required">Description of rented premises</span>
-						<textarea
-							value={rentedPremisesDescription}
-							onChange={(e) => setRentedPremisesDescription(e.target.value)}
-							required
-							rows={3}
-						/>
-					</label>
+				<label>
+					<span className="label-text required">6. Description of rented premises</span>
+					<textarea
+						value={rentedPremisesDescription}
+						onChange={(e) => setRentedPremisesDescription(e.target.value)}
+						required
+						rows={3}
+					/>
+				</label>
 
+				<div className="service-form-fields">
 					<label>
-						<span className="label-text required">Existing details of other charges</span>
+						<span className="label-text required">7. Existing details of other charges</span>
 						<span className="field-note">such as- charges for Electricity or Power-backup, Water, Maintenance, Security Services, Extra services or equipment etc.</span>
 						<textarea
 							value={existingOtherChargesDetails}
@@ -269,7 +257,7 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 						/>
 					</label>
 					<label>
-						<span className="label-text required">Proposed other charges</span>
+						<span className="label-text required">8. Proposed other charges</span>
 						<textarea
 							value={proposedOtherChargesDetails}
 							onChange={(e) => setProposedOtherChargesDetails(e.target.value)}
@@ -277,23 +265,21 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 							rows={3}
 						/>
 					</label>
+				</div>
 
-					<label className="tenancy-field-full">
-						<span className="label-text required">Reason for fixation or revision of other charges</span>
-						<textarea
-							value={reasonForOtherChargesRevision}
-							onChange={(e) => setReasonForOtherChargesRevision(e.target.value)}
-							required
-							rows={3}
-						/>
-					</label>
-				</ServiceFormSection>
+				<label>
+					<span className="label-text required">9. Reason for fixation or revision of other charges</span>
+					<textarea
+						value={reasonForOtherChargesRevision}
+						onChange={(e) => setReasonForOtherChargesRevision(e.target.value)}
+						required
+						rows={3}
+					/>
+				</label>
 
-				<ServiceFormSection
-					number={4}
-					title="Signature"
-					description="Name and signature of the landlord or tenant filing this form."
-				>
+				<fieldset className="tenancy-fieldset">
+					<legend>Name and Signature of landlord or tenant</legend>
+
 					<label>
 						<span className="label-text required">Signed by</span>
 						<select
@@ -316,10 +302,10 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</ServiceFormSection>
+				</fieldset>
 
 				<div className="form-actions">
-					<button type="button" className="ws-btn ws-btn--secondary" onClick={onBack} disabled={submitting}>
+					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>
 						Back
 					</button>
 					<button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>
