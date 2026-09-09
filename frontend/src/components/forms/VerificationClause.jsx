@@ -8,6 +8,7 @@ import {
 	verificationParagraphs,
 } from '../../constants/declarations'
 import ClauseSentence from './ClauseSentence'
+import InlineParagraphSelector from './InlineParagraphSelector'
 
 /**
  * The VERIFICATION clause of Forms II to VI.
@@ -25,19 +26,6 @@ import ClauseSentence from './ClauseSentence'
  * reader reading the inputs alone would not.
  */
 
-/** Column headings, reused as the per-cell label once the table collapses on narrow screens. */
-const ANSWER_LABEL = {
-	[PARA_ANSWER.PERSONAL_KNOWLEDGE]: 'True to my personal knowledge',
-	[PARA_ANSWER.LEGAL_ADVICE]: 'Believed true on legal advice',
-	[PARA_ANSWER.NOT_VERIFIED]: 'Not verified',
-}
-
-const ANSWER_ORDER = [
-	PARA_ANSWER.PERSONAL_KNOWLEDGE,
-	PARA_ANSWER.LEGAL_ADVICE,
-	PARA_ANSWER.NOT_VERIFIED,
-]
-
 function VerificationClause({ fieldId, values, onChange, onParagraphChange, prefilled = false }) {
 	const id = useId()
 	const paragraphs = verificationParagraphs(fieldId)
@@ -45,6 +33,21 @@ function VerificationClause({ fieldId, values, onChange, onParagraphChange, pref
 
 	const personal = paragraphsWithAnswer(fieldId, answers, PARA_ANSWER.PERSONAL_KNOWLEDGE)
 	const advised = paragraphsWithAnswer(fieldId, answers, PARA_ANSWER.LEGAL_ADVICE)
+
+	const paraOptions = Object.entries(paragraphs).map(([number, heading]) => ({
+		number: Number(number),
+		heading,
+	}))
+
+	const toggleParagraphAnswer = (number, answer) => {
+		const num = Number(number)
+		const currentAnswer = answers[num]
+		if (currentAnswer === answer) {
+			onParagraphChange(num, PARA_ANSWER.NOT_VERIFIED)
+		} else {
+			onParagraphChange(num, answer)
+		}
+	}
 
 	const blanks = {
 		':name': (
@@ -109,17 +112,27 @@ function VerificationClause({ fieldId, values, onChange, onParagraphChange, pref
 				required
 			/>
 		),
-		// The two paragraph blanks are filled from the table below, not typed. Asking a filer to
+		// The two paragraph blanks are filled from the inline dropdowns, not typed. Asking a filer to
 		// work out their own paragraph ranges invites contradictions the form cannot catch.
 		':personal_paras': (
-			<span key="personal_paras" className="clause__filled" aria-live="polite">
-				{renderParagraphNumbers(personal)}
-			</span>
+			<InlineParagraphSelector
+				key="personal_paras"
+				label="True to personal knowledge"
+				options={paraOptions}
+				selectedParas={personal}
+				onToggle={(num) => toggleParagraphAnswer(num, PARA_ANSWER.PERSONAL_KNOWLEDGE)}
+				ariaLabel="Paragraphs true to personal knowledge"
+			/>
 		),
 		':advised_paras': (
-			<span key="advised_paras" className="clause__filled" aria-live="polite">
-				{renderParagraphNumbers(advised)}
-			</span>
+			<InlineParagraphSelector
+				key="advised_paras"
+				label="Believed true on legal advice"
+				options={paraOptions}
+				selectedParas={advised}
+				onToggle={(num) => toggleParagraphAnswer(num, PARA_ANSWER.LEGAL_ADVICE)}
+				ariaLabel="Paragraphs believed true on legal advice"
+			/>
 		),
 	}
 
@@ -128,52 +141,6 @@ function VerificationClause({ fieldId, values, onChange, onParagraphChange, pref
 			<p className="clause__heading">VERIFICATION</p>
 
 			<ClauseSentence template={VERIFICATION_TEMPLATE} blanks={blanks} />
-
-			<fieldset className="verification__paras" id={`${id}-paras`}>
-				<legend>Which paragraphs are you verifying, and how?</legend>
-				<p className="verification__paras-hint">
-					The two blanks in the sentence above are filled from your answers here. Leave a paragraph
-					unmarked if you are not verifying it.
-				</p>
-
-				<table className="verification__table">
-					<thead>
-						<tr>
-							<th scope="col">Paragraph</th>
-							{ANSWER_ORDER.map((answer) => (
-								<th key={answer} scope="col">
-									{ANSWER_LABEL[answer]}
-								</th>
-							))}
-						</tr>
-					</thead>
-					<tbody>
-						{Object.entries(paragraphs).map(([number, heading]) => (
-							<tr key={number}>
-								<th scope="row">
-									<span className="verification__para-number">{number}.</span> {heading}
-								</th>
-								{ANSWER_ORDER.map((answer) => (
-									<td key={answer} data-answer={ANSWER_LABEL[answer]}>
-										<label className="verification__radio">
-											<input
-												type="radio"
-												name={`${id}-para-${number}`}
-												value={answer}
-												checked={answers[number] === answer}
-												onChange={() => onParagraphChange(Number(number), answer)}
-											/>
-											<span className="verification__sr-only">
-												Paragraph {number}, {heading}: {ANSWER_LABEL[answer]}
-											</span>
-										</label>
-									</td>
-								))}
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</fieldset>
 
 			<div className="verification__foot">
 				{/* Printed on one line at the foot of the form, so set inline rather than as a field. */}
@@ -199,12 +166,6 @@ function VerificationClause({ fieldId, values, onChange, onParagraphChange, pref
 					<span className="verification__date-value">Stamped when you submit</span>
 				</p>
 			</div>
-
-			<p className="clause__note">
-				Submitting records this verification against your name, with the date and time. Proceedings
-				before the Rent Court and the Rent Tribunal are judicial proceedings under section 36(2) of
-				the Act, and section 31 applies the same to the Rent Authority.
-			</p>
 		</div>
 	)
 }
