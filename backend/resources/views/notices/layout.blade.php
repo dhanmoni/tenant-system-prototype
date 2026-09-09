@@ -73,18 +73,6 @@
   actively misleading, so it says what is actually the case, and says something different depending
   on whether the signature has been applied yet.
 --}}
-<div class="attestation">
-    @if ($signed)
-        Issued through the Assam Tenancy Portal by the {{ $officeName }}{{ $districtName ? ', ' . $districtName : '' }}
-        and authenticated by the digital signature affixed to this document. A physical signature is
-        not required. The signature may be verified in any standard PDF reader.
-    @else
-        <span class="bold">DRAFT — NOT YET SIGNED.</span>
-        This document has been generated through the Assam Tenancy Portal but the digital signature
-        of the issuing authority has not yet been affixed. It is not a notice or order until signed,
-        and must not be served or acted upon in this form.
-    @endif
-</div>
 
 </body>
 </html>
