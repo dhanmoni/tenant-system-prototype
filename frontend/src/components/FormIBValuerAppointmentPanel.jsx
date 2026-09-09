@@ -4,7 +4,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ValuerApplicationClause from './forms/ValuerApplicationClause'
-import ServiceFormSection from './forms/ServiceFormSection'
 import { hasProfileDefaults, profileDefaults } from '../utils/profileAutofill'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
@@ -182,48 +181,34 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 	)
 
 	return (
-		<div className="service-form-panel">
-			{error ? <div className="service-form-alert service-form-alert--error" role="alert">{error}</div> : null}
+		<div className="dashboard-card service-form-panel">
+			{error ? <div className="error" role="alert">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<ServiceFormSection
-					number={1}
-					title="Tenancy reference"
-					description="Enter the Tenancy UIN linked to the premises for which a valuer is sought."
-				>
-					<TenancyUinLookup
-						value={tenancyUIN}
-						onChange={setTenancyUIN}
-						onLoaded={handleTenancyLoaded}
-						label="Unique Identification Number issued by the Rent Authority"
-					/>
-				</ServiceFormSection>
+				<TenancyUinLookup
+					value={tenancyUIN}
+					onChange={setTenancyUIN}
+					onLoaded={handleTenancyLoaded}
+					label="Ref: Unique Identification Number issued by the Rent Authority"
+				/>
 
-				<ServiceFormSection
-					number={2}
-					title="Application"
-					description="Complete the application sentence blanks for appointment of a valuer."
-				>
-					<ValuerApplicationClause
-						prefilled={hasProfileDefaults(profile)}
-						values={{
-							name: applicantName,
-							relation: applicantRelationType,
-							relativeName: applicantRelationTargetName,
-							residence: applicantResidentPlace,
-							capacity: applicantLandlordOrTenant,
-							premises: premisesSituatedAddress,
-							district,
-						}}
-						onChange={setClauseField}
-					/>
-				</ServiceFormSection>
+				<ValuerApplicationClause
+					prefilled={hasProfileDefaults(profile)}
+					values={{
+						name: applicantName,
+						relation: applicantRelationType,
+						relativeName: applicantRelationTargetName,
+						residence: applicantResidentPlace,
+						capacity: applicantLandlordOrTenant,
+						premises: premisesSituatedAddress,
+						district,
+					}}
+					onChange={setClauseField}
+				/>
 
-				<ServiceFormSection
-					number={3}
-					title="Signature"
-					description="Name and signature of the landlord or tenant filing this form."
-				>
+				<fieldset className="tenancy-fieldset">
+					<legend>Name and Signature of landlord or tenant</legend>
+
 					<label>
 						<span className="label-text required">Signed by</span>
 						<select
@@ -251,10 +236,10 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</ServiceFormSection>
+				</fieldset>
 
 				<div className="form-actions">
-					<button type="button" className="ws-btn ws-btn--secondary" onClick={onBack} disabled={submitting}>
+					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>
 						Back
 					</button>
 					<button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>

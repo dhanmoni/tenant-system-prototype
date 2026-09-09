@@ -4342,25 +4342,13 @@ a.ws-sidebar-support-item:hover {
 	margin: 0;
 }
 
-/* Center the form column in .ws-main whether the sidebar is open or collapsed. */
-.ws-page:has(.service-form-page) {
-	max-width: 64rem;
-	margin-inline: auto;
-	width: 100%;
-}
-
-.ws-page .service-form-page {
-	max-width: none;
-	margin-inline: 0;
-}
-
 .ws-page .service-form-page .ws-breadcrumb {
-	margin-bottom: 0.65rem;
+	margin-bottom: 0.35rem;
 }
 
 @media (max-width: 1023px) {
 	.ws-page .service-form-page .ws-breadcrumb {
-		margin-bottom: 0.45rem;
+		margin-bottom: 0.25rem;
 	}
 }
 
