@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
+import ServiceFormSection from './forms/ServiceFormSection'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { APPLICATION_TYPES } from '../constants/application'
@@ -141,6 +142,10 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 	const isRepairs = statutoryMatter === RA_MATTER.SECTION_15
 	const isServices = statutoryMatter === RA_MATTER.SECTION_20
 	const otherServiceChosen = isServices && essentialServices.includes(SERVICE_OTHER)
+	const selectedMatter = useMemo(
+		() => RA_MATTER_OPTIONS.find((option) => option.value === statutoryMatter) || null,
+		[statutoryMatter]
+	)
 
 	const toggleRepairItem = useCallback((code) => {
 		setRepairItems((current) =>
@@ -404,22 +409,30 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		})
 
 	return (
-		<div className="dashboard-card service-form-panel">
-			{error ? <div className="error" role="alert">{error}</div> : null}
+		<div className="service-form-panel">
+			{error ? <div className="service-form-alert service-form-alert--error" role="alert">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<TenancyUinLookup
-					value={tenancyUIN}
-					onChange={setTenancyUIN}
-					onLoaded={handleTenancyLoaded}
-					label="In the matter of Tenancy of Unique Identification Number"
-				/>
+				<ServiceFormSection
+					number={1}
+					title="Tenancy reference"
+					description="Identify the tenancy this Form IV application concerns."
+				>
+					<TenancyUinLookup
+						value={tenancyUIN}
+						onChange={setTenancyUIN}
+						onLoaded={handleTenancyLoaded}
+						label="In the matter of Tenancy of Unique Identification Number"
+					/>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>A. Name of the Applicant</legend>
-					<label>
+				<ServiceFormSection
+					number={2}
+					title="A. Name of the Applicant"
+					description="Add the residential address on which notices are to be served on the applicant."
+				>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Name of the Applicant</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Applicant</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -428,16 +441,18 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 							value={applicantResidentialAddress}
 							onChange={(e) => setApplicantResidentialAddress(e.target.value)}
 							required
-							rows={3}
+							rows={2}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>B. Name of the Opposite Party</legend>
-					<label>
+				<ServiceFormSection
+					number={3}
+					title="B. Name of the Opposite Party"
+					description="Add the residential address on which notices are to be served on the opposite party."
+				>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Name of the Opposite Party</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Opposite Party</span>
 						<input type="text" value={oppositePartyName} onChange={(e) => setOppositePartyName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -446,60 +461,71 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 							value={oppositePartyResidentialAddress}
 							onChange={(e) => setOppositePartyResidentialAddress(e.target.value)}
 							required
-							rows={3}
+							rows={2}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>Matter applied under</legend>
-					<p className="field-note tenancy-field-full">
-						Rule 11(1) provides that an application to the Rent Authority under sections 10, 14, 15
-						and 20 of the Act shall be made in Form IV. Select the provision this application is
-						made under, so that the Rent Authority takes up the right inquiry.
-					</p>
-
-					<div className="tenancy-field-full ground-choice-group" role="radiogroup" aria-label="Provision applied under">
-						{RA_MATTER_OPTIONS.map((option) => (
-							<label key={option.value} className="ground-choice">
-								<input
-									type="radio"
-									name="statutory_matter"
-									value={option.value}
-									checked={statutoryMatter === option.value}
-									onChange={() => setStatutoryMatter(option.value)}
-								/>
-								<span className="ground-choice__body">
-									<span className="ground-choice__cite">{option.citation}</span>
-									<span className="ground-choice__label">{option.heading}</span>
-									<span className="ground-choice__text">{option.note}</span>
-								</span>
-							</label>
-						))}
+				<ServiceFormSection
+					number={4}
+					title="Matter applied under"
+					description="Choose the section this application is filed under. Follow-up questions appear only when needed."
+				>
+					<div
+						className="tenancy-field-full matter-choice-grid"
+						role="radiogroup"
+						aria-label="Provision applied under"
+					>
+						{RA_MATTER_OPTIONS.map((option) => {
+							const selected = statutoryMatter === option.value
+							return (
+								<label
+									key={option.value}
+									className={`matter-choice${selected ? ' is-selected' : ''}`}
+								>
+									<input
+										type="radio"
+										name="statutory_matter"
+										value={option.value}
+										checked={selected}
+										onChange={() => setStatutoryMatter(option.value)}
+									/>
+									<span className="matter-choice__cite">{option.citation}</span>
+									<span className="matter-choice__label">{option.heading}</span>
+								</label>
+							)
+						})}
 					</div>
 
+					{selectedMatter ? (
+						<div className="tenancy-field-full matter-choice-detail" role="status">
+							<p className="matter-choice-detail__title">
+								{selectedMatter.citation} — what this covers
+							</p>
+							<p className="matter-choice-detail__text">{selectedMatter.note}</p>
+						</div>
+					) : null}
+
 					{isRepairs ? (
-						<div className="tenancy-field-full">
+						<div className="tenancy-field-full service-form-followup">
 							<p className="label-text required">Second Schedule items in dispute</p>
 							<p className="field-note">
-								Unless otherwise agreed in the tenancy agreement, the landlord is responsible for
-								Part A and the tenant for Part B. Select every item this application concerns.
+								Unless otherwise agreed, the landlord handles Part A and the tenant handles Part B.
+								Select every item this application concerns.
 							</p>
 							{REPAIR_PARTS.map((part) => (
 								<div key={part.part} className="schedule-part">
 									<p className="schedule-part__title">{part.title}</p>
-									<div className="ground-choice-group">
+									<div className="matter-check-grid">
 										{part.items.map((item) => (
-											<label key={item.code} className="ground-choice ground-choice--compact">
+											<label key={item.code} className="matter-check">
 												<input
 													type="checkbox"
 													value={item.code}
 													checked={repairItems.includes(item.code)}
 													onChange={() => toggleRepairItem(item.code)}
 												/>
-												<span className="ground-choice__body">
-													<span className="ground-choice__text">{item.text}</span>
-												</span>
+												<span>{item.text}</span>
 											</label>
 										))}
 									</div>
@@ -509,26 +535,22 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 					) : null}
 
 					{isServices ? (
-						<div className="tenancy-field-full">
+						<div className="tenancy-field-full service-form-followup">
 							<p className="label-text required">Essential supply or service withheld</p>
 							<p className="field-note">
-								The Explanation to section 20 states that essential services includes supply of
-								water, electricity, piped cooking gas supply, lights in passages, lifts and on
-								staircase, conservancy, parking, communication links, sanitary services and security
-								fixtures and features. Because it says includes, the list is not exhaustive.
+								Select every essential service that was withheld. You can also describe another
+								service if it is not listed.
 							</p>
-							<div className="ground-choice-group">
+							<div className="matter-check-grid">
 								{ESSENTIAL_SERVICES.map((service) => (
-									<label key={service.code} className="ground-choice ground-choice--compact">
+									<label key={service.code} className="matter-check">
 										<input
 											type="checkbox"
 											value={service.code}
 											checked={essentialServices.includes(service.code)}
 											onChange={() => toggleService(service.code)}
 										/>
-										<span className="ground-choice__body">
-											<span className="ground-choice__text">{service.label}</span>
-										</span>
+										<span>{service.label}</span>
 									</label>
 								))}
 							</div>
@@ -537,7 +559,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 								<label className="schedule-other">
 									<span className="label-text required">Describe the other essential service</span>
 									<input
-							required
+										required
 										type="text"
 										value={essentialServiceOther}
 										onChange={(e) => setEssentialServiceOther(e.target.value)}
@@ -547,10 +569,13 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 							) : null}
 						</div>
 					) : null}
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>Details of application</legend>
+				<ServiceFormSection
+					number={5}
+					title="Details of application"
+					description="Particulars, jurisdiction declaration, facts, grounds, and the relief you seek."
+				>
 					<label className="tenancy-field-full">
 						<span className="label-text required">1. Particulars of violation against which the present application is made</span>
 						<textarea
@@ -597,20 +622,28 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 						<span className="field-note">Rule 11(1) allows the application to be accompanied by affidavits and documents, if any. Attachments are optional.</span>
 						<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<VerificationClause
-					prefilled={hasProfileDefaults(profile)}
-					fieldId={VERIFICATION.FORM_IV}
-					values={verification}
-					onChange={setVerificationField}
-					onParagraphChange={setParagraphAnswer}
-				/>
+				<ServiceFormSection
+					number={6}
+					title="Verification"
+					description="Read the sworn sentence, mark each paragraph, and confirm place of verification."
+					className="service-form-block--verification"
+				>
+					<VerificationClause
+						prefilled={hasProfileDefaults(profile)}
+						fieldId={VERIFICATION.FORM_IV}
+						values={verification}
+						onChange={setVerificationField}
+						onParagraphChange={setParagraphAnswer}
+					/>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					{/* The Gazette prints "Signature of the Applicant" on all five forms, including the
-					  * two appeal forms. Reproduced as printed. */}
-					<legend>Signature of the Applicant</legend>
+				<ServiceFormSection
+					number={7}
+					title="Signature of the Applicant"
+					description="Name against the signature as printed in the Gazette form."
+				>
 					<label>
 						<span className="label-text required">Name against the signature</span>
 						<input
@@ -628,10 +661,10 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
 				<div className="form-actions">
-					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>
+					<button type="button" className="ws-btn ws-btn--secondary" onClick={onBack} disabled={submitting}>
 						Back
 					</button>
 					<button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>

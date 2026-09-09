@@ -16,8 +16,8 @@ function DeclarationCheckbox({ fieldId, label, checked, onChange, disabled = fal
 
 	return (
 		<div className="declaration tenancy-field-full">
-			<p className="label-text required">{label}</p>
-			<label className="declaration__box">
+			{label ? <p className="declaration__label label-text required">{label}</p> : null}
+			<label className={`declaration__box${checked ? ' is-checked' : ''}`}>
 				<input
 					type="checkbox"
 					checked={checked}
@@ -25,12 +25,13 @@ function DeclarationCheckbox({ fieldId, label, checked, onChange, disabled = fal
 					disabled={disabled}
 					required
 				/>
-				<span className="declaration__text">{text}</span>
+				<span className="declaration__body">
+					<span className="declaration__text">{text}</span>
+					<span className="declaration__note">
+						Ticking this records the declaration against your name, with the date and time.
+					</span>
+				</span>
 			</label>
-			<p className="declaration__note">
-				Ticking this records the declaration above against your name, with the date and time.
-				It is reproduced on the filing exactly as printed in the form.
-			</p>
 		</div>
 	)
 }

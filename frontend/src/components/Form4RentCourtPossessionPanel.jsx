@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
+import ServiceFormSection from './forms/ServiceFormSection'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { APPLICATION_TYPES } from '../constants/application'
@@ -117,6 +118,10 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 	}, [])
 
 	const groundsApply = statutoryBasis === EVICTION_BASIS.SECTION_21_2
+	const selectedBasis = useMemo(
+		() => EVICTION_BASIS_OPTIONS.find((option) => option.value === statutoryBasis) || null,
+		[statutoryBasis]
+	)
 
 	const mutation = useMutation({
 		mutationFn: async (formData) => {
@@ -364,33 +369,38 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 		})
 
 	return (
-		<div className="dashboard-card service-form-panel">
-			{error ? <div className="error" role="alert">{error}</div> : null}
+		<div className="service-form-panel">
+			{error ? <div className="service-form-alert service-form-alert--error" role="alert">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<TenancyUinLookup
-					value={tenancyUIN}
-					onChange={setTenancyUIN}
-					onLoaded={handleTenancyLoaded}
-					label="Unique Identification Number"
-				/>
+				<ServiceFormSection
+					number={1}
+					title="Tenancy reference"
+					description="Identify the tenancy and the Rent Court where this application is filed."
+				>
+					<TenancyUinLookup
+						value={tenancyUIN}
+						onChange={setTenancyUIN}
+						onLoaded={handleTenancyLoaded}
+						label="Unique Identification Number"
+					/>
+					<label className="tenancy-field-full">
+						<span className="label-text required">Before the Rent Court at</span>
+						<input type="text" value={beforeRentCourt} onChange={(e) => setBeforeRentCourt(e.target.value)} required />
+					</label>
+				</ServiceFormSection>
 
-				<label>
-					<span className="label-text required">Before the Rent Court at</span>
-					<input type="text" value={beforeRentCourt} onChange={(e) => setBeforeRentCourt(e.target.value)} required />
-				</label>
-
-				<fieldset className="tenancy-fieldset">
-					<legend>Applicant</legend>
-
+				<ServiceFormSection
+					number={2}
+					title="Applicant"
+					description="Applicant and tenant details for this Form II application."
+				>
 					<label>
 						<span className="label-text required">Name of the Applicant</span>
-						<span className="field-note">Add description and the residential address of the Applicant</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
 					<label>
 						<span className="label-text required">Name of the Tenant</span>
-						<span className="field-note">Form II names the tenant only in its opening recital and has no separate respondent block, so this is captured here.</span>
 						<input
 							required type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
 					</label>
@@ -400,75 +410,90 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 							value={applicantResidentialAddress}
 							onChange={(e) => setApplicantResidentialAddress(e.target.value)}
 							required
-							rows={3}
+							rows={2}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>Grounds for recovery of possession</legend>
-					<p className="field-note tenancy-field-full">
-						Form II states: In accordance with sub-section (2) of section 21 or section 22 of the
-						Act, I hereby request the Rent Court for recovery of possession of the premises on
-						following ground. Select the basis and the grounds relied on.
-					</p>
-
-					<div className="tenancy-field-full ground-choice-group" role="radiogroup" aria-label="Statutory basis">
-						{EVICTION_BASIS_OPTIONS.map((option) => (
-							<label key={option.value} className="ground-choice">
-								<input
-									type="radio"
-									name="statutory_basis"
-									value={option.value}
-									checked={statutoryBasis === option.value}
-									onChange={() => setStatutoryBasis(option.value)}
-								/>
-								<span className="ground-choice__body">
-									<span className="ground-choice__cite">{option.citation}</span>
-									<span className="ground-choice__label">{option.label}</span>
-									<span className="ground-choice__text">{option.note}</span>
-								</span>
-							</label>
-						))}
+				<ServiceFormSection
+					number={3}
+					title="Grounds for recovery of possession"
+					description="Select the statutory basis. Section 21(2) grounds appear only when that basis is chosen."
+				>
+					<div
+						className="tenancy-field-full matter-choice-grid"
+						role="radiogroup"
+						aria-label="Statutory basis"
+					>
+						{EVICTION_BASIS_OPTIONS.map((option) => {
+							const selected = statutoryBasis === option.value
+							return (
+								<label
+									key={option.value}
+									className={`matter-choice${selected ? ' is-selected' : ''}`}
+								>
+									<input
+										type="radio"
+										name="statutory_basis"
+										value={option.value}
+										checked={selected}
+										onChange={() => setStatutoryBasis(option.value)}
+									/>
+									<span className="matter-choice__cite">{option.citation}</span>
+									<span className="matter-choice__label">{option.label}</span>
+								</label>
+							)
+						})}
 					</div>
 
+					{selectedBasis ? (
+						<div className="tenancy-field-full matter-choice-detail" role="status">
+							<p className="matter-choice-detail__title">
+								{selectedBasis.citation} — what this covers
+							</p>
+							<p className="matter-choice-detail__text">{selectedBasis.note}</p>
+						</div>
+					) : null}
+
 					{groundsApply ? (
-						<div className="tenancy-field-full ground-choice-group">
+						<div className="tenancy-field-full service-form-followup">
 							<p className="label-text required">Grounds under section 21(2)</p>
 							<p className="field-note">
-								Section 21(2) allows an order on one or more of the following grounds. Select every
-								ground relied on.
+								Select every ground relied on. One or more may be chosen.
 							</p>
-							{EVICTION_GROUND_CLAUSES.map((clause) => (
-								<label key={clause.value} className="ground-choice">
-									<input
-										type="checkbox"
-										value={clause.value}
-										checked={evictionGrounds.includes(clause.value)}
-										onChange={() => toggleGround(clause.value)}
-									/>
-									<span className="ground-choice__body">
-										<span className="ground-choice__cite">{clause.citation}</span>
-										<span className="ground-choice__text">{clause.text}</span>
-										{clause.explanation ? (
-											<span className="ground-choice__explanation">{clause.explanation}</span>
-										) : null}
-									</span>
-								</label>
-							))}
+							<div className="matter-check-grid matter-check-grid--wide">
+								{EVICTION_GROUND_CLAUSES.map((clause) => (
+									<label key={clause.value} className="matter-check matter-check--detail">
+										<input
+											type="checkbox"
+											value={clause.value}
+											checked={evictionGrounds.includes(clause.value)}
+											onChange={() => toggleGround(clause.value)}
+										/>
+										<span>
+											<span className="matter-check__cite">{clause.citation}</span>
+											<span className="matter-check__text">{clause.text}</span>
+											{clause.explanation ? (
+												<span className="matter-check__note">{clause.explanation}</span>
+											) : null}
+										</span>
+									</label>
+								))}
+							</div>
 						</div>
 					) : (
 						<p className="field-note tenancy-field-full">
-							Section 22 has no separate list of grounds. The Rent Court must be satisfied that the
-							legal heirs of the deceased landlord are in bonafide requirement of the premises. Set
-							out that requirement in the facts and grounds below, and enclose proof of the
-							landlord&rsquo;s death and of heirship.
+							Section 22 has no separate list of grounds. Set out the bonafide requirement in the
+							facts and grounds below, and enclose proof of the landlord&rsquo;s death and of heirship.
 						</p>
 					)}
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>Details of application</legend>
+				<ServiceFormSection
+					number={4}
+					title="Details of application"
+					description="Particulars, jurisdiction declaration, facts, grounds, and the relief you seek."
+				>
 					<label className="tenancy-field-full">
 						<span className="label-text required">1. Particulars of application</span>
 						<textarea
@@ -518,20 +543,28 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 						<span className="label-text">8. List of enclosures</span>
 						<textarea value={enclosuresList} onChange={(e) => setEnclosuresList(e.target.value)} rows={3} />
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<VerificationClause
-					prefilled={hasProfileDefaults(profile)}
-					fieldId={VERIFICATION.FORM_II}
-					values={verification}
-					onChange={setVerificationField}
-					onParagraphChange={setParagraphAnswer}
-				/>
+				<ServiceFormSection
+					number={5}
+					title="Verification"
+					description="Read the sworn sentence, mark each paragraph, and confirm place of verification."
+					className="service-form-block--verification"
+				>
+					<VerificationClause
+						prefilled={hasProfileDefaults(profile)}
+						fieldId={VERIFICATION.FORM_II}
+						values={verification}
+						onChange={setVerificationField}
+						onParagraphChange={setParagraphAnswer}
+					/>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					{/* The Gazette prints "Signature of the Applicant" on all five forms, including the
-					  * two appeal forms. Reproduced as printed. */}
-					<legend>Signature of the Applicant</legend>
+				<ServiceFormSection
+					number={6}
+					title="Signature of the Applicant"
+					description="Name against the signature as printed in the Gazette form."
+				>
 					<label>
 						<span className="label-text required">Name against the signature</span>
 						<input
@@ -549,10 +582,10 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
 				<div className="form-actions">
-					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>
+					<button type="button" className="ws-btn ws-btn--secondary" onClick={onBack} disabled={submitting}>
 						Back
 					</button>
 					<button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>

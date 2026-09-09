@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
+import ServiceFormSection from './forms/ServiceFormSection'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { APPLICATION_TYPES } from '../constants/application'
@@ -339,32 +340,39 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 		})
 
 	return (
-		<div className="dashboard-card service-form-panel">
-			{error ? <div className="error" role="alert">{error}</div> : null}
+		<div className="service-form-panel">
+			{error ? <div className="service-form-alert service-form-alert--error" role="alert">{error}</div> : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<TenancyUinLookup
-					value={tenancyUIN}
-					onChange={setTenancyUIN}
-					onLoaded={handleTenancyLoaded}
-					label="In the matter of Tenancy of U.I. No."
-				/>
-
-				<label>
-					<span className="label-text required">Before the Rent Tribunal at</span>
-					<input
-						type="text"
-						value={rentTribunalAt}
-						onChange={(e) => setRentTribunalAt(e.target.value)}
-						required
+				<ServiceFormSection
+					number={1}
+					title="Tenancy reference"
+					description="Identify the tenancy and the Rent Tribunal hearing this appeal."
+				>
+					<TenancyUinLookup
+						value={tenancyUIN}
+						onChange={setTenancyUIN}
+						onLoaded={handleTenancyLoaded}
+						label="In the matter of Tenancy of U.I. No."
 					/>
-				</label>
+					<label className="tenancy-field-full">
+						<span className="label-text required">Before the Rent Tribunal at</span>
+						<input
+							type="text"
+							value={rentTribunalAt}
+							onChange={(e) => setRentTribunalAt(e.target.value)}
+							required
+						/>
+					</label>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>A. Name of the Appellant</legend>
-					<label>
+				<ServiceFormSection
+					number={2}
+					title="A. Name of the Appellant"
+					description="Add the residential address on which notices are to be served on the appellant."
+				>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Name of the Appellant</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Appellant</span>
 						<input
 							type="text"
 							value={appellantName}
@@ -378,16 +386,18 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 							value={appellantResidentialAddress}
 							onChange={(e) => setAppellantResidentialAddress(e.target.value)}
 							required
-							rows={3}
+							rows={2}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>B. Name of the Respondent</legend>
-					<label>
+				<ServiceFormSection
+					number={3}
+					title="B. Name of the Respondent"
+					description="Add the residential address on which notices are to be served on the respondent."
+				>
+					<label className="tenancy-field-full">
 						<span className="label-text required">Name of the Respondent</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Respondent(s)</span>
 						<input
 							type="text"
 							value={respondentName}
@@ -401,13 +411,16 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 							value={respondentResidentialAddress}
 							onChange={(e) => setRespondentResidentialAddress(e.target.value)}
 							required
-							rows={3}
+							rows={2}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>Details of appeal</legend>
+				<ServiceFormSection
+					number={4}
+					title="Details of appeal"
+					description="Order under appeal, jurisdiction and limitation declarations, memorandum, and relief."
+				>
 					<label className="tenancy-field-full">
 						<span className="label-text required">1. Particulars of the order of the Rent Court as against which the Appeal is made</span>
 						<textarea
@@ -460,20 +473,28 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 						<textarea
 							required value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<VerificationClause
-					prefilled={hasProfileDefaults(profile)}
-					fieldId={VERIFICATION.FORM_VI}
-					values={verification}
-					onChange={setVerificationField}
-					onParagraphChange={setParagraphAnswer}
-				/>
+				<ServiceFormSection
+					number={5}
+					title="Verification"
+					description="Read the sworn sentence, mark each paragraph, and confirm place of verification."
+					className="service-form-block--verification"
+				>
+					<VerificationClause
+						prefilled={hasProfileDefaults(profile)}
+						fieldId={VERIFICATION.FORM_VI}
+						values={verification}
+						onChange={setVerificationField}
+						onParagraphChange={setParagraphAnswer}
+					/>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					{/* The Gazette prints "Signature of the Applicant" on all five forms, including the
-					  * two appeal forms. Reproduced as printed. */}
-					<legend>Signature of the Applicant</legend>
+				<ServiceFormSection
+					number={6}
+					title="Signature of the Applicant"
+					description="Name against the signature as printed in the Gazette form."
+				>
 					<label>
 						<span className="label-text required">Name against the signature</span>
 						<input
@@ -491,10 +512,10 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
 				<div className="form-actions">
-					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>
+					<button type="button" className="ws-btn ws-btn--secondary" onClick={onBack} disabled={submitting}>
 						Back
 					</button>
 					<button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>
