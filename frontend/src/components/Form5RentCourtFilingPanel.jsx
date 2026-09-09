@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Info } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -353,8 +354,15 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 				<fieldset className="tenancy-fieldset">
 					<legend>A. Name of the Applicant</legend>
 					<label>
-						<span className="label-text required">Name of the Applicant</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Applicant</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							Name of the Applicant
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Add description and the residential address on which the service of notices is to be effected on the Applicant</span>
+								</div>
+							</div>
+						</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -371,8 +379,15 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 				<fieldset className="tenancy-fieldset">
 					<legend>B. Name of the Respondent</legend>
 					<label>
-						<span className="label-text required">Name of the Respondent</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Respondent(s)</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							Name of the Respondent
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Add description and the residential address on which the service of notices is to be effected on the Respondent(s)</span>
+								</div>
+							</div>
+						</span>
 						<input type="text" value={respondentName} onChange={(e) => setRespondentName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -400,8 +415,15 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 						onChange={setJurisdictionAccepted}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">3. Facts of the case</span>
-						<span className="field-note">Give here a concise statement of facts in a chronological order, each paragraph containing as nearly as possible a separate issue or fact.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							3. Facts of the case
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Give here a concise statement of facts in a chronological order, each paragraph containing as nearly as possible a separate issue or fact.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} rows={3} />
 					</label>
@@ -419,14 +441,28 @@ export default function Form5RentCourtFilingPanel({ onBack, serviceMeta, user })
 						onEntriesChange={setPriorProceedings}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">6. Relief sought</span>
-						<span className="field-note">In view of the grounds mentioned in para 4 above, the applicant prays for the following relief(s). Specify below the relief(s) sought explaining the grounds for such relief(s) and the legal provisions, if any, relied upon.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							6. Relief sought
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>In view of the grounds mentioned in para 4 above, the applicant prays for the following relief(s). Specify below the relief(s) sought explaining the grounds for such relief(s) and the legal provisions, if any, relied upon.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text">7. Interim order, if any prayed for</span>
-						<span className="field-note">Pending final decision on the application, the applicant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+						<span className="label-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							7. Interim order, if any prayed for
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Pending final decision on the application, the applicant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+								</div>
+							</div>
+						</span>
 						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">

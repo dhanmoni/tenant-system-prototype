@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Info } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -305,15 +306,14 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 							? ''
 							: hasPriorProceedings
 								? priorProceedings
-										.map(
-											(entry, i) =>
-												`${i + 1}. ${entry.case_number} before ${entry.forum} - ${
-													entry.status === PRIOR_STATUS.PENDING
-														? `pending: ${entry.pendency_details}`
-														: `disposed: ${entry.decision}`
-												}`
-										)
-										.join('\n')
+									.map(
+										(entry, i) =>
+											`${i + 1}. ${entry.case_number} before ${entry.forum} - ${entry.status === PRIOR_STATUS.PENDING
+												? `pending: ${entry.pendency_details}`
+												: `disposed: ${entry.decision}`
+											}`
+									)
+									.join('\n')
 								: declarationText(DECLARATION.FORM_II_PRIOR_PROCEEDINGS)
 					),
 					previewItem('Relief sought', reliefSought),
@@ -338,18 +338,18 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 			interimOrderSought,
 			jurisdictionAccepted,
 			hasPriorProceedings,
-		priorProceedings,
+			priorProceedings,
 			reliefSought,
 			signatureImage,
 			signatureName,
-		verification,
+			verification,
 			tenancyUIN,
 			tenantName,
 			statutoryBasis,
 			evictionGrounds,
 			groundsApply,
 			particularsOfApplication,
-												]
+		]
 	)
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
@@ -385,12 +385,10 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 
 					<label>
 						<span className="label-text required">Name of the Applicant</span>
-						<span className="field-note">Add description and the residential address of the Applicant</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
 					<label>
 						<span className="label-text required">Name of the Tenant</span>
-						<span className="field-note">Form II names the tenant only in its opening recital and has no separate respondent block, so this is captured here.</span>
 						<input
 							required type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
 					</label>
@@ -406,12 +404,19 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 				</fieldset>
 
 				<fieldset className="tenancy-fieldset">
-					<legend>Grounds for recovery of possession</legend>
-					<p className="field-note tenancy-field-full">
-						Form II states: In accordance with sub-section (2) of section 21 or section 22 of the
-						Act, I hereby request the Rent Court for recovery of possession of the premises on
-						following ground. Select the basis and the grounds relied on.
-					</p>
+					<legend style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+						Grounds for recovery of possession
+						<div className="ground-choice__info-container">
+							<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+							<div className="ground-choice__info-popup">
+								<span>
+									Form II states: In accordance with sub-section (2) of section 21 or section 22 of the
+									Act, I hereby request the Rent Court for recovery of possession of the premises on
+									following ground. Select the basis and the grounds relied on.
+								</span>
+							</div>
+						</div>
+					</legend>
 
 					<div className="tenancy-field-full ground-choice-group" role="radiogroup" aria-label="Statutory basis">
 						{EVICTION_BASIS_OPTIONS.map((option) => (
@@ -423,46 +428,61 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 									checked={statutoryBasis === option.value}
 									onChange={() => setStatutoryBasis(option.value)}
 								/>
-								<span className="ground-choice__body">
-									<span className="ground-choice__cite">{option.citation}</span>
-									<span className="ground-choice__label">{option.label}</span>
-									<span className="ground-choice__text">{option.note}</span>
+								<span className="ground-choice__body" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+									<span className="ground-choice__label" style={{ marginBottom: 0 }}>{option.label}</span>
+									<div className="ground-choice__info-container">
+										<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+										<div className="ground-choice__info-popup">
+											<strong>{option.citation}</strong>
+											<span>{option.note}</span>
+										</div>
+									</div>
 								</span>
 							</label>
 						))}
 					</div>
 
 					{groundsApply ? (
-						<div className="tenancy-field-full ground-choice-group">
-							<p className="label-text required">Grounds under section 21(2)</p>
-							<p className="field-note">
-								Section 21(2) allows an order on one or more of the following grounds. Select every
-								ground relied on.
+						<>
+							<p className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+								Grounds under section 21(2)
+								<div className="ground-choice__info-container">
+									<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+									<div className="ground-choice__info-popup">
+										<span>
+											Section 21(2) allows an order on one or more of the following grounds. Select every
+											ground relied on.
+										</span>
+									</div>
+								</div>
 							</p>
-							{EVICTION_GROUND_CLAUSES.map((clause) => (
-								<label key={clause.value} className="ground-choice">
-									<input
-										type="checkbox"
-										value={clause.value}
-										checked={evictionGrounds.includes(clause.value)}
-										onChange={() => toggleGround(clause.value)}
-									/>
-									<span className="ground-choice__body">
-										<span className="ground-choice__cite">{clause.citation}</span>
-										<span className="ground-choice__text">{clause.text}</span>
-										{clause.explanation ? (
-											<span className="ground-choice__explanation">{clause.explanation}</span>
-										) : null}
-									</span>
-								</label>
-							))}
-						</div>
+							<div className="tenancy-field-full ground-choice-group ground-choice-group--inline">
+
+								{EVICTION_GROUND_CLAUSES.map((clause) => (
+									<label key={clause.value} className="ground-choice">
+										<input
+											type="checkbox"
+											value={clause.value}
+											checked={evictionGrounds.includes(clause.value)}
+											onChange={() => toggleGround(clause.value)}
+										/>
+										<span className="ground-choice__body" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+											<span className="ground-choice__label" style={{ marginBottom: 0 }}>{clause.label}</span>
+											<div className="ground-choice__info-container">
+												<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+												<div className="ground-choice__info-popup">
+													<strong>{clause.citation}</strong>
+													<p style={{ marginTop: '0.25rem', marginBottom: '0.25rem' }}>{clause.text}</p>
+													{clause.explanation && <p style={{ marginTop: 0, fontStyle: 'italic' }}>{clause.explanation}</p>}
+												</div>
+											</div>
+										</span>
+									</label>
+								))}
+							</div>
+						</>
 					) : (
 						<p className="field-note tenancy-field-full">
-							Section 22 has no separate list of grounds. The Rent Court must be satisfied that the
-							legal heirs of the deceased landlord are in bonafide requirement of the premises. Set
-							out that requirement in the facts and grounds below, and enclose proof of the
-							landlord&rsquo;s death and of heirship.
 						</p>
 					)}
 				</fieldset>
@@ -485,8 +505,15 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 						onChange={setJurisdictionAccepted}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">3. Facts of the case</span>
-						<span className="field-note">Give here a concise statement of facts in a chronological order, each paragraph containing as nearly as possible a separate issue or fact.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							3. Facts of the case
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Give here a concise statement of facts in a chronological order, each paragraph containing as nearly as possible a separate issue or fact.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} rows={3} />
 					</label>
@@ -504,14 +531,28 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 						onEntriesChange={setPriorProceedings}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">6. Relief sought</span>
-						<span className="field-note">In view of the grounds mentioned in para 4 above, the applicant prays for the following relief(s). Specify below the relief(s) sought explaining the grounds for such relief(s) and the legal provisions, if any, relied upon.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							6. Relief sought
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>In view of the grounds mentioned in para 4 above, the applicant prays for the following relief(s). Specify below the relief(s) sought explaining the grounds for such relief(s) and the legal provisions, if any, relied upon.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text">7. Interim order, if any prayed for</span>
-						<span className="field-note">Pending final decision on the application, the applicant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+						<span className="label-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							7. Interim order, if any prayed for
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Pending final decision on the application, the applicant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+								</div>
+							</div>
+						</span>
 						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Info } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -341,15 +342,14 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 							? ''
 							: hasPriorProceedings
 								? priorProceedings
-										.map(
-											(entry, i) =>
-												`${i + 1}. ${entry.case_number} before ${entry.forum} - ${
-													entry.status === PRIOR_STATUS.PENDING
-														? `pending: ${entry.pendency_details}`
-														: `disposed: ${entry.decision}`
-												}`
-										)
-										.join('\n')
+									.map(
+										(entry, i) =>
+											`${i + 1}. ${entry.case_number} before ${entry.forum} - ${entry.status === PRIOR_STATUS.PENDING
+												? `pending: ${entry.pendency_details}`
+												: `disposed: ${entry.decision}`
+											}`
+									)
+									.join('\n')
 								: declarationText(DECLARATION.FORM_IV_PRIOR_PROCEEDINGS)
 					),
 					previewItem('Relief sought', reliefSought),
@@ -373,14 +373,14 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 			jurisdictionAccepted,
 			listOfEnclosures,
 			hasPriorProceedings,
-		priorProceedings,
+			priorProceedings,
 			oppositePartyName,
 			oppositePartyResidentialAddress,
 			particularsOfViolation,
 			reliefSought,
 			signatureImage,
 			signatureName,
-		verification,
+			verification,
 			tenancyUIN,
 			statutoryMatter,
 			repairItems,
@@ -389,7 +389,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 			isRepairs,
 			isServices,
 			otherServiceChosen,
-												]
+		]
 	)
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
@@ -418,8 +418,15 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				<fieldset className="tenancy-fieldset">
 					<legend>A. Name of the Applicant</legend>
 					<label>
-						<span className="label-text required">Name of the Applicant</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Applicant</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							Name of the Applicant
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Add description and the residential address on which the service of notices is to be effected on the Applicant</span>
+								</div>
+							</div>
+						</span>
 						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -436,8 +443,15 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				<fieldset className="tenancy-fieldset">
 					<legend>B. Name of the Opposite Party</legend>
 					<label>
-						<span className="label-text required">Name of the Opposite Party</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Opposite Party</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							Name of the Opposite Party
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Add description and the residential address on which the service of notices is to be effected on the Opposite Party</span>
+								</div>
+							</div>
+						</span>
 						<input type="text" value={oppositePartyName} onChange={(e) => setOppositePartyName(e.target.value)} required />
 					</label>
 					<label className="tenancy-field-full">
@@ -452,12 +466,15 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				</fieldset>
 
 				<fieldset className="tenancy-fieldset">
-					<legend>Matter applied under</legend>
-					<p className="field-note tenancy-field-full">
-						Rule 11(1) provides that an application to the Rent Authority under sections 10, 14, 15
-						and 20 of the Act shall be made in Form IV. Select the provision this application is
-						made under, so that the Rent Authority takes up the right inquiry.
-					</p>
+					<legend style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+						Matter applied under
+						<div className="ground-choice__info-container">
+							<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+							<div className="ground-choice__info-popup">
+								<span>Rule 11(1) provides that an application to the Rent Authority under sections 10, 14, 15 and 20 of the Act shall be made in Form IV. Select the provision this application is made under, so that the Rent Authority takes up the right inquiry.</span>
+							</div>
+						</div>
+					</legend>
 
 					<div className="tenancy-field-full ground-choice-group" role="radiogroup" aria-label="Provision applied under">
 						{RA_MATTER_OPTIONS.map((option) => (
@@ -469,10 +486,15 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 									checked={statutoryMatter === option.value}
 									onChange={() => setStatutoryMatter(option.value)}
 								/>
-								<span className="ground-choice__body">
-									<span className="ground-choice__cite">{option.citation}</span>
-									<span className="ground-choice__label">{option.heading}</span>
-									<span className="ground-choice__text">{option.note}</span>
+								<span className="ground-choice__body" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+									<span className="ground-choice__label" style={{ marginBottom: 0 }}>{option.heading}</span>
+									<div className="ground-choice__info-container">
+										<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+										<div className="ground-choice__info-popup">
+											<strong>{option.citation}</strong>
+											<span>{option.note}</span>
+										</div>
+									</div>
 								</span>
 							</label>
 						))}
@@ -480,15 +502,19 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 
 					{isRepairs ? (
 						<div className="tenancy-field-full">
-							<p className="label-text required">Second Schedule items in dispute</p>
-							<p className="field-note">
-								Unless otherwise agreed in the tenancy agreement, the landlord is responsible for
-								Part A and the tenant for Part B. Select every item this application concerns.
+							<p className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+								Second Schedule items in dispute
+								<div className="ground-choice__info-container">
+									<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+									<div className="ground-choice__info-popup">
+										<span>Unless otherwise agreed in the tenancy agreement, the landlord is responsible for Part A and the tenant for Part B. Select every item this application concerns.</span>
+									</div>
+								</div>
 							</p>
 							{REPAIR_PARTS.map((part) => (
 								<div key={part.part} className="schedule-part">
 									<p className="schedule-part__title">{part.title}</p>
-									<div className="ground-choice-group">
+									<div className="ground-choice-group ground-choice-group--inline">
 										{part.items.map((item) => (
 											<label key={item.code} className="ground-choice ground-choice--compact">
 												<input
@@ -510,14 +536,16 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 
 					{isServices ? (
 						<div className="tenancy-field-full">
-							<p className="label-text required">Essential supply or service withheld</p>
-							<p className="field-note">
-								The Explanation to section 20 states that essential services includes supply of
-								water, electricity, piped cooking gas supply, lights in passages, lifts and on
-								staircase, conservancy, parking, communication links, sanitary services and security
-								fixtures and features. Because it says includes, the list is not exhaustive.
+							<p className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+								Essential supply or service withheld
+								<div className="ground-choice__info-container">
+									<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+									<div className="ground-choice__info-popup">
+										<span>The Explanation to section 20 states that essential services includes supply of water, electricity, piped cooking gas supply, lights in passages, lifts and on staircase, conservancy, parking, communication links, sanitary services and security fixtures and features. Because it says includes, the list is not exhaustive.</span>
+									</div>
+								</div>
 							</p>
-							<div className="ground-choice-group">
+							<div className="ground-choice-group ground-choice-group--inline">
 								{ESSENTIAL_SERVICES.map((service) => (
 									<label key={service.code} className="ground-choice ground-choice--compact">
 										<input
@@ -537,7 +565,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 								<label className="schedule-other">
 									<span className="label-text required">Describe the other essential service</span>
 									<input
-							required
+										required
 										type="text"
 										value={essentialServiceOther}
 										onChange={(e) => setEssentialServiceOther(e.target.value)}
@@ -563,8 +591,15 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 						onChange={setJurisdictionAccepted}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">3. Facts of the case</span>
-						<span className="field-note">Give here a concise statement of facts in a chronological order, each paragraph containing as nearly as possible a separate issue or fact.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							3. Facts of the case
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Give here a concise statement of facts in a chronological order, each paragraph containing as nearly as possible a separate issue or fact.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} rows={3} />
 					</label>
@@ -582,19 +617,40 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 						onEntriesChange={setPriorProceedings}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">6. Relief sought</span>
-						<span className="field-note">In view of the grounds mentioned in para 4 above, the applicant prays for the following relief(s). Specify below the relief(s) sought explaining the grounds for such relief(s) and the legal provisions, if any, relied upon.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							6. Relief sought
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>In view of the grounds mentioned in para 4 above, the applicant prays for the following relief(s). Specify below the relief(s) sought explaining the grounds for such relief(s) and the legal provisions, if any, relied upon.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text">7. Interim order, if any prayed for</span>
-						<span className="field-note">Pending final decision on the application, the applicant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+						<span className="label-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							7. Interim order, if any prayed for
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Pending final decision on the application, the applicant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+								</div>
+							</div>
+						</span>
 						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text">8. List of enclosures</span>
-						<span className="field-note">Rule 11(1) allows the application to be accompanied by affidavits and documents, if any. Attachments are optional.</span>
+						<span className="label-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							8. List of enclosures
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Rule 11(1) allows the application to be accompanied by affidavits and documents, if any. Attachments are optional.</span>
+								</div>
+							</div>
+						</span>
 						<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
 					</label>
 				</fieldset>

@@ -41,23 +41,27 @@ export const EVICTION_GROUND_CLAUSES = [
 	{
 		value: 'a',
 		citation: 'Section 21(2)(a)',
+		label: 'Refusal to pay revised rent',
 		text: 'that the tenant does not agree to pay the rent payable under section 8;',
 	},
 	{
 		value: 'b',
 		citation: 'Section 21(2)(b)',
+		label: 'Non-payment of arrears of rent',
 		text:
 			'that the tenant has not paid the arrears of rent and other charges payable in full as specified in sub-section (1) of section 13 for two consecutive months, including interest for delayed payment as may be specified in the tenancy agreement within a period of one month from the date of service of notice of demand for payment of such arrears of rent and other charges payable to the landlord in the manner provided in sub-section (4) of section 106 of the Transfer of Property Act, 1882;',
 	},
 	{
 		value: 'c',
 		citation: 'Section 21(2)(c)',
+		label: 'Subletting without consent',
 		text:
 			'that the tenant has, after the commencement of this Act, parted with the possession of whole or any part of the premises without obtaining the written consent of the landlord;',
 	},
 	{
 		value: 'd',
 		citation: 'Section 21(2)(d)',
+		label: 'Misuse of premises',
 		text:
 			'that the tenant has continued to misuse the premises even after receipt of notice from the landlord to desist from such misuse;',
 		explanation:
@@ -66,12 +70,14 @@ export const EVICTION_GROUND_CLAUSES = [
 	{
 		value: 'e',
 		citation: 'Section 21(2)(e)',
+		label: 'Repairs requiring vacant possession',
 		text:
 			'where it is necessary for the landlord to carry out any repair or construction or rebuilding or addition or alteration or demolition in respect of the premises or any part thereof, which is not possible to be carried out without the premises being vacated;',
 	},
 	{
 		value: 'f',
 		citation: 'Section 21(2)(f)',
+		label: 'Redevelopment or change of land use',
 		text:
 			'that the premises or any part thereof is required by the landlord for carrying out any repairs, construction, rebuilding, additions, alterations or demolition, for change of its use as a consequence of change of land use by the competent authority;',
 		explanation:
@@ -80,12 +86,14 @@ export const EVICTION_GROUND_CLAUSES = [
 	{
 		value: 'g',
 		citation: 'Section 21(2)(g)',
+		label: 'Landlord has contracted to sell',
 		text:
 			'that the landlord has given written notice to vacate the premises let out on rent and in consequence of that notice the landlord has contracted to sell the said premises or has taken any other step, as a result of which his interests would seriously suffer if he is not put in possession of that premises;',
 	},
 	{
 		value: 'h',
 		citation: 'Section 21(2)(h)',
+		label: 'Unauthorized structural change',
 		text:
 			'that the tenant has carried out any structural change or erected any permanent structure in the premises let out on rent without the written consent of the landlord.',
 	},

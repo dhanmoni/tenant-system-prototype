@@ -27,10 +27,6 @@ function DeclarationCheckbox({ fieldId, label, checked, onChange, disabled = fal
 				/>
 				<span className="declaration__text">{text}</span>
 			</label>
-			<p className="declaration__note">
-				Ticking this records the declaration above against your name, with the date and time.
-				It is reproduced on the filing exactly as printed in the form.
-			</p>
 		</div>
 	)
 }

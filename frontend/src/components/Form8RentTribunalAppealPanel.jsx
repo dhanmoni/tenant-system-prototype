@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Info } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -363,8 +364,15 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 				<fieldset className="tenancy-fieldset">
 					<legend>A. Name of the Appellant</legend>
 					<label>
-						<span className="label-text required">Name of the Appellant</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Appellant</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							Name of the Appellant
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Add description and the residential address on which the service of notices is to be effected on the Appellant</span>
+								</div>
+							</div>
+						</span>
 						<input
 							type="text"
 							value={appellantName}
@@ -386,8 +394,15 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 				<fieldset className="tenancy-fieldset">
 					<legend>B. Name of the Respondent</legend>
 					<label>
-						<span className="label-text required">Name of the Respondent</span>
-						<span className="field-note">Add description and the residential address on which the service of notices is to be effected on the Respondent(s)</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							Name of the Respondent
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Add description and the residential address on which the service of notices is to be effected on the Respondent(s)</span>
+								</div>
+							</div>
+						</span>
 						<input
 							type="text"
 							value={respondentName}
@@ -430,8 +445,15 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 						onChange={setLimitationAccepted}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">4. Memorandum of Appeal</span>
-						<span className="field-note">Grounds for appeal with legal provisions</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							4. Memorandum of Appeal
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Grounds for appeal with legal provisions</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={memorandumOfAppeal} onChange={(e) => setMemorandumOfAppeal(e.target.value)} rows={3} />
 					</label>
@@ -444,19 +466,40 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 						onEntriesChange={setPriorProceedings}
 					/>
 					<label className="tenancy-field-full">
-						<span className="label-text required">6. Relief sought</span>
-						<span className="field-note">In view of the Memorandum provided in para 4 above, the appellant prays for the following relief(s).</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							6. Relief sought
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>In view of the Memorandum provided in para 4 above, the appellant prays for the following relief(s).</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text">7. Interim order, if any prayed for</span>
-						<span className="field-note">Pending final decision on the appeal, the appellant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+						<span className="label-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							7. Interim order, if any prayed for
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Pending final decision on the appeal, the appellant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
+								</div>
+							</div>
+						</span>
 						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text required">8. List of enclosures</span>
-						<span className="field-note">Rule 13(3) requires the Memorandum to be accompanied by the certified copy of the order of the Rent Court appealed against.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							8. List of enclosures
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>Rule 13(3) requires the Memorandum to be accompanied by the certified copy of the order of the Rent Court appealed against.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							required value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
 					</label>

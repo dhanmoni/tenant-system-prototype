@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Info } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -247,8 +248,15 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 
 				<div className="service-form-fields">
 					<label>
-						<span className="label-text required">7. Existing details of other charges</span>
-						<span className="field-note">such as- charges for Electricity or Power-backup, Water, Maintenance, Security Services, Extra services or equipment etc.</span>
+						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+							7. Existing details of other charges
+							<div className="ground-choice__info-container">
+								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+								<div className="ground-choice__info-popup">
+									<span>such as- charges for Electricity or Power-backup, Water, Maintenance, Security Services, Extra services or equipment etc.</span>
+								</div>
+							</div>
+						</span>
 						<textarea
 							value={existingOtherChargesDetails}
 							onChange={(e) => setExistingOtherChargesDetails(e.target.value)}

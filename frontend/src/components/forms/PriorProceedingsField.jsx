@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react'
 import { declarationBranchText, declarationText } from '../../constants/declarations'
 import { emptyPriorProceeding, PRIOR_STATUS } from '../../constants/priorProceedings'
 
@@ -36,9 +37,14 @@ function PriorProceedingsField({ fieldId, label, hasPrior, onHasPriorChange, ent
 						checked={hasPrior === false}
 						onChange={() => onHasPriorChange(false)}
 					/>
-					<span className="ground-choice__body">
-						<span className="ground-choice__label">I make this declaration</span>
-						<span className="ground-choice__text">{declaration}</span>
+					<span className="ground-choice__body" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+						<span className="ground-choice__label" style={{ marginBottom: 0 }}>I make this declaration</span>
+						<div className="ground-choice__info-container">
+							<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+							<div className="ground-choice__info-popup">
+								<span>{declaration}</span>
+							</div>
+						</div>
 					</span>
 				</label>
 
@@ -52,20 +58,21 @@ function PriorProceedingsField({ fieldId, label, hasPrior, onHasPriorChange, ent
 							if (entries.length === 0) onEntriesChange([emptyPriorProceeding()])
 						}}
 					/>
-					<span className="ground-choice__body">
-						<span className="ground-choice__label">
+					<span className="ground-choice__body" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+						<span className="ground-choice__label" style={{ marginBottom: 0 }}>
 							I have previously filed, or there is pending, such a proceeding
 						</span>
-						<span className="ground-choice__text">{branch}</span>
+						<div className="ground-choice__info-container">
+							<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+							<div className="ground-choice__info-popup">
+								<span>{branch}</span>
+							</div>
+						</div>
 					</span>
 				</label>
 			</div>
 
-			{hasPrior === false ? (
-				<p className="declaration__note">
-					Choosing this records the declaration above against your name, with the date and time.
-				</p>
-			) : null}
+			{hasPrior === false ? null : null}
 
 			{hasPrior === true ? (
 				<div className="prior-proceedings">
@@ -125,10 +132,14 @@ function PriorProceedingsField({ fieldId, label, hasPrior, onHasPriorChange, ent
 								</label>
 							) : (
 								<label className="tenancy-field-full">
-									<span className="label-text required">Decision</span>
-									<span className="field-note">
-										The form requires the decision in a disposed case to be enclosed. It will be
-										added to the list of enclosures at paragraph 8.
+									<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+										Decision
+										<div className="ground-choice__info-container">
+											<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
+											<div className="ground-choice__info-popup">
+												<span>The form requires the decision in a disposed case to be enclosed. It will be added to the list of enclosures at paragraph 8.</span>
+											</div>
+										</div>
 									</span>
 									<textarea
 										value={entry.decision}
