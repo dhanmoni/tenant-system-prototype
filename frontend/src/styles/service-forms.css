@@ -37,14 +37,83 @@
 	width: 2.1rem;
 	height: 2.1rem;
 	border-radius: 8px;
-	background: #eff6ff;
-	color: #1d4ed8;
+	background: #ede9fe;
+	color: #5b21b6;
 }
 
 .service-form-page--rent-authority .sf-section__icon,
 .service-form-panel .service-form-page--rent-authority .sf-section__icon {
 	background: #ede9fe;
 	color: #6d28d9;
+}
+
+.service-form-page--rent-court .sf-section__icon,
+.service-form-panel .service-form-page--rent-court .sf-section__icon {
+	background: #dbeafe;
+	color: #1d4ed8;
+}
+
+/* Rent Court — blue selection chrome (not Rent Authority purple) */
+.service-form-page--rent-court .ground-choice:focus-within,
+.service-form-panel.service-form-page--rent-court .ground-choice:focus-within {
+	border-color: #2563eb;
+}
+
+.service-form-page--rent-court .ground-choice:has(input:checked),
+.service-form-panel.service-form-page--rent-court .ground-choice:has(input:checked) {
+	border-color: #2563eb;
+	background: #eff6ff;
+}
+
+.service-form-page--rent-court .ground-choice input,
+.service-form-panel.service-form-page--rent-court .ground-choice input {
+	accent-color: #2563eb;
+}
+
+.service-form-page--rent-court .ground-choice__info-container,
+.service-form-panel.service-form-page--rent-court .ground-choice__info-container {
+	color: #1d4ed8;
+}
+
+.service-form-page--rent-court .matter-accordion__item.is-selected,
+.service-form-panel.service-form-page--rent-court .matter-accordion__item.is-selected {
+	border-color: #93c5fd;
+	background: #f8fbff;
+}
+
+.service-form-page--rent-court .matter-accordion__header input,
+.service-form-panel.service-form-page--rent-court .matter-accordion__header input {
+	accent-color: #2563eb;
+}
+
+.service-form-page--rent-court.service-form-page--modern .form-i-icon-gutter,
+.service-form-page--rent-court.service-form-page--modern .form-i-field--readonly .form-i-icon-gutter {
+	border-right-color: #93c5fd !important;
+	background: #dbeafe !important;
+	color: #1d4ed8 !important;
+}
+
+.service-form-page--rent-court.service-form-page--modern .form-i-field:focus-within,
+.service-form-page--rent-court.service-form-page--modern .form-i-uin-lookup--center .form-i-uin-field:focus-within {
+	border-color: #2563eb;
+}
+
+.service-form-page--rent-court.service-form-page--modern .form-i-change-uin {
+	border-color: #93c5fd;
+	background: #eff6ff;
+	color: #1d4ed8;
+}
+
+.service-form-page--rent-court.service-form-page--modern .form-i-change-uin:hover {
+	background: #dbeafe;
+}
+
+.service-form-page--rent-court.service-form-page--modern .form-i-uin-lookup button {
+	background: #2563eb !important;
+}
+
+.service-form-page--rent-court.service-form-page--modern .form-i-uin-lookup button:hover:not(:disabled) {
+	background: #1d4ed8 !important;
 }
 
 .service-form-page .sf-section__copy,
@@ -216,7 +285,7 @@
 .service-form-page .sf-field__info:focus,
 .service-form-panel .sf-field__info:hover,
 .service-form-panel .sf-field__info:focus {
-	color: #1d4ed8;
+	color: #5b21b6;
 }
 
 .service-form-page .sf-field-block,
@@ -455,14 +524,14 @@
 }
 
 .service-form-alert--info {
-	border: 1px solid #bfdbfe;
-	background: #eff6ff;
+	border: 1px solid #ddd6fe;
+	background: #ede9fe;
 	color: #1e40af;
 }
 
 /* Tailwind modern Form I shell width + beat global App.css grey inputs / selects */
 .service-form-page--modern {
-	max-width: 64rem;
+	max-width: 80rem;
 }
 
 .service-form-page--modern .form-i-field {
@@ -475,6 +544,256 @@
 	border-radius: 10px;
 	background: #ffffff !important;
 	box-sizing: border-box;
+}
+
+.service-form-page--modern .form-i-field.form-iv-dob-input,
+.service-form-page--modern .form-date-picker.form-iv-dob-input,
+.service-form-page--modern .form-date-picker.form-iv-dob-input .form-date-picker__field {
+	width: 15.5rem;
+	max-width: 100%;
+	flex: 0 0 auto;
+}
+
+.service-form-page--modern .form-i-field.form-iv-relative-name-input {
+	width: 100%;
+	max-width: 100%;
+}
+
+.service-form-page--modern .form-iv-from-uin-tag {
+	display: inline !important;
+	margin-left: 0.3rem;
+	font-size: 0.7rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.01em;
+	text-transform: none !important;
+	color: #16a34a !important;
+}
+
+.service-form-page--modern .form-date-picker {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+}
+
+.service-form-page--modern .form-date-picker__field {
+	width: 100%;
+}
+
+.service-form-page--modern .form-date-picker__trigger {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	min-width: 0;
+	height: 100%;
+	margin: 0;
+	padding: 0 0.9rem;
+	border: 0;
+	background: transparent;
+	color: #151717;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.2;
+	text-align: left;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-date-picker__trigger.is-empty {
+	color: #94a3b8;
+	font-weight: 400;
+}
+
+.service-form-page--modern .form-date-picker__trigger:focus-visible {
+	outline: none;
+}
+
+.service-form-page--modern .form-date-picker__popover {
+	position: absolute;
+	z-index: 40;
+	top: calc(100% + 0.4rem);
+	left: 0;
+	width: 19rem;
+	padding: 0.75rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.service-form-page--modern .form-date-picker__header {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 0.4rem;
+	margin-bottom: 0.65rem;
+}
+
+.service-form-page--modern .form-date-picker__selectors {
+	display: grid;
+	grid-template-columns: 1.35fr 0.9fr;
+	align-items: center;
+	gap: 0.35rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-date-picker__select-wrap {
+	margin: 0;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-date-picker__select {
+	width: 100%;
+	min-height: 1.85rem !important;
+	margin: 0;
+	padding: 0.2rem 1.4rem 0.2rem 0.45rem !important;
+	border: 1px solid #e2e8f0 !important;
+	border-radius: 8px !important;
+	background-color: #f8fafc !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+	background-repeat: no-repeat !important;
+	background-position: right 0.35rem center !important;
+	background-size: 0.7rem !important;
+	box-shadow: none !important;
+	color: #0f172a !important;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1.2;
+	appearance: none;
+	-webkit-appearance: none;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-date-picker__select--month {
+	min-width: 6.4rem;
+}
+
+.service-form-page--modern .form-date-picker__select--year {
+	min-width: 4.4rem;
+}
+
+.service-form-page--modern .form-date-picker__select:focus {
+	outline: none;
+	border-color: #a78bfa;
+	box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.25);
+}
+
+.service-form-page--modern .form-date-picker__title {
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-date-picker__nav {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.85rem;
+	height: 1.85rem;
+	margin: 0;
+	padding: 0;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #f8fafc;
+	color: #475569;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-date-picker__nav:hover {
+	background: #f1f5f9;
+	border-color: #cbd5e1;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-date-picker__weekdays {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 0.15rem;
+	margin-bottom: 0.35rem;
+}
+
+.service-form-page--modern .form-date-picker__weekdays span {
+	text-align: center;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: #94a3b8;
+}
+
+.service-form-page--modern .form-date-picker__grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 0.15rem;
+}
+
+.service-form-page--modern .form-date-picker__day {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	aspect-ratio: 1;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: #0f172a;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-date-picker__day.is-empty {
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.service-form-page--modern .form-date-picker__day:hover:not(:disabled) {
+	background: #f1f5f9;
+}
+
+.service-form-page--modern .form-date-picker__day.is-today:not(.is-selected) {
+	box-shadow: inset 0 0 0 1.5px #cbd5e1;
+}
+
+.service-form-page--modern .form-date-picker__day.is-selected {
+	background: #6d28d9;
+	color: #fff;
+}
+
+.service-form-page--modern .form-date-picker__day:disabled {
+	color: #cbd5e1;
+	cursor: not-allowed;
+}
+
+.service-form-page--modern .form-date-picker__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-top: 0.65rem;
+	padding-top: 0.55rem;
+	border-top: 1px solid #f1f5f9;
+}
+
+.service-form-page--modern .form-date-picker__today,
+.service-form-page--modern .form-date-picker__clear {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #64748b;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-date-picker__today:hover:not(:disabled),
+.service-form-page--modern .form-date-picker__clear:hover {
+	color: #6d28d9;
+}
+
+.service-form-page--modern .form-date-picker__today:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
 }
 
 .service-form-page--modern .form-i-field--readonly {
@@ -494,15 +813,15 @@
 	flex: 0 0 3rem;
 	width: 3rem;
 	align-self: stretch;
-	border-right: 2px solid #c4b5fd;
-	background: #ede9fe !important;
-	color: #8b5cf6;
+	border-right: 1.5px solid #e2e8f0;
+	background: #f8fafc !important;
+	color: #6d28d9;
 }
 
 .service-form-page--modern .form-i-field--readonly .form-i-icon-gutter {
-	background: #ede9fe !important;
-	border-right: 2px solid #c4b5fd;
-	color: #8b5cf6;
+	background: #f1f5f9 !important;
+	border-right: 1.5px solid #e2e8f0;
+	color: #6d28d9;
 }
 
 .service-form-page--modern .form-i-field:focus-within {
@@ -580,10 +899,10 @@
 .service-form-page--modern .form-i-change-uin {
 	margin: 0;
 	padding: 0.35rem 0.65rem;
-	border: 1px solid #c4b5fd;
+	border: 1px solid #cbd5e1;
 	border-radius: 8px;
-	background: #f5f3ff;
-	color: #6d28d9;
+	background: #f8fafc;
+	color: #475569;
 	font-size: 12px;
 	font-weight: 600;
 	line-height: 1.2;
@@ -592,8 +911,9 @@
 }
 
 .service-form-page--modern .form-i-change-uin:hover {
-	background: #ede9fe;
-	border-color: #a78bfa;
+	background: #f1f5f9;
+	border-color: #94a3b8;
+	color: #334155;
 }
 
 .service-form-page--modern .form-i-readonly-value.is-empty {
@@ -617,6 +937,46 @@
 	font-size: 15px !important;
 	appearance: none !important;
 	-webkit-appearance: none !important;
+}
+
+.service-form-page--modern .form-iv-prior__field input:not([type='checkbox']):not([type='radio']):not([type='file']),
+.service-form-page--modern .form-iv-prior__field textarea {
+	min-height: 2.55rem !important;
+	padding: 0.55rem 0.7rem !important;
+	border: 1.5px solid #94a3b8 !important;
+	border-radius: 8px !important;
+	background: #ffffff !important;
+	box-shadow: none !important;
+	font-size: 0.875rem !important;
+	color: #151717 !important;
+}
+
+.service-form-page--modern .form-iv-prior__field textarea {
+	min-height: 4.5rem !important;
+	resize: vertical;
+}
+
+.service-form-page--modern .form-iv-prior__field input:focus,
+.service-form-page--modern .form-iv-prior__field textarea:focus {
+	border-color: #6d28d9 !important;
+	box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12) !important;
+	outline: none !important;
+}
+
+.service-form-page--modern .form-iv-prior__status-option {
+	border: 1.5px solid #94a3b8 !important;
+	background: #ffffff !important;
+	color: #334155 !important;
+}
+
+.service-form-page--modern .form-iv-prior__status-option:hover {
+	border-color: #c4b5fd !important;
+}
+
+.service-form-page--modern .form-iv-prior__status-option.is-selected {
+	border-color: #6d28d9 !important;
+	background: #ede9fe !important;
+	color: #6d28d9 !important;
 }
 
 .service-form-page--modern .form-i-control {
@@ -810,13 +1170,13 @@
 
 .service-form-page .ground-choice:focus-within,
 .service-form-panel .ground-choice:focus-within {
-	border-color: #1d4ed8;
+	border-color: #5b21b6;
 	box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
 }
 
 .service-form-page .ground-choice:has(input:checked),
 .service-form-panel .ground-choice:has(input:checked) {
-	border-color: #1d4ed8;
+	border-color: #5b21b6;
 	background: #f5f8ff;
 }
 
@@ -826,7 +1186,7 @@
 	height: 1.05rem;
 	margin: 0.15rem 0 0;
 	flex: none;
-	accent-color: #1d4ed8;
+	accent-color: #5b21b6;
 }
 
 .service-form-page .ground-choice__body,
@@ -842,7 +1202,7 @@
 	font-size: 0.8125rem;
 	font-weight: 700;
 	letter-spacing: 0.01em;
-	color: #1d4ed8;
+	color: #5b21b6;
 }
 
 .service-form-page .ground-choice__label,
@@ -920,7 +1280,7 @@
 
 .service-form-page .matter-accordion__item.is-selected,
 .service-form-panel .matter-accordion__item.is-selected {
-	border-color: #93c5fd;
+	border-color: #c4b5fd;
 	background: #f8fbff;
 }
 
@@ -949,7 +1309,7 @@
 	width: 1rem;
 	height: 1rem;
 	margin: 0.2rem 0 0;
-	accent-color: #2563eb;
+	accent-color: #6d28d9;
 }
 
 .service-form-page .matter-accordion__copy,
@@ -971,7 +1331,7 @@
 
 .service-form-page .matter-accordion__item.is-selected .matter-accordion__cite,
 .service-form-panel .matter-accordion__item.is-selected .matter-accordion__cite {
-	color: #1d4ed8;
+	color: #5b21b6;
 }
 
 .service-form-page .matter-accordion__title,
@@ -1004,7 +1364,7 @@
 .service-form-panel .matter-accordion__info:hover,
 .service-form-panel .matter-accordion__info:focus,
 .service-form-panel .matter-accordion__info:focus-visible {
-	color: #1d4ed8;
+	color: #5b21b6;
 }
 
 .service-form-page .matter-accordion__info .ground-choice__info-popup,
@@ -1109,7 +1469,7 @@
 	height: 0.95rem;
 	margin: 0.15rem 0 0;
 	flex: none;
-	accent-color: #2563eb;
+	accent-color: #6d28d9;
 }
 
 .service-form-page .matter-accordion__other,
@@ -1153,7 +1513,7 @@
 	margin: 0;
 	padding: 0.9rem 1rem;
 	border: 1px solid #cbd5e1;
-	border-left: 3px solid #1d4ed8;
+	border-left: 3px solid #5b21b6;
 	border-radius: 0 8px 8px 0;
 	background: #fff;
 	cursor: pointer;
@@ -1175,7 +1535,7 @@
 	height: 1.15rem;
 	margin: 0.1rem 0 0;
 	flex: none;
-	accent-color: #1d4ed8;
+	accent-color: #5b21b6;
 }
 
 .service-form-page .declaration__text,
@@ -1676,7 +2036,7 @@
 	margin: 2rem 0 1.4rem;
 	padding: 1.2rem 1.3rem 1.3rem;
 	border: 1px solid #cbd5e1;
-	border-left: 3px solid #1d4ed8;
+	border-left: 3px solid #5b21b6;
 	border-radius: 0 8px 8px 0;
 	background: #fff;
 }
@@ -1737,7 +2097,7 @@
 .service-form-page .clause--embedded .clause__blank:focus,
 .service-form-panel .clause--embedded .clause__blank:focus {
 	outline: none;
-	border-color: #2563eb;
+	border-color: #6d28d9;
 	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 	background: #fff;
 }
@@ -1762,9 +2122,9 @@
 
 .service-form-page .clause--embedded .inline-para-selector__button.has-selection,
 .service-form-panel .clause--embedded .inline-para-selector__button.has-selection {
-	border-color: #93c5fd;
-	background: #eff6ff;
-	color: #1d4ed8;
+	border-color: #c4b5fd;
+	background: #ede9fe;
+	color: #5b21b6;
 }
 
 .service-form-page .clause--embedded .verification__foot,
@@ -1814,7 +2174,7 @@
 .service-form-page .clause--embedded .verification__place input:focus,
 .service-form-panel .clause--embedded .verification__place input:focus {
 	outline: none;
-	border-color: #2563eb;
+	border-color: #6d28d9;
 	background: #fff;
 	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
@@ -1915,7 +2275,7 @@
 	font-size: 0.8125rem;
 	font-weight: 700;
 	letter-spacing: 0.08em;
-	color: #1d4ed8;
+	color: #5b21b6;
 }
 
 /*
@@ -1999,7 +2359,7 @@
 
 .service-form-page .clause .clause__blank:focus,
 .service-form-panel .clause .clause__blank:focus {
-	outline: 2px solid var(--ws-accent, #1d4ed8);
+	outline: 2px solid var(--ws-accent, #5b21b6);
 	outline-offset: 2px;
 	border-bottom-color: transparent;
 	background: #fff;
@@ -2081,8 +2441,8 @@
 
 .inline-para-selector__button.has-selection {
 	border-style: solid;
-	border-color: #1d4ed8;
-	background: #eff6ff;
+	border-color: #5b21b6;
+	background: #ede9fe;
 	color: #1e3a8a;
 }
 
@@ -2149,7 +2509,7 @@
 
 .inline-para-selector__option input[type="checkbox"] {
 	margin-top: 0.15rem;
-	accent-color: #1d4ed8;
+	accent-color: #5b21b6;
 	width: auto;
 	flex-shrink: 0;
 }

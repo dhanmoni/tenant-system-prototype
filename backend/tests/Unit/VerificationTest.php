@@ -198,13 +198,22 @@ class VerificationTest extends TestCase
     }
 
     /**
-     * Paragraphs 2 and 5 are sworn separately under their own wording, and 8 asserts no fact.
-     * Offering them here would have a filer swear the same thing twice, two different ways.
+     * Paragraph 2 is sworn separately under its own wording on every form.
+     * Forms II/III/V/VI also keep paragraph 5 and 8 out of this blank (5 has its own
+     * declaration; 8 is the enclosure list). Form IV offers 5, 7 and 8 here so the
+     * filer can mark those particulars as based on legal advice when they apply.
      */
     public function test_the_separately_sworn_paragraphs_are_not_offered_for_verification(): void
     {
         foreach (self::FORMS as $fieldId) {
             $numbers = array_keys(Verification::paragraphs($fieldId));
+            $this->assertNotContains(2, $numbers, "{$fieldId} must not offer paragraph 2");
+
+            if ($fieldId === Declarations::FORM_IV_VERIFICATION) {
+                $this->assertSame([1, 3, 4, 5, 6, 7, 8], $numbers, "{$fieldId} offers the wrong paragraphs");
+                continue;
+            }
+
             $this->assertSame([1, 3, 4, 6, 7], $numbers, "{$fieldId} offers the wrong paragraphs");
         }
     }

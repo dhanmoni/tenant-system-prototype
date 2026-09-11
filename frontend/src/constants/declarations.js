@@ -148,8 +148,10 @@ export const VERIFICATION_PARAGRAPHS = {
 		1: 'Particulars of violation against which the present application is made',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
+		5: 'Earlier proceedings',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	// Forms V and VI have no "Facts of the case": para 3 is Limitation, para 4 the Memorandum.
 	[VERIFICATION.FORM_V]: {
@@ -249,7 +251,7 @@ export const FORM_IB_UNDERTAKING_TEXT =
 	'I hereby agree to bear the fee of the valuer as determined by the Rent Authority.'
 
 /** As printed. The filer strikes out two on paper; here they pick one. */
-export const FORM_IB_RELATIONS = ['Son', 'Daughter', 'Wife']
+export const FORM_IB_RELATIONS = ['Son', 'Daughter', 'Spouse']
 
 /** "landlord or tenant of premises situated at" - again a pair to strike one of. */
 export const FORM_IB_CAPACITIES = ['landlord', 'tenant']

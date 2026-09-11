@@ -81,7 +81,7 @@ function FormSection({
 								{title}
 							</h3>
 							{badge ? (
-								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#f5f3ff] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
+								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
 									{badge}
 								</span>
 							) : null}
@@ -163,7 +163,7 @@ function ReadOnlyField({
 }
 
 const btnPrimary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#151717] px-5 text-[15px] font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60'
+	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#6d28d9] px-5 text-[15px] font-medium text-white transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60'
 const btnSecondary =
 	'inline-flex h-[50px] items-center justify-center rounded-[10px] border border-[#ededef] bg-white px-5 text-[15px] font-medium text-[#151717] transition hover:border-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-60'
 
@@ -496,8 +496,54 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 								step={2}
 								tone="application"
 								title="Particulars of the application"
-								description="State the other charges you seek to have fixed or revised, and the grounds for this application."
+								description="State the other charges you seek, whether you are applying as landlord or tenant, and upload your signature."
 							>
+								<div className="flex flex-col gap-1.5">
+									<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
+										<span>Applying as</span>
+										<span className="text-red-500">*</span>
+										<span className="text-[12px] font-medium text-slate-500">
+											Landlord or tenant of the premises
+										</span>
+									</div>
+									<div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Applying as">
+										<label
+											className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center gap-2.5 rounded-[10px] border px-3.5 transition ${
+												signedBy === 'landlord'
+													? 'border-[#6d28d9] bg-[#ede9fe]'
+													: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
+											}`}
+										>
+											<input
+												type="radio"
+												name="signed_by_ia"
+												value="landlord"
+												checked={signedBy === 'landlord'}
+												onChange={() => setSignedBy('landlord')}
+												className="h-4 w-4 accent-[#6d28d9]"
+											/>
+											<span className="text-sm font-semibold text-[#151717]">Landlord</span>
+										</label>
+										<label
+											className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center gap-2.5 rounded-[10px] border px-3.5 transition ${
+												signedBy === 'tenant'
+													? 'border-[#6d28d9] bg-[#ede9fe]'
+													: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
+											}`}
+										>
+											<input
+												type="radio"
+												name="signed_by_ia"
+												value="tenant"
+												checked={signedBy === 'tenant'}
+												onChange={() => setSignedBy('tenant')}
+												className="h-4 w-4 accent-[#6d28d9]"
+											/>
+											<span className="text-sm font-semibold text-[#151717]">Tenant</span>
+										</label>
+									</div>
+								</div>
+
 								<Field
 									label="Document No. of tenancy agreement registered before the Sub-Registrar (if any)"
 									optional
@@ -540,65 +586,6 @@ export default function FormIARentRevisionPanel({ onBack, serviceMeta, user }) {
 										/>
 									</InputShell>
 								</Field>
-							</FormSection>
-
-							<FormSection
-								step={3}
-								tone="signature"
-								title="Signature of the applicant"
-								description="Confirm whether you are filing as landlord or tenant, and upload a clear image of your signature."
-							>
-								<div className="flex flex-col gap-2">
-									<div className="flex flex-row flex-wrap items-center gap-x-1.5 text-[15px] font-semibold text-[#151717]">
-										<span>I am signing as</span>
-										<span className="text-red-500">*</span>
-									</div>
-									<div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Signed by">
-										<label
-											className={`!flex !flex-row cursor-pointer items-center gap-3 rounded-[10px] border-2 px-4 py-3.5 transition ${
-												signedBy === 'landlord'
-													? 'border-[#6d28d9] bg-[#ede9fe]'
-													: 'border-[#94a3b8] bg-white hover:border-[#c4b5fd]'
-											}`}
-										>
-											<input
-												type="radio"
-												name="signed_by_ia"
-												value="landlord"
-												checked={signedBy === 'landlord'}
-												onChange={() => setSignedBy('landlord')}
-												className="h-4 w-4 accent-[#6d28d9]"
-											/>
-											<span className="text-base font-semibold text-[#151717]">Landlord</span>
-										</label>
-										<label
-											className={`!flex !flex-row cursor-pointer items-center gap-3 rounded-[10px] border-2 px-4 py-3.5 transition ${
-												signedBy === 'tenant'
-													? 'border-[#6d28d9] bg-[#ede9fe]'
-													: 'border-[#94a3b8] bg-white hover:border-[#c4b5fd]'
-											}`}
-										>
-											<input
-												type="radio"
-												name="signed_by_ia"
-												value="tenant"
-												checked={signedBy === 'tenant'}
-												onChange={() => setSignedBy('tenant')}
-												className="h-4 w-4 accent-[#6d28d9]"
-											/>
-											<span className="text-base font-semibold text-[#151717]">Tenant</span>
-										</label>
-									</div>
-									{signatureNamePreview ? (
-										<p className="m-0 text-sm leading-relaxed text-slate-600">
-											Signature will be recorded in the name of{' '}
-											<span className="text-lg font-bold text-[#151717] underline decoration-2 underline-offset-[3px]">
-												{signatureNamePreview}
-											</span>{' '}
-											from the tenancy record.
-										</p>
-									) : null}
-								</div>
 
 								<Field
 									label="Signature image"

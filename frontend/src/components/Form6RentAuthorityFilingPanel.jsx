@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, Children, cloneElement, isValidElement } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, Check, CheckCircle2, IdCard, Info, MapPin, Upload, User } from 'lucide-react'
+import { ArrowLeft, Building2, Check, IdCard, Info, MapPin, Scale, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormIVLegalDocument from './forms/FormIVLegalDocument'
+import FormDatePicker from './forms/FormDatePicker'
 import PriorProceedingsField from './forms/PriorProceedingsField'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
-import { ageOn, formatLongDate, profileDefaults, toDateInputValue } from '../utils/profileAutofill'
+import { ageOn, profileDefaults, toDateInputValue } from '../utils/profileAutofill'
 import { APPLICATION_TYPES } from '../constants/application'
 import { PRIOR_STATUS } from '../constants/priorProceedings'
 import {
@@ -51,8 +52,8 @@ function dobInputMax() {
 
 function FormCard({ title, description, badge, children }) {
 	return (
-		<section className="overflow-hidden rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-			<div className="border-b border-[#ddd6fe] bg-[#ede9fe] px-[30px] py-5 text-center">
+		<section className="rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+			<div className="overflow-hidden rounded-t-[20px] border-b border-[#ddd6fe] bg-[#ede9fe] px-[30px] py-5 text-center">
 				{badge ? (
 					<span className="mb-2 inline-flex rounded-md bg-white/70 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#6d28d9]">
 						{badge}
@@ -77,6 +78,47 @@ const sectionToneClass = {
 	default: '',
 }
 
+function FormTopBar({ onBack, disabled = false }) {
+	return (
+		<div className="form-iv-topbar">
+			<button
+				type="button"
+				onClick={onBack}
+				disabled={disabled}
+				className="form-iv-back-btn"
+			>
+				<ArrowLeft size={18} strokeWidth={2.25} aria-hidden />
+				Back
+			</button>
+		</div>
+	)
+}
+
+function injectControlA11y(children, a11y) {
+	return Children.map(children, (child) => {
+		if (!isValidElement(child)) return child
+		const type = child.type
+		const isControl =
+			type === 'input' || type === 'textarea' || type === 'select'
+		if (isControl) {
+			const describedBy = [child.props['aria-describedby'], a11y.describedBy]
+				.filter(Boolean)
+				.join(' ')
+			return cloneElement(child, {
+				id: child.props.id || a11y.id,
+				'aria-invalid': a11y.invalid || child.props['aria-invalid'] || undefined,
+				'aria-describedby': describedBy || undefined,
+			})
+		}
+		if (child.props?.children != null) {
+			return cloneElement(child, {
+				children: injectControlA11y(child.props.children, a11y),
+			})
+		}
+		return child
+	})
+}
+
 function FormSection({
 	step,
 	title,
@@ -84,11 +126,13 @@ function FormSection({
 	description,
 	descriptionClassName = 'mt-1 mb-0 text-sm leading-relaxed text-slate-500',
 	tone = 'default',
+	contentClassName = 'flex flex-col gap-3.5',
 	children,
 }) {
 	const toneClass = sectionToneClass[tone] || sectionToneClass.default
+	const sectionId = step ? `form-iv-section-${step}` : undefined
 	return (
-		<div className={toneClass || undefined}>
+		<div className={toneClass || undefined} id={sectionId}>
 			<div className="mb-3.5">
 				<div className="flex items-start gap-3">
 					{step ? (
@@ -106,7 +150,7 @@ function FormSection({
 								{title}
 							</h3>
 							{badge ? (
-								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#f5f3ff] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
+								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
 									{badge}
 								</span>
 							) : null}
@@ -115,57 +159,109 @@ function FormSection({
 					</div>
 				</div>
 			</div>
-			<div className="flex flex-col gap-3.5">{children}</div>
+			<div className={contentClassName}>{children}</div>
 		</div>
 	)
 }
 
-function Field({ label, hint, required = false, optional = false, para = null, hintInline = false, children }) {
+function Field({
+	id,
+	label,
+	hint,
+	error = '',
+	required = false,
+	optional = false,
+	para = null,
+	hintInline = false,
+	children,
+}) {
 	const isDetail = para != null
+	const hintId = id && hint ? `${id}-hint` : undefined
+	const errorId = id && error ? `${id}-error` : undefined
+	const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined
+	const controlChildren = id
+		? injectControlA11y(children, {
+				id,
+				describedBy,
+				invalid: Boolean(error) || undefined,
+			})
+		: children
+
 	return (
 		<div
 			className={
 				isDetail
-					? 'form-iv-field flex min-w-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5'
+					? 'form-iv-field form-iv-detail-item flex min-w-0 flex-col'
 					: 'form-iv-field flex min-w-0 flex-col gap-1.5'
 			}
+			id={id ? `${id}-group` : undefined}
 		>
 			<div className={`flex min-w-0 ${hintInline || !hint ? '' : 'flex-col gap-1'}`}>
 				<div className="flex flex-row flex-wrap items-center gap-x-2 gap-y-1 text-[14px] font-semibold text-[#151717]">
 					{para != null ? (
 						<span
-							className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-[#ede9fe] px-1.5 text-[13px] font-bold text-[#6d28d9]"
+							className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-1.5 text-[12px] font-bold text-[#6d28d9]"
 							aria-hidden
 						>
 							{para}
 						</span>
 					) : null}
-					<span className={isDetail ? 'text-[15px] font-semibold text-slate-900' : undefined}>{label}</span>
-					{required ? <span className="text-red-500">*</span> : null}
+					{id ? (
+						<label
+							htmlFor={id}
+							className={`m-0 cursor-pointer ${isDetail ? 'text-[14px] font-semibold text-slate-900' : ''}`}
+						>
+							{label}
+						</label>
+					) : (
+						<span className={isDetail ? 'text-[14px] font-semibold text-slate-900' : undefined}>
+							{label}
+						</span>
+					)}
+					{required ? (
+						<span className="text-red-500" aria-hidden>
+							*
+						</span>
+					) : null}
+					{required ? <span className="sr-only">(required)</span> : null}
 					{optional ? (
 						<span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
 							Optional
 						</span>
 					) : null}
 					{hint && hintInline ? (
-						<span className="text-[12px] font-medium text-slate-500">{hint}</span>
+						<span id={hintId} className="text-[12px] font-medium text-slate-500">
+							{hint}
+						</span>
 					) : null}
 				</div>
 				{hint && !hintInline ? (
-					<p className={`m-0 text-[12px] leading-relaxed text-slate-500${isDetail ? ' sm:pl-9' : ''}`}>
+					<p
+						id={hintId}
+						className={`m-0 text-[12px] leading-relaxed text-slate-500${isDetail ? ' sm:pl-8' : ''}`}
+					>
 						{hint}
 					</p>
 				) : null}
 			</div>
-			<div className={isDetail ? 'sm:pl-9' : undefined}>{children}</div>
+			<div className={isDetail ? 'min-w-0 sm:pl-8' : undefined}>{controlChildren}</div>
+			{error ? (
+				<p
+					id={errorId}
+					className={`m-0 text-[12px] font-medium leading-snug text-red-600${isDetail ? ' sm:pl-8' : ''}`}
+					role="alert"
+				>
+					{error}
+				</p>
+			) : null}
 		</div>
 	)
 }
 
-function FormTick({ checked }) {
+function FormTick({ checked, className = 'mt-0.5' }) {
 	return (
 		<span
-			className={`mt-0.5 inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition ${
+			className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition ${className} ${
 				checked
 					? 'border-[#6d28d9] bg-[#6d28d9] text-white'
 					: 'border-slate-400 bg-white text-transparent'
@@ -198,35 +294,43 @@ const FORM_IV_PART_SHORT = {
 	1: 'Particulars of the violation',
 	3: 'Facts of the case',
 	4: 'Grounds for relief',
+	5: 'Earlier proceedings',
 	6: 'Relief sought',
 	7: 'Interim order sought',
+	8: 'List of enclosures',
 }
 
 function partLabel(option) {
 	return FORM_IV_PART_SHORT[option.number] || option.heading || `Part ${option.number}`
 }
 
-function LegalAdvicePartPicker({ options, selectedNumbers, onToggle }) {
+function LegalAdvicePartPicker({ options, selectedNumbers, onToggle, error = '' }) {
+	const errorId = error ? 'form-iv-legal-advice-error' : undefined
 	return (
-		<div
-			className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5"
-			role="group"
-			aria-label="Parts based on legal advice"
+		<fieldset
+			className="form-iv-detail-item form-iv-legal-advice form-iv-optional-gate m-0 flex min-w-0 flex-col border-0"
+			id="form-iv-legal-advice-group"
 		>
-			<div className="min-w-0">
-				<p className="m-0 flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#6d28d9]">
+			<legend className="m-0 w-full min-w-0 px-0">
+				<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#6d28d9]">
+					<span
+						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] text-[#6d28d9]"
+						aria-hidden
+					>
+						<Scale size={15} strokeWidth={2.25} />
+					</span>
 					Based on legal advice
-					<span className="rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#6d28d9]">
+					<span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
 						Optional
 					</span>
-				</p>
-				<p className="mt-1 mb-0 text-[12px] leading-relaxed text-slate-500">
-					By default, all particulars above are treated as based on your own knowledge. Tick only
-					those that are based on legal advice.
-				</p>
-			</div>
+				</span>
+			</legend>
+			<p className="mt-0 mb-0 text-[12px] leading-relaxed text-slate-500 sm:pl-9">
+				By default, all particulars above are treated as based on your own knowledge. Tick only those
+				that are based on legal advice.
+			</p>
 
-			<ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+			<ul className="m-0 flex list-none flex-col gap-1.5 p-0 sm:pl-9" aria-describedby={errorId}>
 				{options.map((option) => {
 					const selected = selectedNumbers.includes(option.number)
 					const label = partLabel(option)
@@ -235,8 +339,9 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle }) {
 						<li key={option.number} className="min-w-0">
 							<label
 								htmlFor={inputId}
-								className="!m-0 !flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-2.5 hover:border-slate-300"
+								className="!m-0 !flex cursor-pointer items-center gap-2.5"
 							>
+								<FormTick checked={selected} className="mt-0" />
 								<input
 									id={inputId}
 									type="checkbox"
@@ -244,8 +349,7 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle }) {
 									checked={selected}
 									onChange={() => onToggle(option.number)}
 								/>
-								<FormTick checked={selected} />
-								<span className="min-w-0 text-sm font-medium text-slate-800">
+								<span className="min-w-0 text-[14px] font-medium leading-snug text-slate-800">
 									{label} ({option.number})
 								</span>
 							</label>
@@ -253,26 +357,52 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle }) {
 					)
 				})}
 			</ul>
-		</div>
+			{error ? (
+				<p id={errorId} className="m-0 text-[12px] font-medium text-red-600 sm:pl-9" role="alert">
+					{error}
+				</p>
+			) : null}
+		</fieldset>
 	)
 }
 
-function ReadOnlyField({ label, value, empty = '—', icon: Icon, variant = 'default', action = null, multiline = false }) {
+function ReadOnlyField({
+	label,
+	value,
+	empty = '—',
+	icon: Icon,
+	variant = 'default',
+	action = null,
+	multiline = false,
+	fromUin = false,
+}) {
 	const text = String(value ?? '').trim()
 	const display = text || empty
 	const hasValue = Boolean(text)
 	const isUin = variant === 'uin'
 
 	return (
-		<div className="flex min-w-0 flex-col gap-1.5">
-			<span className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+		<div className={`flex min-w-0 flex-col gap-1.5${isUin ? ' form-iv-readonly--uin' : ''}`}>
+			<span
+				className={`text-[13px] font-semibold uppercase tracking-wide ${
+					isUin || fromUin ? 'text-[#0f172a]' : 'text-slate-500'
+				}`}
+			>
+				{label}
+				{fromUin ? (
+					<span className="form-iv-from-uin-tag !normal-case !text-[#16a34a]" title="Filled from the loaded tenancy UIN">
+						{' '}
+						(from UIN)
+					</span>
+				) : null}
+			</span>
 			<div
 				className={`form-i-field form-i-field--readonly ${multiline ? 'form-i-field--multiline' : ''} ${
 					action ? 'form-i-field--with-action' : ''
-				}`}
+				}${isUin ? ' form-iv-uin-field' : ''}`}
 			>
 				{Icon ? (
-					<span className="form-i-icon-gutter" aria-hidden>
+					<span className={`form-i-icon-gutter${isUin ? ' form-iv-uin-field__icon' : ''}`} aria-hidden>
 						<Icon size={18} strokeWidth={2} />
 					</span>
 				) : null}
@@ -290,9 +420,7 @@ function ReadOnlyField({ label, value, empty = '—', icon: Icon, variant = 'def
 }
 
 const btnPrimary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#151717] px-5 text-[15px] font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60'
-const btnSecondary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border border-[#ededef] bg-white px-5 text-[15px] font-medium text-[#151717] transition hover:border-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-60'
+	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#6d28d9] px-5 text-[15px] font-medium text-white transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60'
 
 /** Split into two columns so numbering reads down the left column, then the right. */
 function splitIntoColumns(items) {
@@ -347,6 +475,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 	const { showToast } = useToast()
 	const [submitting, setSubmitting] = useState(false)
 	const [error, setError] = useState('')
+	const [fieldErrors, setFieldErrors] = useState({})
 
 	const reportError = useCallback(
 		(message) => {
@@ -357,6 +486,33 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		},
 		[showToast]
 	)
+
+	const focusFormControl = useCallback((fieldId) => {
+		if (!fieldId) return
+		window.requestAnimationFrame(() => {
+			const control =
+				document.getElementById(fieldId) ||
+				document.querySelector(`#${fieldId}-group input, #${fieldId}-group textarea, #${fieldId}-group button`)
+			const group = document.getElementById(`${fieldId}-group`)
+			;(control || group)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+			if (control && typeof control.focus === 'function') {
+				try {
+					control.focus({ preventScroll: true })
+				} catch {
+					control.focus()
+				}
+			}
+		})
+	}, [])
+
+	const clearFieldError = useCallback((fieldId) => {
+		setFieldErrors((current) => {
+			if (!current[fieldId]) return current
+			const next = { ...current }
+			delete next[fieldId]
+			return next
+		})
+	}, [])
 
 	const [tenancyUIN, setTenancyUIN] = useState('')
 	const profile = useMemo(() => profileDefaults(user), [user])
@@ -380,9 +536,6 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 	const [reliefSought, setReliefSought] = useState('')
 	const [interimOrderSought, setInterimOrderSought] = useState('')
 	const [listOfEnclosures, setListOfEnclosures] = useState('')
-	const [needInterimOrder, setNeedInterimOrder] = useState(false)
-	const [needEnclosures, setNeedEnclosures] = useState(false)
-
 	const [signatureImage, setSignatureImage] = useState(null)
 	const [recordLoaded, setRecordLoaded] = useState(false)
 	const [authorityLine1, setAuthorityLine1] = useState('')
@@ -390,7 +543,6 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 	const [tenancyDistrict, setTenancyDistrict] = useState('')
 	const [tenancyOffice, setTenancyOffice] = useState('')
 	const [verificationDob, setVerificationDob] = useState(() => toDateInputValue(profile.dateOfBirth))
-	const [dobEditing, setDobEditing] = useState(() => !toDateInputValue(profile.dateOfBirth))
 	const [verificationUndertakingAccepted, setVerificationUndertakingAccepted] = useState(false)
 	const matterFollowUpRef = useRef(null)
 
@@ -398,13 +550,12 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		name: profile.name,
 		relation: 'S/o.',
 		relativeName: '',
-		age: profile.age,
+		age: ageOn(toDateInputValue(profile.dateOfBirth)) || profile.age || '',
 		address: profile.address,
 		place: '',
 		paragraphs: {},
 	})
 
-	const dobDisplay = useMemo(() => formatLongDate(verificationDob), [verificationDob])
 	const ageFromDob = useMemo(() => ageOn(verificationDob), [verificationDob])
 
 	const applyDob = useCallback((nextDob) => {
@@ -412,7 +563,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		setVerificationDob(normalised)
 		setVerification((current) => ({
 			...current,
-			age: ageOn(normalised),
+			age: ageOn(normalised) || '',
 		}))
 		return normalised
 	}, [])
@@ -461,20 +612,16 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		}
 	}, [])
 
-	const turnOffInterimOrder = useCallback(() => {
-		setNeedInterimOrder(false)
-		setInterimOrderSought('')
-		setVerification((current) => {
-			if (current.paragraphs?.[7] == null) return current
-			const next = { ...current.paragraphs }
-			delete next[7]
-			return { ...current, paragraphs: next }
-		})
-	}, [])
-
-	const turnOffEnclosures = useCallback(() => {
-		setNeedEnclosures(false)
-		setListOfEnclosures('')
+	const setListOfEnclosuresValue = useCallback((value) => {
+		setListOfEnclosures(value)
+		if (!String(value || '').trim()) {
+			setVerification((current) => {
+				if (current.paragraphs?.[8] == null) return current
+				const next = { ...current.paragraphs }
+				delete next[8]
+				return { ...current, paragraphs: next }
+			})
+		}
 	}, [])
 
 	const verificationParaOptions = useMemo(
@@ -486,11 +633,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		[]
 	)
 
-	const requiredVerificationParas = useMemo(
-		() =>
-			verificationParaOptions.filter((option) => option.number !== 7 || needInterimOrder),
-		[verificationParaOptions, needInterimOrder]
-	)
+	const requiredVerificationParas = verificationParaOptions
 
 	/** Unmarked paras default to personal knowledge; only legal-advice taps are stored. */
 	const resolvedVerificationParagraphs = useMemo(() => {
@@ -535,22 +678,19 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		setOppositePartyResidentialAddress('')
 		setSignatureImage(null)
 		setVerificationUndertakingAccepted(false)
-		setNeedInterimOrder(false)
-		setNeedEnclosures(false)
 		setInterimOrderSought('')
 		setListOfEnclosures('')
+		const profileDob = toDateInputValue(profile.dateOfBirth)
+		setVerificationDob(profileDob)
 		setVerification({
 			name: profile.name,
 			relation: 'S/o.',
 			relativeName: '',
-			age: profile.age,
+			age: ageOn(profileDob) || profile.age || '',
 			address: profile.address,
 			place: '',
 			paragraphs: {},
 		})
-		const profileDob = toDateInputValue(profile.dateOfBirth)
-		setVerificationDob(profileDob)
-		setDobEditing(!profileDob)
 		setAuthorityLine1('')
 		setAuthorityLine2('')
 		setTenancyDistrict('')
@@ -597,19 +737,28 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 	const otherServiceChosen = isServices && essentialServices.includes(SERVICE_OTHER)
 
 	const toggleRepairItem = useCallback((code) => {
+		clearFieldError('form-iv-matter')
 		setRepairItems((current) =>
 			current.includes(code) ? current.filter((c) => c !== code) : [...current, code]
 		)
-	}, [])
+	}, [clearFieldError])
 
 	const toggleService = useCallback((code) => {
+		clearFieldError('form-iv-matter')
 		setEssentialServices((current) =>
 			current.includes(code) ? current.filter((c) => c !== code) : [...current, code]
 		)
-	}, [])
+	}, [clearFieldError])
 
 	const selectMatter = useCallback((value) => {
 		setStatutoryMatter(value)
+		setFieldErrors((current) => {
+			if (!current['form-iv-matter'] && !current['form-iv-service-other']) return current
+			const next = { ...current }
+			delete next['form-iv-matter']
+			delete next['form-iv-service-other']
+			return next
+		})
 		if (value !== RA_MATTER.SECTION_15) setRepairItems([])
 		if (value !== RA_MATTER.SECTION_20) {
 			setEssentialServices([])
@@ -627,37 +776,59 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 
 	const submit = useCallback(async () => {
 		setError('')
+		const nextErrors = {}
+		const fail = (fieldId, message) => {
+			if (!nextErrors[fieldId]) nextErrors[fieldId] = message
+		}
+
 		if (!recordLoaded) {
 			reportError('Enter your Tenancy UIN and load the tenancy record before submitting Form IV.')
 			return false
 		}
 		if (!applicantName.trim() || !applicantResidentialAddress.trim()) {
-			reportError('Applicant name and address are required.')
-			return false
+			fail('form-iv-applicant', 'Applicant name and address are required.')
 		}
 		if (!oppositePartyName.trim() || !oppositePartyResidentialAddress.trim()) {
-			reportError('Opposite party name and address are required.')
-			return false
+			fail('form-iv-opposite', 'Opposite party name and address are required.')
+		}
+		if (!verification.relativeName.trim()) {
+			fail('form-iv-relative-name', 'Enter the father / mother / spouse name.')
+		}
+		if (!verification.relation) {
+			fail('form-iv-relation', 'Select the relation.')
+		}
+		if (!verificationDob || !String(verification.age || ageFromDob || '').trim()) {
+			fail(
+				'form-iv-dob',
+				'Enter the applicant’s date of birth so age can be calculated.'
+			)
+		}
+		if (isRepairs && repairItems.length === 0) {
+			fail('form-iv-matter', 'Select the Second Schedule item or items in dispute.')
+		}
+		if (isServices && essentialServices.length === 0) {
+			fail('form-iv-matter', 'Select the essential supply or service that has been withheld.')
+		}
+		if (otherServiceChosen && !essentialServiceOther.trim()) {
+			fail('form-iv-service-other', 'Describe the other essential service that has been withheld.')
 		}
 		if (!particularsOfViolation.trim()) {
-			reportError('Enter the particulars of the violation.')
-			return false
+			fail('form-iv-particulars', 'Enter the particulars of the violation.')
 		}
 		if (!jurisdictionAccepted) {
-			reportError('Confirm that the matter falls within the jurisdiction of this Rent Authority.')
-			return false
+			fail(
+				'form-iv-jurisdiction',
+				'Confirm that the matter falls within the jurisdiction of this Rent Authority.'
+			)
 		}
 		if (!factsOfCase.trim()) {
-			reportError('Enter the facts of the case.')
-			return false
+			fail('form-iv-facts', 'Enter the facts of the case.')
 		}
 		if (!groundsForRelief.trim()) {
-			reportError('Enter the grounds for relief.')
-			return false
+			fail('form-iv-grounds', 'Enter the grounds for relief.')
 		}
 		if (hasPriorProceedings === null) {
-			reportError('State whether you have previously filed regarding this matter.')
-			return false
+			fail('form-iv-prior', 'State whether you have previously filed regarding this matter.')
 		}
 		if (hasPriorProceedings) {
 			const incomplete = priorProceedings.some(
@@ -669,47 +840,23 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 						: !entry.decision.trim())
 			)
 			if (priorProceedings.length === 0 || incomplete) {
-				reportError(
+				fail(
+					'form-iv-prior',
 					'Give the case number, the court or authority, and the pendency or decision for every earlier case disclosed.'
 				)
-				return false
 			}
 		}
 		if (!reliefSought.trim()) {
-			reportError('Enter the relief sought.')
-			return false
-		}
-		if (needInterimOrder && !interimOrderSought.trim()) {
-			reportError('Enter the interim order sought, or turn off “I need an interim order”.')
-			return false
-		}
-		if (needEnclosures && !listOfEnclosures.trim()) {
-			reportError('List the enclosures, or turn off “I am attaching documents”.')
-			return false
-		}
-		if (isRepairs && repairItems.length === 0) {
-			reportError('Select the Second Schedule item or items in dispute.')
-			return false
-		}
-		if (isServices && essentialServices.length === 0) {
-			reportError('Select the essential supply or service that has been withheld.')
-			return false
-		}
-		if (otherServiceChosen && !essentialServiceOther.trim()) {
-			reportError('Describe the other essential service that has been withheld.')
-			return false
+			fail('form-iv-relief', 'Enter the relief sought.')
 		}
 		if (!verifierName || !verification.relativeName.trim() || !verifierAddress) {
-			reportError('Complete the verification particulars (name, relation target and address).')
-			return false
-		}
-		if (!String(verification.age || ageFromDob || '').trim()) {
-			reportError('Age is missing. Edit age under Application particulars, or add date of birth in your profile.')
-			return false
+			fail('form-iv-relative-name', 'Complete the verification particulars (name, relation target and address).')
 		}
 		if (!verification.place.trim()) {
-			reportError('This UIN has no district on record. Place of filing cannot be set automatically.')
-			return false
+			fail(
+				'form-iv-applicant',
+				'This UIN has no district on record. Place of filing cannot be set automatically.'
+			)
 		}
 		const allOnLegalAdvice =
 			requiredVerificationParas.length > 0 &&
@@ -718,17 +865,27 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 					resolvedVerificationParagraphs[option.number] === PARA_ANSWER.LEGAL_ADVICE
 			)
 		if (allOnLegalAdvice) {
-			reportError(
+			fail(
+				'form-iv-legal-advice',
 				'At least one part of the application must remain based on your own knowledge. Leave at least one item unticked under Based on legal advice.'
 			)
-			return false
 		}
 		if (!verificationUndertakingAccepted) {
-			reportError('Accept the verification undertaking before filing.')
-			return false
+			fail('form-iv-undertaking', 'Accept the verification undertaking before filing.')
 		}
 		if (!effectiveSignatureName) {
-			reportError('Enter the name against the signature.')
+			fail('form-iv-undertaking', 'Enter the name against the signature.')
+		}
+		if (!signatureImage) {
+			fail('form-iv-signature', 'Upload your signature image.')
+		}
+
+		const errorKeys = Object.keys(nextErrors)
+		setFieldErrors(nextErrors)
+		if (errorKeys.length > 0) {
+			const firstId = errorKeys[0]
+			reportError(nextErrors[firstId])
+			focusFormControl(firstId)
 			return false
 		}
 
@@ -774,10 +931,10 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				})
 			}
 			formData.append('relief_sought', reliefSought.trim())
-			if (needInterimOrder && interimOrderSought.trim()) {
+			if (interimOrderSought.trim()) {
 				formData.append('interim_order_sought', interimOrderSought.trim())
 			}
-			if (needEnclosures && listOfEnclosures.trim()) {
+			if (listOfEnclosures.trim()) {
 				formData.append('list_of_enclosures', listOfEnclosures.trim())
 			}
 
@@ -815,8 +972,6 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		jurisdictionAccepted,
 		listOfEnclosures,
 		mutation,
-		needEnclosures,
-		needInterimOrder,
 		oppositePartyName,
 		oppositePartyResidentialAddress,
 		otherServiceChosen,
@@ -826,6 +981,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		reliefSought,
 		repairItems,
 		reportError,
+		focusFormControl,
 		resolvedVerificationParagraphs,
 		requiredVerificationParas,
 		signatureImage,
@@ -837,6 +993,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		verifierAddress,
 		verifierName,
 		ageFromDob,
+		verificationDob,
 	])
 
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
@@ -867,10 +1024,12 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		setTenancyDistrict(districtName)
 		setTenancyOffice(officeName)
 		const profileDob = toDateInputValue(profile.dateOfBirth || user?.date_of_birth)
-		const ageFromProfile = String(profile.age || ageOn(profileDob) || '').trim()
+		const nextDob = verificationDob || profileDob
+		if (!verificationDob && profileDob) {
+			setVerificationDob(profileDob)
+		}
 		setVerification((current) => {
-			const nextDob = verificationDob || profileDob
-			const nextAge = String(current.age || ageOn(nextDob) || ageFromProfile || '').trim()
+			const nextAge = String(ageOn(nextDob) || current.age || profile.age || '').trim()
 			return {
 				...current,
 				name: selfName || current.name || profile.name,
@@ -880,13 +1039,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				paragraphs: {},
 			}
 		})
-		if (!verificationDob && profileDob) {
-			setVerificationDob(profileDob)
-		}
-		setDobEditing(!(verificationDob || profileDob))
 		setVerificationUndertakingAccepted(false)
-		setNeedInterimOrder(false)
-		setNeedEnclosures(false)
 		setInterimOrderSought('')
 		setListOfEnclosures('')
 		setRecordLoaded(true)
@@ -914,6 +1067,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 			<form className="flex flex-col gap-4" onSubmit={requestPreview}>
 				{!recordLoaded ? (
 					<>
+						<FormTopBar onBack={onBack} />
 						<FormCard title={formTitle} description={formLead} badge={formBadge}>
 							<FormSection
 								step={1}
@@ -936,20 +1090,16 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 								/>
 							</FormSection>
 						</FormCard>
-						<div className="flex justify-start pt-1">
-							<button type="button" onClick={onBack} className={btnSecondary}>
-								Back
-							</button>
-						</div>
 					</>
 				) : (
 					<>
+						<FormTopBar onBack={onBack} disabled={submitting} />
 						<FormCard title={formTitle} description={formLead} badge={formBadge}>
+							<div className="form-iv-main">
 							<FormSection
 								step={1}
 								tone="record"
-								title="Application particulars"
-								badge="From UIN"
+								title="Applicant details"
 								description="Parties and district come from your UIN. Age is calculated from your profile date of birth."
 							>
 								<ReadOnlyField
@@ -971,184 +1121,179 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 									}
 								/>
 								<div className="grid gap-3 sm:grid-cols-2">
-									<ReadOnlyField label="A. Applicant name" value={applicantName} icon={User} />
-									<ReadOnlyField label="B. Opposite party name" value={oppositePartyName} icon={User} />
+									<ReadOnlyField label="A. Applicant name" value={applicantName} icon={User} fromUin />
+									<ReadOnlyField label="B. Opposite party name" value={oppositePartyName} icon={User} fromUin />
 									<ReadOnlyField
 										label="Applicant residential address"
 										value={applicantResidentialAddress}
 										icon={MapPin}
 										multiline
+										fromUin
 									/>
 									<ReadOnlyField
 										label="Opposite party residential address"
 										value={oppositePartyResidentialAddress}
 										icon={MapPin}
 										multiline
+										fromUin
 									/>
 									<ReadOnlyField
 										label="District / place of filing"
 										value={tenancyDistrict || verification.place}
 										icon={MapPin}
 										empty="Not on record"
+										fromUin
 									/>
 									<ReadOnlyField
 										label="Rent Authority office"
 										value={tenancyOffice}
+										icon={Building2}
 										empty="Not on record"
+										fromUin
 									/>
 								</div>
 
 								<div className="form-iv-applicant-extras">
-									<Field
-										label="Father / mother / spouse"
-										required
-										hintInline
-										hint="Person you are Son, Daughter or Spouse of"
-									>
-										<InputShell icon={User}>
-											<input
-												type="text"
-												value={verification.relativeName}
-												onChange={(e) => setVerificationField('relativeName', e.target.value)}
-												required
-												placeholder="Full name"
-												className={inputClass}
-											/>
-										</InputShell>
-									</Field>
-
-									<Field
-										label="Relation"
-										required
-										hintInline
-										hint="Son, Daughter or Spouse of the person named above"
-									>
-										<div
-											className="form-iv-relation-field__options"
-											role="radiogroup"
-											aria-label="Relation"
-										>
-											{VERIFICATION_RELATION_OPTIONS.map((option) => {
-												const selected = verification.relation === option.value
-												return (
-													<label
-														key={option.value}
-														className={`form-iv-relation-option${selected ? ' is-selected' : ''}`}
-													>
-														<input
-															type="radio"
-															name="verification_relation_iv"
-															value={option.value}
-															checked={selected}
-															onChange={() => setVerificationField('relation', option.value)}
-															className="sr-only"
-														/>
-														<span>{option.label}</span>
-													</label>
-												)
-											})}
-										</div>
-									</Field>
-
-									{dobEditing ? (
+									<div className="form-iv-applicant-extras__grid">
 										<Field
-											label="Your age"
+											id="form-iv-relative-name"
+											label="Applicant's father/mother/spouse name"
 											required
-											hintInline
-											hint="Pick date of birth to set age"
+											hint="Person you are Son, Daughter or Spouse of"
+											error={fieldErrors['form-iv-relative-name'] || ''}
 										>
-											<div className="form-iv-age-edit">
-												<InputShell icon={CalendarDays} className={`${inputShellClass} form-iv-dob-input`}>
-													<input
-														type="date"
-														value={verificationDob}
-														onChange={(e) => applyDob(e.target.value)}
-														required
-														max={dobInputMax()}
-														aria-label="Date of birth"
-														className={inputClass}
-													/>
-												</InputShell>
-												{ageFromDob ? (
-													<span className="form-iv-dob-age-chip">{ageFromDob} years</span>
-												) : null}
-												{verificationDob ? (
-													<button
-														type="button"
-														className="form-i-change-uin"
-														onClick={() => setDobEditing(false)}
-													>
-														Done
-													</button>
-												) : null}
-												{profile.dateOfBirth &&
-												toDateInputValue(profile.dateOfBirth) !== verificationDob ? (
-													<button
-														type="button"
-														className="form-i-change-uin"
-														onClick={() => {
-															applyDob(profile.dateOfBirth)
-															setDobEditing(false)
-														}}
-													>
-														Use profile
-													</button>
-												) : null}
-											</div>
+											<InputShell icon={User} className={`${inputShellClass} form-iv-relative-name-input`}>
+												<input
+													type="text"
+													value={verification.relativeName}
+													onChange={(e) => {
+														clearFieldError('form-iv-relative-name')
+														setVerificationField('relativeName', e.target.value)
+													}}
+													required
+													placeholder="Full name"
+													className={inputClass}
+												/>
+											</InputShell>
 										</Field>
-									) : (
-										<Field
-											label="Your age"
-											required
-											hintInline
-											hint="From your profile date of birth"
+
+										<fieldset
+											id="form-iv-relation-group"
+											className="form-iv-field form-iv-applicant-extras__relation m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0"
 										>
-											<div className="form-i-field form-i-field--readonly form-i-field--with-action form-iv-age-readonly">
-												<span className="form-i-icon-gutter" aria-hidden>
-													<CalendarDays size={18} strokeWidth={2} />
+											<legend className="form-iv-applicant-extras__legend">
+												<span className="form-iv-applicant-extras__legend-title">
+													Relation
+													<span className="text-red-500" aria-hidden>
+														{' '}
+														*
+													</span>
+													<span className="sr-only">(required)</span>
 												</span>
-												<p className="form-iv-age-readonly__line">
-													{ageFromDob ? (
-														<>
-															<span className="form-iv-age-readonly__value">{ageFromDob} years</span>
-															{dobDisplay ? (
-																<span className="form-iv-age-readonly__source">
-																	· Born {dobDisplay}
-																</span>
-															) : null}
-														</>
-													) : (
-														<span className="form-iv-age-readonly__empty">Not on profile</span>
-													)}
+												<span className="form-iv-applicant-extras__legend-hint">
+													Son, Daughter or Spouse of the person named beside
+												</span>
+											</legend>
+											<div className="form-iv-relation-field__options" role="radiogroup" aria-label="Relation">
+												{VERIFICATION_RELATION_OPTIONS.map((option) => {
+													const selected = verification.relation === option.value
+													return (
+														<label
+															key={option.value}
+															className={`form-iv-relation-option${selected ? ' is-selected' : ''}`}
+														>
+															<input
+																type="radio"
+																name="verification_relation_iv"
+																value={option.value}
+																checked={selected}
+																onChange={() => {
+																	clearFieldError('form-iv-relation')
+																	setVerificationField('relation', option.value)
+																}}
+																className="sr-only"
+															/>
+															<span>{option.label}</span>
+														</label>
+													)
+												})}
+											</div>
+											{fieldErrors['form-iv-relation'] ? (
+												<p className="m-0 text-[12px] font-medium text-red-600" role="alert">
+													{fieldErrors['form-iv-relation']}
 												</p>
-												<div className="form-i-field-action">
-													<button
-														type="button"
-														className="form-i-change-uin"
-														onClick={() => setDobEditing(true)}
-													>
-														Edit
-													</button>
-												</div>
+											) : null}
+										</fieldset>
+
+										<Field
+											id="form-iv-dob"
+											label="Applicant's date of birth"
+											required
+											hint="Age is calculated automatically"
+											error={fieldErrors['form-iv-dob'] || fieldErrors['form-iv-age'] || ''}
+										>
+											<div className="form-iv-dob-field">
+												<FormDatePicker
+													id="form-iv-dob"
+													value={verificationDob}
+													onChange={(next) => {
+														clearFieldError('form-iv-dob')
+														clearFieldError('form-iv-age')
+														applyDob(next)
+													}}
+													required
+													max={dobInputMax()}
+													placeholder="DD-MM-YYYY"
+													className="form-iv-dob-input"
+													aria-invalid={
+														fieldErrors['form-iv-dob'] || fieldErrors['form-iv-age']
+															? 'true'
+															: undefined
+													}
+													aria-describedby={
+														[
+															'form-iv-dob-hint',
+															fieldErrors['form-iv-dob'] || fieldErrors['form-iv-age']
+																? 'form-iv-dob-error'
+																: null,
+														]
+															.filter(Boolean)
+															.join(' ') || undefined
+													}
+												/>
+												{ageFromDob ? (
+													<p className="form-iv-dob-age m-0" aria-live="polite">
+														Age: <strong>{ageFromDob}</strong> years
+													</p>
+												) : null}
 											</div>
 										</Field>
-									)}
+									</div>
 								</div>
 							</FormSection>
 
 							<FormSection
 								step={2}
 								tone="application"
-								title="Matter applied under"
+								title="Matter"
 								description="Choose what this application is about. Extra questions open only when needed."
 							>
 								<p className="m-0 text-[12px] leading-snug text-slate-500">
 									Tap the info (i) icon for the section of the Assam Tenancy Act, 2021 and a short explanation.
 								</p>
+								<fieldset
+									id="form-iv-matter-group"
+									className="m-0 min-w-0 border-0 p-0"
+								>
+									<legend className="sr-only">Matter</legend>
 								<div
 									className="tenancy-field-full matter-accordion form-iv-matter"
 									role="radiogroup"
-									aria-label="Matter applied under"
+									aria-label="Matter"
+									aria-invalid={fieldErrors['form-iv-matter'] ? 'true' : undefined}
+									aria-describedby={
+										fieldErrors['form-iv-matter'] ? 'form-iv-matter-error' : undefined
+									}
 								>
 									{RA_MATTER_OPTIONS.map((option) => {
 										const selected = statutoryMatter === option.value
@@ -1215,121 +1360,51 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 
 												{showRepairs ? (
 													<div className="matter-accordion__panel form-iv-repairs">
-														<div className="form-iv-followup-intro">
-															<div className="form-iv-followup-intro__main">
-																<p className="form-iv-followup-intro__title">
-																	Which repair items are in dispute?
-																</p>
-																<p className="form-iv-followup-intro__hint">
-																	Tick every item that applies. Part A is usually the landlord’s
-																	duty; Part B is usually the tenant’s — unless your agreement
-																	says otherwise.
-																</p>
-															</div>
-															<div className="form-iv-followup-intro__meta form-iv-followup-intro__meta--row">
-																<span className="form-iv-followup-chip form-iv-followup-chip--multi">
-																	Choose more than one
-																</span>
-																{REPAIR_PARTS.map((part) => {
-																	const selectedInPart = part.items.filter((item) =>
-																		repairItems.includes(item.code)
-																	).length
-																	const tone = part.part === 'A' ? 'a' : 'b'
-																	const side = part.part === 'A' ? 'Landlord' : 'Tenant'
-																	return (
-																		<span
-																			key={part.part}
-																			className={`form-iv-followup-chip form-iv-followup-chip--part-${tone}`}
-																		>
-																			Part {part.part} · {side}
-																			<span className="form-iv-followup-chip__count">
-																				{selectedInPart}/{part.items.length}
-																			</span>
-																		</span>
-																	)
-																})}
-															</div>
-														</div>
+														<p className="form-iv-followup-plain">
+															Tick every repair item in dispute. Part A — landlord duties; Part B —
+															tenant periodic repairs (unless the agreement says otherwise).
+														</p>
 														<div className="form-iv-repair-parts">
-															{REPAIR_PARTS.map((part) => {
-																const selectedInPart = part.items.filter((item) =>
-																	repairItems.includes(item.code)
-																).length
-																const tone = part.part === 'A' ? 'landlord' : 'tenant'
-																return (
-																	<div
-																		key={part.part}
-																		className={`form-iv-repair-part form-iv-repair-part--${tone}`}
-																	>
-																		<div className="form-iv-repair-part__head">
-																			<span className="form-iv-repair-part__badge">
-																				Part {part.part}
-																			</span>
-																			<div className="form-iv-repair-part__titles">
-																				<p className="form-iv-repair-part__title">
-																					{part.part === 'A'
-																						? 'Responsibilities of the Landlord'
-																						: 'Periodic repairs by the Tenant'}
-																				</p>
-																				<p className="form-iv-repair-part__sub">
-																					Second Schedule
-																				</p>
-																			</div>
-																			<span className="form-iv-repair-part__count">
-																				{selectedInPart}/{part.items.length}
-																			</span>
-																		</div>
-																		<div className="form-iv-repair-part__list">
-																			<ColumnCheckList
-																				items={part.items}
-																				getKey={(item) => item.code}
-																				getLabel={(item) => item.text}
-																				isChecked={(code) => repairItems.includes(code)}
-																				onToggle={toggleRepairItem}
-																			/>
-																		</div>
+															{REPAIR_PARTS.map((part) => (
+																<div key={part.part} className="form-iv-repair-part">
+																	<div className="form-iv-repair-part__head">
+																		<p className="form-iv-repair-part__title">
+																			Part {part.part} —{' '}
+																			{part.part === 'A'
+																				? 'Responsibilities of the Landlord'
+																				: 'Periodic repairs by the Tenant'}
+																		</p>
+																		<p className="form-iv-repair-part__sub">Second Schedule</p>
 																	</div>
-																)
-															})}
+																	<div className="form-iv-repair-part__list">
+																		<ColumnCheckList
+																			items={part.items}
+																			getKey={(item) => item.code}
+																			getLabel={(item) => item.text}
+																			isChecked={(code) => repairItems.includes(code)}
+																			onToggle={toggleRepairItem}
+																		/>
+																	</div>
+																</div>
+															))}
 														</div>
 													</div>
 												) : null}
 
 												{showServices ? (
 													<div className="matter-accordion__panel form-iv-services">
-														<div className="form-iv-followup-intro">
-															<div className="form-iv-followup-intro__main">
-																<p className="form-iv-followup-intro__title">
-																	Which essential supply or service was withheld?
-																</p>
-																<p className="form-iv-followup-intro__hint">
-																	Tick every service that was cut off or withheld. Use Other if
-																	it is not in the list.
-																</p>
-															</div>
-															<div className="form-iv-followup-intro__meta">
-																<span className="form-iv-followup-chip form-iv-followup-chip--multi">
-																	Choose more than one
-																</span>
-																<span className="form-iv-followup-chip form-iv-followup-chip--count">
-																	{essentialServices.length} selected
-																</span>
-															</div>
-														</div>
+														<p className="form-iv-followup-plain">
+															Tick every essential supply or service that was cut off or withheld. Use
+															Other if it is not listed.
+														</p>
 														<div className="form-iv-service-card">
 															<div className="form-iv-service-card__head">
-																<span className="form-iv-service-card__badge">Section 20</span>
-																<div className="form-iv-service-card__titles">
-																	<p className="form-iv-service-card__title">
-																		Essential supplies and services
-																	</p>
-																	<p className="form-iv-service-card__sub">
-																		Explanation to section 20 — select one or more
-																	</p>
-																</div>
-																<span className="form-iv-repair-part__count">
-																	{essentialServices.length}/{ESSENTIAL_SERVICES.length}
-																</span>
+																<p className="form-iv-service-card__title">
+																	Essential supplies and services (Section 20)
+																</p>
+																<p className="form-iv-service-card__sub">
+																	Explanation to section 20 — select one or more
+																</p>
 															</div>
 															<div className="form-iv-service-card__body">
 																<ColumnCheckList
@@ -1344,13 +1419,21 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 														</div>
 														{otherServiceChosen ? (
 															<div className="form-iv-service-other">
-																<Field label="Describe the other essential service" required>
+																<Field
+																	id="form-iv-service-other"
+																	label="Describe the other essential service"
+																	required
+																	error={fieldErrors['form-iv-service-other'] || ''}
+																>
 																	<InputShell>
 																		<input
 																			required
 																			type="text"
 																			value={essentialServiceOther}
-																			onChange={(e) => setEssentialServiceOther(e.target.value)}
+																			onChange={(e) => {
+																				clearFieldError('form-iv-service-other')
+																				setEssentialServiceOther(e.target.value)
+																			}}
 																			maxLength={255}
 																			placeholder="Name the other essential service"
 																			className={inputClass}
@@ -1365,90 +1448,41 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 										)
 									})}
 								</div>
+								{fieldErrors['form-iv-matter'] ? (
+									<p
+										id="form-iv-matter-error"
+										className="m-0 mt-2 text-[12px] font-medium text-red-600"
+										role="alert"
+									>
+										{fieldErrors['form-iv-matter']}
+									</p>
+								) : null}
+								</fieldset>
 							</FormSection>
 
 							<FormSection
 								step={3}
 								tone="application"
-								title="Details of the application"
-								description="Confirm the Rent Authority, then complete each item in order. Optional items may be left unticked."
+								title="Case details"
+								description="Complete each item in Gazette order. Optional items may be left blank."
+								contentClassName="form-iv-details"
 							>
-								<div className="flex flex-col gap-3.5">
 									<Field
-										label="Jurisdiction of the Rent Authority"
-										required
-										para={1}
-										hint="Confirm that this application is filed before the correct Rent Authority."
-									>
-										<div className="flex flex-col gap-3">
-											<div
-												className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3"
-												aria-label="Rent Authority"
-											>
-												<span
-													className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[#6d28d9]"
-													aria-hidden
-												>
-													<MapPin size={18} strokeWidth={2} />
-												</span>
-												<div className="min-w-0">
-													<p className="m-0 text-[15px] font-semibold leading-snug text-slate-900">
-														{authorityLine1 ||
-															(tenancyOffice
-																? `Rent Authority — ${tenancyOffice}`
-																: tenancyDistrict
-																	? `Rent Authority — ${tenancyDistrict}`
-																	: 'Rent Authority')}
-													</p>
-													{authorityLine2 ? (
-														<p className="mt-1 mb-0 text-[13px] leading-relaxed text-slate-600">
-															{authorityLine2}
-														</p>
-													) : tenancyDistrict ? (
-														<p className="mt-1 mb-0 text-[13px] leading-relaxed text-slate-600">
-															{tenancyOffice ? `${tenancyOffice}, ` : ''}
-															{tenancyDistrict}
-														</p>
-													) : (
-														<p className="mt-1 mb-0 text-[13px] italic text-slate-400">
-															Authority address not available on this UIN
-														</p>
-													)}
-												</div>
-											</div>
-											<label
-												className={`!m-0 !flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition ${
-													jurisdictionAccepted
-														? 'border-[#c4b5fd] bg-white'
-														: 'border-slate-200 bg-white hover:border-[#c4b5fd]'
-												}`}
-											>
-												<input
-													type="checkbox"
-													checked={jurisdictionAccepted}
-													onChange={(e) => setJurisdictionAccepted(e.target.checked)}
-													required
-													className="sr-only"
-												/>
-												<FormTick checked={jurisdictionAccepted} />
-												<span className="min-w-0 text-sm leading-relaxed text-slate-800">
-													{declarationText(DECLARATION.FORM_IV_JURISDICTION)}
-												</span>
-											</label>
-										</div>
-									</Field>
-
-									<Field
+										id="form-iv-particulars"
 										label="Particulars of the violation"
 										required
-										para={2}
+										para={1}
 										hint="State briefly the dispute or violation against which this application is made."
+										error={fieldErrors['form-iv-particulars'] || ''}
 									>
 										<InputShell className={textareaShellClass}>
 											<textarea
 												required
 												value={particularsOfViolation}
-												onChange={(e) => setParticularsOfViolation(e.target.value)}
+												onChange={(e) => {
+													clearFieldError('form-iv-particulars')
+													setParticularsOfViolation(e.target.value)
+												}}
 												rows={3}
 												placeholder="Example: Unilateral revision of rent without agreement…"
 												className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
@@ -1457,16 +1491,49 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 									</Field>
 
 									<Field
+										id="form-iv-jurisdiction"
+										label="Jurisdiction of the Rent Authority"
+										required
+										para={2}
+										hint="Confirm that this application is filed before the correct Rent Authority."
+										error={fieldErrors['form-iv-jurisdiction'] || ''}
+									>
+										<label className="!m-0 !flex cursor-pointer items-start gap-3">
+											<input
+												id="form-iv-jurisdiction"
+												type="checkbox"
+												checked={jurisdictionAccepted}
+												onChange={(e) => {
+													clearFieldError('form-iv-jurisdiction')
+													setJurisdictionAccepted(e.target.checked)
+												}}
+												required
+												className="sr-only"
+												aria-invalid={fieldErrors['form-iv-jurisdiction'] ? 'true' : undefined}
+											/>
+											<FormTick checked={jurisdictionAccepted} />
+											<span className="min-w-0 text-sm leading-relaxed text-slate-800">
+												{declarationText(DECLARATION.FORM_IV_JURISDICTION)}
+											</span>
+										</label>
+									</Field>
+
+									<Field
+										id="form-iv-facts"
 										label="Facts of the case"
 										required
 										para={3}
 										hint="Set out what happened, in chronological order."
+										error={fieldErrors['form-iv-facts'] || ''}
 									>
 										<InputShell className={textareaShellClass}>
 											<textarea
 												required
 												value={factsOfCase}
-												onChange={(e) => setFactsOfCase(e.target.value)}
+												onChange={(e) => {
+													clearFieldError('form-iv-facts')
+													setFactsOfCase(e.target.value)
+												}}
 												rows={4}
 												placeholder="Example: On … the agreed rent was … Thereafter on …"
 												className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
@@ -1475,16 +1542,21 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 									</Field>
 
 									<Field
+										id="form-iv-grounds"
 										label="Grounds for relief"
 										required
 										para={4}
 										hint="State the grounds on which the relief is claimed."
+										error={fieldErrors['form-iv-grounds'] || ''}
 									>
 										<InputShell className={textareaShellClass}>
 											<textarea
 												required
 												value={groundsForRelief}
-												onChange={(e) => setGroundsForRelief(e.target.value)}
+												onChange={(e) => {
+													clearFieldError('form-iv-grounds')
+													setGroundsForRelief(e.target.value)
+												}}
 												rows={3}
 												placeholder="Example: The revision is contrary to the tenancy agreement and the Act…"
 												className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
@@ -1493,33 +1565,46 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 									</Field>
 
 									<Field
+										id="form-iv-prior"
 										label="Earlier proceedings"
 										required
 										para={5}
 										hint="State whether any application, petition, writ petition or suit regarding this matter was previously filed."
+										error={fieldErrors['form-iv-prior'] || ''}
 									>
 										<PriorProceedingsField
 											fieldId={DECLARATION.FORM_IV_PRIOR_PROCEEDINGS}
 											hint="If Yes, furnish particulars of each case below. If No, select the first option."
 											hasPrior={hasPriorProceedings}
-											onHasPriorChange={setHasPriorProceedings}
+											onHasPriorChange={(value) => {
+												clearFieldError('form-iv-prior')
+												setHasPriorProceedings(value)
+											}}
 											entries={priorProceedings}
-											onEntriesChange={setPriorProceedings}
+											onEntriesChange={(entries) => {
+												clearFieldError('form-iv-prior')
+												setPriorProceedings(entries)
+											}}
 											variant="modern"
 										/>
 									</Field>
 
 									<Field
+										id="form-iv-relief"
 										label="Relief sought"
 										required
 										para={6}
 										hint="State clearly the order prayed for from the Rent Authority."
+										error={fieldErrors['form-iv-relief'] || ''}
 									>
 										<InputShell className={textareaShellClass}>
 											<textarea
 												required
 												value={reliefSought}
-												onChange={(e) => setReliefSought(e.target.value)}
+												onChange={(e) => {
+													clearFieldError('form-iv-relief')
+													setReliefSought(e.target.value)
+												}}
 												rows={3}
 												placeholder="Example: That the revised rent be set aside / determined…"
 												className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
@@ -1527,147 +1612,126 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 										</InputShell>
 									</Field>
 
-									<div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-										<label className="!m-0 !flex cursor-pointer items-start gap-3">
-											<span
-												className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-[#ede9fe] px-1.5 text-[13px] font-bold text-[#6d28d9]"
-												aria-hidden
-											>
-												7
-											</span>
-											<FormTick checked={needInterimOrder} />
-											<input
-												type="checkbox"
-												checked={needInterimOrder}
+									<Field
+										id="form-iv-interim"
+										label="Interim order sought"
+										optional
+										para={7}
+										hint="Temporary relief pending final disposal. Leave blank if not required."
+										error={fieldErrors['form-iv-interim'] || ''}
+									>
+										<InputShell className={textareaShellClass}>
+											<textarea
+												value={interimOrderSought}
 												onChange={(e) => {
-													if (e.target.checked) setNeedInterimOrder(true)
-													else turnOffInterimOrder()
+													clearFieldError('form-iv-interim')
+													setInterimOrderSoughtValue(e.target.value)
 												}}
-												className="sr-only"
+												rows={3}
+												placeholder="Nature of the interim relief prayed for"
+												className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
 											/>
-											<span className="min-w-0 pt-0.5">
-												<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-slate-900">
-													Interim order sought
-													<span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-														Optional
-													</span>
-												</span>
-												<span className="mt-1 block text-[12px] leading-relaxed text-slate-500">
-													Temporary relief pending final disposal. Leave unticked if not required.
-												</span>
-											</span>
-										</label>
-										{needInterimOrder ? (
-											<div className="sm:pl-9">
-												<Field label="Nature of interim relief" required>
-													<InputShell className={textareaShellClass}>
-														<textarea
-															value={interimOrderSought}
-															onChange={(e) => setInterimOrderSoughtValue(e.target.value)}
-															rows={2}
-															required
-															placeholder="Nature of the interim relief prayed for"
-															className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
-														/>
-													</InputShell>
-												</Field>
-											</div>
-										) : null}
-									</div>
+										</InputShell>
+									</Field>
 
-									<div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-										<label className="!m-0 !flex cursor-pointer items-start gap-3">
-											<span
-												className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-[#ede9fe] px-1.5 text-[13px] font-bold text-[#6d28d9]"
-												aria-hidden
-											>
-												8
-											</span>
-											<FormTick checked={needEnclosures} />
-											<input
-												type="checkbox"
-												checked={needEnclosures}
+									<Field
+										id="form-iv-enclosures"
+										label="List of enclosures"
+										optional
+										para={8}
+										hint="List the affidavits or documents accompanying this application. Leave blank if none."
+										error={fieldErrors['form-iv-enclosures'] || ''}
+									>
+										<InputShell className={textareaShellClass}>
+											<textarea
+												value={listOfEnclosures}
 												onChange={(e) => {
-													if (e.target.checked) setNeedEnclosures(true)
-													else turnOffEnclosures()
+													clearFieldError('form-iv-enclosures')
+													setListOfEnclosuresValue(e.target.value)
 												}}
-												className="sr-only"
+												rows={3}
+												placeholder="Example: Copy of tenancy agreement; rent receipts…"
+												className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
 											/>
-											<span className="min-w-0 pt-0.5">
-												<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-slate-900">
-													List of enclosures
-													<span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-														Optional
-													</span>
-												</span>
-												<span className="mt-1 block text-[12px] leading-relaxed text-slate-500">
-													List the affidavits or documents accompanying this application.
-												</span>
-											</span>
-										</label>
-										{needEnclosures ? (
-											<div className="sm:pl-9">
-												<Field label="Documents enclosed" required>
-													<InputShell className={textareaShellClass}>
-														<textarea
-															value={listOfEnclosures}
-															onChange={(e) => setListOfEnclosures(e.target.value)}
-															rows={2}
-															required
-															placeholder="Example: Copy of tenancy agreement; rent receipts…"
-															className="h-full w-full resize-y border-0 bg-transparent px-3.5 py-2.5 text-[15px] text-[#151717] outline-none placeholder:text-slate-400"
-														/>
-													</InputShell>
-												</Field>
-											</div>
-										) : null}
-									</div>
+										</InputShell>
+									</Field>
 
 									<LegalAdvicePartPicker
 										options={requiredVerificationParas}
 										selectedNumbers={legalAdviceParaNumbers}
-										onToggle={toggleLegalAdvicePara}
+										onToggle={(number) => {
+											clearFieldError('form-iv-legal-advice')
+											toggleLegalAdvicePara(number)
+										}}
+										error={fieldErrors['form-iv-legal-advice'] || ''}
 									/>
-								</div>
 							</FormSection>
 
 							<FormSection
 								step={4}
 								tone="signature"
 								title="Declaration and signature"
-								description="Accept the undertaking, then upload your signature if you have one."
+								description="Accept the undertaking and upload your signature to complete the filing."
 							>
-								<div className="form-iv-verify">
+								<div className="form-iv-verify" id="form-iv-undertaking-group">
 									<div className="flex flex-col gap-1.5">
 										<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
-											<span>Undertaking</span>
-											<span className="text-red-500">*</span>
+											<label htmlFor="form-iv-undertaking" className="m-0 cursor-pointer">
+												Undertaking
+											</label>
+											<span className="text-red-500" aria-hidden>
+												*
+											</span>
+											<span className="sr-only">(required)</span>
 										</div>
 										<label
 											className={`!m-0 !flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition ${
 												verificationUndertakingAccepted
 													? 'border-[#c4b5fd] bg-white'
-													: 'border-slate-200 bg-white hover:border-[#c4b5fd]'
+													: fieldErrors['form-iv-undertaking']
+														? 'border-red-300 bg-white'
+														: 'border-slate-200 bg-white hover:border-[#c4b5fd]'
 											}`}
 										>
 											<input
+												id="form-iv-undertaking"
 												type="checkbox"
 												checked={verificationUndertakingAccepted}
-												onChange={(e) => setVerificationUndertakingAccepted(e.target.checked)}
+												onChange={(e) => {
+													clearFieldError('form-iv-undertaking')
+													setVerificationUndertakingAccepted(e.target.checked)
+												}}
 												required
 												className="sr-only"
+												aria-invalid={fieldErrors['form-iv-undertaking'] ? 'true' : undefined}
+												aria-describedby={
+													fieldErrors['form-iv-undertaking']
+														? 'form-iv-undertaking-error'
+														: undefined
+												}
 											/>
 											<FormTick checked={verificationUndertakingAccepted} />
 											<span className="min-w-0 text-sm leading-relaxed text-slate-800">
 												I hereby declare that I have not suppressed any material facts.
 											</span>
 										</label>
+										{fieldErrors['form-iv-undertaking'] ? (
+											<p
+												id="form-iv-undertaking-error"
+												className="m-0 text-[12px] font-medium text-red-600"
+												role="alert"
+											>
+												{fieldErrors['form-iv-undertaking']}
+											</p>
+										) : null}
 									</div>
 
 									<Field
+										id="form-iv-signature"
 										label="Signature image"
-										optional
+										required
 										hint="JPG, JPEG or PNG. Recommended: at least 300 × 100 px, max 2 MB."
+										error={fieldErrors['form-iv-signature'] || ''}
 									>
 										<div className="form-i-field form-i-upload-field">
 											<span className="form-i-icon-gutter" aria-hidden>
@@ -1677,17 +1741,26 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 												<span className="inline-flex shrink-0 items-center rounded-lg bg-[#ede9fe] px-3 py-1.5 text-sm font-semibold text-[#6d28d9]">
 													{signatureImage ? 'Change file' : 'Choose file'}
 												</span>
-												<span
-													className={`min-w-0 truncate text-sm ${
-														signatureImage ? 'font-medium text-green-700' : 'text-slate-500'
-													}`}
-												>
-													{signatureImage?.name || 'No file chosen'}
+												<span className="min-w-0 truncate text-sm text-slate-500">
+													{signatureImage ? 'Signature selected' : 'No file chosen'}
 												</span>
 												<input
+													id="form-iv-signature"
 													type="file"
 													accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+													required={!signatureImage}
 													className="sr-only"
+													aria-invalid={fieldErrors['form-iv-signature'] ? 'true' : undefined}
+													aria-describedby={
+														[
+															'form-iv-signature-hint',
+															fieldErrors['form-iv-signature']
+																? 'form-iv-signature-error'
+																: null,
+														]
+															.filter(Boolean)
+															.join(' ') || undefined
+													}
 													onChange={(e) => {
 														const file = e.target.files?.[0] || null
 														if (file && file.size > 2 * 1024 * 1024) {
@@ -1696,6 +1769,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 															setSignatureImage(null)
 															return
 														}
+														clearFieldError('form-iv-signature')
 														setError('')
 														setSignatureImage(file)
 													}}
@@ -1703,38 +1777,31 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 											</label>
 										</div>
 										{signatureImage && signaturePreviewUrl ? (
-											<div className="mt-3 overflow-hidden rounded-[10px] border border-green-200 bg-green-50">
-												<div className="flex flex-wrap items-center justify-between gap-2 border-b border-green-200 px-4 py-2.5">
-													<p className="m-0 inline-flex items-center gap-2 text-sm font-semibold text-green-700">
-														<CheckCircle2 size={18} strokeWidth={2} aria-hidden />
-														Signature image uploaded
-													</p>
-													<button
-														type="button"
-														onClick={clearSignatureImage}
-														className="text-sm font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
-													>
-														Remove
-													</button>
-												</div>
-												<div className="flex items-center justify-center bg-white px-4 py-5">
-													<img
-														src={signaturePreviewUrl}
-														alt="Uploaded signature preview"
-														className="max-h-32 w-auto max-w-full object-contain"
-													/>
-												</div>
+											<div className="form-iv-signature-preview">
+												<img
+													src={signaturePreviewUrl}
+													alt="Uploaded signature preview"
+													className="form-iv-signature-preview__img"
+												/>
+												<button
+													type="button"
+													onClick={() => {
+														clearSignatureImage()
+														clearFieldError('form-iv-signature')
+													}}
+													className="form-iv-signature-preview__remove"
+												>
+													Remove
+												</button>
 											</div>
 										) : null}
 									</Field>
 								</div>
 							</FormSection>
+							</div>
 						</FormCard>
 
-						<div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-							<button type="button" onClick={onBack} disabled={submitting} className={btnSecondary}>
-								Back
-							</button>
+						<div className="flex flex-wrap items-center justify-center gap-3 pt-2">
 							<button type="submit" disabled={submitting} className={btnPrimary}>
 								{submitting ? 'Submitting…' : 'Review & submit'}
 							</button>

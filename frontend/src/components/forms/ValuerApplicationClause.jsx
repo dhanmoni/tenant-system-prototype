@@ -50,7 +50,7 @@ function ValuerApplicationClause({
 			<select
 				key="relation"
 				className="clause__blank clause__blank--relation"
-				aria-label="Son, daughter or wife of"
+				aria-label="Son, daughter or spouse of"
 				value={values.relation}
 				onChange={(e) => onChange('relation', e.target.value)}
 				required
@@ -67,7 +67,7 @@ function ValuerApplicationClause({
 				key="relative_name"
 				type="text"
 				className="clause__blank clause__blank--name"
-				aria-label="Name of father, mother or husband as applicable"
+				aria-label="Name of father, mother or spouse as applicable"
 				placeholder="…………"
 				value={values.relativeName}
 				onChange={(e) => onChange('relativeName', e.target.value)}

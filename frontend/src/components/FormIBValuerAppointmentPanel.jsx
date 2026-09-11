@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Building2, CheckCircle2, IdCard, MapPin, Upload, User } from 'lucide-react'
+import { Building2, Check, CheckCircle2, IdCard, MapPin, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
@@ -33,16 +33,31 @@ function FormCard({ title, description, badge, children }) {
 					<p className="mx-auto mt-1.5 mb-0 max-w-2xl text-sm leading-relaxed text-[#6d5a9c]">{description}</p>
 				) : null}
 			</div>
-			<div className="flex flex-col gap-3 p-[22px] sm:p-[26px]">{children}</div>
+			<div className="flex flex-col gap-4 p-[30px]">{children}</div>
 		</section>
 	)
 }
 
 const sectionToneClass = {
-	record: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 sm:px-5 sm:py-4',
-	application: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 sm:px-5 sm:py-4',
-	signature: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 sm:px-5 sm:py-4',
+	record: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
+	application: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
+	signature: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
 	default: '',
+}
+
+function FormTick({ checked }) {
+	return (
+		<span
+			className={`mt-0.5 inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition ${
+				checked
+					? 'border-[#6d28d9] bg-[#6d28d9] text-white'
+					: 'border-slate-400 bg-white text-transparent'
+			}`}
+			aria-hidden
+		>
+			{checked ? <Check size={11} strokeWidth={3} /> : null}
+		</span>
+	)
 }
 
 function FormSection({
@@ -57,7 +72,7 @@ function FormSection({
 	const toneClass = sectionToneClass[tone] || sectionToneClass.default
 	return (
 		<div className={toneClass || undefined}>
-			<div className="mb-3.5">
+			<div className="mb-5">
 				<div className="flex items-start gap-3">
 					{step ? (
 						<span
@@ -78,7 +93,7 @@ function FormSection({
 								{title}
 							</h3>
 							{badge ? (
-								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#f5f3ff] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
+								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
 									{badge}
 								</span>
 							) : null}
@@ -87,7 +102,7 @@ function FormSection({
 					</div>
 				</div>
 			</div>
-			<div className="flex flex-col gap-3.5">{children}</div>
+			<div className="flex flex-col gap-5">{children}</div>
 		</div>
 	)
 }
@@ -120,7 +135,15 @@ function InputShell({ icon: Icon, children, className = inputShellClass }) {
 	)
 }
 
-function ReadOnlyField({ label, value, empty = '—', icon: Icon, variant = 'default', action = null }) {
+function ReadOnlyField({
+	label,
+	value,
+	empty = '—',
+	icon: Icon,
+	multiline = false,
+	variant = 'default',
+	action = null,
+}) {
 	const text = String(value ?? '').trim()
 	const display = text || empty
 	const hasValue = Boolean(text)
@@ -130,7 +153,9 @@ function ReadOnlyField({ label, value, empty = '—', icon: Icon, variant = 'def
 		<div className="flex min-w-0 flex-col gap-2">
 			<span className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">{label}</span>
 			<div
-				className={`form-i-field form-i-field--readonly ${action ? 'form-i-field--with-action' : ''}`}
+				className={`form-i-field form-i-field--readonly ${multiline ? 'form-i-field--multiline' : ''} ${
+					action ? 'form-i-field--with-action' : ''
+				}`}
 			>
 				{Icon ? (
 					<span className="form-i-icon-gutter" aria-hidden>
@@ -138,9 +163,9 @@ function ReadOnlyField({ label, value, empty = '—', icon: Icon, variant = 'def
 					</span>
 				) : null}
 				<p
-					className={`form-i-readonly-value m-0 min-w-0 flex-1 whitespace-pre-wrap px-3.5 leading-relaxed flex items-center ${
-						hasValue ? 'is-filled' : 'is-empty'
-					} ${isUin ? 'form-i-readonly-value--uin' : ''}`}
+					className={`form-i-readonly-value m-0 min-w-0 flex-1 whitespace-pre-wrap px-3.5 leading-relaxed ${
+						multiline ? 'py-3' : 'flex items-center'
+					} ${hasValue ? 'is-filled' : 'is-empty'} ${isUin ? 'form-i-readonly-value--uin' : ''}`}
 				>
 					{isUin && hasValue ? <strong>{display}</strong> : display}
 				</p>
@@ -151,7 +176,7 @@ function ReadOnlyField({ label, value, empty = '—', icon: Icon, variant = 'def
 }
 
 const btnPrimary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#151717] px-5 text-[15px] font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60'
+	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#6d28d9] px-5 text-[15px] font-medium text-white transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60'
 const btnSecondary =
 	'inline-flex h-[50px] items-center justify-center rounded-[10px] border border-[#ededef] bg-white px-5 text-[15px] font-medium text-[#151717] transition hover:border-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-60'
 
@@ -174,6 +199,11 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 
 	const [tenancyUIN, setTenancyUIN] = useState('')
 	const profile = useMemo(() => profileDefaults(user), [user])
+
+	const [landlordName, setLandlordName] = useState('')
+	const [landlordAddress, setLandlordAddress] = useState('')
+	const [tenantName, setTenantName] = useState('')
+	const [tenantAddress, setTenantAddress] = useState('')
 
 	const [applicantName, setApplicantName] = useState(profile.name)
 	const [applicantRelationType, setApplicantRelationType] = useState('Son')
@@ -207,6 +237,10 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 
 	const clearTenancyRecord = useCallback(() => {
 		setRecordLoaded(false)
+		setLandlordName('')
+		setLandlordAddress('')
+		setTenantName('')
+		setTenantAddress('')
 		setApplicantName(profile.name)
 		setApplicantRelationType('Son')
 		setApplicantRelationTargetName('')
@@ -269,7 +303,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 			return false
 		}
 		if (!applicantRelationTargetName.trim()) {
-			reportError('Enter the name of the father, mother or husband as applicable.')
+			reportError('Enter the name of the father, mother or spouse as applicable.')
 			return false
 		}
 		if (!applicantResidentPlace.trim()) {
@@ -339,6 +373,10 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 	const { previewOpen, requestPreview, closePreview, confirmSubmit } = useServiceFormPreview(submit)
 
 	const handleTenancyLoaded = (tenancy) => {
+		setLandlordName(String(tenancy?.landlord_name || '').trim())
+		setLandlordAddress(String(tenancy?.landlord_address || '').trim())
+		setTenantName(String(tenancy?.tenant_name || '').trim())
+		setTenantAddress(String(tenancy?.tenant_address || '').trim())
 		const filled = applyTenancyAutofill(APPLICATION_TYPES.VALUER_APPOINTMENT, tenancy, user, {
 			setTenancyUIN,
 			setApplicantName,
@@ -356,11 +394,21 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 		return filled
 	}
 
-	const setCapacity = useCallback((side) => {
-		const role = side === 'tenant' ? 'tenant' : 'landlord'
-		setApplicantLandlordOrTenant(role)
-		setSignedBy(role)
-	}, [])
+	const setCapacity = useCallback(
+		(side) => {
+			const role = side === 'tenant' ? 'tenant' : 'landlord'
+			setApplicantLandlordOrTenant(role)
+			setSignedBy(role)
+			if (role === 'tenant') {
+				setApplicantName(tenantName || profile.name)
+				setApplicantResidentPlace(tenantAddress || profile.address)
+			} else {
+				setApplicantName(landlordName || profile.name)
+				setApplicantResidentPlace(landlordAddress || profile.address)
+			}
+		},
+		[landlordAddress, landlordName, profile.address, profile.name, tenantAddress, tenantName]
+	)
 
 	const formTitle = serviceMeta?.label || 'Form I-B — Appointment of valuer'
 	const formBadge = serviceMeta?.groupTitle || 'Rent Authority'
@@ -417,9 +465,9 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 							<FormSection
 								step={1}
 								tone="record"
-								title="Tenancy reference"
-								badge="From UIN"
-								description="This application is tied to the loaded UIN. Use Change UIN to start again with another record."
+								title="Particulars from the tenancy"
+								badge="From UIN · read-only"
+								description="Applicant name, residence and district come from the UIN. They update if you change Applying as below."
 								descriptionClassName="mt-1.5 mb-0 text-sm font-medium leading-relaxed text-amber-700"
 							>
 								<ReadOnlyField
@@ -440,114 +488,40 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 										</button>
 									}
 								/>
+								<div className="grid gap-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5">
+									<ReadOnlyField label="Landlord name" value={landlordName} icon={User} />
+									<ReadOnlyField label="Tenant name" value={tenantName} icon={User} />
+									<ReadOnlyField
+										label="Landlord address"
+										value={landlordAddress}
+										icon={MapPin}
+										multiline
+									/>
+									<ReadOnlyField
+										label="Tenant address"
+										value={tenantAddress}
+										icon={MapPin}
+										multiline
+									/>
+									<ReadOnlyField label="Name of the applicant" value={applicantName} icon={User} />
+									<ReadOnlyField
+										label="Resident of"
+										value={applicantResidentPlace}
+										icon={MapPin}
+										multiline
+									/>
+									<div className="sm:col-span-2">
+										<ReadOnlyField label="District" value={district} icon={MapPin} />
+									</div>
+								</div>
 							</FormSection>
 
 							<FormSection
 								step={2}
 								tone="application"
 								title="Particulars of the application"
-								description="These details appear on FORM-IB. Edit any suggestion from the tenancy record before you continue."
+								description="Choose whether you are applying as landlord or tenant, complete the relation details, then accept the undertaking and upload your signature."
 							>
-								<Field label="Name of the applicant" required>
-									<InputShell icon={User}>
-										<input
-											type="text"
-											value={applicantName}
-											onChange={(e) => setApplicantName(e.target.value)}
-											required
-											placeholder="Full name"
-											className={inputClass}
-										/>
-									</InputShell>
-								</Field>
-
-								<div className="flex flex-col gap-3.5">
-									<div className="flex flex-col gap-1.5">
-										<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
-											<span>Relation</span>
-											<span className="text-red-500">*</span>
-											<span className="text-[12px] font-medium text-slate-500">
-												Son, Daughter or Wife of
-											</span>
-										</div>
-										<div
-											className="grid grid-cols-3 gap-2"
-											role="radiogroup"
-											aria-label="Relation"
-										>
-											{FORM_IB_RELATIONS.map((relation) => {
-												const selected = applicantRelationType === relation
-												return (
-													<label
-														key={relation}
-														className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center justify-center rounded-[10px] border px-2 transition ${
-															selected
-																? 'border-[#6d28d9] bg-[#ede9fe]'
-																: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
-														}`}
-													>
-														<input
-															type="radio"
-															name="relation_ib"
-															value={relation}
-															checked={selected}
-															onChange={() => setApplicantRelationType(relation)}
-															className="sr-only"
-														/>
-														<span
-															className={`text-sm font-semibold ${
-																selected ? 'text-[#6d28d9]' : 'text-[#151717]'
-															}`}
-														>
-															{relation}
-														</span>
-													</label>
-												)
-											})}
-										</div>
-									</div>
-
-									<Field label="Name of father / mother / husband" required>
-										<InputShell icon={User}>
-											<input
-												type="text"
-												value={applicantRelationTargetName}
-												onChange={(e) => setApplicantRelationTargetName(e.target.value)}
-												required
-												placeholder="As applicable to the relation"
-												className={inputClass}
-											/>
-										</InputShell>
-									</Field>
-								</div>
-
-								<div className="grid gap-3 sm:grid-cols-2">
-									<Field label="Resident of" required>
-										<InputShell icon={MapPin}>
-											<input
-												type="text"
-												value={applicantResidentPlace}
-												onChange={(e) => setApplicantResidentPlace(e.target.value)}
-												required
-												placeholder="Town / village / locality"
-												className={inputClass}
-											/>
-										</InputShell>
-									</Field>
-									<Field label="District" required>
-										<InputShell icon={MapPin}>
-											<input
-												type="text"
-												value={district}
-												onChange={(e) => setDistrict(e.target.value)}
-												required
-												placeholder="District in Assam"
-												className={inputClass}
-											/>
-										</InputShell>
-									</Field>
-								</div>
-
 								<div className="flex flex-col gap-1.5">
 									<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
 										<span>Applying as</span>
@@ -594,7 +568,11 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 									</div>
 								</div>
 
-								<Field label="Premises situated at" required>
+								<Field
+									label="Premises situated at"
+									required
+									hint="Pre-filled from the tenancy record — edit if needed"
+								>
 									<InputShell icon={Building2} className={textareaShellClass}>
 										<textarea
 											value={premisesSituatedAddress}
@@ -607,17 +585,76 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 									</InputShell>
 								</Field>
 
+								<div className="flex flex-col gap-5">
+									<Field
+										label="Applicants father/mother/spouse name"
+										required
+										hint="Person you are Son, Daughter or Spouse of"
+									>
+										<InputShell icon={User}>
+											<input
+												type="text"
+												value={applicantRelationTargetName}
+												onChange={(e) => setApplicantRelationTargetName(e.target.value)}
+												required
+												placeholder="Full name"
+												className={inputClass}
+											/>
+										</InputShell>
+									</Field>
+
+									<div className="flex flex-col gap-1.5">
+										<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
+											<span>Relation</span>
+											<span className="text-red-500">*</span>
+											<span className="text-[12px] font-medium text-slate-500">
+												Son, Daughter or Spouse of the person named above
+											</span>
+										</div>
+										<div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Relation">
+											{FORM_IB_RELATIONS.map((relation) => {
+												const selected = applicantRelationType === relation
+												return (
+													<label
+														key={relation}
+														className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center justify-center rounded-[10px] border px-2 transition ${
+															selected
+																? 'border-[#6d28d9] bg-[#ede9fe]'
+																: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
+														}`}
+													>
+														<input
+															type="radio"
+															name="relation_ib"
+															value={relation}
+															checked={selected}
+															onChange={() => setApplicantRelationType(relation)}
+															className="sr-only"
+														/>
+														<span
+															className={`text-sm font-semibold ${
+																selected ? 'text-[#6d28d9]' : 'text-[#151717]'
+															}`}
+														>
+															{relation}
+														</span>
+													</label>
+												)
+											})}
+										</div>
+									</div>
+								</div>
+
 								<div className="flex flex-col gap-1.5">
 									<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
-										<span>Fee undertaking</span>
+										<span>Undertaking</span>
 										<span className="text-red-500">*</span>
-										<span className="text-[12px] font-medium text-slate-500">Rule 5(4)</span>
 									</div>
 									<label
-										className={`form-ib-undertaking !m-0 !flex cursor-pointer items-start gap-3 rounded-[10px] border px-3.5 py-2.5 transition ${
+										className={`!m-0 !flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition ${
 											feeUndertakingAccepted
-												? 'is-checked border-[#6d28d9] bg-[#f5f3ff]'
-												: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
+												? 'border-[#c4b5fd] bg-white'
+												: 'border-slate-200 bg-white hover:border-[#c4b5fd]'
 										}`}
 									>
 										<input
@@ -625,31 +662,14 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 											checked={feeUndertakingAccepted}
 											onChange={(e) => setFeeUndertakingAccepted(e.target.checked)}
 											required
-											className="mt-0.5 h-4 w-4 shrink-0 accent-[#6d28d9]"
+											className="sr-only"
 										/>
-										<span className="min-w-0 text-sm leading-snug text-[#151717]">
+										<FormTick checked={feeUndertakingAccepted} />
+										<span className="min-w-0 text-sm leading-relaxed text-slate-800">
 											{FORM_IB_UNDERTAKING_TEXT}
 										</span>
 									</label>
 								</div>
-							</FormSection>
-
-							<FormSection
-								step={3}
-								tone="signature"
-								title="Signature of the applicant"
-								description="Upload a clear image of your signature. It will appear on FORM-IB as the name and signature of landlord or tenant."
-							>
-								{signatureNamePreview ? (
-									<p className="m-0 text-sm leading-relaxed text-slate-600">
-										Signature will be recorded in the name of{' '}
-										<span className="text-lg font-bold text-[#151717] underline decoration-2 underline-offset-[3px]">
-											{signatureNamePreview}
-										</span>
-										{' '}
-										({signedBy === 'tenant' ? 'tenant' : 'landlord'}).
-									</p>
-								) : null}
 
 								<Field
 									label="Signature image"

@@ -38,11 +38,10 @@ class Verification
     /**
      * The paragraphs a filer may assign, per form, under the Gazette's own headings.
      *
-     * Paragraphs 2 and 5 are excluded because they are themselves sworn declarations, attested
-     * separately and under their own wording; sweeping them into "true to my personal knowledge"
-     * would have the filer swear the same thing twice under two different formulas. Paragraph 8 is
-     * excluded because a list of enclosures asserts no fact. What remains is everything the filer
-     * states in their own words.
+     * Paragraph 2 is excluded on every form because it is itself a sworn declaration, attested
+     * separately. On Forms II/III/V/VI, paragraph 5 is likewise excluded (its own declaration) and
+     * paragraph 8 is omitted (enclosure list asserts no fact). Form IV additionally offers 5, 7 and
+     * 8 so those particulars can be marked as based on legal advice when they apply.
      */
     public static function paragraphs(string $fieldId): array
     {
@@ -66,7 +65,11 @@ class Verification
         $byForm = [
             Declarations::FORM_II_VERIFICATION => [1 => 'Particulars of application'] + $application + $shared,
             Declarations::FORM_III_VERIFICATION => [1 => 'Particulars of application'] + $application + $shared,
-            Declarations::FORM_IV_VERIFICATION => [1 => 'Particulars of violation against which the present application is made'] + $application + $shared,
+            Declarations::FORM_IV_VERIFICATION => [
+                1 => 'Particulars of violation against which the present application is made',
+                5 => 'Earlier proceedings',
+                8 => 'List of enclosures',
+            ] + $application + $shared,
             Declarations::FORM_V_VERIFICATION => [1 => 'Particulars of the order of the Rent Authority as against which the appeal is made'] + $appeal + $shared,
             Declarations::FORM_VI_VERIFICATION => [1 => 'Particulars of the order of the Rent Court as against which the Appeal is made'] + $appeal + $shared,
         ];

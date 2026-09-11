@@ -48,7 +48,7 @@ function PriorProceedingsField({
 						/>
 						<span className="form-iv-prior__choice-title">No — I have not filed this matter elsewhere</span>
 						<span
-							className="form-iv-prior__info"
+							className="ground-choice__info-container form-iv-prior__info"
 							role="note"
 							tabIndex={0}
 							aria-label={declaration}
@@ -61,8 +61,8 @@ function PriorProceedingsField({
 								e.stopPropagation()
 							}}
 						>
-							<Info size={15} aria-hidden />
-							<span className="form-iv-prior__info-popup" role="tooltip">
+							<Info size={16} aria-hidden />
+							<span className="ground-choice__info-popup form-iv-prior__info-popup" role="tooltip">
 								{declaration}
 							</span>
 						</span>
@@ -84,7 +84,7 @@ function PriorProceedingsField({
 						/>
 						<span className="form-iv-prior__choice-title">Yes — a related case was filed or is pending</span>
 						<span
-							className="form-iv-prior__info"
+							className="ground-choice__info-container form-iv-prior__info"
 							role="note"
 							tabIndex={0}
 							aria-label={branch}
@@ -97,8 +97,8 @@ function PriorProceedingsField({
 								e.stopPropagation()
 							}}
 						>
-							<Info size={15} aria-hidden />
-							<span className="form-iv-prior__info-popup" role="tooltip">
+							<Info size={16} aria-hidden />
+							<span className="ground-choice__info-popup form-iv-prior__info-popup" role="tooltip">
 								{branch}
 							</span>
 						</span>
@@ -106,47 +106,37 @@ function PriorProceedingsField({
 				</div>
 
 				{hasPrior === true ? (
-					<div className="form-iv-prior__table-wrap">
-						<div className="form-iv-prior__table-head">
-							<p className="form-iv-prior__table-title">Particulars of earlier proceedings</p>
-							<p className="form-iv-prior__table-note">
-								Fill one row per case. For disposed cases, enclose the decision with the list of enclosures.
+					<div className="form-iv-prior__cases-wrap">
+						<div className="form-iv-prior__cases-head">
+							<p className="form-iv-prior__cases-title">Particulars of earlier proceedings</p>
+							<p className="form-iv-prior__cases-note">
+								Add one card per case. For disposed cases, enclose the decision with the list of
+								enclosures.
 							</p>
 						</div>
 
-						<div className="form-iv-prior__table" role="table" aria-label="Earlier proceedings">
-							<div className="form-iv-prior__tr form-iv-prior__tr--head" role="row">
-								<div className="form-iv-prior__th form-iv-prior__col-no" role="columnheader">
-									#
-								</div>
-								<div className="form-iv-prior__th form-iv-prior__col-case" role="columnheader">
-									Case no. *
-								</div>
-								<div className="form-iv-prior__th form-iv-prior__col-forum" role="columnheader">
-									Court / forum *
-								</div>
-								<div className="form-iv-prior__th form-iv-prior__col-date" role="columnheader">
-									Filed on
-								</div>
-								<div className="form-iv-prior__th form-iv-prior__col-status" role="columnheader">
-									Status *
-								</div>
-								<div className="form-iv-prior__th form-iv-prior__col-actions" role="columnheader">
-									<span className="sr-only">Actions</span>
-								</div>
-							</div>
-
+						<div className="form-iv-prior__cases" aria-label="Earlier proceedings">
 							{entries.map((entry, index) => (
-								<div key={index} className="form-iv-prior__case-block" role="rowgroup">
-									<div className="form-iv-prior__tr form-iv-prior__tr--main" role="row">
-										<div className="form-iv-prior__td form-iv-prior__col-no" role="cell" data-label="#">
-											<span className="form-iv-prior__row-no">{index + 1}</span>
-										</div>
-										<div
-											className="form-iv-prior__td form-iv-prior__col-case"
-											role="cell"
-											data-label="Case number"
-										>
+								<article key={index} className="form-iv-prior__case">
+									<header className="form-iv-prior__case-head">
+										<span className="form-iv-prior__row-no">{index + 1}</span>
+										<span className="form-iv-prior__case-heading">Case {index + 1}</span>
+										{entries.length > 1 ? (
+											<button
+												type="button"
+												className="form-iv-prior__remove"
+												onClick={() => removeEntry(index)}
+											>
+												Remove
+											</button>
+										) : null}
+									</header>
+
+									<div className="form-iv-prior__case-grid">
+										<label className="form-iv-prior__field">
+											<span className="form-iv-prior__field-label">
+												Case no. <span className="text-red-500">*</span>
+											</span>
 											<input
 												type="text"
 												value={entry.case_number}
@@ -156,12 +146,12 @@ function PriorProceedingsField({
 												aria-label={`Case ${index + 1} number`}
 												required
 											/>
-										</div>
-										<div
-											className="form-iv-prior__td form-iv-prior__col-forum"
-											role="cell"
-											data-label="Court / forum"
-										>
+										</label>
+
+										<label className="form-iv-prior__field">
+											<span className="form-iv-prior__field-label">
+												Court / forum <span className="text-red-500">*</span>
+											</span>
 											<input
 												type="text"
 												value={entry.forum}
@@ -171,29 +161,27 @@ function PriorProceedingsField({
 												aria-label={`Case ${index + 1} forum`}
 												required
 											/>
-										</div>
-										<div
-											className="form-iv-prior__td form-iv-prior__col-date"
-											role="cell"
-											data-label="Filed on"
-										>
+										</label>
+
+										<label className="form-iv-prior__field">
+											<span className="form-iv-prior__field-label">Filed on</span>
 											<input
 												type="date"
 												value={entry.filing_date}
 												onChange={(e) => updateEntry(index, { filing_date: e.target.value })}
 												aria-label={`Case ${index + 1} filing date`}
 											/>
-										</div>
+										</label>
+
 										<div
-											className="form-iv-prior__td form-iv-prior__col-status"
-											role="cell"
-											data-label="Status"
+											className="form-iv-prior__field form-iv-prior__field--status"
+											role="radiogroup"
+											aria-label={`Case ${index + 1} status`}
 										>
-											<div
-												className="form-iv-prior__status"
-												role="radiogroup"
-												aria-label={`Case ${index + 1} status`}
-											>
+											<span className="form-iv-prior__field-label">
+												Status <span className="text-red-500">*</span>
+											</span>
+											<div className="form-iv-prior__status">
 												<label
 													className={`form-iv-prior__status-option${
 														entry.status === PRIOR_STATUS.PENDING ? ' is-selected' : ''
@@ -230,39 +218,13 @@ function PriorProceedingsField({
 												</label>
 											</div>
 										</div>
-										<div
-											className="form-iv-prior__td form-iv-prior__col-actions"
-											role="cell"
-											data-label="Actions"
-										>
-											{entries.length > 1 ? (
-												<button
-													type="button"
-													className="form-iv-prior__remove"
-													onClick={() => removeEntry(index)}
-												>
-													Remove
-												</button>
-											) : (
-												<span className="form-iv-prior__actions-empty">—</span>
-											)}
-										</div>
-									</div>
 
-									<div className="form-iv-prior__tr form-iv-prior__tr--detail" role="row">
-										<div
-											className="form-iv-prior__td form-iv-prior__col-detail"
-											role="cell"
-											data-label={
-												entry.status === PRIOR_STATUS.PENDING
-													? 'Pendency details'
-													: 'Decision'
-											}
-										>
-											<span className="form-iv-prior__detail-label">
+										<label className="form-iv-prior__field form-iv-prior__field--detail">
+											<span className="form-iv-prior__field-label">
 												{entry.status === PRIOR_STATUS.PENDING
-													? 'Pendency details *'
-													: 'Decision *'}
+													? 'Pendency details'
+													: 'Decision'}{' '}
+												<span className="text-red-500">*</span>
 											</span>
 											{entry.status === PRIOR_STATUS.PENDING ? (
 												<textarea
@@ -270,7 +232,7 @@ function PriorProceedingsField({
 													onChange={(e) =>
 														updateEntry(index, { pendency_details: e.target.value })
 													}
-													rows={2}
+													rows={3}
 													maxLength={2000}
 													placeholder="Stage / where pending"
 													aria-label={`Case ${index + 1} pendency details`}
@@ -280,16 +242,16 @@ function PriorProceedingsField({
 												<textarea
 													value={entry.decision}
 													onChange={(e) => updateEntry(index, { decision: e.target.value })}
-													rows={2}
+													rows={3}
 													maxLength={2000}
-													placeholder="Decision summary — enclose copy under paragraph 8"
+													placeholder="Decision summary — enclose copy under list of enclosures"
 													aria-label={`Case ${index + 1} decision`}
 													required
 												/>
 											)}
-										</div>
+										</label>
 									</div>
-								</div>
+								</article>
 							))}
 						</div>
 
