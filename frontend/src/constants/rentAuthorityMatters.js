@@ -21,28 +21,28 @@ export const RA_MATTER_OPTIONS = [
 	{
 		value: RA_MATTER.SECTION_10,
 		citation: 'Section 10',
-		heading: 'Rent Authority to determine the revised rent in case of dispute',
+		heading: 'Dispute about revised rent',
 		note:
 			'In case of any dispute between the landlord and the tenant regarding revision of rent, the Rent Authority may, on an application made by the landlord or tenant, determine the revised rent and other charges payable by the tenant and also fix the date from which such revised rent becomes payable.',
 	},
 	{
 		value: RA_MATTER.SECTION_14,
 		citation: 'Section 14',
-		heading: 'Deposit of rent with Rent Authority',
+		heading: 'Deposit of rent with the Rent Authority',
 		note:
 			'Where the landlord refuses to accept rent and other charges payable or refuses to give a receipt, or where the tenant is unable to decide to whom the rent is payable, the tenant may deposit the rent with the Rent Authority, which shall enquire as to whom the rent is payable and pass orders as may deem fit.',
 	},
 	{
 		value: RA_MATTER.SECTION_15,
 		citation: 'Section 15',
-		heading: 'Repair and maintenance of property',
+		heading: 'Repair and maintenance of the property',
 		note:
 			'The landlord and the tenant shall keep the premises in as good a condition as at the commencement of the tenancy, except for normal wear and tear, and shall respectively be responsible to repair and maintain the premises as specified in the Second Schedule or as agreed to in the tenancy agreement.',
 	},
 	{
 		value: RA_MATTER.SECTION_20,
 		citation: 'Section 20',
-		heading: 'Withholding essential supply and service',
+		heading: 'Essential supply or service withheld',
 		note:
 			'No landlord or property manager shall withhold any essential supply or service in the premises occupied by the tenant. The Rent Authority may pass an interim order directing restoration immediately on service of the order, must complete the inquiry within one month of filing, and may award compensation not exceeding two months rent against the person responsible, or a penalty not exceeding twice the monthly rent if the application is found frivolous or vexatious.',
 	},

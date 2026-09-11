@@ -1,15 +1,22 @@
-function ServiceFormSection({ title, description, children, className = '' }) {
+/**
+ * Shared section chrome for service application forms.
+ * Title + short purpose line; optional Lucide icon as a quiet signpost.
+ */
+function ServiceFormSection({ icon: Icon, title, lead, children, className = '' }) {
 	return (
-		<section className={`service-form-section${className ? ` ${className}` : ''}`}>
-			{title ? (
-				<div className="service-form-section__head">
-					<h2 className="service-form-section__title">{title}</h2>
-					{description ? (
-						<p className="service-form-section__desc">{description}</p>
-					) : null}
+		<section className={`sf-section${className ? ` ${className}` : ''}`}>
+			<header className="sf-section__head">
+				{Icon ? (
+					<span className="sf-section__icon" aria-hidden>
+						<Icon size={18} strokeWidth={2} />
+					</span>
+				) : null}
+				<div className="sf-section__copy">
+					<h2 className="sf-section__title">{title}</h2>
+					{lead ? <p className="sf-section__lead">{lead}</p> : null}
 				</div>
-			) : null}
-			{children}
+			</header>
+			<div className="sf-section__body">{children}</div>
 		</section>
 	)
 }

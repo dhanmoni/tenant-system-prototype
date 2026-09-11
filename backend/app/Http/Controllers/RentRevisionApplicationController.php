@@ -41,15 +41,15 @@ class RentRevisionApplicationController extends Controller
 
             'signed_by' => ['required', 'string', 'in:landlord,tenant'],
             'signature_name' => ['required', 'string', 'max:255'],
-            'signature_image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'signature_image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ], [
+            'signature_image.required' => 'A signature image is required.',
             'signature_image.image' => 'Signature must be an image file.',
+            'signature_image.mimes' => 'Signature must be a JPG, JPEG or PNG file.',
+            'signature_image.max' => 'Signature image must not exceed 2 MB.',
         ]);
 
-        $signaturePath = null;
-        if ($request->hasFile('signature_image')) {
-            $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/rent-revision');
-        }
+        $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/rent-revision');
 
         [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin'], $user);
         if ($uinError) {

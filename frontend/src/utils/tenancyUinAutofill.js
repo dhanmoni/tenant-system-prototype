@@ -33,6 +33,32 @@ export function formatJurisdiction(tenancy) {
 	return [office, district].filter(Boolean).join(', ')
 }
 
+/**
+ * Two address lines under "To / The Rent Authority" on Form I,
+ * taken from the office that issued the UIN.
+ */
+export function formatRentAuthorityAddressee(tenancy) {
+	if (!tenancy) return { line1: '', line2: '' }
+	const officeName = String(tenancy.office?.name || '').trim()
+	const officeAddress = String(tenancy.office?.address || '').trim()
+	const districtName = String(tenancy.district?.name || tenancy.office?.district?.name || '').trim()
+
+	const line1 = officeName
+		? `Rent Authority — ${officeName}`
+		: districtName
+			? `Rent Authority — ${districtName}`
+			: 'Rent Authority'
+
+	const line2Parts = []
+	if (officeAddress) line2Parts.push(officeAddress)
+	if (districtName && !officeAddress.toLowerCase().includes(districtName.toLowerCase())) {
+		line2Parts.push(`District: ${districtName}`)
+	}
+	const line2 = line2Parts.join(', ') || (districtName ? `District: ${districtName}` : '')
+
+	return { line1, line2 }
+}
+
 export function formatOtherCharges(tenancy) {
 	const lines = []
 	if (tenancy.property_charge_electricity) {

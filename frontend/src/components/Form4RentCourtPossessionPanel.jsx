@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
+import { BadgeCheck, FileText, IdCard, Info, PenLine, Scale, Users } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
+import ServiceFormSection from './forms/ServiceFormSection'
+import ServiceFormFieldLabel from './forms/ServiceFormFieldLabel'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { APPLICATION_TYPES } from '../constants/application'
 import DeclarationCheckbox from './forms/DeclarationCheckbox'
@@ -365,60 +367,117 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 
 	return (
 		<div className="dashboard-card service-form-panel">
-			{error ? <div className="error" role="alert">{error}</div> : null}
+			{error ? (
+				<div className="service-form-alert service-form-alert--error" role="alert">
+					{error}
+				</div>
+			) : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<TenancyUinLookup
-					value={tenancyUIN}
-					onChange={setTenancyUIN}
-					onLoaded={handleTenancyLoaded}
-					label="Unique Identification Number"
-				/>
-
-				<label>
-					<span className="label-text required">Before the Rent Court at</span>
-					<input type="text" value={beforeRentCourt} onChange={(e) => setBeforeRentCourt(e.target.value)} required />
-				</label>
-
-				<fieldset className="tenancy-fieldset">
-					<legend>Applicant</legend>
-
+				<ServiceFormSection
+					icon={IdCard}
+					title="Tenancy"
+					lead="Start with the UIN for this tenancy, then name the Rent Court where this application will be heard."
+				>
+					<TenancyUinLookup
+						value={tenancyUIN}
+						onChange={setTenancyUIN}
+						onLoaded={handleTenancyLoaded}
+						label="Tenancy Unique Identification Number (UIN)"
+						hint="Enter the UIN issued for this tenancy, then tap Fetch details. Only a party to the tenancy can look it up."
+					/>
 					<label>
-						<span className="label-text required">Name of the Applicant</span>
-						<input type="text" value={applicantName} onChange={(e) => setApplicantName(e.target.value)} required />
-					</label>
-					<label>
-						<span className="label-text required">Name of the Tenant</span>
-						<input
-							required type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
-					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text required">Residential address of the Applicant</span>
-						<textarea
-							value={applicantResidentialAddress}
-							onChange={(e) => setApplicantResidentialAddress(e.target.value)}
+						<ServiceFormFieldLabel
 							required
-							rows={3}
+							hint="Name the place where this Rent Court sits (for example, the district or town)."
+						>
+							Before the Rent Court at
+						</ServiceFormFieldLabel>
+						<input
+							type="text"
+							value={beforeRentCourt}
+							onChange={(e) => setBeforeRentCourt(e.target.value)}
+							required
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-						Grounds for recovery of possession
-						<div className="ground-choice__info-container">
-							<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-							<div className="ground-choice__info-popup">
-								<span>
-									Form II states: In accordance with sub-section (2) of section 21 or section 22 of the
-									Act, I hereby request the Rent Court for recovery of possession of the premises on
-									following ground. Select the basis and the grounds relied on.
-								</span>
-							</div>
+				<ServiceFormSection
+					icon={Users}
+					title="Parties"
+					lead="Name the applicant and the tenant. Notices for the applicant will go to the address you give here."
+				>
+					<div className="sf-party-grid">
+						<div className="sf-party-card">
+							<h3 className="sf-party-card__title">A. Applicant</h3>
+							<p className="sf-party-card__note">You (or the person filing this application)</p>
+							<label>
+								<ServiceFormFieldLabel
+									required
+									hint="Full name as it should appear on the application."
+								>
+									Name of the Applicant
+								</ServiceFormFieldLabel>
+								<input
+									type="text"
+									value={applicantName}
+									onChange={(e) => setApplicantName(e.target.value)}
+									required
+								/>
+							</label>
+							<label className="tenancy-field-full">
+								<ServiceFormFieldLabel
+									required
+									hint="Address where notices for the applicant should be served."
+								>
+									Residential address of the Applicant
+								</ServiceFormFieldLabel>
+								<textarea
+									value={applicantResidentialAddress}
+									onChange={(e) => setApplicantResidentialAddress(e.target.value)}
+									required
+									rows={3}
+								/>
+							</label>
 						</div>
-					</legend>
 
-					<div className="tenancy-field-full ground-choice-group" role="radiogroup" aria-label="Statutory basis">
+						<div className="sf-party-card">
+							<h3 className="sf-party-card__title">B. Tenant</h3>
+							<p className="sf-party-card__note">The tenant named in this tenancy</p>
+							<label>
+								<ServiceFormFieldLabel
+									required
+									hint="Full name of the tenant against whom possession is sought."
+								>
+									Name of the Tenant
+								</ServiceFormFieldLabel>
+								<input
+									type="text"
+									value={tenantName}
+									onChange={(e) => setTenantName(e.target.value)}
+									required
+								/>
+							</label>
+						</div>
+					</div>
+				</ServiceFormSection>
+
+				<ServiceFormSection
+					icon={Scale}
+					title="Grounds for recovery of possession"
+					lead="Choose the statutory basis. Extra ground checkboxes open only when section 21(2) applies."
+				>
+					<p className="sf-section__inline-hint">
+						Tap the{' '}
+						<Info size={14} className="sf-inline-info" aria-hidden /> info icon on an option to see
+						which section of the Act it refers to.
+					</p>
+
+					<div
+						className="tenancy-field-full ground-choice-group"
+						role="radiogroup"
+						aria-label="Statutory basis"
+					>
 						{EVICTION_BASIS_OPTIONS.map((option) => (
 							<label key={option.value} className="ground-choice">
 								<input
@@ -428,15 +487,38 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 									checked={statutoryBasis === option.value}
 									onChange={() => setStatutoryBasis(option.value)}
 								/>
-								<span className="ground-choice__body" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-									<span className="ground-choice__label" style={{ marginBottom: 0 }}>{option.label}</span>
-									<div className="ground-choice__info-container">
-										<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-										<div className="ground-choice__info-popup">
+								<span
+									className="ground-choice__body"
+									style={{
+										flexDirection: 'row',
+										alignItems: 'center',
+										gap: '0.5rem',
+										flexWrap: 'wrap',
+									}}
+								>
+									<span className="ground-choice__label" style={{ marginBottom: 0 }}>
+										{option.label}
+									</span>
+									<span
+										className="ground-choice__info-container"
+										role="note"
+										tabIndex={0}
+										aria-label={`${option.citation}: ${option.note}`}
+										onClick={(e) => {
+											e.preventDefault()
+											e.stopPropagation()
+										}}
+										onMouseDown={(e) => {
+											e.preventDefault()
+											e.stopPropagation()
+										}}
+									>
+										<Info size={16} aria-hidden />
+										<span className="ground-choice__info-popup" role="tooltip">
 											<strong>{option.citation}</strong>
 											<span>{option.note}</span>
-										</div>
-									</div>
+										</span>
+									</span>
 								</span>
 							</label>
 						))}
@@ -444,20 +526,26 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 
 					{groundsApply ? (
 						<>
-							<p className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-								Grounds under section 21(2)
-								<div className="ground-choice__info-container">
-									<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-									<div className="ground-choice__info-popup">
+							<p className="sf-section__inline-hint" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+								<span className="label-text required" style={{ marginBottom: 0 }}>
+									Grounds under section 21(2)
+								</span>
+								<span
+									className="ground-choice__info-container"
+									role="note"
+									tabIndex={0}
+									aria-label="Section 21(2) allows an order on one or more of the following grounds. Select every ground relied on."
+								>
+									<Info size={16} aria-hidden />
+									<span className="ground-choice__info-popup" role="tooltip">
 										<span>
 											Section 21(2) allows an order on one or more of the following grounds. Select every
 											ground relied on.
 										</span>
-									</div>
-								</div>
+									</span>
+								</span>
 							</p>
 							<div className="tenancy-field-full ground-choice-group ground-choice-group--inline">
-
 								{EVICTION_GROUND_CLAUSES.map((clause) => (
 									<label key={clause.value} className="ground-choice">
 										<input
@@ -466,16 +554,41 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 											checked={evictionGrounds.includes(clause.value)}
 											onChange={() => toggleGround(clause.value)}
 										/>
-										<span className="ground-choice__body" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-											<span className="ground-choice__label" style={{ marginBottom: 0 }}>{clause.label}</span>
-											<div className="ground-choice__info-container">
-												<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-												<div className="ground-choice__info-popup">
+										<span
+											className="ground-choice__body"
+											style={{
+												flexDirection: 'row',
+												alignItems: 'center',
+												gap: '0.5rem',
+												flexWrap: 'wrap',
+											}}
+										>
+											<span className="ground-choice__label" style={{ marginBottom: 0 }}>
+												{clause.label}
+											</span>
+											<span
+												className="ground-choice__info-container"
+												role="note"
+												tabIndex={0}
+												aria-label={`${clause.citation}: ${clause.text}`}
+												onClick={(e) => {
+													e.preventDefault()
+													e.stopPropagation()
+												}}
+												onMouseDown={(e) => {
+													e.preventDefault()
+													e.stopPropagation()
+												}}
+											>
+												<Info size={16} aria-hidden />
+												<span className="ground-choice__info-popup" role="tooltip">
 													<strong>{clause.citation}</strong>
 													<p style={{ marginTop: '0.25rem', marginBottom: '0.25rem' }}>{clause.text}</p>
-													{clause.explanation && <p style={{ marginTop: 0, fontStyle: 'italic' }}>{clause.explanation}</p>}
-												</div>
-											</div>
+													{clause.explanation ? (
+														<p style={{ marginTop: 0, fontStyle: 'italic' }}>{clause.explanation}</p>
+													) : null}
+												</span>
+											</span>
 										</span>
 									</label>
 								))}
@@ -483,14 +596,26 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 						</>
 					) : (
 						<p className="field-note tenancy-field-full">
+							No additional ground checklist applies under section 22 — continue with the application
+							details.
 						</p>
 					)}
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>Details of application</legend>
+				<ServiceFormSection
+					icon={FileText}
+					title="Details of the application"
+					lead="Explain the dispute in plain words. Paragraph numbers match Form II in the Gazette."
+				>
 					<label className="tenancy-field-full">
-						<span className="label-text required">1. Particulars of application</span>
+						<ServiceFormFieldLabel
+							required
+							para={1}
+							hint="In one or two sentences, what recovery of possession are you seeking?"
+							info="Form II para 1 — Particulars of application."
+						>
+							Particulars of application
+						</ServiceFormFieldLabel>
 						<textarea
 							required
 							value={particularsOfApplication}
@@ -498,83 +623,155 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 							rows={3}
 						/>
 					</label>
-					<DeclarationCheckbox
-						fieldId={DECLARATION.FORM_II_JURISDICTION}
-						label="2. Jurisdiction of the Rent Court"
-						checked={jurisdictionAccepted}
-						onChange={setJurisdictionAccepted}
-					/>
-					<label className="tenancy-field-full">
-						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							3. Facts of the case
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>Give here a concise statement of facts in a chronological order, each paragraph containing as nearly as possible a separate issue or fact.</span>
-								</div>
-							</div>
-						</span>
-						<textarea
-							required value={factsOfCase} onChange={(e) => setFactsOfCase(e.target.value)} rows={3} />
-					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text required">4. Grounds for relief</span>
-						<textarea
-							required value={groundsForRelief} onChange={(e) => setGroundsForRelief(e.target.value)} rows={3} />
-					</label>
-					<PriorProceedingsField
-						fieldId={DECLARATION.FORM_II_PRIOR_PROCEEDINGS}
-						label="5. Matters not previously filed or pending with any other court"
-						hasPrior={hasPriorProceedings}
-						onHasPriorChange={setHasPriorProceedings}
-						entries={priorProceedings}
-						onEntriesChange={setPriorProceedings}
-					/>
-					<label className="tenancy-field-full">
-						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							6. Relief sought
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>In view of the grounds mentioned in para 4 above, the applicant prays for the following relief(s). Specify below the relief(s) sought explaining the grounds for such relief(s) and the legal provisions, if any, relied upon.</span>
-								</div>
-							</div>
-						</span>
-						<textarea
-							required value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
-					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							7. Interim order, if any prayed for
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>Pending final decision on the application, the applicant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
-								</div>
-							</div>
-						</span>
-						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
-					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text">8. List of enclosures</span>
-						<textarea value={enclosuresList} onChange={(e) => setEnclosuresList(e.target.value)} rows={3} />
-					</label>
-				</fieldset>
 
-				<VerificationClause
-					prefilled={hasProfileDefaults(profile)}
-					fieldId={VERIFICATION.FORM_II}
-					values={verification}
-					onChange={setVerificationField}
-					onParagraphChange={setParagraphAnswer}
-				/>
+					<div className="sf-field-block">
+						<ServiceFormFieldLabel
+							required
+							para={2}
+							hint="Confirm that this Rent Court is the correct place to file."
+							info="Form II para 2 — Jurisdiction of the Rent Court (declaration)."
+						>
+							Jurisdiction of the Rent Court
+						</ServiceFormFieldLabel>
+						<DeclarationCheckbox
+							fieldId={DECLARATION.FORM_II_JURISDICTION}
+							hideLabel
+							simple
+							summary="Yes — this matter can be heard by this Rent Court"
+							checked={jurisdictionAccepted}
+							onChange={setJurisdictionAccepted}
+						/>
+					</div>
 
-				<fieldset className="tenancy-fieldset">
-					{/* The Gazette prints "Signature of the Applicant" on all five forms, including the
-					  * two appeal forms. Reproduced as printed. */}
-					<legend>Signature of the Applicant</legend>
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							required
+							para={3}
+							hint="Write what happened in date order. Prefer one fact or issue per short paragraph."
+							info="Form II para 3 — Facts of the case."
+						>
+							Facts of the case
+						</ServiceFormFieldLabel>
+						<textarea
+							required
+							value={factsOfCase}
+							onChange={(e) => setFactsOfCase(e.target.value)}
+							rows={4}
+						/>
+					</label>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							required
+							para={4}
+							hint="Why should the Rent Court grant what you are asking? Link to the grounds you chose above."
+							info="Form II para 4 — Grounds for relief."
+						>
+							Grounds for relief
+						</ServiceFormFieldLabel>
+						<textarea
+							required
+							value={groundsForRelief}
+							onChange={(e) => setGroundsForRelief(e.target.value)}
+							rows={3}
+						/>
+					</label>
+
+					<div className="sf-field-block">
+						<ServiceFormFieldLabel
+							required
+							para={5}
+							hint="Say whether this same matter is already before another court or authority."
+							info="Form II para 5 — Matters not previously filed or pending with any other court."
+						>
+							Have you filed this matter elsewhere?
+						</ServiceFormFieldLabel>
+						<PriorProceedingsField
+							fieldId={DECLARATION.FORM_II_PRIOR_PROCEEDINGS}
+							hint="If yes, add each case below. If no, choose the first option."
+							hasPrior={hasPriorProceedings}
+							onHasPriorChange={setHasPriorProceedings}
+							entries={priorProceedings}
+							onEntriesChange={setPriorProceedings}
+						/>
+					</div>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							required
+							para={6}
+							hint="State clearly what order you want (for example: recovery of possession)."
+							info="Form II para 6 — Relief sought. Mention legal provisions if you know them."
+						>
+							Relief sought
+						</ServiceFormFieldLabel>
+						<textarea
+							required
+							value={reliefSought}
+							onChange={(e) => setReliefSought(e.target.value)}
+							rows={3}
+						/>
+					</label>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							optional
+							para={7}
+							hint="Only if you need temporary help before the final order."
+							info="Form II para 7 — Interim order, if any prayed for."
+						>
+							Interim order, if any prayed for
+						</ServiceFormFieldLabel>
+						<textarea
+							value={interimOrderSought}
+							onChange={(e) => setInterimOrderSought(e.target.value)}
+							rows={3}
+							placeholder="Leave blank if not needed"
+						/>
+					</label>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							optional
+							para={8}
+							hint="List affidavits or documents you are attaching, if any."
+							info="Form II para 8 — List of enclosures."
+						>
+							List of enclosures
+						</ServiceFormFieldLabel>
+						<textarea
+							value={enclosuresList}
+							onChange={(e) => setEnclosuresList(e.target.value)}
+							rows={3}
+							placeholder="Example: Copy of tenancy agreement, rent receipts…"
+						/>
+					</label>
+				</ServiceFormSection>
+
+				<ServiceFormSection
+					icon={BadgeCheck}
+					title="Verification"
+					lead="Complete the sworn statement below. Fill the blanks in the sentence, then enter the place of verification."
+				>
+					<VerificationClause
+						prefilled={hasProfileDefaults(profile)}
+						fieldId={VERIFICATION.FORM_II}
+						values={verification}
+						onChange={setVerificationField}
+						onParagraphChange={setParagraphAnswer}
+						embedded
+					/>
+				</ServiceFormSection>
+
+				<ServiceFormSection
+					icon={PenLine}
+					title="Signature"
+					lead="Put the name that should appear against the signature on this application."
+				>
 					<label>
-						<span className="label-text required">Name against the signature</span>
+						<ServiceFormFieldLabel required hint="Usually the applicant’s full name.">
+							Name against the signature
+						</ServiceFormFieldLabel>
 						<input
 							type="text"
 							value={signatureName}
@@ -583,14 +780,19 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 						/>
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text">Signature image (optional)</span>
+						<ServiceFormFieldLabel
+							optional
+							hint="You may upload a scanned signature image if you have one."
+						>
+							Signature image
+						</ServiceFormFieldLabel>
 						<input
 							type="file"
 							accept="image/*"
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
 				<div className="form-actions">
 					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>

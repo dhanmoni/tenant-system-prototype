@@ -41,13 +41,10 @@ class OtherChargesRevisionApplicationController extends Controller
 
             'signed_by' => ['required', 'string', 'in:landlord,tenant'],
             'signature_name' => ['required', 'string', 'max:255'],
-            'signature_image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'signature_image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ]);
 
-        $signaturePath = null;
-        if ($request->hasFile('signature_image')) {
-            $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/other-charges-revision');
-        }
+        $signaturePath = DocumentStore::store($request->file('signature_image'), 'tenancy/signatures/other-charges-revision');
 
         [$tenancy, $uinError] = \App\Models\TenancyApplication::resolveForServiceForm($data['tenancy_uin'], $user);
         if ($uinError) {

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
+import { BadgeCheck, FileText, IdCard, PenLine, Users } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
+import ServiceFormSection from './forms/ServiceFormSection'
+import ServiceFormFieldLabel from './forms/ServiceFormFieldLabel'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
 import { APPLICATION_TYPES } from '../constants/application'
 import DeclarationCheckbox from './forms/DeclarationCheckbox'
@@ -339,65 +341,132 @@ export default function Form7RentCourtAppealPanel({ onBack, serviceMeta, user })
 
 	return (
 		<div className="dashboard-card service-form-panel">
-			{error ? <div className="error" role="alert">{error}</div> : null}
+			{error ? (
+				<div className="service-form-alert service-form-alert--error" role="alert">
+					{error}
+				</div>
+			) : null}
 
 			<form className="tenancy-form" onSubmit={requestPreview}>
-				<TenancyUinLookup
-					value={tenancyUIN}
-					onChange={setTenancyUIN}
-					onLoaded={handleTenancyLoaded}
-					label="In the matter of Tenancy of Unique Identification Number"
-				/>
-
-				<label>
-					<span className="label-text required">In the Rent Court at</span>
-					<input type="text" value={rentCourtAt} onChange={(e) => setRentCourtAt(e.target.value)} required />
-				</label>
-
-				<fieldset className="tenancy-fieldset">
-					<legend>A. Name of the Appellant</legend>
+				<ServiceFormSection
+					icon={IdCard}
+					title="Tenancy"
+					lead="Start with the UIN for this tenancy, then name the Rent Court where this appeal is filed."
+				>
+					<TenancyUinLookup
+						value={tenancyUIN}
+						onChange={setTenancyUIN}
+						onLoaded={handleTenancyLoaded}
+						label="Tenancy Unique Identification Number (UIN)"
+						hint="Enter the UIN issued for this tenancy, then tap Fetch details. Only a party to the tenancy can look it up."
+					/>
 					<label>
-						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							Name of the Appellant
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>Add description and the residential address on which the service of notices is to be effected on the Appellant</span>
-								</div>
-							</div>
-						</span>
-						<input type="text" value={appellantName} onChange={(e) => setAppellantName(e.target.value)} required />
+						<ServiceFormFieldLabel
+							required
+							hint="Name the place of the Rent Court hearing this appeal."
+							info="Form V — In the Rent Court at."
+						>
+							In the Rent Court at
+						</ServiceFormFieldLabel>
+						<input
+							type="text"
+							value={rentCourtAt}
+							onChange={(e) => setRentCourtAt(e.target.value)}
+							required
+						/>
 					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text required">Residential address of the Appellant</span>
-						<textarea value={appellantResidentialAddress} onChange={(e) => setAppellantResidentialAddress(e.target.value)} required rows={3} />
-					</label>
-				</fieldset>
+				</ServiceFormSection>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>B. Name of the Respondent</legend>
-					<label>
-						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							Name of the Respondent
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>Add description and the residential address on which the service of notices is to be effected on the Respondent</span>
-								</div>
-							</div>
-						</span>
-						<input type="text" value={respondentName} onChange={(e) => setRespondentName(e.target.value)} required />
-					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text required">Residential address of the Respondent</span>
-						<textarea value={respondentResidentialAddress} onChange={(e) => setRespondentResidentialAddress(e.target.value)} required rows={3} />
-					</label>
-				</fieldset>
+				<ServiceFormSection
+					icon={Users}
+					title="Parties"
+					lead="Who is appealing, and against whom. Notices will be sent to the addresses you give here."
+				>
+					<div className="sf-party-grid">
+						<div className="sf-party-card">
+							<h3 className="sf-party-card__title">A. Appellant</h3>
+							<p className="sf-party-card__note">You (or the person filing this appeal)</p>
+							<label>
+								<ServiceFormFieldLabel
+									required
+									hint="Full name as it should appear on the appeal. Include description if needed."
+									info="Add description and the residential address on which the service of notices is to be effected on the Appellant."
+								>
+									Name of the Appellant
+								</ServiceFormFieldLabel>
+								<input
+									type="text"
+									value={appellantName}
+									onChange={(e) => setAppellantName(e.target.value)}
+									required
+								/>
+							</label>
+							<label className="tenancy-field-full">
+								<ServiceFormFieldLabel
+									required
+									hint="Address where notices for the appellant should be served."
+								>
+									Residential address of the Appellant
+								</ServiceFormFieldLabel>
+								<textarea
+									value={appellantResidentialAddress}
+									onChange={(e) => setAppellantResidentialAddress(e.target.value)}
+									required
+									rows={3}
+								/>
+							</label>
+						</div>
 
-				<fieldset className="tenancy-fieldset">
-					<legend>Details of appeal</legend>
+						<div className="sf-party-card">
+							<h3 className="sf-party-card__title">B. Respondent</h3>
+							<p className="sf-party-card__note">The other side in this appeal</p>
+							<label>
+								<ServiceFormFieldLabel
+									required
+									hint="Full name of the respondent. Include description if needed."
+									info="Add description and the residential address on which the service of notices is to be effected on the Respondent."
+								>
+									Name of the Respondent
+								</ServiceFormFieldLabel>
+								<input
+									type="text"
+									value={respondentName}
+									onChange={(e) => setRespondentName(e.target.value)}
+									required
+								/>
+							</label>
+							<label className="tenancy-field-full">
+								<ServiceFormFieldLabel
+									required
+									hint="Address where notices for the respondent should be served."
+								>
+									Residential address of the Respondent
+								</ServiceFormFieldLabel>
+								<textarea
+									value={respondentResidentialAddress}
+									onChange={(e) => setRespondentResidentialAddress(e.target.value)}
+									required
+									rows={3}
+								/>
+							</label>
+						</div>
+					</div>
+				</ServiceFormSection>
+
+				<ServiceFormSection
+					icon={FileText}
+					title="Details of appeal"
+					lead="Explain the appeal in plain words. Paragraph numbers match Form V in the Gazette."
+				>
 					<label className="tenancy-field-full">
-						<span className="label-text required">1. Particulars of the order of the Rent Authority as against which the appeal is made</span>
+						<ServiceFormFieldLabel
+							required
+							para={1}
+							hint="Identify the Rent Authority order you are appealing against (date, number, and brief substance)."
+							info="Form V para 1 — Particulars of the order of the Rent Authority as against which the appeal is made."
+						>
+							Particulars of the order of the Rent Authority as against which the appeal is made
+						</ServiceFormFieldLabel>
 						<textarea
 							required
 							value={orderParticularsAgainstWhichAppealMade}
@@ -405,84 +474,162 @@ export default function Form7RentCourtAppealPanel({ onBack, serviceMeta, user })
 							rows={3}
 						/>
 					</label>
-					<DeclarationCheckbox
-						fieldId={DECLARATION.FORM_V_JURISDICTION}
-						label="2. Jurisdiction of the Rent Court"
-						checked={jurisdictionAccepted}
-						onChange={setJurisdictionAccepted}
-					/>
-					<DeclarationCheckbox
-						fieldId={DECLARATION.FORM_V_LIMITATION}
-						label="3. Limitation"
-						checked={limitationAccepted}
-						onChange={setLimitationAccepted}
-					/>
-					<label className="tenancy-field-full">
-						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							4. Memorandum of Appeal
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>Grounds for appeal with legal provisions</span>
-								</div>
-							</div>
-						</span>
-						<textarea
-							required value={memorandumOfAppeal} onChange={(e) => setMemorandumOfAppeal(e.target.value)} rows={3} />
-					</label>
-					<PriorProceedingsField
-						fieldId={DECLARATION.FORM_V_PRIOR_PROCEEDINGS}
-						label="5. Matters not previously filed or pending with any other court"
-						hasPrior={hasPriorProceedings}
-						onHasPriorChange={setHasPriorProceedings}
-						entries={priorProceedings}
-						onEntriesChange={setPriorProceedings}
-					/>
-					<label className="tenancy-field-full">
-						<span className="label-text required" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							6. Relief sought
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>In view of the Memorandum provided in para 4 above, the appellant prays for the following relief(s).</span>
-								</div>
-							</div>
-						</span>
-						<textarea
-							required value={reliefSought} onChange={(e) => setReliefSought(e.target.value)} rows={3} />
-					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-							7. Interim order, if any prayed for
-							<div className="ground-choice__info-container">
-								<Info size={16} className="text-muted-foreground" style={{ cursor: 'help' }} />
-								<div className="ground-choice__info-popup">
-									<span>Pending final decision on the appeal, the appellant seeks the following interim relief. Give here the nature of the interim relief prayed for.</span>
-								</div>
-							</div>
-						</span>
-						<textarea value={interimOrderSought} onChange={(e) => setInterimOrderSought(e.target.value)} rows={3} />
-					</label>
-					<label className="tenancy-field-full">
-						<span className="label-text">8. List of enclosures</span>
-						<textarea value={listOfEnclosures} onChange={(e) => setListOfEnclosures(e.target.value)} rows={3} />
-					</label>
-				</fieldset>
 
-				<VerificationClause
-					prefilled={hasProfileDefaults(profile)}
-					fieldId={VERIFICATION.FORM_V}
-					values={verification}
-					onChange={setVerificationField}
-					onParagraphChange={setParagraphAnswer}
-				/>
+					<div className="sf-field-block">
+						<ServiceFormFieldLabel
+							required
+							para={2}
+							hint="Confirm that this Rent Court is the correct place to file this appeal."
+							info="Form V para 2 — Jurisdiction of the Rent Court (declaration)."
+						>
+							Jurisdiction of the Rent Court
+						</ServiceFormFieldLabel>
+						<DeclarationCheckbox
+							fieldId={DECLARATION.FORM_V_JURISDICTION}
+							hideLabel
+							simple
+							summary="Yes — this appeal can be heard by this Rent Court"
+							checked={jurisdictionAccepted}
+							onChange={setJurisdictionAccepted}
+						/>
+					</div>
 
-				<fieldset className="tenancy-fieldset">
-					{/* The Gazette prints "Signature of the Applicant" on all five forms, including the
-					  * two appeal forms. Reproduced as printed. */}
-					<legend>Signature of the Applicant</legend>
+					<div className="sf-field-block">
+						<ServiceFormFieldLabel
+							required
+							para={3}
+							hint="Confirm that this appeal is filed within the limitation period."
+							info="Form V para 3 — Limitation (declaration)."
+						>
+							Limitation
+						</ServiceFormFieldLabel>
+						<DeclarationCheckbox
+							fieldId={DECLARATION.FORM_V_LIMITATION}
+							hideLabel
+							simple
+							summary="Yes — this appeal is within the limitation period"
+							checked={limitationAccepted}
+							onChange={setLimitationAccepted}
+						/>
+					</div>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							required
+							para={4}
+							hint="State the grounds of appeal and any legal provisions you rely on."
+							info="Form V para 4 — Memorandum of Appeal. Grounds for appeal with legal provisions."
+						>
+							Memorandum of Appeal
+						</ServiceFormFieldLabel>
+						<textarea
+							required
+							value={memorandumOfAppeal}
+							onChange={(e) => setMemorandumOfAppeal(e.target.value)}
+							rows={3}
+						/>
+					</label>
+
+					<div className="sf-field-block">
+						<ServiceFormFieldLabel
+							required
+							para={5}
+							hint="Say whether this same matter is already before another court or authority."
+							info="Form V para 5 — Matters not previously filed or pending with any other court."
+						>
+							Have you filed this matter elsewhere?
+						</ServiceFormFieldLabel>
+						<PriorProceedingsField
+							fieldId={DECLARATION.FORM_V_PRIOR_PROCEEDINGS}
+							hint="If yes, add each case below. If no, choose the first option."
+							hasPrior={hasPriorProceedings}
+							onHasPriorChange={setHasPriorProceedings}
+							entries={priorProceedings}
+							onEntriesChange={setPriorProceedings}
+						/>
+					</div>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							required
+							para={6}
+							hint="In view of the memorandum in para 4, state the relief(s) you seek."
+							info="Form V para 6 — Relief sought."
+						>
+							Relief sought
+						</ServiceFormFieldLabel>
+						<textarea
+							required
+							value={reliefSought}
+							onChange={(e) => setReliefSought(e.target.value)}
+							rows={3}
+						/>
+					</label>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							optional
+							para={7}
+							hint="Only if you need temporary relief pending the final decision on this appeal."
+							info="Form V para 7 — Interim order, if any prayed for."
+						>
+							Interim order, if any prayed for
+						</ServiceFormFieldLabel>
+						<textarea
+							value={interimOrderSought}
+							onChange={(e) => setInterimOrderSought(e.target.value)}
+							rows={3}
+							placeholder="Leave blank if not needed"
+						/>
+					</label>
+
+					<label className="tenancy-field-full">
+						<ServiceFormFieldLabel
+							optional
+							para={8}
+							hint="List affidavits or documents you are attaching, if any."
+							info="Form V para 8 — List of enclosures."
+						>
+							List of enclosures
+						</ServiceFormFieldLabel>
+						<textarea
+							value={listOfEnclosures}
+							onChange={(e) => setListOfEnclosures(e.target.value)}
+							rows={3}
+							placeholder="Example: Copy of Rent Authority order, tenancy agreement…"
+						/>
+					</label>
+				</ServiceFormSection>
+
+				<ServiceFormSection
+					icon={BadgeCheck}
+					title="Verification"
+					lead="Complete the sworn statement below. Fill the blanks in the sentence, then enter the place of verification."
+				>
+					<VerificationClause
+						prefilled={hasProfileDefaults(profile)}
+						fieldId={VERIFICATION.FORM_V}
+						values={verification}
+						onChange={setVerificationField}
+						onParagraphChange={setParagraphAnswer}
+						embedded
+					/>
+				</ServiceFormSection>
+
+				{/* The Gazette prints "Signature of the Applicant" on all five forms, including the
+				  * two appeal forms. Section title kept short; lead carries the filing sense. */}
+				<ServiceFormSection
+					icon={PenLine}
+					title="Signature"
+					lead="Put the name that should appear against the signature of the applicant on this appeal."
+				>
 					<label>
-						<span className="label-text required">Name against the signature</span>
+						<ServiceFormFieldLabel
+							required
+							hint="Usually the appellant’s full name."
+						>
+							Name against the signature
+						</ServiceFormFieldLabel>
 						<input
 							type="text"
 							value={signatureName}
@@ -491,14 +638,19 @@ export default function Form7RentCourtAppealPanel({ onBack, serviceMeta, user })
 						/>
 					</label>
 					<label className="tenancy-field-full">
-						<span className="label-text">Signature image (optional)</span>
+						<ServiceFormFieldLabel
+							optional
+							hint="You may upload a scanned signature image if you have one."
+						>
+							Signature image
+						</ServiceFormFieldLabel>
 						<input
 							type="file"
 							accept="image/*"
 							onChange={(e) => setSignatureImage(e.target.files?.[0] || null)}
 						/>
 					</label>
-				</fieldset>
+				</ServiceFormSection>
 
 				<div className="form-actions">
 					<button type="button" className="ws-btn ws-btn--outline" onClick={onBack} disabled={submitting}>

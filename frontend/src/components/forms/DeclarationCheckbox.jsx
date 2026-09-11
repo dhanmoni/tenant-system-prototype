@@ -8,15 +8,47 @@ import { declarationText } from '../../constants/declarations'
  * free-text box. The wording is read from a shared constant so that what is displayed is what the
  * server records.
  *
- * The filer must be able to read the whole declaration before accepting it, so the text is never
- * truncated or hidden behind a tooltip.
+ * `simple` shows a short citizen-facing accept line first, with the full legal wording underneath
+ * in smaller type — easier to act on, without hiding what is being asserted.
  */
-function DeclarationCheckbox({ fieldId, label, checked, onChange, disabled = false }) {
+function DeclarationCheckbox({
+	fieldId,
+	label,
+	summary,
+	checked,
+	onChange,
+	disabled = false,
+	hideLabel = false,
+	simple = false,
+}) {
 	const text = declarationText(fieldId)
+
+	if (simple) {
+		return (
+			<div className="declaration declaration--simple tenancy-field-full">
+				{!hideLabel && label ? <p className="label-text required">{label}</p> : null}
+				<label className={`declaration__simple${checked ? ' is-checked' : ''}`}>
+					<input
+						type="checkbox"
+						checked={checked}
+						onChange={(e) => onChange(e.target.checked)}
+						disabled={disabled}
+						required
+					/>
+					<span className="declaration__simple-copy">
+						<span className="declaration__simple-title">
+							{summary || 'Yes — I confirm this declaration'}
+						</span>
+						<span className="declaration__simple-legal">{text}</span>
+					</span>
+				</label>
+			</div>
+		)
+	}
 
 	return (
 		<div className="declaration tenancy-field-full">
-			<p className="label-text required">{label}</p>
+			{!hideLabel && label ? <p className="label-text required">{label}</p> : null}
 			<label className="declaration__box">
 				<input
 					type="checkbox"

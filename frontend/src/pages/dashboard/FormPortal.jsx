@@ -44,7 +44,17 @@ function FormPortal() {
 	}
 
 	return (
-		<ServiceFormShell serviceMeta={serviceMeta}>
+		<ServiceFormShell
+			serviceMeta={serviceMeta}
+			variant={
+				formType === APPLICATION_TYPES.RENT_REVISION ||
+				formType === APPLICATION_TYPES.OTHER_CHARGES_REVISION ||
+				formType === APPLICATION_TYPES.VALUER_APPOINTMENT ||
+				formType === APPLICATION_TYPES.RENT_AUTHORITY_FILING
+					? 'modern'
+					: 'default'
+			}
+		>
 			<Suspense fallback={<WorkspaceRouteLoader label="Opening form…" />}>
 				<Panel user={user} serviceMeta={serviceMeta} onBack={onBack} />
 			</Suspense>
