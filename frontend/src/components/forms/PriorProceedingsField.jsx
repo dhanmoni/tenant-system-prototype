@@ -68,198 +68,220 @@ function PriorProceedingsField({
 						</span>
 					</label>
 
-					<label
-						className={`form-iv-prior__choice form-iv-prior__choice--compact${
-							hasPrior === true ? ' is-selected' : ''
-						}`}
+					<div
+						className={`form-iv-prior__yes-block${hasPrior === true ? ' is-selected is-open' : ''}`}
 					>
-						<input
-							type="radio"
-							name={`${fieldId}__has_prior`}
-							checked={hasPrior === true}
-							onChange={() => {
-								onHasPriorChange(true)
-								if (entries.length === 0) onEntriesChange([emptyPriorProceeding()])
-							}}
-						/>
-						<span className="form-iv-prior__choice-title">Yes — a related case was filed or is pending</span>
-						<span
-							className="ground-choice__info-container form-iv-prior__info"
-							role="note"
-							tabIndex={0}
-							aria-label={branch}
-							onClick={(e) => {
-								e.preventDefault()
-								e.stopPropagation()
-							}}
-							onMouseDown={(e) => {
-								e.preventDefault()
-								e.stopPropagation()
-							}}
+						<label
+							className={`form-iv-prior__choice form-iv-prior__choice--compact form-iv-prior__choice--yes${
+								hasPrior === true ? ' is-selected' : ''
+							}`}
 						>
-							<Info size={16} aria-hidden />
-							<span className="ground-choice__info-popup form-iv-prior__info-popup" role="tooltip">
-								{branch}
+							<input
+								type="radio"
+								name={`${fieldId}__has_prior`}
+								checked={hasPrior === true}
+								onChange={() => {
+									onHasPriorChange(true)
+									if (entries.length === 0) onEntriesChange([emptyPriorProceeding()])
+								}}
+							/>
+							<span className="form-iv-prior__choice-title">
+								Yes — a related case was filed or is pending
 							</span>
-						</span>
-					</label>
-				</div>
+							<span
+								className="ground-choice__info-container form-iv-prior__info"
+								role="note"
+								tabIndex={0}
+								aria-label={branch}
+								onClick={(e) => {
+									e.preventDefault()
+									e.stopPropagation()
+								}}
+								onMouseDown={(e) => {
+									e.preventDefault()
+									e.stopPropagation()
+								}}
+							>
+								<Info size={16} aria-hidden />
+								<span className="ground-choice__info-popup form-iv-prior__info-popup" role="tooltip">
+									{branch}
+								</span>
+							</span>
+						</label>
 
-				{hasPrior === true ? (
-					<div className="form-iv-prior__cases-wrap">
-						<div className="form-iv-prior__cases-head">
-							<p className="form-iv-prior__cases-title">Particulars of earlier proceedings</p>
-							<p className="form-iv-prior__cases-note">
-								Add one card per case. For disposed cases, enclose the decision with the list of
-								enclosures.
-							</p>
-						</div>
+						{hasPrior === true ? (
+							<div className="form-iv-prior__cases-wrap">
+								<div className="form-iv-prior__cases-head">
+									<p className="form-iv-prior__cases-title">Particulars of earlier proceedings</p>
+									<p className="form-iv-prior__cases-note">
+										Add one card per case. For disposed cases, enclose the decision with the list of
+										enclosures.
+									</p>
+								</div>
 
-						<div className="form-iv-prior__cases" aria-label="Earlier proceedings">
-							{entries.map((entry, index) => (
-								<article key={index} className="form-iv-prior__case">
-									<header className="form-iv-prior__case-head">
-										<span className="form-iv-prior__row-no">{index + 1}</span>
-										<span className="form-iv-prior__case-heading">Case {index + 1}</span>
-										{entries.length > 1 ? (
-											<button
-												type="button"
-												className="form-iv-prior__remove"
-												onClick={() => removeEntry(index)}
-											>
-												Remove
-											</button>
-										) : null}
-									</header>
+								<div className="form-iv-prior__cases" aria-label="Earlier proceedings">
+									{entries.map((entry, index) => (
+										<article key={index} className="form-iv-prior__case">
+											<header className="form-iv-prior__case-head">
+												<span className="form-iv-prior__row-no">{index + 1}</span>
+												<span className="form-iv-prior__case-heading">Case {index + 1}</span>
+												{entries.length > 1 ? (
+													<button
+														type="button"
+														className="form-iv-prior__remove"
+														onClick={() => removeEntry(index)}
+													>
+														Remove
+													</button>
+												) : null}
+											</header>
 
-									<div className="form-iv-prior__case-grid">
-										<label className="form-iv-prior__field">
-											<span className="form-iv-prior__field-label">
-												Case no. <span className="text-red-500">*</span>
-											</span>
-											<input
-												type="text"
-												value={entry.case_number}
-												onChange={(e) => updateEntry(index, { case_number: e.target.value })}
-												maxLength={128}
-												placeholder="Case No."
-												aria-label={`Case ${index + 1} number`}
-												required
-											/>
-										</label>
-
-										<label className="form-iv-prior__field">
-											<span className="form-iv-prior__field-label">
-												Court / forum <span className="text-red-500">*</span>
-											</span>
-											<input
-												type="text"
-												value={entry.forum}
-												onChange={(e) => updateEntry(index, { forum: e.target.value })}
-												maxLength={255}
-												placeholder="Forum"
-												aria-label={`Case ${index + 1} forum`}
-												required
-											/>
-										</label>
-
-										<label className="form-iv-prior__field">
-											<span className="form-iv-prior__field-label">Filed on</span>
-											<input
-												type="date"
-												value={entry.filing_date}
-												onChange={(e) => updateEntry(index, { filing_date: e.target.value })}
-												aria-label={`Case ${index + 1} filing date`}
-											/>
-										</label>
-
-										<div
-											className="form-iv-prior__field form-iv-prior__field--status"
-											role="radiogroup"
-											aria-label={`Case ${index + 1} status`}
-										>
-											<span className="form-iv-prior__field-label">
-												Status <span className="text-red-500">*</span>
-											</span>
-											<div className="form-iv-prior__status">
-												<label
-													className={`form-iv-prior__status-option${
-														entry.status === PRIOR_STATUS.PENDING ? ' is-selected' : ''
-													}`}
-												>
+											<div className="form-iv-prior__case-grid">
+												<label className="form-iv-prior__field">
+													<span className="form-iv-prior__field-label">
+														Case no. <span className="text-red-500">*</span>
+													</span>
 													<input
-														type="radio"
-														name={`${fieldId}__status_${index}`}
-														value={PRIOR_STATUS.PENDING}
-														checked={entry.status === PRIOR_STATUS.PENDING}
-														onChange={() =>
-															updateEntry(index, { status: PRIOR_STATUS.PENDING })
+														type="text"
+														value={entry.case_number}
+														onChange={(e) =>
+															updateEntry(index, { case_number: e.target.value })
 														}
-														className="sr-only"
+														maxLength={128}
+														placeholder="Case No."
+														aria-label={`Case ${index + 1} number`}
+														required
 													/>
-													<span>Pending</span>
 												</label>
-												<label
-													className={`form-iv-prior__status-option${
-														entry.status === PRIOR_STATUS.DISPOSED ? ' is-selected' : ''
-													}`}
-												>
+
+												<label className="form-iv-prior__field">
+													<span className="form-iv-prior__field-label">
+														Court / forum <span className="text-red-500">*</span>
+													</span>
 													<input
-														type="radio"
-														name={`${fieldId}__status_${index}`}
-														value={PRIOR_STATUS.DISPOSED}
-														checked={entry.status === PRIOR_STATUS.DISPOSED}
-														onChange={() =>
-															updateEntry(index, { status: PRIOR_STATUS.DISPOSED })
-														}
-														className="sr-only"
+														type="text"
+														value={entry.forum}
+														onChange={(e) => updateEntry(index, { forum: e.target.value })}
+														maxLength={255}
+														placeholder="Forum"
+														aria-label={`Case ${index + 1} forum`}
+														required
 													/>
-													<span>Disposed</span>
+												</label>
+
+												<label className="form-iv-prior__field">
+													<span className="form-iv-prior__field-label">Filed on</span>
+													<input
+														type="date"
+														value={entry.filing_date}
+														onChange={(e) =>
+															updateEntry(index, { filing_date: e.target.value })
+														}
+														aria-label={`Case ${index + 1} filing date`}
+													/>
+												</label>
+
+												<div
+													className="form-iv-prior__field form-iv-prior__field--status"
+													role="radiogroup"
+													aria-label={`Case ${index + 1} status`}
+												>
+													<span className="form-iv-prior__field-label">
+														Status <span className="text-red-500">*</span>
+													</span>
+													<div className="form-iv-prior__status">
+														<label
+															className={`form-iv-prior__status-option${
+																entry.status === PRIOR_STATUS.PENDING
+																	? ' is-selected'
+																	: ''
+															}`}
+														>
+															<input
+																type="radio"
+																name={`${fieldId}__status_${index}`}
+																value={PRIOR_STATUS.PENDING}
+																checked={entry.status === PRIOR_STATUS.PENDING}
+																onChange={() =>
+																	updateEntry(index, {
+																		status: PRIOR_STATUS.PENDING,
+																	})
+																}
+																className="sr-only"
+															/>
+															<span>Pending</span>
+														</label>
+														<label
+															className={`form-iv-prior__status-option${
+																entry.status === PRIOR_STATUS.DISPOSED
+																	? ' is-selected'
+																	: ''
+															}`}
+														>
+															<input
+																type="radio"
+																name={`${fieldId}__status_${index}`}
+																value={PRIOR_STATUS.DISPOSED}
+																checked={entry.status === PRIOR_STATUS.DISPOSED}
+																onChange={() =>
+																	updateEntry(index, {
+																		status: PRIOR_STATUS.DISPOSED,
+																	})
+																}
+																className="sr-only"
+															/>
+															<span>Disposed</span>
+														</label>
+													</div>
+												</div>
+
+												<label className="form-iv-prior__field form-iv-prior__field--detail">
+													<span className="form-iv-prior__field-label">
+														{entry.status === PRIOR_STATUS.PENDING
+															? 'Pendency details'
+															: 'Decision'}{' '}
+														<span className="text-red-500">*</span>
+													</span>
+													{entry.status === PRIOR_STATUS.PENDING ? (
+														<textarea
+															value={entry.pendency_details}
+															onChange={(e) =>
+																updateEntry(index, {
+																	pendency_details: e.target.value,
+																})
+															}
+															rows={3}
+															maxLength={2000}
+															placeholder="Stage / where pending"
+															aria-label={`Case ${index + 1} pendency details`}
+															required
+														/>
+													) : (
+														<textarea
+															value={entry.decision}
+															onChange={(e) =>
+																updateEntry(index, { decision: e.target.value })
+															}
+															rows={3}
+															maxLength={2000}
+															placeholder="Decision summary — enclose copy under list of enclosures"
+															aria-label={`Case ${index + 1} decision`}
+															required
+														/>
+													)}
 												</label>
 											</div>
-										</div>
+										</article>
+									))}
+								</div>
 
-										<label className="form-iv-prior__field form-iv-prior__field--detail">
-											<span className="form-iv-prior__field-label">
-												{entry.status === PRIOR_STATUS.PENDING
-													? 'Pendency details'
-													: 'Decision'}{' '}
-												<span className="text-red-500">*</span>
-											</span>
-											{entry.status === PRIOR_STATUS.PENDING ? (
-												<textarea
-													value={entry.pendency_details}
-													onChange={(e) =>
-														updateEntry(index, { pendency_details: e.target.value })
-													}
-													rows={3}
-													maxLength={2000}
-													placeholder="Stage / where pending"
-													aria-label={`Case ${index + 1} pendency details`}
-													required
-												/>
-											) : (
-												<textarea
-													value={entry.decision}
-													onChange={(e) => updateEntry(index, { decision: e.target.value })}
-													rows={3}
-													maxLength={2000}
-													placeholder="Decision summary — enclose copy under list of enclosures"
-													aria-label={`Case ${index + 1} decision`}
-													required
-												/>
-											)}
-										</label>
-									</div>
-								</article>
-							))}
-						</div>
-
-						<button type="button" className="form-iv-prior__add" onClick={addEntry}>
-							+ Add another case
-						</button>
+								<button type="button" className="form-iv-prior__add" onClick={addEntry}>
+									+ Add another case
+								</button>
+							</div>
+						) : null}
 					</div>
-				) : null}
+				</div>
 			</div>
 		)
 	}

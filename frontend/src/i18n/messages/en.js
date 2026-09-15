@@ -347,6 +347,7 @@ const en = {
 	'ws.nav.applyUin': 'Apply for UIN',
 	'ws.nav.uinStatus': 'UIN Status',
 	'ws.nav.allServices': 'All services',
+	'ws.nav.browseAllServices': 'Browse all services',
 	'ws.nav.myProfile': 'My profile',
 	'ws.nav.userManagement': 'User management',
 	'ws.nav.staffDirectory': 'Staff directory',

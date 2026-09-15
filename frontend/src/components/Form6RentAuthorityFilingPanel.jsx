@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Building2, Check, IdCard, Info, MapPin, Scale, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
+import UinPrefillNotice from './forms/UinPrefillNotice'
+import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormIVLegalDocument from './forms/FormIVLegalDocument'
 import FormDatePicker from './forms/FormDatePicker'
@@ -52,19 +54,11 @@ function dobInputMax() {
 
 function FormCard({ title, description, badge, children }) {
 	return (
-		<section className="rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-			<div className="overflow-hidden rounded-t-[20px] border-b border-[#ddd6fe] bg-[#ede9fe] px-[30px] py-5 text-center">
-				{badge ? (
-					<span className="mb-2 inline-flex rounded-md bg-white/70 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#6d28d9]">
-						{badge}
-					</span>
-				) : null}
-				<h1 className="m-0 text-[1.5rem] font-semibold leading-snug text-[#6d28d9]">{title}</h1>
-				{description ? (
-					<p className="mx-auto mt-1.5 mb-0 max-w-2xl text-sm leading-relaxed text-[#6d5a9c]">
-						{description}
-					</p>
-				) : null}
+		<section className="sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+			<div className="sf-form-card__header overflow-hidden rounded-t-[20px]">
+				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
+				<h1 className="sf-form-card__title">{title}</h1>
+				{description ? <p className="sf-form-card__lead">{description}</p> : null}
 			</div>
 			<div className="flex flex-col gap-3.5 p-[22px] sm:p-[26px]">{children}</div>
 		</section>
@@ -72,9 +66,9 @@ function FormCard({ title, description, badge, children }) {
 }
 
 const sectionToneClass = {
-	record: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 sm:px-5',
-	application: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 sm:px-5',
-	signature: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-4 py-4 sm:px-5',
+	record: 'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-4 py-4 sm:px-5',
+	application: 'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-4 py-4 sm:px-5',
+	signature: 'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-4 py-4 sm:px-5',
 	default: '',
 }
 
@@ -136,21 +130,18 @@ function FormSection({
 			<div className="mb-3.5">
 				<div className="flex items-start gap-3">
 					{step ? (
-						<span
-							className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] px-2 text-sm font-semibold text-white"
-							aria-hidden
-						>
+						<span className="sf-step-badge" aria-hidden>
 							{step}
 						</span>
 					) : null}
 					<div className="min-w-0 flex-1">
 						<div className="flex flex-wrap items-center gap-2">
-							<h3 className="m-0 text-base font-semibold text-[#6d28d9]">
+							<h3 className="sf-section-title">
 								{step ? <span className="sr-only">Section {step}. </span> : null}
 								{title}
 							</h3>
 							{badge ? (
-								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
+								<span className="inline-flex items-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#334155]">
 									{badge}
 								</span>
 							) : null}
@@ -200,7 +191,7 @@ function Field({
 				<div className="flex flex-row flex-wrap items-center gap-x-2 gap-y-1 text-[14px] font-semibold text-[#151717]">
 					{para != null ? (
 						<span
-							className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-1.5 text-[12px] font-bold text-[#6d28d9]"
+							className="sf-para-badge"
 							aria-hidden
 						>
 							{para}
@@ -224,11 +215,6 @@ function Field({
 						</span>
 					) : null}
 					{required ? <span className="sr-only">(required)</span> : null}
-					{optional ? (
-						<span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-							Optional
-						</span>
-					) : null}
 					{hint && hintInline ? (
 						<span id={hintId} className="text-[12px] font-medium text-slate-500">
 							{hint}
@@ -258,14 +244,10 @@ function Field({
 	)
 }
 
-function FormTick({ checked, className = 'mt-0.5' }) {
+function FormTick({ checked, className = '' }) {
 	return (
 		<span
-			className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition ${className} ${
-				checked
-					? 'border-[#6d28d9] bg-[#6d28d9] text-white'
-					: 'border-slate-400 bg-white text-transparent'
-			}`}
+			className={`sf-form-tick${checked ? ' is-checked' : ''}${className ? ` ${className}` : ''}`}
 			aria-hidden
 		>
 			{checked ? <Check size={11} strokeWidth={3} /> : null}
@@ -312,17 +294,14 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle, error = '' 
 			id="form-iv-legal-advice-group"
 		>
 			<legend className="m-0 w-full min-w-0 px-0">
-				<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#6d28d9]">
+				<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#334155]">
 					<span
-						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] text-[#6d28d9]"
+						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] text-[#334155]"
 						aria-hidden
 					>
 						<Scale size={15} strokeWidth={2.25} />
 					</span>
 					Based on legal advice
-					<span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-						Optional
-					</span>
 				</span>
 			</legend>
 			<p className="mt-0 mb-0 text-[12px] leading-relaxed text-slate-500 sm:pl-9">
@@ -419,8 +398,7 @@ function ReadOnlyField({
 	)
 }
 
-const btnPrimary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#6d28d9] px-5 text-[15px] font-medium text-white transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60'
+const btnPrimary = 'sf-btn-primary'
 
 /** Split into two columns so numbering reads down the left column, then the right. */
 function splitIntoColumns(items) {
@@ -644,8 +622,12 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 					? PARA_ANSWER.LEGAL_ADVICE
 					: PARA_ANSWER.PERSONAL_KNOWLEDGE
 		})
+		// Para 2 is the jurisdiction undertaking — include it in the sworn blank when accepted.
+		if (jurisdictionAccepted) {
+			paragraphs[2] = PARA_ANSWER.PERSONAL_KNOWLEDGE
+		}
 		return paragraphs
-	}, [requiredVerificationParas, verification.paragraphs])
+	}, [requiredVerificationParas, verification.paragraphs, jurisdictionAccepted])
 
 	const legalAdviceParaNumbers = useMemo(
 		() =>
@@ -1068,28 +1050,29 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				{!recordLoaded ? (
 					<>
 						<FormTopBar onBack={onBack} />
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
-							<FormSection
-								step={1}
-								tone="application"
-								title="Identify the tenancy"
-								description="Enter the Unique Identification Number issued by the Rent Authority. Form IV can be filed only after the tenancy record is loaded."
-							>
-								<TenancyUinLookup
-									variant="modern"
-									align="center"
-									value={tenancyUIN}
-									onChange={handleUinChange}
-									onLoaded={handleTenancyLoaded}
-									label="Tenancy UIN"
-									hint="Unique Identification Number issued by the Rent Authority. Only a landlord or tenant named on that tenancy may load the record."
-									actionLabel="Load tenancy record"
-									loadingLabel="Loading…"
-									successMessage={() => 'Tenancy record loaded.'}
-									errorFallback="Could not load the tenancy record for this UIN."
-								/>
-							</FormSection>
-						</FormCard>
+						<ServiceFormReadyGate
+							badge={formBadge}
+							title={formTitle}
+							description={serviceMeta?.rule || null}
+							knowBefore={[
+								'Date of birth and relation details for verification',
+								'A scanned signature for the declaration',
+							]}
+						>
+							<TenancyUinLookup
+								variant="modern"
+								align="center"
+								value={tenancyUIN}
+								onChange={handleUinChange}
+								onLoaded={handleTenancyLoaded}
+								label="Tenancy UIN"
+								hint="Only a named landlord or tenant on that record can load it."
+								actionLabel="Load record"
+								loadingLabel="Loading…"
+								successMessage={() => 'Tenancy record loaded.'}
+								errorFallback="Could not load the tenancy record for this UIN."
+							/>
+						</ServiceFormReadyGate>
 					</>
 				) : (
 					<>
@@ -1100,7 +1083,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 								step={1}
 								tone="record"
 								title="Applicant details"
-								description="Parties and district come from your UIN. Age is calculated from your profile date of birth."
+								description="Review the party and tenancy details loaded from your UIN, then complete relation and age details."
 							>
 								<ReadOnlyField
 									label="UIN issued by the Rent Authority"
@@ -1120,6 +1103,8 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 										</button>
 									}
 								/>
+								<UinPrefillNotice />
+								<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
 								<div className="grid gap-3 sm:grid-cols-2">
 									<ReadOnlyField label="A. Applicant name" value={applicantName} icon={User} fromUin />
 									<ReadOnlyField label="B. Opposite party name" value={oppositePartyName} icon={User} fromUin />
@@ -1495,27 +1480,63 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 										label="Jurisdiction of the Rent Authority"
 										required
 										para={2}
-										hint="Confirm that this application is filed before the correct Rent Authority."
+										hint="Check the authority below, then tick the declaration to confirm this is the correct Rent Authority."
 										error={fieldErrors['form-iv-jurisdiction'] || ''}
 									>
-										<label className="!m-0 !flex cursor-pointer items-start gap-3">
-											<input
-												id="form-iv-jurisdiction"
-												type="checkbox"
-												checked={jurisdictionAccepted}
-												onChange={(e) => {
-													clearFieldError('form-iv-jurisdiction')
-													setJurisdictionAccepted(e.target.checked)
-												}}
-												required
-												className="sr-only"
-												aria-invalid={fieldErrors['form-iv-jurisdiction'] ? 'true' : undefined}
-											/>
-											<FormTick checked={jurisdictionAccepted} />
-											<span className="min-w-0 text-sm leading-relaxed text-slate-800">
-												{declarationText(DECLARATION.FORM_IV_JURISDICTION)}
-											</span>
-										</label>
+										<div className="form-iv-jurisdiction form-ii-jurisdiction">
+											<div className="form-ii-jurisdiction__fetched">
+												<span className="form-ii-jurisdiction__fetched-label">
+													Filing venue
+													<span
+														className="form-iv-from-uin-tag !normal-case !text-[#16a34a]"
+														title="Filled from the loaded tenancy UIN"
+													>
+														{' '}
+														(from UIN)
+													</span>
+												</span>
+												<div className="form-i-field form-i-field--readonly form-i-field--multiline form-ii-jurisdiction__field">
+													<span className="form-i-icon-gutter" aria-hidden>
+														<Scale size={18} strokeWidth={2} />
+													</span>
+													<div
+														className={`form-i-readonly-value m-0 min-w-0 flex-1 px-3.5 py-2.5 leading-relaxed ${
+															authorityLine1 || tenancyOffice || authorityLine2
+																? 'is-filled'
+																: 'is-empty'
+														}`}
+													>
+														<p className="form-ii-jurisdiction__fetched-name m-0">
+															{authorityLine1 || tenancyOffice || 'Rent Authority'}
+														</p>
+														<p className="form-ii-jurisdiction__fetched-addr m-0">
+															{authorityLine2 ||
+																'Address will appear after you load a UIN.'}
+														</p>
+													</div>
+												</div>
+											</div>
+											<label className="form-ii-jurisdiction__declare">
+												<input
+													id="form-iv-jurisdiction"
+													type="checkbox"
+													checked={jurisdictionAccepted}
+													onChange={(e) => {
+														clearFieldError('form-iv-jurisdiction')
+														setJurisdictionAccepted(e.target.checked)
+													}}
+													required
+													className="sr-only"
+													aria-invalid={
+														fieldErrors['form-iv-jurisdiction'] ? 'true' : undefined
+													}
+												/>
+												<FormTick checked={jurisdictionAccepted} />
+												<span className="form-ii-jurisdiction__declare-text">
+													{declarationText(DECLARATION.FORM_IV_JURISDICTION)}
+												</span>
+											</label>
+										</div>
 									</Field>
 
 									<Field
@@ -1685,12 +1706,11 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 											<span className="sr-only">(required)</span>
 										</div>
 										<label
-											className={`!m-0 !flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition ${
-												verificationUndertakingAccepted
-													? 'border-[#c4b5fd] bg-white'
-													: fieldErrors['form-iv-undertaking']
-														? 'border-red-300 bg-white'
-														: 'border-slate-200 bg-white hover:border-[#c4b5fd]'
+											htmlFor="form-iv-undertaking"
+											className={`sf-undertaking-box${
+												verificationUndertakingAccepted ? ' is-checked' : ''
+											}${
+												fieldErrors['form-iv-undertaking'] ? ' is-error' : ''
 											}`}
 										>
 											<input
@@ -1733,16 +1753,20 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 										hint="JPG, JPEG or PNG. Recommended: at least 300 × 100 px, max 2 MB."
 										error={fieldErrors['form-iv-signature'] || ''}
 									>
-										<div className="form-i-field form-i-upload-field">
+										<div className="form-i-field form-i-upload-field w-full max-w-md">
 											<span className="form-i-icon-gutter" aria-hidden>
 												<Upload size={18} strokeWidth={2} />
 											</span>
 											<label className="form-i-upload-body !m-0 !flex !flex-row !gap-3 min-w-0 flex-1 cursor-pointer items-center px-3.5">
-												<span className="inline-flex shrink-0 items-center rounded-lg bg-[#ede9fe] px-3 py-1.5 text-sm font-semibold text-[#6d28d9]">
-													{signatureImage ? 'Change file' : 'Choose file'}
+												<span className="sf-upload-btn">
+													{signatureImage ? 'Change image' : 'Upload image'}
 												</span>
-												<span className="min-w-0 truncate text-sm text-slate-500">
-													{signatureImage ? 'Signature selected' : 'No file chosen'}
+												<span
+													className={`sf-upload-filename${
+														signatureImage ? ' is-selected' : ''
+													}`}
+												>
+													{signatureImage ? 'Signature selected' : 'No image chosen'}
 												</span>
 												<input
 													id="form-iv-signature"

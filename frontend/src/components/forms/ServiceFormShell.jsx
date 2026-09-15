@@ -4,17 +4,18 @@ function ServiceFormShell({ serviceMeta, children, variant = 'default' }) {
 	const groupId = serviceMeta?.groupId || 'rent-authority'
 	const crumbLabel = serviceMeta?.formName || serviceMeta?.label || 'Application'
 	const modern = variant === 'modern'
-	const crumbLinkClass =
-		groupId === 'rent-court'
+	const crumbLinkClass = modern
+		? 'font-medium text-[#334155] hover:underline'
+		: groupId === 'rent-court'
 			? 'font-medium text-[#2563eb] hover:underline'
 			: groupId === 'rent-tribunal'
 				? 'font-medium text-[#d97706] hover:underline'
-				: 'font-medium text-[#6d28d9] hover:underline'
+				: 'font-medium text-[#0d47a1] hover:underline'
 
 	return (
 		<div
 			className={`service-form-page service-form-page--${groupId}${
-				modern ? ' service-form-page--modern mx-auto w-full max-w-7xl' : ''
+				modern ? ' service-form-page--modern mx-auto w-full' : ''
 			}`}
 		>
 			<p className={`ws-breadcrumb${modern ? ' mb-4 text-sm text-slate-500' : ''}`}>

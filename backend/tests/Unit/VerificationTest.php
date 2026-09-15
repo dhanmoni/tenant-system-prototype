@@ -161,7 +161,29 @@ class VerificationTest extends TestCase
             99 => Verification::PERSONAL_KNOWLEDGE,
         ]));
 
-        $this->assertSame([3], $sets['personal']);
+        $this->assertSame([3, 5, 8], $sets['personal']);
+    }
+
+    /** When the jurisdiction declaration is accepted, paragraph 2 is named in the personal blank. */
+    public function test_accepted_jurisdiction_names_paragraph_2_in_personal_knowledge(): void
+    {
+        foreach ([
+            Declarations::FORM_II_VERIFICATION,
+            Declarations::FORM_III_VERIFICATION,
+            Declarations::FORM_IV_VERIFICATION,
+            Declarations::FORM_V_VERIFICATION,
+            Declarations::FORM_VI_VERIFICATION,
+        ] as $fieldId) {
+            $sets = Verification::paragraphSets($fieldId, $this->data([
+                1 => Verification::PERSONAL_KNOWLEDGE,
+                3 => Verification::PERSONAL_KNOWLEDGE,
+            ], [
+                'jurisdiction_declaration_accepted' => '1',
+            ]));
+
+            $this->assertContains(2, $sets['personal'], "{$fieldId} should name paragraph 2");
+            $this->assertSame([1, 2, 3], $sets['personal']);
+        }
     }
 
     public function test_a_verification_asserting_nothing_of_personal_knowledge_is_rejected(): void
@@ -198,23 +220,16 @@ class VerificationTest extends TestCase
     }
 
     /**
-     * Paragraph 2 is sworn separately under its own wording on every form.
-     * Forms II/III/V/VI also keep paragraph 5 and 8 out of this blank (5 has its own
-     * declaration; 8 is the enclosure list). Form IV offers 5, 7 and 8 here so the
-     * filer can mark those particulars as based on legal advice when they apply.
+     * Paragraph 2 is sworn separately under its own wording on every form. Every form (II to VI)
+     * offers paragraphs 5 and 8 so earlier proceedings / enclosures can be marked as based on
+     * legal advice when they apply.
      */
     public function test_the_separately_sworn_paragraphs_are_not_offered_for_verification(): void
     {
         foreach (self::FORMS as $fieldId) {
             $numbers = array_keys(Verification::paragraphs($fieldId));
             $this->assertNotContains(2, $numbers, "{$fieldId} must not offer paragraph 2");
-
-            if ($fieldId === Declarations::FORM_IV_VERIFICATION) {
-                $this->assertSame([1, 3, 4, 5, 6, 7, 8], $numbers, "{$fieldId} offers the wrong paragraphs");
-                continue;
-            }
-
-            $this->assertSame([1, 3, 4, 6, 7], $numbers, "{$fieldId} offers the wrong paragraphs");
+            $this->assertSame([1, 3, 4, 5, 6, 7, 8], $numbers, "{$fieldId} offers the wrong paragraphs");
         }
     }
 

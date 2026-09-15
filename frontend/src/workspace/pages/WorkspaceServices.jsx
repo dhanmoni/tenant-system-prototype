@@ -163,6 +163,7 @@ function ServiceFormCard({ form, groupId, t }) {
 function WorkspaceServices() {
 	const { user } = useOutletContext()
 	const { t } = useLanguage()
+	const location = useLocation()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const authorityParam = searchParams.get('authority')
 	const [activeGroup, setActiveGroup] = useState(() => {
@@ -171,6 +172,16 @@ function WorkspaceServices() {
 		}
 		return 'all'
 	})
+
+	useEffect(() => {
+		const main = document.getElementById('dashboard-primary-content')
+		if (main?.scrollTo) {
+			main.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+		} else if (main) {
+			main.scrollTop = 0
+		}
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+	}, [location.key])
 
 	useEffect(() => {
 		if (authorityParam && tenantServiceGroups.some((g) => g.id === authorityParam)) {

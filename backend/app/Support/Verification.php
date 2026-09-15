@@ -39,9 +39,8 @@ class Verification
      * The paragraphs a filer may assign, per form, under the Gazette's own headings.
      *
      * Paragraph 2 is excluded on every form because it is itself a sworn declaration, attested
-     * separately. On Forms II/III/V/VI, paragraph 5 is likewise excluded (its own declaration) and
-     * paragraph 8 is omitted (enclosure list asserts no fact). Form IV additionally offers 5, 7 and
-     * 8 so those particulars can be marked as based on legal advice when they apply.
+     * separately. Every form (II to VI) offers paragraphs 5 and 8 so earlier proceedings /
+     * enclosures can be marked as based on legal advice when they apply.
      */
     public static function paragraphs(string $fieldId): array
     {
@@ -63,15 +62,31 @@ class Verification
         ];
 
         $byForm = [
-            Declarations::FORM_II_VERIFICATION => [1 => 'Particulars of application'] + $application + $shared,
-            Declarations::FORM_III_VERIFICATION => [1 => 'Particulars of application'] + $application + $shared,
+            Declarations::FORM_II_VERIFICATION => [
+                1 => 'Particulars of application',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $application + $shared,
+            Declarations::FORM_III_VERIFICATION => [
+                1 => 'Particulars of application',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $application + $shared,
             Declarations::FORM_IV_VERIFICATION => [
                 1 => 'Particulars of violation against which the present application is made',
                 5 => 'Earlier proceedings',
                 8 => 'List of enclosures',
             ] + $application + $shared,
-            Declarations::FORM_V_VERIFICATION => [1 => 'Particulars of the order of the Rent Authority as against which the appeal is made'] + $appeal + $shared,
-            Declarations::FORM_VI_VERIFICATION => [1 => 'Particulars of the order of the Rent Court as against which the Appeal is made'] + $appeal + $shared,
+            Declarations::FORM_V_VERIFICATION => [
+                1 => 'Particulars of the order of the Rent Authority as against which the appeal is made',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $appeal + $shared,
+            Declarations::FORM_VI_VERIFICATION => [
+                1 => 'Particulars of the order of the Rent Court as against which the Appeal is made',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $appeal + $shared,
         ];
 
         if (!isset($byForm[$fieldId])) {
@@ -131,7 +146,37 @@ class Verification
             }
         }
 
+        // Paragraph 2 is attested by the jurisdiction declaration (not offered in the picker).
+        // When accepted, name it in the personal-knowledge blank so the sworn sentence covers it.
+        if (self::shouldNameJurisdictionParagraph($fieldId, $data)) {
+            if (!in_array(2, $advised, true) && !in_array(2, $personal, true)) {
+                $personal[] = 2;
+                sort($personal);
+            }
+        }
+
         return ['personal' => $personal, 'advised' => $advised];
+    }
+
+    /** Forms II to VI swear jurisdiction in paragraph 2 via a separate declaration checkbox. */
+    private static function shouldNameJurisdictionParagraph(string $fieldId, array $data): bool
+    {
+        if (
+            $fieldId !== Declarations::FORM_II_VERIFICATION
+            && $fieldId !== Declarations::FORM_III_VERIFICATION
+            && $fieldId !== Declarations::FORM_IV_VERIFICATION
+            && $fieldId !== Declarations::FORM_V_VERIFICATION
+            && $fieldId !== Declarations::FORM_VI_VERIFICATION
+        ) {
+            return false;
+        }
+
+        $flag = $data['jurisdiction_declaration_accepted'] ?? null;
+        if ($flag === true || $flag === 1 || $flag === '1') {
+            return true;
+        }
+
+        return is_string($flag) && strtolower($flag) === 'on';
     }
 
     /**

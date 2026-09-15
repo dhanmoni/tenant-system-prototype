@@ -25,7 +25,7 @@ export function getWorkspaceNavigation(user) {
 						icon: 'documentPlus',
 					},
 					{ to: '/dashboard/status', labelKey: 'ws.nav.uinStatus', icon: 'status' },
-					{ to: '/dashboard/services', labelKey: 'ws.nav.allServices', icon: 'services' },
+					{ to: '/dashboard/services', labelKey: 'ws.nav.allServices', icon: 'services', servicesMenu: true },
 				],
 			},
 			{

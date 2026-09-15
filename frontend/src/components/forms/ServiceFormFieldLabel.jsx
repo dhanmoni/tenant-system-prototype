@@ -17,7 +17,6 @@ function ServiceFormFieldLabel({
 			<span className={`sf-field__label${required ? ' required' : ''}`}>
 				{para ? <span className="sf-field__para">Para {para}</span> : null}
 				<span className="sf-field__name">{children}</span>
-				{optional ? <span className="sf-field__optional">Optional</span> : null}
 				{info ? (
 					<span
 						className="ground-choice__info-container sf-field__info"

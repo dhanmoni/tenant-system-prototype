@@ -9,11 +9,6 @@ import {
 	renderParagraphNumbers,
 } from '../../constants/declarations'
 import { PRIOR_STATUS } from '../../constants/priorProceedings'
-import {
-	describeMatter,
-	describeRepairItem,
-	describeService,
-} from '../../constants/rentAuthorityMatters'
 
 function blank(value) {
 	const text = String(value ?? '').trim()
@@ -36,22 +31,28 @@ function enclosureLines(listOfEnclosures) {
 }
 
 /**
- * Print-style FORM-IV sheet matching the Gazette physical form ([See rule- 11]).
+ * Print-style FORM-VI sheet matching the Gazette physical form ([See rule 13]).
+ *
+ * Product path: an appeal against an order of the Rent Court, filed before the Rent Tribunal.
+ * The appellant may be either the landlord or the tenant, so the parties are supplied by the
+ * panel (which honours the Applying-as toggle) rather than fixed to one side.
+ *
+ * Paragraph 3 is Limitation and paragraph 4 the Memorandum of Appeal — Forms V/VI have no
+ * "Facts of the case". See docs/gazette-divergences.md.
  */
-export default function FormIVLegalDocument({
+export default function FormVILegalDocument({
 	tenancyUIN,
-	applicantName,
-	applicantResidentialAddress,
-	oppositePartyName,
-	oppositePartyResidentialAddress,
-	statutoryMatter,
-	repairItems = [],
-	essentialServices = [],
-	essentialServiceOther = '',
-	particularsOfViolation,
+	beforeRentTribunal = '',
+	tribunalLine1 = '',
+	tribunalLine2 = '',
+	appellantName,
+	appellantResidentialAddress,
+	respondentName,
+	respondentResidentialAddress,
+	particularsOfOrder,
 	jurisdictionAccepted,
-	factsOfCase,
-	groundsForRelief,
+	limitationAccepted,
+	memorandumOfAppeal,
 	hasPriorProceedings,
 	priorProceedings = [],
 	reliefSought,
@@ -60,8 +61,6 @@ export default function FormIVLegalDocument({
 	verification,
 	signatureName,
 	signatureImage,
-	authorityLine1 = '',
-	authorityLine2 = '',
 }) {
 	const [signatureUrl, setSignatureUrl] = useState('')
 
@@ -75,29 +74,15 @@ export default function FormIVLegalDocument({
 		return () => URL.revokeObjectURL(url)
 	}, [signatureImage])
 
-	const auth1 = String(authorityLine1 ?? '').trim()
-	const auth2 = String(authorityLine2 ?? '').trim()
-	const authorityBracket =
-		[
-			auth1.replace(/^Rent Authority\s*[—–-]\s*/i, '').trim(),
-			auth2,
-		]
+	const tribunalBracket =
+		String(beforeRentTribunal ?? '').trim() ||
+		String(tribunalLine1 ?? '')
+			.replace(/^Rent Tribunal\s*(at|—|–|-)\s*/i, '')
+			.trim() ||
+		[String(tribunalLine1 ?? '').trim(), String(tribunalLine2 ?? '').trim()]
 			.filter(Boolean)
-			.join(', ') || '________'
-
-	const matterLabel = describeMatter(statutoryMatter)
-	const repairs =
-		repairItems.length > 0 ? repairItems.map(describeRepairItem).join('; ') : ''
-	const services =
-		essentialServices.length > 0
-			? essentialServices
-					.map((code) =>
-						code === 'other'
-							? `Other: ${essentialServiceOther || '—'}`
-							: describeService(code)
-					)
-					.join('; ')
-			: ''
+			.join(', ') ||
+		'________'
 
 	const enclosures = enclosureLines(listOfEnclosures)
 
@@ -106,7 +91,7 @@ export default function FormIVLegalDocument({
 		if (!hasPriorProceedings) {
 			return (
 				<p className="form-iv-legal__paren">
-					({declarationText(DECLARATION.FORM_IV_PRIOR_PROCEEDINGS)})
+					({declarationText(DECLARATION.FORM_VI_PRIOR_PROCEEDINGS)})
 				</p>
 			)
 		}
@@ -118,9 +103,7 @@ export default function FormIVLegalDocument({
 					: `Disposed — ${entry.decision || '—'}`
 			return (
 				<li key={i}>
-					<strong className="form-i-legal__value">
-						{entry.case_number || '—'}
-					</strong>
+					<strong className="form-i-legal__value">{entry.case_number || '—'}</strong>
 					{' before '}
 					<strong className="form-i-legal__value">{entry.forum || '—'}</strong>
 					{filed}. {detail}
@@ -130,7 +113,7 @@ export default function FormIVLegalDocument({
 		return (
 			<>
 				<p className="form-iv-legal__paren">
-					({declarationBranchText(DECLARATION.FORM_IV_PRIOR_PROCEEDINGS)})
+					({declarationBranchText(DECLARATION.FORM_VI_PRIOR_PROCEEDINGS)})
 				</p>
 				{rows.length > 0 ? (
 					<ol className="form-iv-legal__prior-list">{rows}</ol>
@@ -149,24 +132,36 @@ export default function FormIVLegalDocument({
 		year: 'numeric',
 	})
 
+	const verificationAnswers = (() => {
+		const answers = { ...(verification?.paragraphs || {}) }
+		// Jurisdiction is sworn separately; mirror it into the verification blank when accepted.
+		if (jurisdictionAccepted && answers[2] == null && answers['2'] == null) {
+			answers[2] = PARA_ANSWER.PERSONAL_KNOWLEDGE
+		}
+		return answers
+	})()
+
 	const personalParas = renderParagraphNumbers(
-		paragraphsWithAnswer(VERIFICATION.FORM_IV, verification?.paragraphs || {}, PARA_ANSWER.PERSONAL_KNOWLEDGE)
+		paragraphsWithAnswer(VERIFICATION.FORM_VI, verificationAnswers, PARA_ANSWER.PERSONAL_KNOWLEDGE)
 	)
 	const advisedParas = renderParagraphNumbers(
-		paragraphsWithAnswer(VERIFICATION.FORM_IV, verification?.paragraphs || {}, PARA_ANSWER.LEGAL_ADVICE)
+		paragraphsWithAnswer(VERIFICATION.FORM_VI, verificationAnswers, PARA_ANSWER.LEGAL_ADVICE)
 	)
 
 	return (
-		<article className="form-i-legal form-iv-legal" aria-label="FORM-IV preview">
+		<article
+			className="form-i-legal form-iv-legal form-iii-legal form-v-legal form-vi-legal"
+			aria-label="FORM-VI preview"
+		>
 			<header className="form-i-legal__header">
-				<p className="form-i-legal__form-no">FORM-IV</p>
-				<p className="form-i-legal__rule">[See rule- 11]</p>
-				<p className="form-i-legal__subject">Application filed before the Rent Authority</p>
+				<p className="form-i-legal__form-no">FORM-VI</p>
+				<p className="form-i-legal__rule">[See rule 13]</p>
+				<p className="form-i-legal__subject">Appeal to be filed before the Rent Tribunal</p>
 			</header>
 
 			<div className="form-iv-legal__before">
 				<p className="form-iv-legal__before-title">
-					BEFORE THE RENT AUTHORITY [{authorityBracket}]
+					BEFORE THE RENT TRIBUNAL AT [{blank(tribunalBracket)}]
 				</p>
 				<p className="form-iv-legal__uin-line">
 					In the matter of Tenancy of Unique Identification Number{' '}
@@ -176,126 +171,95 @@ export default function FormIVLegalDocument({
 				</p>
 			</div>
 
-			{(matterLabel || repairs || services) && (
-				<p className="form-iv-legal__matter-line">
-					<span className="form-iv-legal__matter-label">Matter applied under: </span>
-					<strong className="form-i-legal__value">{matterLabel || '—'}</strong>
-					{repairs ? (
-						<>
-							{'; '}
-							<span className="form-iv-legal__matter-label">Second Schedule: </span>
-							<span className="form-i-legal__value">{repairs}</span>
-						</>
-					) : null}
-					{services ? (
-						<>
-							{'; '}
-							<span className="form-iv-legal__matter-label">Essential services: </span>
-							<span className="form-i-legal__value">{services}</span>
-						</>
-					) : null}
-				</p>
-			)}
-
 			<section className="form-iv-legal__parties" aria-label="Parties">
 				<div className="form-iv-legal__party">
-					<p className="form-iv-legal__party-heading">A. Name of the Applicant</p>
+					<p className="form-iv-legal__party-heading">A. Name of the Appellant</p>
 					<p className="form-iv-legal__party-hint">
 						(Add description and the residential address on which the service of notices is to
-						be effected on the Applicant)
+						be effected on the Appellant)
 					</p>
 					<p className="form-iv-legal__party-filled">
-						<strong className="form-i-legal__value">{blank(applicantName)}</strong>
-						{String(applicantResidentialAddress ?? '').trim() ? (
+						<strong className="form-i-legal__value">{blank(appellantName)}</strong>
+						{String(appellantResidentialAddress ?? '').trim() ? (
 							<>
 								<br />
 								<span className="form-i-legal__addr">
-									{String(applicantResidentialAddress).trim()}
+									{String(appellantResidentialAddress).trim()}
 								</span>
 							</>
 						) : null}
 					</p>
-					<p className="form-iv-legal__party-role">…..APPLICANT</p>
+					<p className="form-iv-legal__party-role">.....APPELLANT</p>
 				</div>
 
 				<p className="form-iv-legal__versus">Versus</p>
 
 				<div className="form-iv-legal__party">
-					<p className="form-iv-legal__party-heading">B. Name of the Opposite Party</p>
+					<p className="form-iv-legal__party-heading">B. Name of the Respondent(s)</p>
 					<p className="form-iv-legal__party-hint">
 						(Add description and the residential address on which the service of notices is to
-						be effected on the Opposite Party).
+						be effected on the Respondent(s)).
 					</p>
 					<p className="form-iv-legal__party-filled">
-						<strong className="form-i-legal__value">{blank(oppositePartyName)}</strong>
-						{String(oppositePartyResidentialAddress ?? '').trim() ? (
+						<strong className="form-i-legal__value">{blank(respondentName)}</strong>
+						{String(respondentResidentialAddress ?? '').trim() ? (
 							<>
 								<br />
 								<span className="form-i-legal__addr">
-									{String(oppositePartyResidentialAddress).trim()}
+									{String(respondentResidentialAddress).trim()}
 								</span>
 							</>
 						) : null}
 					</p>
-					<p className="form-iv-legal__party-role">...OPPOSITE PARTY</p>
+					<p className="form-iv-legal__party-role">.....RESPONDENT</p>
 				</div>
 			</section>
 
-			<p className="form-iv-legal__details-heading">DETAILS OF APPLICATION:</p>
+			<p className="form-iv-legal__details-heading">DETAILS OF APPEAL:</p>
 
-			<ol className="form-iv-legal__details">
+			<ol className="form-iv-legal__details form-iii-legal__details">
 				<li>
 					<span className="form-iv-legal__item-label">
-						Particulars of violation against which the present application is made :
+						Particulars of the order of the Rent Court as against which the Appeal is made :
 					</span>
 					<p className="form-iv-legal__filled">
-						<strong className="form-i-legal__value">{blank(particularsOfViolation)}</strong>
+						<strong className="form-i-legal__value">{blank(particularsOfOrder)}</strong>
 					</p>
 				</li>
 
 				<li>
-					<span className="form-iv-legal__item-label">Jurisdiction of the Rent Authority :</span>
+					<span className="form-iv-legal__item-label">Jurisdiction of the Rent Tribunal :</span>
 					<p className="form-iv-legal__paren">
 						(
 						{jurisdictionAccepted
-							? declarationText(DECLARATION.FORM_IV_JURISDICTION)
+							? declarationText(DECLARATION.FORM_VI_JURISDICTION)
 							: '—'}
 						)
 					</p>
-					{(auth1 || auth2) && (
-						<p className="form-iv-legal__filled">
-							<strong className="form-i-legal__value">{blank(auth1)}</strong>
-							{auth2 ? (
-								<>
-									<br />
-									<span className="form-i-legal__addr">{auth2}</span>
-								</>
-							) : null}
-						</p>
-					)}
 				</li>
 
 				<li>
-					<span className="form-iv-legal__item-label">Facts of the case :</span>
+					<span className="form-iv-legal__item-label">Limitation :</span>
 					<p className="form-iv-legal__paren">
-						(Give here a concise statement of facts in a chronological order, each paragraph
-						containing as nearly as possible a separate issue or fact).
-					</p>
-					<p className="form-iv-legal__filled">
-						<strong className="form-i-legal__value">{blank(factsOfCase)}</strong>
+						(
+						{limitationAccepted
+							? declarationText(DECLARATION.FORM_VI_LIMITATION)
+							: '—'}
+						)
 					</p>
 				</li>
 
 				<li>
-					<span className="form-iv-legal__item-label">Grounds for relief :</span>
+					<span className="form-iv-legal__item-label">Memorandum of Appeal :</span>
+					<p className="form-iv-legal__paren">(Grounds for appeal with legal provisions: )</p>
 					<p className="form-iv-legal__filled">
-						<strong className="form-i-legal__value">{blank(groundsForRelief)}</strong>
+						<strong className="form-i-legal__value">{blank(memorandumOfAppeal)}</strong>
 					</p>
 				</li>
 
 				<li>
 					<span className="form-iv-legal__item-label">
-						Matters not previously filed or pending with any other court:
+						Matters not previously filed or pending with any other court :
 					</span>
 					{priorBody}
 				</li>
@@ -303,12 +267,8 @@ export default function FormIVLegalDocument({
 				<li>
 					<span className="form-iv-legal__item-label">Relief sought :</span>
 					<p className="form-iv-legal__paren">
-						(In view of the grounds mentioned in para 4 above, the applicant prays for the
-						following relief(s)):-
-					</p>
-					<p className="form-iv-legal__paren">
-						(Specify below the relief sought explaining the grounds for such relief(s) and the
-						legal provisions, if any, relied upon).
+						(In view of the Memorandum provided in para 4 above the appellant prays for the
+						following relief(s)) -
 					</p>
 					<p className="form-iv-legal__filled">
 						<strong className="form-i-legal__value">{blank(reliefSought)}</strong>
@@ -318,7 +278,7 @@ export default function FormIVLegalDocument({
 				<li>
 					<span className="form-iv-legal__item-label">Interim order, if any prayed for :</span>
 					<p className="form-iv-legal__lead">
-						Pending final decision on the application, the applicant seeks the following interim
+						Pending final decision on the appeal, the appellant seeks the following interim
 						relief:
 					</p>
 					<p className="form-iv-legal__paren">
@@ -334,7 +294,7 @@ export default function FormIVLegalDocument({
 				<li>
 					<span className="form-iv-legal__item-label">List of enclosures</span>
 					<ol className="form-iv-legal__enclosures">
-						{(enclosures.length > 0 ? enclosures : ['', '', '']).map((line, i) => (
+						{(enclosures.length > 0 ? enclosures : ['', '']).map((line, i) => (
 							<li key={i}>
 								{line ? (
 									<strong className="form-i-legal__value">{line}</strong>
@@ -364,8 +324,7 @@ export default function FormIVLegalDocument({
 			<footer className="form-iv-legal__footer">
 				<div className="form-iv-legal__footer-meta">
 					<p>
-						Date:{' '}
-						<strong className="form-i-legal__value">{verificationDate}</strong>
+						Date: <strong className="form-i-legal__value">{verificationDate}</strong>
 					</p>
 					<p>
 						Place:{' '}

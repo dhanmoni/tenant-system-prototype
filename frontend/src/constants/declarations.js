@@ -126,23 +126,28 @@ export const PARA_ANSWER = {
 /**
  * The paragraphs a filer may assign, under the Gazette's own headings.
  *
- * Paragraphs 2 and 5 are absent because they are themselves sworn declarations, accepted separately
- * under their own wording. Paragraph 8 is absent because a list of enclosures asserts no fact.
+ * Paragraph 2 is absent because it is itself a sworn declaration, accepted separately.
+ * Forms II, III and IV offer paragraphs 5 and 8 (earlier proceedings / enclosures) so they
+ * can be marked as based on legal advice when they apply.
  */
 export const VERIFICATION_PARAGRAPHS = {
 	[VERIFICATION.FORM_II]: {
 		1: 'Particulars of application',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	[VERIFICATION.FORM_III]: {
 		1: 'Particulars of application',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	[VERIFICATION.FORM_IV]: {
 		1: 'Particulars of violation against which the present application is made',
@@ -154,19 +159,24 @@ export const VERIFICATION_PARAGRAPHS = {
 		8: 'List of enclosures',
 	},
 	// Forms V and VI have no "Facts of the case": para 3 is Limitation, para 4 the Memorandum.
+	// Both also offer 5 and 8 (earlier proceedings / enclosures) for legal-advice marking.
 	[VERIFICATION.FORM_V]: {
 		1: 'Particulars of the order of the Rent Authority as against which the appeal is made',
 		3: 'Limitation',
 		4: 'Memorandum of Appeal',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	[VERIFICATION.FORM_VI]: {
 		1: 'Particulars of the order of the Rent Court as against which the Appeal is made',
 		3: 'Limitation',
 		4: 'Memorandum of Appeal',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 }
 
@@ -195,9 +205,20 @@ export function renderParagraphNumbers(numbers) {
 
 /** The paragraph numbers carrying a given answer, in order. */
 export function paragraphsWithAnswer(fieldId, answers, wanted) {
-	return Object.keys(verificationParagraphs(fieldId))
-		.map(Number)
-		.filter((n) => answers[n] === wanted)
+	const base = Object.keys(verificationParagraphs(fieldId)).map(Number)
+	// Para 2 is sworn via the jurisdiction checkbox; when present in answers, include it in the blank.
+	const hasJurisdictionAnswer =
+		(fieldId === VERIFICATION.FORM_II ||
+			fieldId === VERIFICATION.FORM_III ||
+			fieldId === VERIFICATION.FORM_IV ||
+			fieldId === VERIFICATION.FORM_V ||
+			fieldId === VERIFICATION.FORM_VI) &&
+		(answers[2] != null || answers['2'] != null)
+	const candidates = hasJurisdictionAnswer ? [...new Set([2, ...base])] : base
+
+	return candidates
+		.filter((n) => (answers[n] ?? answers[String(n)]) === wanted)
+		.sort((a, b) => a - b)
 }
 
 /**

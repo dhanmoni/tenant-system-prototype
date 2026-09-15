@@ -1,6 +1,9 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useId, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { Icon } from '../../components/dashboard/Icons'
 import { useLanguage } from '../../i18n'
+import { APPLICATION_TYPES } from '../../constants/application'
+import { tenantServiceGroups } from '../../data/tenantServices'
 import { getWorkspaceNavigation, showWorkspaceSupport } from '../config/navigation'
 
 const PREFETCH_BY_PATH = {
@@ -12,9 +15,150 @@ const PREFETCH_BY_PATH = {
 	'/dashboard/status': () => import('../pages/WorkspaceUinStatus'),
 }
 
+const AUTHORITY_TITLE_KEYS = {
+	'rent-authority': 'ws.citizen.authority.rentAuthority',
+	'rent-court': 'ws.citizen.authority.rentCourt',
+	'rent-tribunal': 'ws.citizen.authority.rentTribunal',
+}
+
+const FORM_I18N_KEYS = {
+	[APPLICATION_TYPES.RENT_REVISION]: {
+		name: 'ws.services.form.i.name',
+		label: 'ws.services.form.i.label',
+	},
+	[APPLICATION_TYPES.OTHER_CHARGES_REVISION]: {
+		name: 'ws.services.form.ia.name',
+		label: 'ws.services.form.ia.label',
+	},
+	[APPLICATION_TYPES.VALUER_APPOINTMENT]: {
+		name: 'ws.services.form.ib.name',
+		label: 'ws.services.form.ib.label',
+	},
+	[APPLICATION_TYPES.RENT_AUTHORITY_FILING]: {
+		name: 'ws.services.form.iv.name',
+		label: 'ws.services.form.iv.label',
+	},
+	[APPLICATION_TYPES.RENT_COURT_POSSESSION]: {
+		name: 'ws.services.form.ii.name',
+		label: 'ws.services.form.ii.label',
+	},
+	[APPLICATION_TYPES.RENT_COURT_FILING]: {
+		name: 'ws.services.form.iii.name',
+		label: 'ws.services.form.iii.label',
+	},
+	[APPLICATION_TYPES.RENT_COURT_APPEAL]: {
+		name: 'ws.services.form.v.name',
+		label: 'ws.services.form.v.label',
+	},
+	[APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL]: {
+		name: 'ws.services.form.vi.name',
+		label: 'ws.services.form.vi.label',
+	},
+}
+
+function formNavCopy(form, t) {
+	const keys = FORM_I18N_KEYS[form.formKey]
+	if (!keys) {
+		return { name: form.formName, label: form.label }
+	}
+	return { name: t(keys.name), label: t(keys.label) }
+}
+
 function prefetchForPath(to) {
 	const run = PREFETCH_BY_PATH[to]
 	if (run) void run()
+}
+
+function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
+	const location = useLocation()
+	const panelId = useId()
+	const label = t(item.labelKey)
+	const onServicesRoute =
+		location.pathname === '/dashboard/services' ||
+		location.pathname.startsWith('/dashboard/forms/')
+	const [open, setOpen] = useState(onServicesRoute)
+
+	useEffect(() => {
+		if (onServicesRoute) setOpen(true)
+	}, [onServicesRoute])
+
+	if (collapsed) {
+		return (
+			<NavLink
+				to={item.to}
+				className={({ isActive }) => `ws-nav-link${isActive || onServicesRoute ? ' active' : ''}`}
+				title={label}
+				onClick={onNavClick}
+				onMouseEnter={() => prefetchForPath(item.to)}
+				onFocus={() => prefetchForPath(item.to)}
+			>
+				<Icon name={item.icon} className={`ws-nav-link-icon ws-nav-link-icon--${item.icon}`} />
+				<span className="ws-nav-link-label">{label}</span>
+			</NavLink>
+		)
+	}
+
+	return (
+		<div className={`ws-nav-disclosure${open ? ' is-open' : ''}${onServicesRoute ? ' is-active' : ''}`}>
+			<button
+				type="button"
+				className={`ws-nav-link ws-nav-disclosure__trigger${onServicesRoute ? ' active' : ''}`}
+				aria-expanded={open}
+				aria-controls={panelId}
+				onClick={() => setOpen((prev) => !prev)}
+			>
+				<Icon name={item.icon} className={`ws-nav-link-icon ws-nav-link-icon--${item.icon}`} />
+				<span className="ws-nav-link-label">{label}</span>
+				<Icon
+					name="chevron"
+					className={`ws-nav-disclosure__chevron${open ? ' is-open' : ''}`}
+				/>
+			</button>
+			{open ? (
+				<div id={panelId} className="ws-nav-disclosure__panel" role="group" aria-label={label}>
+					{tenantServiceGroups.map((group) => (
+						<div key={group.id} className="ws-nav-disclosure__group">
+							<div className="ws-nav-disclosure__group-label">
+								{t(AUTHORITY_TITLE_KEYS[group.id] || group.title)}
+							</div>
+							<ul className="ws-nav-disclosure__list">
+								{group.forms.map((form) => {
+									const copy = formNavCopy(form, t)
+									return (
+										<li key={form.formKey}>
+											<NavLink
+												to={form.to}
+												className={({ isActive }) =>
+													`ws-nav-disclosure__link${isActive ? ' active' : ''}`
+												}
+												title={copy.label}
+												onClick={onNavClick}
+												onMouseEnter={() => prefetchForPath('/dashboard/services')}
+											>
+												{copy.name}
+											</NavLink>
+										</li>
+									)
+								})}
+							</ul>
+						</div>
+					))}
+					<NavLink
+						to={item.to}
+						end
+						className={({ isActive }) =>
+							`ws-nav-disclosure__catalog${isActive ? ' active' : ''}`
+						}
+						title={label}
+						onClick={onNavClick}
+						onMouseEnter={() => prefetchForPath(item.to)}
+					>
+						{t('ws.nav.browseAllServices')}
+					</NavLink>
+				</div>
+			) : null}
+		</div>
+	)
 }
 
 function SidebarNavGroup({ group, collapsed, linkClass, onNavClick, t }) {
@@ -27,6 +171,18 @@ function SidebarNavGroup({ group, collapsed, linkClass, onNavClick, t }) {
 				<div className="ws-nav-section-label">{sectionLabel}</div>
 			) : null}
 			{group.items.map((item) => {
+				if (item.servicesMenu) {
+					return (
+						<ServicesNavMenu
+							key={`${item.to}-${item.labelKey}`}
+							item={item}
+							collapsed={collapsed}
+							onNavClick={onNavClick}
+							t={t}
+						/>
+					)
+				}
+
 				const label = t(item.labelKey)
 				return (
 					<NavLink

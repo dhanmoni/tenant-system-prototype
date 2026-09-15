@@ -346,6 +346,7 @@ const as = {
 	'ws.nav.applyUin': 'UINৰ বাবে আবেদন',
 	'ws.nav.uinStatus': 'UIN স্থিতি',
 	'ws.nav.allServices': 'সকলো সেৱা',
+	'ws.nav.browseAllServices': 'সকলো সেৱা চাওক',
 	'ws.nav.myProfile': 'মোৰ প্ৰ\'ফাইল',
 	'ws.nav.userManagement': 'ব্যৱহাৰকাৰী ব্যৱস্থাপনা',
 	'ws.nav.staffDirectory': 'কৰ্মচাৰী সূচী',

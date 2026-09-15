@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Building2, CheckCircle2, FileText, IdCard, IndianRupee, MapPin, Upload, User } from 'lucide-react'
+import { ArrowLeft, Building2, FileText, IdCard, IndianRupee, MapPin, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
+import UinPrefillNotice from './forms/UinPrefillNotice'
+import ApplyingAsToggle from './forms/ApplyingAsToggle'
+import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormILegalDocument from './forms/FormILegalDocument'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
@@ -35,27 +38,21 @@ const sanitizeMoneyInput = (raw) => {
 
 /** Soft bordered field shell — icon gutter + divider + white input. */
 const inputShellClass =
-	'form-i-field flex h-[50px] w-full items-stretch overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white transition-[border-color] duration-200 ease-in-out focus-within:border-[#6d28d9]'
+	'form-i-field flex h-[50px] w-full items-stretch overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white transition-[border-color] duration-200 ease-in-out focus-within:border-[#64748b]'
 
 const inputClass =
 	'form-i-control h-full w-full min-w-0 flex-1 border-0 bg-transparent px-3.5 text-[15px] font-medium text-[#151717] outline-none placeholder:font-normal placeholder:text-slate-400'
 
 const textareaShellClass =
-	'form-i-field flex min-h-[120px] w-full overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white px-3.5 py-3 transition-[border-color] duration-200 ease-in-out focus-within:border-[#6d28d9]'
+	'form-i-field flex min-h-[120px] w-full overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white px-3.5 py-3 transition-[border-color] duration-200 ease-in-out focus-within:border-[#64748b]'
 
 function FormCard({ title, description, badge, children }) {
 	return (
-		<section className="overflow-hidden rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-			<div className="border-b border-[#ddd6fe] bg-[#ede9fe] px-[30px] py-5 text-center">
-				{badge ? (
-					<span className="mb-2 inline-flex rounded-md bg-white/70 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#6d28d9]">
-						{badge}
-					</span>
-				) : null}
-				<h1 className="m-0 text-[1.5rem] font-semibold leading-snug text-[#6d28d9]">{title}</h1>
-				{description ? (
-					<p className="mx-auto mt-1.5 mb-0 max-w-2xl text-sm leading-relaxed text-[#6d5a9c]">{description}</p>
-				) : null}
+		<section className="sf-form-card overflow-hidden sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+			<div className="sf-form-card__header">
+				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
+				<h1 className="sf-form-card__title">{title}</h1>
+				{description ? <p className="sf-form-card__lead">{description}</p> : null}
 			</div>
 			<div className="flex flex-col gap-4 p-[30px]">{children}</div>
 		</section>
@@ -64,12 +61,23 @@ function FormCard({ title, description, badge, children }) {
 
 const sectionToneClass = {
 	record:
-		'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
+		'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-5 py-5 sm:px-6',
 	application:
-		'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
+		'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-5 py-5 sm:px-6',
 	signature:
-		'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
+		'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-5 py-5 sm:px-6',
 	default: '',
+}
+
+function FormTopBar({ onBack, disabled = false }) {
+	return (
+		<div className="form-iv-topbar">
+			<button type="button" onClick={onBack} disabled={disabled} className="form-iv-back-btn">
+				<ArrowLeft size={18} strokeWidth={2.25} aria-hidden />
+				Back
+			</button>
+		</div>
+	)
 }
 
 function FormSection({
@@ -87,16 +95,13 @@ function FormSection({
 			<div className="mb-5">
 				<div className="flex items-start gap-3">
 					{step ? (
-						<span
-							className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] px-2 text-sm font-semibold text-white"
-							aria-hidden
-						>
+						<span className="sf-step-badge" aria-hidden>
 							{step}
 						</span>
 					) : null}
 					<div className="min-w-0 flex-1">
 						<div className="flex flex-wrap items-center gap-2">
-							<h3 className="m-0 text-base font-semibold text-[#6d28d9]">
+							<h3 className="sf-section-title">
 								{step ? (
 									<span className="sr-only">
 										Section {step}.{' '}
@@ -105,7 +110,7 @@ function FormSection({
 								{title}
 							</h3>
 							{badge ? (
-								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
+								<span className="inline-flex items-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#334155]">
 									{badge}
 								</span>
 							) : null}
@@ -121,17 +126,40 @@ function FormSection({
 	)
 }
 
-function Field({ label, hint, optional = false, required = false, children }) {
+function Field({ label, hint, optional = false, required = false, para = null, children }) {
+	const isDetail = para != null
 	return (
-		<div className="flex flex-col gap-2">
-			{/* Use div — global App.css `label { display:grid }` stacks the red * onto the next row */}
-			<div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0 text-[15px] font-semibold text-[#151717]">
-				<span>{label}</span>
-				{required ? <span className="text-red-500">*</span> : null}
-				{optional ? <span className="text-xs font-medium text-slate-400">Optional</span> : null}
+		<div
+			className={
+				isDetail
+					? 'form-iv-field form-iv-detail-item flex min-w-0 flex-col'
+					: 'form-iv-field flex min-w-0 flex-col gap-1.5'
+			}
+		>
+			<div className={`flex min-w-0 ${hint ? 'flex-col gap-1' : ''}`}>
+				<div className="flex flex-row flex-wrap items-center gap-x-2 gap-y-1 text-[14px] font-semibold text-[#151717]">
+					{para != null ? (
+						<span
+							className="sf-para-badge"
+							aria-hidden
+						>
+							{para}
+						</span>
+					) : null}
+					<span className={isDetail ? 'text-[14px] font-semibold text-slate-900' : undefined}>
+						{label}
+					</span>
+					{required ? <span className="text-red-500">*</span> : null}
+				</div>
+				{hint ? (
+					<p
+						className={`m-0 text-[12px] leading-relaxed text-slate-500${isDetail ? ' sm:pl-8' : ''}`}
+					>
+						{hint}
+					</p>
+				) : null}
 			</div>
-			{hint ? <p className="m-0 text-sm text-slate-500">{hint}</p> : null}
-			{children}
+			<div className={isDetail ? 'min-w-0 sm:pl-8' : undefined}>{children}</div>
 		</div>
 	)
 }
@@ -158,6 +186,7 @@ function ReadOnlyField({
 	multiline = false,
 	variant = 'default',
 	action = null,
+	fromUin = false,
 }) {
 	const text = String(value ?? '').trim()
 	const display = text || empty
@@ -165,17 +194,27 @@ function ReadOnlyField({
 	const isUin = variant === 'uin'
 
 	return (
-		<div className="flex min-w-0 flex-col gap-2">
-			<span className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">
+		<div className={`flex min-w-0 flex-col gap-1.5${isUin ? ' form-iv-readonly--uin' : ''}`}>
+			<span
+				className={`text-[13px] font-semibold uppercase tracking-wide ${
+					isUin || fromUin ? 'text-[#0f172a]' : 'text-slate-500'
+				}`}
+			>
 				{label}
+				{fromUin ? (
+					<span className="form-iv-from-uin-tag !normal-case !text-[#16a34a]" title="Filled from the loaded tenancy UIN">
+						{' '}
+						(from UIN)
+					</span>
+				) : null}
 			</span>
 			<div
 				className={`form-i-field form-i-field--readonly ${multiline ? 'form-i-field--multiline' : ''} ${
 					action ? 'form-i-field--with-action' : ''
-				}`}
+				}${isUin ? ' form-iv-uin-field' : ''}`}
 			>
 				{Icon ? (
-					<span className="form-i-icon-gutter" aria-hidden>
+					<span className={`form-i-icon-gutter${isUin ? ' form-iv-uin-field__icon' : ''}`} aria-hidden>
 						<Icon size={18} strokeWidth={2} />
 					</span>
 				) : null}
@@ -192,10 +231,7 @@ function ReadOnlyField({
 	)
 }
 
-const btnPrimary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#6d28d9] px-5 text-[15px] font-medium text-white transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60'
-const btnSecondary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border border-[#ededef] bg-white px-5 text-[15px] font-medium text-[#151717] transition hover:border-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-60'
+const btnPrimary = 'sf-btn-primary'
 
 export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
@@ -240,6 +276,8 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 	const [recordLoaded, setRecordLoaded] = useState(false)
 	const [authorityLine1, setAuthorityLine1] = useState('')
 	const [authorityLine2, setAuthorityLine2] = useState('')
+	const [tenancyDistrict, setTenancyDistrict] = useState('')
+	const [tenancyOffice, setTenancyOffice] = useState('')
 
 	const signaturePreviewUrl = useMemo(
 		() => (signatureImage ? URL.createObjectURL(signatureImage) : null),
@@ -269,6 +307,8 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 		setSignatureImage(null)
 		setAuthorityLine1('')
 		setAuthorityLine2('')
+		setTenancyDistrict('')
+		setTenancyOffice('')
 		setError('')
 	}, [filesAsTenant, profile.address, profile.name])
 
@@ -408,6 +448,8 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 		const authority = formatRentAuthorityAddressee(tenancy)
 		setAuthorityLine1(authority.line1)
 		setAuthorityLine2(authority.line2)
+		setTenancyDistrict(String(tenancy?.district?.name || tenancy?.office?.district?.name || '').trim())
+		setTenancyOffice(String(tenancy?.office?.name || '').trim())
 		setRecordLoaded(true)
 		setError('')
 		return filled
@@ -434,45 +476,40 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 			<form className="flex flex-col gap-4" onSubmit={requestPreview}>
 				{!recordLoaded ? (
 					<>
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
-							<FormSection
-								step={1}
-								tone="application"
-								title="Identify the tenancy"
-								description="Enter the Unique Identification Number issued by the Rent Authority. Form I can be filed only after the tenancy record is loaded."
-							>
-								<TenancyUinLookup
-									variant="modern"
-									align="center"
-									value={tenancyUIN}
-									onChange={handleUinChange}
-									onLoaded={handleTenancyLoaded}
-									label="Tenancy UIN"
-									hint="Unique Identification Number issued by the Rent Authority. Only a landlord or tenant named on that tenancy may load the record."
-									actionLabel="Load tenancy record"
-									loadingLabel="Loading…"
-									successMessage={() => 'Tenancy record loaded.'}
-									errorFallback="Could not load the tenancy record for this UIN."
-								/>
-							</FormSection>
-						</FormCard>
-
-						<div className="flex justify-start pt-1">
-							<button type="button" onClick={onBack} className={btnSecondary}>
-								Back
-							</button>
-						</div>
+						<FormTopBar onBack={onBack} />
+						<ServiceFormReadyGate
+							badge={formBadge}
+							title={formTitle}
+							description={serviceMeta?.rule || null}
+							knowBefore={[
+								'Proposed / revised rent amount (if known)',
+								'A scanned signature for the declaration',
+							]}
+						>
+							<TenancyUinLookup
+								variant="modern"
+								align="center"
+								value={tenancyUIN}
+								onChange={handleUinChange}
+								onLoaded={handleTenancyLoaded}
+								label="Tenancy UIN"
+								hint="Only a named landlord or tenant on that record can load it."
+								actionLabel="Load record"
+								loadingLabel="Loading…"
+								successMessage={() => 'Tenancy record loaded.'}
+								errorFallback="Could not load the tenancy record for this UIN."
+							/>
+						</ServiceFormReadyGate>
 					</>
 				) : (
 					<>
+						<FormTopBar onBack={onBack} disabled={submitting} />
 						<FormCard title={formTitle} description={formLead} badge={formBadge}>
 							<FormSection
 								step={1}
 								tone="record"
-								title="Particulars of the tenancy"
-								badge="From UIN · read-only"
-								description="These details are taken from the UIN ID. They are for confirmation only and cannot be changed on this form."
-								descriptionClassName="mt-1.5 mb-0 text-sm font-medium leading-relaxed text-amber-700"
+								title="Applicant details"
+								description="First choose Applying as. Then review the tenancy record from your UIN and add the document number if any."
 							>
 								<ReadOnlyField
 									label="UIN issued by the Rent Authority"
@@ -492,29 +529,55 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 										</button>
 									}
 								/>
-								<div className="grid gap-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5">
+
+								<ApplyingAsToggle
+									value={signedBy}
+									onChange={setSignedBy}
+									name="signed_by"
+								/>
+
+								<UinPrefillNotice />
+								<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
+								<div className="grid gap-3 sm:grid-cols-2 sm:gap-x-5 sm:gap-y-3">
 									{/* Same-height rows: landlord left, tenant right */}
-									<ReadOnlyField label="Landlord name" value={landlordName} icon={User} />
-									<ReadOnlyField label="Tenant name" value={tenantName} icon={User} />
-									<ReadOnlyField label="Landlord address" value={landlordAddress} icon={MapPin} />
-									<ReadOnlyField label="Tenant address" value={tenantAddress} icon={MapPin} />
+									<ReadOnlyField label="Landlord name" value={landlordName} icon={User} fromUin />
+									<ReadOnlyField label="Tenant name" value={tenantName} icon={User} fromUin />
+									<ReadOnlyField label="Landlord address" value={landlordAddress} icon={MapPin} fromUin />
+									<ReadOnlyField label="Tenant address" value={tenantAddress} icon={MapPin} fromUin />
 									<ReadOnlyField
 										label="Property manager name (if any)"
 										value={managerName}
 										empty="None on record"
 										icon={User}
+										fromUin
 									/>
 									<ReadOnlyField
 										label="Property manager address (if any)"
 										value={managerAddress}
 										empty="None on record"
 										icon={MapPin}
+										fromUin
+									/>
+									<ReadOnlyField
+										label="District"
+										value={tenancyDistrict}
+										empty="Not on record"
+										icon={MapPin}
+										fromUin
+									/>
+									<ReadOnlyField
+										label="Rent Authority office"
+										value={tenancyOffice}
+										empty="Not on record"
+										icon={Building2}
+										fromUin
 									/>
 									<div className="sm:col-span-2">
 										<ReadOnlyField
 											label="Present monthly rent"
 											value={presentRentDisplay}
 											icon={IndianRupee}
+											fromUin
 										/>
 									</div>
 									<div className="sm:col-span-2">
@@ -524,68 +587,17 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 											icon={Building2}
 											empty="Not on record"
 											multiline
+											fromUin
 										/>
-									</div>
-								</div>
-							</FormSection>
-
-							<FormSection
-								step={2}
-								tone="application"
-								title="Particulars of the application"
-								description="State the rent you seek, whether you are applying as landlord or tenant, and upload your signature."
-							>
-								<div className="flex flex-col gap-1.5">
-									<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
-										<span>Applying as</span>
-										<span className="text-red-500">*</span>
-										<span className="text-[12px] font-medium text-slate-500">
-											Landlord or tenant of the premises
-										</span>
-									</div>
-									<div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Applying as">
-										<label
-											className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center gap-2.5 rounded-[10px] border px-3.5 transition ${
-												signedBy === 'landlord'
-													? 'border-[#6d28d9] bg-[#ede9fe]'
-													: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
-											}`}
-										>
-											<input
-												type="radio"
-												name="signed_by"
-												value="landlord"
-												checked={signedBy === 'landlord'}
-												onChange={() => setSignedBy('landlord')}
-												className="h-4 w-4 accent-[#6d28d9]"
-											/>
-											<span className="text-sm font-semibold text-[#151717]">Landlord</span>
-										</label>
-										<label
-											className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center gap-2.5 rounded-[10px] border px-3.5 transition ${
-												signedBy === 'tenant'
-													? 'border-[#6d28d9] bg-[#ede9fe]'
-													: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
-											}`}
-										>
-											<input
-												type="radio"
-												name="signed_by"
-												value="tenant"
-												checked={signedBy === 'tenant'}
-												onChange={() => setSignedBy('tenant')}
-												className="h-4 w-4 accent-[#6d28d9]"
-											/>
-											<span className="text-sm font-semibold text-[#151717]">Tenant</span>
-										</label>
 									</div>
 								</div>
 
 								<Field
-									label="Document No. of tenancy agreement registered before the Sub-Registrar (if any)"
+									label="Document Number"
 									optional
+									hint="Of the tenancy agreement registered before the Sub-Registrar (if any)"
 								>
-									<InputShell icon={FileText}>
+									<InputShell icon={FileText} className={`${inputShellClass} w-full max-w-[22rem]`}>
 										<input
 											type="text"
 											value={tenancyAgreementDocumentNo}
@@ -595,8 +607,16 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 										/>
 									</InputShell>
 								</Field>
-								<Field label="Proposed monthly rent" required>
-									<InputShell icon={IndianRupee}>
+							</FormSection>
+
+							<FormSection
+								step={2}
+								tone="application"
+								title="Details of revision or fixation"
+								description="State the rent you seek to have fixed or revised, and the grounds for this application."
+							>
+								<Field label="Proposed monthly rent" required para={1}>
+									<InputShell icon={IndianRupee} className={`${inputShellClass} w-full max-w-[22rem]`}>
 										<input
 											type="text"
 											inputMode="decimal"
@@ -615,7 +635,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 										/>
 									</InputShell>
 								</Field>
-								<Field label="Reason for fixation or revision of rent" required>
+								<Field label="Reason for fixation or revision of rent" required para={2}>
 									<InputShell className={textareaShellClass}>
 										<textarea
 											value={reasonForRentRevision}
@@ -627,26 +647,33 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 										/>
 									</InputShell>
 								</Field>
+							</FormSection>
 
+							<FormSection
+								step={3}
+								tone="signature"
+								title="Declaration and signature"
+								description="Upload your signature to complete the filing."
+							>
 								<Field
 									label="Signature image"
 									required
 									hint="Upload a clear scan or photo of your signature. Format: JPG, JPEG or PNG. Recommended: at least 300 × 100 px (or higher), max file size 2 MB."
 								>
-									<div className="form-i-field form-i-upload-field">
+									<div className="form-i-field form-i-upload-field w-full max-w-md">
 										<span className="form-i-icon-gutter" aria-hidden>
 											<Upload size={18} strokeWidth={2} />
 										</span>
 										<label className="form-i-upload-body !m-0 !flex !flex-row !gap-3 min-w-0 flex-1 cursor-pointer items-center px-3.5">
-											<span className="inline-flex shrink-0 items-center rounded-lg bg-[#ede9fe] px-3 py-1.5 text-sm font-semibold text-[#6d28d9]">
-												{signatureImage ? 'Change file' : 'Choose file'}
+											<span className="sf-upload-btn">
+												{signatureImage ? 'Change image' : 'Upload image'}
 											</span>
 											<span
-												className={`min-w-0 truncate text-sm ${
-													signatureImage ? 'font-medium text-green-700' : 'text-slate-500'
+												className={`sf-upload-filename${
+													signatureImage ? ' is-selected' : ''
 												}`}
 											>
-												{signatureImage?.name || 'No file chosen'}
+												{signatureImage?.name || 'No image chosen'}
 											</span>
 											<input
 												type="file"
@@ -668,43 +695,26 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 										</label>
 									</div>
 									{signatureImage && signaturePreviewUrl ? (
-										<div className="mt-3 overflow-hidden rounded-[10px] border border-green-200 bg-green-50">
-											<div className="flex flex-wrap items-center justify-between gap-2 border-b border-green-200 px-4 py-2.5">
-												<p className="m-0 inline-flex items-center gap-2 text-sm font-semibold text-green-700">
-													<CheckCircle2 size={18} strokeWidth={2} aria-hidden />
-													Signature image uploaded
-												</p>
-												<button
-													type="button"
-													onClick={clearSignatureImage}
-													className="text-sm font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
-												>
-													Remove
-												</button>
-											</div>
-											<div className="flex items-center justify-center bg-white px-4 py-5">
-												<img
-													src={signaturePreviewUrl}
-													alt="Uploaded signature preview"
-													className="max-h-32 w-auto max-w-full object-contain"
-												/>
-											</div>
-											<p className="m-0 truncate border-t border-green-100 bg-green-50/80 px-4 py-2 text-xs text-slate-500">
-												{signatureImage.name}
-												{signatureImage.size
-													? ` · ${(signatureImage.size / 1024).toFixed(0)} KB`
-													: ''}
-											</p>
+										<div className="form-iv-signature-preview">
+											<img
+												src={signaturePreviewUrl}
+												alt="Uploaded signature preview"
+												className="form-iv-signature-preview__img"
+											/>
+											<button
+												type="button"
+												onClick={clearSignatureImage}
+												className="form-iv-signature-preview__remove"
+											>
+												Remove
+											</button>
 										</div>
 									) : null}
 								</Field>
 							</FormSection>
 						</FormCard>
 
-						<div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-							<button type="button" onClick={onBack} disabled={submitting} className={btnSecondary}>
-								Back
-							</button>
+						<div className="flex flex-wrap items-center justify-center gap-3 pt-2">
 							<button type="submit" disabled={submitting} className={btnPrimary}>
 								{submitting ? 'Submitting…' : 'Review & submit'}
 							</button>

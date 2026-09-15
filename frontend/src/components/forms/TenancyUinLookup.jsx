@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { IdCard } from 'lucide-react'
+import { useId, useState } from 'react'
+import { IdCard, Search } from 'lucide-react'
 import api from '../../api'
 
 function TenancyUinLookup({
@@ -19,6 +19,7 @@ function TenancyUinLookup({
 }) {
 	const [loading, setLoading] = useState(false)
 	const [status, setStatus] = useState(null)
+	const inputId = useId()
 	const modern = variant === 'modern'
 	const centered = align === 'center'
 
@@ -64,27 +65,80 @@ function TenancyUinLookup({
 		}
 	}
 
+	if (modern && centered) {
+		return (
+			<div className="form-i-uin-lookup form-i-uin-lookup--center sf-uin-search">
+				<label className="sf-uin-search__label" htmlFor={inputId}>
+					<span>{label}</span>
+					{required ? (
+						<span className="sf-uin-search__required" aria-hidden>
+							*
+						</span>
+					) : null}
+				</label>
+
+				<div className="sf-uin-search__bar">
+					<span className="sf-uin-search__icon" aria-hidden>
+						<IdCard size={20} strokeWidth={2} />
+					</span>
+					<input
+						id={inputId}
+						type="text"
+						value={value}
+						onChange={(e) => {
+							onChange(e.target.value)
+							if (status) setStatus(null)
+						}}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault()
+								if (!loading) handleLookup()
+							}
+						}}
+						required={required}
+						placeholder="e.g. ATRMS-01012026-0303"
+						spellCheck={false}
+						autoCapitalize="characters"
+						aria-label={label}
+						className="sf-uin-search__input"
+					/>
+					<button
+						type="button"
+						onClick={handleLookup}
+						disabled={loading}
+						className="sf-uin-search__submit"
+					>
+						<Search size={16} strokeWidth={2.25} aria-hidden />
+						<span>{loading ? loadingLabel : actionLabel}</span>
+					</button>
+				</div>
+
+				{status ? (
+					<p
+						className={`sf-uin-search__status sf-uin-search__status--${status.type}`}
+						role="status"
+					>
+						{status.message}
+					</p>
+				) : (
+					<p className="sf-uin-search__hint">
+						{hint ||
+							'Enter the Tenancy UIN issued for your tenancy and load details. Only a party to that tenancy may load the record.'}
+					</p>
+				)}
+			</div>
+		)
+	}
+
 	if (modern) {
 		return (
-			<div
-				className={`form-i-uin-lookup flex flex-col gap-3 ${
-					centered ? 'form-i-uin-lookup--center mx-auto w-full max-w-3xl py-4 sm:py-6' : ''
-				}`}
-			>
-				<div
-					className={`flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0 text-[15px] font-semibold text-[#151717] ${
-						centered ? 'justify-center text-center' : ''
-					}`}
-				>
+			<div className="form-i-uin-lookup flex flex-col gap-3">
+				<div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0 text-[15px] font-semibold text-[#151717]">
 					<span>{label}</span>
 					{required ? <span className="text-red-500">*</span> : null}
 				</div>
-				<div
-					className={`flex flex-col gap-3 sm:flex-row sm:items-center ${
-						centered ? 'sm:gap-3' : 'sm:gap-2.5'
-					}`}
-				>
-					<div className="form-i-field form-i-uin-field flex h-[52px] min-w-0 w-full flex-1 items-stretch overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white transition-[border-color] duration-200 ease-in-out focus-within:border-[#6d28d9]">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2.5">
+					<div className="form-i-field form-i-uin-field flex h-[52px] min-w-0 w-full flex-1 items-stretch overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white transition-[border-color] duration-200 ease-in-out focus-within:border-[#0d47a1]">
 						<span className="form-i-icon-gutter" aria-hidden>
 							<IdCard size={18} strokeWidth={2} />
 						</span>
@@ -113,7 +167,7 @@ function TenancyUinLookup({
 						type="button"
 						onClick={handleLookup}
 						disabled={loading}
-						className="inline-flex h-[52px] w-full shrink-0 items-center justify-center rounded-[10px] border-0 bg-[#6d28d9] px-5 text-[15px] font-medium text-white transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[12rem]"
+						className="inline-flex h-[52px] w-full shrink-0 items-center justify-center rounded-[10px] border-0 bg-[#0d47a1] px-5 text-[15px] font-medium text-white transition hover:bg-[#0a3a82] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[12rem]"
 					>
 						{loading ? loadingLabel : actionLabel}
 					</button>
@@ -122,17 +176,13 @@ function TenancyUinLookup({
 					<p
 						className={`m-0 text-sm leading-relaxed ${
 							status.type === 'success' ? 'text-emerald-700' : 'text-red-600'
-						} ${centered ? 'text-center' : ''}`}
+						}`}
 						role="status"
 					>
 						{status.message}
 					</p>
 				) : (
-					<p
-						className={`m-0 text-sm leading-relaxed text-slate-500 ${
-							centered ? 'text-center' : ''
-						}`}
-					>
+					<p className="m-0 text-sm leading-relaxed text-slate-500">
 						{hint ||
 							'Enter the Tenancy UIN issued for your tenancy and load details. Only a party to that tenancy may load the record.'}
 					</p>

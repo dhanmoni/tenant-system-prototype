@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Building2, Check, CheckCircle2, IdCard, MapPin, Upload, User } from 'lucide-react'
+import { ArrowLeft, Building2, Check, IdCard, MapPin, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
+import UinPrefillNotice from './forms/UinPrefillNotice'
+import ApplyingAsToggle from './forms/ApplyingAsToggle'
+import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormIBLegalDocument from './forms/FormIBLegalDocument'
 import { useServiceFormPreview } from '../hooks/useServiceFormPreview'
@@ -21,17 +24,11 @@ const textareaShellClass = 'form-i-field form-i-field--multiline'
 
 function FormCard({ title, description, badge, children }) {
 	return (
-		<section className="overflow-hidden rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-			<div className="border-b border-[#ddd6fe] bg-[#ede9fe] px-[30px] py-5 text-center">
-				{badge ? (
-					<span className="mb-2 inline-flex rounded-md bg-white/70 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#6d28d9]">
-						{badge}
-					</span>
-				) : null}
-				<h1 className="m-0 text-[1.5rem] font-semibold leading-snug text-[#6d28d9]">{title}</h1>
-				{description ? (
-					<p className="mx-auto mt-1.5 mb-0 max-w-2xl text-sm leading-relaxed text-[#6d5a9c]">{description}</p>
-				) : null}
+		<section className="sf-form-card overflow-hidden sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
+			<div className="sf-form-card__header">
+				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
+				<h1 className="sf-form-card__title">{title}</h1>
+				{description ? <p className="sf-form-card__lead">{description}</p> : null}
 			</div>
 			<div className="flex flex-col gap-4 p-[30px]">{children}</div>
 		</section>
@@ -39,9 +36,9 @@ function FormCard({ title, description, badge, children }) {
 }
 
 const sectionToneClass = {
-	record: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
-	application: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
-	signature: 'rounded-2xl border border-[#cbd5e1] bg-[#f8fafc] px-5 py-5 sm:px-6',
+	record: 'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-5 py-5 sm:px-6',
+	application: 'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-5 py-5 sm:px-6',
+	signature: 'sf-section-panel rounded-2xl border border-[#cbd5e1] bg-white px-5 py-5 sm:px-6',
 	default: '',
 }
 
@@ -50,13 +47,24 @@ function FormTick({ checked }) {
 		<span
 			className={`mt-0.5 inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition ${
 				checked
-					? 'border-[#6d28d9] bg-[#6d28d9] text-white'
+					? 'border-[#0d47a1] bg-[#0d47a1] text-white'
 					: 'border-slate-400 bg-white text-transparent'
 			}`}
 			aria-hidden
 		>
 			{checked ? <Check size={11} strokeWidth={3} /> : null}
 		</span>
+	)
+}
+
+function FormTopBar({ onBack, disabled = false }) {
+	return (
+		<div className="form-iv-topbar">
+			<button type="button" onClick={onBack} disabled={disabled} className="form-iv-back-btn">
+				<ArrowLeft size={18} strokeWidth={2.25} aria-hidden />
+				Back
+			</button>
+		</div>
 	)
 }
 
@@ -75,16 +83,13 @@ function FormSection({
 			<div className="mb-5">
 				<div className="flex items-start gap-3">
 					{step ? (
-						<span
-							className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] px-2 text-sm font-semibold text-white"
-							aria-hidden
-						>
+						<span className="sf-step-badge" aria-hidden>
 							{step}
 						</span>
 					) : null}
 					<div className="min-w-0 flex-1">
 						<div className="flex flex-wrap items-center gap-2">
-							<h3 className="m-0 text-base font-semibold text-[#6d28d9]">
+							<h3 className="sf-section-title">
 								{step ? (
 									<span className="sr-only">
 										Section {step}.{' '}
@@ -93,7 +98,7 @@ function FormSection({
 								{title}
 							</h3>
 							{badge ? (
-								<span className="inline-flex items-center rounded-md border border-[#ddd6fe] bg-[#ede9fe] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#6d28d9]">
+								<span className="inline-flex items-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#334155]">
 									{badge}
 								</span>
 							) : null}
@@ -109,7 +114,7 @@ function FormSection({
 
 function Field({ label, hint, required = false, children }) {
 	return (
-		<div className="flex min-w-0 flex-col gap-1.5">
+		<div className="form-iv-field flex min-w-0 flex-col gap-1.5">
 			<div className="flex min-w-0 flex-col gap-0.5">
 				<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 gap-y-0 text-[14px] font-semibold text-[#151717]">
 					<span>{label}</span>
@@ -143,6 +148,7 @@ function ReadOnlyField({
 	multiline = false,
 	variant = 'default',
 	action = null,
+	fromUin = false,
 }) {
 	const text = String(value ?? '').trim()
 	const display = text || empty
@@ -150,15 +156,27 @@ function ReadOnlyField({
 	const isUin = variant === 'uin'
 
 	return (
-		<div className="flex min-w-0 flex-col gap-2">
-			<span className="text-[13px] font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+		<div className={`flex min-w-0 flex-col gap-1.5${isUin ? ' form-iv-readonly--uin' : ''}`}>
+			<span
+				className={`text-[13px] font-semibold uppercase tracking-wide ${
+					isUin || fromUin ? 'text-[#0f172a]' : 'text-slate-500'
+				}`}
+			>
+				{label}
+				{fromUin ? (
+					<span className="form-iv-from-uin-tag !normal-case !text-[#16a34a]" title="Filled from the loaded tenancy UIN">
+						{' '}
+						(from UIN)
+					</span>
+				) : null}
+			</span>
 			<div
 				className={`form-i-field form-i-field--readonly ${multiline ? 'form-i-field--multiline' : ''} ${
 					action ? 'form-i-field--with-action' : ''
-				}`}
+				}${isUin ? ' form-iv-uin-field' : ''}`}
 			>
 				{Icon ? (
-					<span className="form-i-icon-gutter" aria-hidden>
+					<span className={`form-i-icon-gutter${isUin ? ' form-iv-uin-field__icon' : ''}`} aria-hidden>
 						<Icon size={18} strokeWidth={2} />
 					</span>
 				) : null}
@@ -175,10 +193,7 @@ function ReadOnlyField({
 	)
 }
 
-const btnPrimary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border-0 bg-[#6d28d9] px-5 text-[15px] font-medium text-white transition hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:opacity-60'
-const btnSecondary =
-	'inline-flex h-[50px] items-center justify-center rounded-[10px] border border-[#ededef] bg-white px-5 text-[15px] font-medium text-[#151717] transition hover:border-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-60'
+const btnPrimary = 'sf-btn-primary'
 
 export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user }) {
 	const navigate = useNavigate()
@@ -214,6 +229,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 	)
 	const [premisesSituatedAddress, setPremisesSituatedAddress] = useState('')
 	const [district, setDistrict] = useState(profile.district)
+	const [tenancyOffice, setTenancyOffice] = useState('')
 
 	const [signedBy, setSignedBy] = useState(profile.side === 'TENANT' ? 'tenant' : 'landlord')
 	const [signatureImage, setSignatureImage] = useState(null)
@@ -248,6 +264,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 		setApplicantLandlordOrTenant(profile.side === 'TENANT' ? 'tenant' : 'landlord')
 		setPremisesSituatedAddress('')
 		setDistrict(profile.district)
+		setTenancyOffice('')
 		setSignedBy(profile.side === 'TENANT' ? 'tenant' : 'landlord')
 		setSignatureImage(null)
 		setFeeUndertakingAccepted(false)
@@ -389,6 +406,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 		const authority = formatRentAuthorityAddressee(tenancy)
 		setAuthorityLine1(authority.line1)
 		setAuthorityLine2(authority.line2)
+		setTenancyOffice(String(tenancy?.office?.name || '').trim())
 		setRecordLoaded(true)
 		setError('')
 		return filled
@@ -430,45 +448,40 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 			<form className="flex flex-col gap-4" onSubmit={requestPreview}>
 				{!recordLoaded ? (
 					<>
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
-							<FormSection
-								step={1}
-								tone="application"
-								title="Identify the tenancy"
-								description="Enter the Unique Identification Number issued by the Rent Authority. Form I-B can be filed only after the tenancy record is loaded."
-							>
-								<TenancyUinLookup
-									variant="modern"
-									align="center"
-									value={tenancyUIN}
-									onChange={handleUinChange}
-									onLoaded={handleTenancyLoaded}
-									label="Tenancy UIN"
-									hint="Unique Identification Number issued by the Rent Authority. Only a landlord or tenant named on that tenancy may load the record."
-									actionLabel="Load tenancy record"
-									loadingLabel="Loading…"
-									successMessage={() => 'Tenancy record loaded.'}
-									errorFallback="Could not load the tenancy record for this UIN."
-								/>
-							</FormSection>
-						</FormCard>
-
-						<div className="flex justify-start pt-1">
-							<button type="button" onClick={onBack} className={btnSecondary}>
-								Back
-							</button>
-						</div>
+						<FormTopBar onBack={onBack} />
+						<ServiceFormReadyGate
+							badge={formBadge}
+							title={formTitle}
+							description={serviceMeta?.rule || null}
+							knowBefore={[
+								'Father / mother / spouse name for the relation field',
+								'A scanned signature for the declaration',
+							]}
+						>
+							<TenancyUinLookup
+								variant="modern"
+								align="center"
+								value={tenancyUIN}
+								onChange={handleUinChange}
+								onLoaded={handleTenancyLoaded}
+								label="Tenancy UIN"
+								hint="Only a named landlord or tenant on that record can load it."
+								actionLabel="Load record"
+								loadingLabel="Loading…"
+								successMessage={() => 'Tenancy record loaded.'}
+								errorFallback="Could not load the tenancy record for this UIN."
+							/>
+						</ServiceFormReadyGate>
 					</>
 				) : (
 					<>
+						<FormTopBar onBack={onBack} disabled={submitting} />
 						<FormCard title={formTitle} description={formLead} badge={formBadge}>
 							<FormSection
 								step={1}
 								tone="record"
-								title="Particulars from the tenancy"
-								badge="From UIN · read-only"
-								description="Applicant name, residence and district come from the UIN. They update if you change Applying as below."
-								descriptionClassName="mt-1.5 mb-0 text-sm font-medium leading-relaxed text-amber-700"
+								title="Applicant details"
+								description="First choose Applying as. Then review the tenancy record from your UIN and complete premises and relation details."
 							>
 								<ReadOnlyField
 									label="UIN issued by the Rent Authority"
@@ -488,84 +501,40 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 										</button>
 									}
 								/>
-								<div className="grid gap-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-5">
-									<ReadOnlyField label="Landlord name" value={landlordName} icon={User} />
-									<ReadOnlyField label="Tenant name" value={tenantName} icon={User} />
+
+								<ApplyingAsToggle
+									value={applicantLandlordOrTenant}
+									onChange={setCapacity}
+									name="capacity_ib"
+								/>
+
+								<UinPrefillNotice />
+								<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
+								<div className="grid gap-3 sm:grid-cols-2 sm:gap-x-5 sm:gap-y-3">
+									<ReadOnlyField label="Landlord name" value={landlordName} icon={User} fromUin />
+									<ReadOnlyField label="Tenant name" value={tenantName} icon={User} fromUin />
 									<ReadOnlyField
 										label="Landlord address"
 										value={landlordAddress}
 										icon={MapPin}
 										multiline
+										fromUin
 									/>
 									<ReadOnlyField
 										label="Tenant address"
 										value={tenantAddress}
 										icon={MapPin}
 										multiline
+										fromUin
 									/>
-									<ReadOnlyField label="Name of the applicant" value={applicantName} icon={User} />
+									<ReadOnlyField label="District" value={district} icon={MapPin} fromUin />
 									<ReadOnlyField
-										label="Resident of"
-										value={applicantResidentPlace}
-										icon={MapPin}
-										multiline
+										label="Rent Authority office"
+										value={tenancyOffice}
+										icon={Building2}
+										empty="Not on record"
+										fromUin
 									/>
-									<div className="sm:col-span-2">
-										<ReadOnlyField label="District" value={district} icon={MapPin} />
-									</div>
-								</div>
-							</FormSection>
-
-							<FormSection
-								step={2}
-								tone="application"
-								title="Particulars of the application"
-								description="Choose whether you are applying as landlord or tenant, complete the relation details, then accept the undertaking and upload your signature."
-							>
-								<div className="flex flex-col gap-1.5">
-									<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
-										<span>Applying as</span>
-										<span className="text-red-500">*</span>
-										<span className="text-[12px] font-medium text-slate-500">
-											Landlord or tenant of the premises
-										</span>
-									</div>
-									<div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Applying as">
-										<label
-											className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center gap-2.5 rounded-[10px] border px-3.5 transition ${
-												applicantLandlordOrTenant === 'landlord'
-													? 'border-[#6d28d9] bg-[#ede9fe]'
-													: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
-											}`}
-										>
-											<input
-												type="radio"
-												name="capacity_ib"
-												value="landlord"
-												checked={applicantLandlordOrTenant === 'landlord'}
-												onChange={() => setCapacity('landlord')}
-												className="h-4 w-4 accent-[#6d28d9]"
-											/>
-											<span className="text-sm font-semibold text-[#151717]">Landlord</span>
-										</label>
-										<label
-											className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center gap-2.5 rounded-[10px] border px-3.5 transition ${
-												applicantLandlordOrTenant === 'tenant'
-													? 'border-[#6d28d9] bg-[#ede9fe]'
-													: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
-											}`}
-										>
-											<input
-												type="radio"
-												name="capacity_ib"
-												value="tenant"
-												checked={applicantLandlordOrTenant === 'tenant'}
-												onChange={() => setCapacity('tenant')}
-												className="h-4 w-4 accent-[#6d28d9]"
-											/>
-											<span className="text-sm font-semibold text-[#151717]">Tenant</span>
-										</label>
-									</div>
 								</div>
 
 								<Field
@@ -585,77 +554,76 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 									</InputShell>
 								</Field>
 
-								<div className="flex flex-col gap-5">
-									<Field
-										label="Applicants father/mother/spouse name"
-										required
-										hint="Person you are Son, Daughter or Spouse of"
-									>
-										<InputShell icon={User}>
-											<input
-												type="text"
-												value={applicantRelationTargetName}
-												onChange={(e) => setApplicantRelationTargetName(e.target.value)}
-												required
-												placeholder="Full name"
-												className={inputClass}
-											/>
-										</InputShell>
-									</Field>
+								<div className="form-ib-relation-row">
+										<Field
+											label="Applicant's father/mother/spouse name"
+											required
+											hint="Person you are Son, Daughter or Spouse of"
+										>
+											<InputShell icon={User} className={`${inputShellClass} form-iv-relative-name-input`}>
+												<input
+													type="text"
+													value={applicantRelationTargetName}
+													onChange={(e) => setApplicantRelationTargetName(e.target.value)}
+													required
+													placeholder="Full name"
+													className={inputClass}
+												/>
+											</InputShell>
+										</Field>
 
-									<div className="flex flex-col gap-1.5">
-										<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
-											<span>Relation</span>
-											<span className="text-red-500">*</span>
-											<span className="text-[12px] font-medium text-slate-500">
-												Son, Daughter or Spouse of the person named above
-											</span>
-										</div>
-										<div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Relation">
-											{FORM_IB_RELATIONS.map((relation) => {
-												const selected = applicantRelationType === relation
-												return (
-													<label
-														key={relation}
-														className={`!m-0 !flex !h-[46px] !flex-row cursor-pointer items-center justify-center rounded-[10px] border px-2 transition ${
-															selected
-																? 'border-[#6d28d9] bg-[#ede9fe]'
-																: 'border-[#cbd5e1] bg-white hover:border-[#c4b5fd]'
-														}`}
-													>
-														<input
-															type="radio"
-															name="relation_ib"
-															value={relation}
-															checked={selected}
-															onChange={() => setApplicantRelationType(relation)}
-															className="sr-only"
-														/>
-														<span
-															className={`text-sm font-semibold ${
-																selected ? 'text-[#6d28d9]' : 'text-[#151717]'
-															}`}
+										<fieldset className="form-iv-field form-ib-relation-row__relation m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0">
+											<legend className="form-iv-applicant-extras__legend">
+												<span className="form-iv-applicant-extras__legend-title">
+													Relation
+													<span className="text-red-500" aria-hidden>
+														{' '}
+														*
+													</span>
+													<span className="sr-only">(required)</span>
+												</span>
+												<span className="form-iv-applicant-extras__legend-hint">
+													Son, Daughter or Spouse of the person named beside
+												</span>
+											</legend>
+											<div className="form-iv-relation-field__options" role="radiogroup" aria-label="Relation">
+												{FORM_IB_RELATIONS.map((relation) => {
+													const selected = applicantRelationType === relation
+													return (
+														<label
+															key={relation}
+															className={`form-iv-relation-option${selected ? ' is-selected' : ''}`}
 														>
-															{relation}
-														</span>
-													</label>
-												)
-											})}
-										</div>
-									</div>
+															<input
+																type="radio"
+																name="relation_ib"
+																value={relation}
+																checked={selected}
+																onChange={() => setApplicantRelationType(relation)}
+																className="sr-only"
+															/>
+															<span>{relation}</span>
+														</label>
+													)
+												})}
+											</div>
+										</fieldset>
 								</div>
+							</FormSection>
 
+							<FormSection
+								step={2}
+								tone="signature"
+								title="Declaration and signature"
+								description="Accept the undertaking and upload your signature to complete the filing."
+							>
 								<div className="flex flex-col gap-1.5">
 									<div className="flex flex-row flex-wrap items-baseline gap-x-1.5 text-[14px] font-semibold text-[#151717]">
 										<span>Undertaking</span>
 										<span className="text-red-500">*</span>
 									</div>
 									<label
-										className={`!m-0 !flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition ${
-											feeUndertakingAccepted
-												? 'border-[#c4b5fd] bg-white'
-												: 'border-slate-200 bg-white hover:border-[#c4b5fd]'
-										}`}
+										className={`sf-undertaking-box${feeUndertakingAccepted ? ' is-checked' : ''}`}
 									>
 										<input
 											type="checkbox"
@@ -676,20 +644,20 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 									required
 									hint="Upload a clear scan or photo of your signature. Format: JPG, JPEG or PNG. Recommended: at least 300 × 100 px (or higher), max file size 2 MB."
 								>
-									<div className="form-i-field form-i-upload-field">
+									<div className="form-i-field form-i-upload-field w-full max-w-md">
 										<span className="form-i-icon-gutter" aria-hidden>
 											<Upload size={18} strokeWidth={2} />
 										</span>
 										<label className="form-i-upload-body !m-0 !flex !flex-row !gap-3 min-w-0 flex-1 cursor-pointer items-center px-3.5">
-											<span className="inline-flex shrink-0 items-center rounded-lg bg-[#ede9fe] px-3 py-1.5 text-sm font-semibold text-[#6d28d9]">
-												{signatureImage ? 'Change file' : 'Choose file'}
+											<span className="sf-upload-btn">
+												{signatureImage ? 'Change image' : 'Upload image'}
 											</span>
 											<span
-												className={`min-w-0 truncate text-sm ${
-													signatureImage ? 'font-medium text-green-700' : 'text-slate-500'
+												className={`sf-upload-filename${
+													signatureImage ? ' is-selected' : ''
 												}`}
 											>
-												{signatureImage?.name || 'No file chosen'}
+												{signatureImage?.name || 'No image chosen'}
 											</span>
 											<input
 												type="file"
@@ -711,43 +679,26 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 										</label>
 									</div>
 									{signatureImage && signaturePreviewUrl ? (
-										<div className="mt-3 overflow-hidden rounded-[10px] border border-green-200 bg-green-50">
-											<div className="flex flex-wrap items-center justify-between gap-2 border-b border-green-200 px-4 py-2.5">
-												<p className="m-0 inline-flex items-center gap-2 text-sm font-semibold text-green-700">
-													<CheckCircle2 size={18} strokeWidth={2} aria-hidden />
-													Signature image uploaded
-												</p>
-												<button
-													type="button"
-													onClick={clearSignatureImage}
-													className="text-sm font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
-												>
-													Remove
-												</button>
-											</div>
-											<div className="flex items-center justify-center bg-white px-4 py-5">
-												<img
-													src={signaturePreviewUrl}
-													alt="Uploaded signature preview"
-													className="max-h-32 w-auto max-w-full object-contain"
-												/>
-											</div>
-											<p className="m-0 truncate border-t border-green-100 bg-green-50/80 px-4 py-2 text-xs text-slate-500">
-												{signatureImage.name}
-												{signatureImage.size
-													? ` · ${(signatureImage.size / 1024).toFixed(0)} KB`
-													: ''}
-											</p>
+										<div className="form-iv-signature-preview">
+											<img
+												src={signaturePreviewUrl}
+												alt="Uploaded signature preview"
+												className="form-iv-signature-preview__img"
+											/>
+											<button
+												type="button"
+												onClick={clearSignatureImage}
+												className="form-iv-signature-preview__remove"
+											>
+												Remove
+											</button>
 										</div>
 									) : null}
 								</Field>
 							</FormSection>
 						</FormCard>
 
-						<div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-							<button type="button" onClick={onBack} disabled={submitting} className={btnSecondary}>
-								Back
-							</button>
+						<div className="flex flex-wrap items-center justify-center gap-3 pt-2">
 							<button type="submit" disabled={submitting} className={btnPrimary}>
 								{submitting ? 'Submitting…' : 'Review & submit'}
 							</button>

@@ -9,11 +9,6 @@ import {
 	renderParagraphNumbers,
 } from '../../constants/declarations'
 import { PRIOR_STATUS } from '../../constants/priorProceedings'
-import {
-	describeMatter,
-	describeRepairItem,
-	describeService,
-} from '../../constants/rentAuthorityMatters'
 
 function blank(value) {
 	const text = String(value ?? '').trim()
@@ -36,19 +31,21 @@ function enclosureLines(listOfEnclosures) {
 }
 
 /**
- * Print-style FORM-IV sheet matching the Gazette physical form ([See rule- 11]).
+ * Print-style FORM-III sheet matching the Gazette physical form ([See rule 10]).
+ *
+ * Product path: landlord (or legal heir) files for eviction / recovery of possession.
+ * Applicant = landlord from UIN; Respondent = tenant. No Applying-as toggle.
  */
-export default function FormIVLegalDocument({
+export default function FormIIILegalDocument({
 	tenancyUIN,
+	beforeRentCourt = '',
+	courtLine1 = '',
+	courtLine2 = '',
 	applicantName,
 	applicantResidentialAddress,
-	oppositePartyName,
-	oppositePartyResidentialAddress,
-	statutoryMatter,
-	repairItems = [],
-	essentialServices = [],
-	essentialServiceOther = '',
-	particularsOfViolation,
+	respondentName,
+	respondentResidentialAddress,
+	particularsOfApplication,
 	jurisdictionAccepted,
 	factsOfCase,
 	groundsForRelief,
@@ -60,8 +57,6 @@ export default function FormIVLegalDocument({
 	verification,
 	signatureName,
 	signatureImage,
-	authorityLine1 = '',
-	authorityLine2 = '',
 }) {
 	const [signatureUrl, setSignatureUrl] = useState('')
 
@@ -75,29 +70,15 @@ export default function FormIVLegalDocument({
 		return () => URL.revokeObjectURL(url)
 	}, [signatureImage])
 
-	const auth1 = String(authorityLine1 ?? '').trim()
-	const auth2 = String(authorityLine2 ?? '').trim()
-	const authorityBracket =
-		[
-			auth1.replace(/^Rent Authority\s*[—–-]\s*/i, '').trim(),
-			auth2,
-		]
+	const courtBracket =
+		String(beforeRentCourt ?? '').trim() ||
+		String(courtLine1 ?? '')
+			.replace(/^Rent Court\s*(at|—|–|-)\s*/i, '')
+			.trim() ||
+		[String(courtLine1 ?? '').trim(), String(courtLine2 ?? '').trim()]
 			.filter(Boolean)
-			.join(', ') || '________'
-
-	const matterLabel = describeMatter(statutoryMatter)
-	const repairs =
-		repairItems.length > 0 ? repairItems.map(describeRepairItem).join('; ') : ''
-	const services =
-		essentialServices.length > 0
-			? essentialServices
-					.map((code) =>
-						code === 'other'
-							? `Other: ${essentialServiceOther || '—'}`
-							: describeService(code)
-					)
-					.join('; ')
-			: ''
+			.join(', ') ||
+		'________'
 
 	const enclosures = enclosureLines(listOfEnclosures)
 
@@ -106,7 +87,7 @@ export default function FormIVLegalDocument({
 		if (!hasPriorProceedings) {
 			return (
 				<p className="form-iv-legal__paren">
-					({declarationText(DECLARATION.FORM_IV_PRIOR_PROCEEDINGS)})
+					({declarationText(DECLARATION.FORM_III_PRIOR_PROCEEDINGS)})
 				</p>
 			)
 		}
@@ -118,9 +99,7 @@ export default function FormIVLegalDocument({
 					: `Disposed — ${entry.decision || '—'}`
 			return (
 				<li key={i}>
-					<strong className="form-i-legal__value">
-						{entry.case_number || '—'}
-					</strong>
+					<strong className="form-i-legal__value">{entry.case_number || '—'}</strong>
 					{' before '}
 					<strong className="form-i-legal__value">{entry.forum || '—'}</strong>
 					{filed}. {detail}
@@ -130,7 +109,7 @@ export default function FormIVLegalDocument({
 		return (
 			<>
 				<p className="form-iv-legal__paren">
-					({declarationBranchText(DECLARATION.FORM_IV_PRIOR_PROCEEDINGS)})
+					({declarationBranchText(DECLARATION.FORM_III_PRIOR_PROCEEDINGS)})
 				</p>
 				{rows.length > 0 ? (
 					<ol className="form-iv-legal__prior-list">{rows}</ol>
@@ -150,23 +129,31 @@ export default function FormIVLegalDocument({
 	})
 
 	const personalParas = renderParagraphNumbers(
-		paragraphsWithAnswer(VERIFICATION.FORM_IV, verification?.paragraphs || {}, PARA_ANSWER.PERSONAL_KNOWLEDGE)
+		paragraphsWithAnswer(
+			VERIFICATION.FORM_III,
+			verification?.paragraphs || {},
+			PARA_ANSWER.PERSONAL_KNOWLEDGE
+		)
 	)
 	const advisedParas = renderParagraphNumbers(
-		paragraphsWithAnswer(VERIFICATION.FORM_IV, verification?.paragraphs || {}, PARA_ANSWER.LEGAL_ADVICE)
+		paragraphsWithAnswer(
+			VERIFICATION.FORM_III,
+			verification?.paragraphs || {},
+			PARA_ANSWER.LEGAL_ADVICE
+		)
 	)
 
 	return (
-		<article className="form-i-legal form-iv-legal" aria-label="FORM-IV preview">
+		<article className="form-i-legal form-iv-legal form-iii-legal" aria-label="FORM-III preview">
 			<header className="form-i-legal__header">
-				<p className="form-i-legal__form-no">FORM-IV</p>
-				<p className="form-i-legal__rule">[See rule- 11]</p>
-				<p className="form-i-legal__subject">Application filed before the Rent Authority</p>
+				<p className="form-i-legal__form-no">FORM-III</p>
+				<p className="form-i-legal__rule">[See rule 10]</p>
+				<p className="form-i-legal__subject">Application filed before the Rent Court</p>
 			</header>
 
 			<div className="form-iv-legal__before">
 				<p className="form-iv-legal__before-title">
-					BEFORE THE RENT AUTHORITY [{authorityBracket}]
+					IN THE RENT COURT AT [{blank(courtBracket)}]
 				</p>
 				<p className="form-iv-legal__uin-line">
 					In the matter of Tenancy of Unique Identification Number{' '}
@@ -175,27 +162,6 @@ export default function FormIVLegalDocument({
 					</strong>
 				</p>
 			</div>
-
-			{(matterLabel || repairs || services) && (
-				<p className="form-iv-legal__matter-line">
-					<span className="form-iv-legal__matter-label">Matter applied under: </span>
-					<strong className="form-i-legal__value">{matterLabel || '—'}</strong>
-					{repairs ? (
-						<>
-							{'; '}
-							<span className="form-iv-legal__matter-label">Second Schedule: </span>
-							<span className="form-i-legal__value">{repairs}</span>
-						</>
-					) : null}
-					{services ? (
-						<>
-							{'; '}
-							<span className="form-iv-legal__matter-label">Essential services: </span>
-							<span className="form-i-legal__value">{services}</span>
-						</>
-					) : null}
-				</p>
-			)}
 
 			<section className="form-iv-legal__parties" aria-label="Parties">
 				<div className="form-iv-legal__party">
@@ -215,64 +181,51 @@ export default function FormIVLegalDocument({
 							</>
 						) : null}
 					</p>
-					<p className="form-iv-legal__party-role">…..APPLICANT</p>
+					<p className="form-iv-legal__party-role">.....APPLICANT</p>
 				</div>
 
 				<p className="form-iv-legal__versus">Versus</p>
 
 				<div className="form-iv-legal__party">
-					<p className="form-iv-legal__party-heading">B. Name of the Opposite Party</p>
+					<p className="form-iv-legal__party-heading">B. Name of the Respondent</p>
 					<p className="form-iv-legal__party-hint">
 						(Add description and the residential address on which the service of notices is to
-						be effected on the Opposite Party).
+						be effected on the Respondent(s)).
 					</p>
 					<p className="form-iv-legal__party-filled">
-						<strong className="form-i-legal__value">{blank(oppositePartyName)}</strong>
-						{String(oppositePartyResidentialAddress ?? '').trim() ? (
+						<strong className="form-i-legal__value">{blank(respondentName)}</strong>
+						{String(respondentResidentialAddress ?? '').trim() ? (
 							<>
 								<br />
 								<span className="form-i-legal__addr">
-									{String(oppositePartyResidentialAddress).trim()}
+									{String(respondentResidentialAddress).trim()}
 								</span>
 							</>
 						) : null}
 					</p>
-					<p className="form-iv-legal__party-role">...OPPOSITE PARTY</p>
+					<p className="form-iv-legal__party-role">.....RESPONDENT</p>
 				</div>
 			</section>
 
 			<p className="form-iv-legal__details-heading">DETAILS OF APPLICATION:</p>
 
-			<ol className="form-iv-legal__details">
+			<ol className="form-iv-legal__details form-iii-legal__details">
 				<li>
-					<span className="form-iv-legal__item-label">
-						Particulars of violation against which the present application is made :
-					</span>
+					<span className="form-iv-legal__item-label">Particulars of application :</span>
 					<p className="form-iv-legal__filled">
-						<strong className="form-i-legal__value">{blank(particularsOfViolation)}</strong>
+						<strong className="form-i-legal__value">{blank(particularsOfApplication)}</strong>
 					</p>
 				</li>
 
 				<li>
-					<span className="form-iv-legal__item-label">Jurisdiction of the Rent Authority :</span>
+					<span className="form-iv-legal__item-label">Jurisdiction of the Rent Court :</span>
 					<p className="form-iv-legal__paren">
 						(
 						{jurisdictionAccepted
-							? declarationText(DECLARATION.FORM_IV_JURISDICTION)
+							? declarationText(DECLARATION.FORM_III_JURISDICTION)
 							: '—'}
 						)
 					</p>
-					{(auth1 || auth2) && (
-						<p className="form-iv-legal__filled">
-							<strong className="form-i-legal__value">{blank(auth1)}</strong>
-							{auth2 ? (
-								<>
-									<br />
-									<span className="form-i-legal__addr">{auth2}</span>
-								</>
-							) : null}
-						</p>
-					)}
 				</li>
 
 				<li>
@@ -295,7 +248,7 @@ export default function FormIVLegalDocument({
 
 				<li>
 					<span className="form-iv-legal__item-label">
-						Matters not previously filed or pending with any other court:
+						Matters not previously filed or pending with any other court :
 					</span>
 					{priorBody}
 				</li>
@@ -304,10 +257,10 @@ export default function FormIVLegalDocument({
 					<span className="form-iv-legal__item-label">Relief sought :</span>
 					<p className="form-iv-legal__paren">
 						(In view of the grounds mentioned in para 4 above, the applicant prays for the
-						following relief(s)):-
+						following relief(s):-
 					</p>
 					<p className="form-iv-legal__paren">
-						(Specify below the relief sought explaining the grounds for such relief(s) and the
+						(Specify below the relief(s) sought explaining the grounds for such relief(s) and the
 						legal provisions, if any, relied upon).
 					</p>
 					<p className="form-iv-legal__filled">
@@ -334,7 +287,7 @@ export default function FormIVLegalDocument({
 				<li>
 					<span className="form-iv-legal__item-label">List of enclosures</span>
 					<ol className="form-iv-legal__enclosures">
-						{(enclosures.length > 0 ? enclosures : ['', '', '']).map((line, i) => (
+						{(enclosures.length > 0 ? enclosures : ['', '']).map((line, i) => (
 							<li key={i}>
 								{line ? (
 									<strong className="form-i-legal__value">{line}</strong>
@@ -364,8 +317,7 @@ export default function FormIVLegalDocument({
 			<footer className="form-iv-legal__footer">
 				<div className="form-iv-legal__footer-meta">
 					<p>
-						Date:{' '}
-						<strong className="form-i-legal__value">{verificationDate}</strong>
+						Date: <strong className="form-i-legal__value">{verificationDate}</strong>
 					</p>
 					<p>
 						Place:{' '}

@@ -13762,7 +13762,7 @@ main.main-fluid {
 	bottom: 0;
 	margin-top: 0.35rem;
 	padding-top: 1rem;
-	border-top: 1px solid #e8eef5;
+	border-top: 1px solid #e3f2fd;
 	background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), #fff 40%);
 }
 
@@ -14751,10 +14751,39 @@ main.main-fluid {
 	text-transform: uppercase;
 }
 
+.form-ii-legal__recital {
+	margin: 0.75em 0 0.5em;
+	font-size: 11.5pt;
+	line-height: 1.5;
+	text-align: justify;
+}
+
+.form-ii-legal__grounds {
+	margin: 0.35em 0 1em;
+	padding: 0 0 0 1.75em;
+	list-style: lower-roman;
+}
+
+.form-ii-legal__grounds > li {
+	margin: 0 0 0.4em;
+	font-size: 11pt;
+	line-height: 1.4;
+}
+
+.form-ii-legal__grounds--blank > li {
+	min-height: 1.35em;
+	border-bottom: 1px solid #94a3b8;
+}
+
 .form-iv-legal__details {
 	margin: 0;
 	padding: 0 0 0 1.35em;
 	list-style: decimal;
+}
+
+.form-iii-legal__details {
+	padding-left: 1.75em;
+	list-style-position: outside;
 }
 
 .form-iv-legal__details > li {
@@ -14927,9 +14956,50 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-prior__choice.is-selected {
-	border-color: #cbd5e1;
+	border-color: #64b5f6;
+	background: linear-gradient(180deg, #eaf4ff 0%, #e3f2fd 100%);
+	box-shadow: inset 3px 0 0 #0d47a1;
+}
+
+/* Nest case particulars under the Yes option */
+.service-form-page--modern .form-iv-prior__yes-block {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
 	background: #fff;
+	overflow: visible;
+	transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block.is-selected {
+	border-color: #64b5f6;
+	background: linear-gradient(180deg, #eaf4ff 0%, #e3f2fd 100%);
+	box-shadow: inset 3px 0 0 #0d47a1;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block .form-iv-prior__choice--yes {
+	border: 0;
+	border-radius: 10px 10px 0 0;
+	background: transparent;
 	box-shadow: none;
+	width: 100%;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block:not(.is-open) .form-iv-prior__choice--yes {
+	border-radius: 10px;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block .form-iv-prior__choice--yes.is-selected {
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block.is-open .form-iv-prior__cases-wrap {
+	margin: 0;
+	padding: 0.85rem 0.9rem 0.95rem;
+	border-top: 1px solid #cfe3f8;
+	background: #fff;
+	border-radius: 0 0 9px 9px;
 }
 
 .service-form-page--modern .form-iv-prior__choice:has(.form-iv-prior__info:hover),
@@ -14940,10 +15010,18 @@ main.main-fluid {
 
 .service-form-page--modern .form-iv-prior__choice input {
 	margin-top: 0;
-	accent-color: #6d28d9;
+	accent-color: #0d47a1;
 	flex-shrink: 0;
 	width: 1.05rem;
 	height: 1.05rem;
+	outline: none;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-prior__choice input:focus,
+.service-form-page--modern .form-iv-prior__choice input:focus-visible {
+	outline: none;
+	box-shadow: none;
 }
 
 .service-form-page--modern .form-iv-prior__choice-title {
@@ -14973,7 +15051,7 @@ main.main-fluid {
 .service-form-page--modern .form-iv-prior__info:hover,
 .service-form-page--modern .form-iv-prior__info:focus,
 .service-form-page--modern .form-iv-prior__info:focus-visible {
-	color: #6d28d9;
+	color: #334155;
 	outline: none;
 }
 
@@ -15053,8 +15131,8 @@ main.main-fluid {
 	height: 1.5rem;
 	margin: 0;
 	border-radius: 999px;
-	background: #ede9fe;
-	color: #6d28d9;
+	background: #f1f5f9;
+	color: #0d47a1;
 	font-size: 0.75rem;
 	font-weight: 700;
 }
@@ -15130,13 +15208,13 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-prior__status-option:hover {
-	border-color: #c4b5fd;
+	border-color: #90caf9;
 }
 
 .service-form-page--modern .form-iv-prior__status-option.is-selected {
-	border-color: #6d28d9;
-	background: #ede9fe;
-	color: #6d28d9;
+	border-color: #0d47a1;
+	background: #e3f2fd;
+	color: #0d47a1;
 }
 
 .service-form-page--modern .form-iv-prior__field input,
@@ -15168,8 +15246,8 @@ main.main-fluid {
 .service-form-page--modern .form-iv-prior__field input:focus,
 .service-form-page--modern .form-iv-prior__field textarea:focus {
 	outline: none;
-	border-color: #6d28d9;
-	box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12);
+	border-color: #334155;
+	box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12);
 }
 
 .service-form-page--modern .form-iv-prior__remove {
@@ -15193,10 +15271,10 @@ main.main-fluid {
 	align-self: flex-start;
 	min-height: 2.4rem;
 	padding: 0.45rem 0.9rem;
-	border: 1px dashed #c4b5fd;
+	border: 1px dashed #90caf9;
 	border-radius: 10px;
-	background: #ede9fe;
-	color: #6d28d9;
+	background: #f1f5f9;
+	color: #334155;
 	font-size: 0.875rem;
 	font-weight: 700;
 	cursor: pointer;
@@ -15204,7 +15282,7 @@ main.main-fluid {
 
 .service-form-page--modern .form-iv-prior__add:hover {
 	border-style: solid;
-	background: #ede9fe;
+	background: #f1f5f9;
 }
 
 .service-form-page--modern .form-iv-from-uin-tag {
@@ -15214,13 +15292,14 @@ main.main-fluid {
 	font-weight: 700 !important;
 	letter-spacing: 0.01em;
 	text-transform: none !important;
-	color: #16a34a !important;
+	color: #0d47a1 !important;
 }
 
+.service-form-page--modern .form-iv-verify .form-i-upload-field .form-i-upload-body > .sf-upload-btn,
 .service-form-page--modern .form-iv-verify .form-i-upload-field .form-i-upload-body > span:first-child {
-	background: #f8fafc;
-	border: 1px solid #cbd5e1;
-	color: #334155;
+	background: #e3f2fd;
+	border: 1px solid #90caf9;
+	color: #0d47a1;
 }
 
 .service-form-page--modern .form-iv-uin-field {
@@ -15228,17 +15307,42 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-uin-field .form-iv-uin-field__icon {
-	color: #6d28d9 !important;
+	color: #334155 !important;
 }
 
 .service-form-page--modern .form-iv-applicant-extras {
 	display: block;
 	margin-top: 0.55rem;
-	padding: 1.05rem 1.1rem 1.15rem;
-	border: 1px solid #e2e8f0;
-	border-radius: 12px;
-	background: #fff;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
 	width: 100%;
+}
+
+.service-form-page--modern .form-ib-relation-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 1.1rem 1.5rem;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+}
+
+.service-form-page--modern .form-ib-relation-row > .form-iv-field:first-child {
+	flex: 1 1 18rem;
+	max-width: 28rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-ib-relation-row__relation {
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 100%;
+	padding-top: 0.2rem;
 }
 
 .service-form-page--modern .form-iv-applicant-extras__grid {
@@ -15326,17 +15430,17 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-relation-option:hover {
-	border-color: #c4b5fd;
-	background: #faf5ff;
+	border-color: #90caf9;
+	background: #e3f2fd;
 }
 
 .service-form-page--modern .form-iv-relation-option.is-selected {
-	border-color: #6d28d9;
-	background: #ede9fe;
+	border-color: #0d47a1;
+	background: #e3f2fd;
 }
 
 .service-form-page--modern .form-iv-relation-option.is-selected span {
-	color: #6d28d9;
+	color: #0d47a1;
 }
 
 .service-form-page--modern .form-iv-age-edit {
@@ -15412,8 +15516,8 @@ main.main-fluid {
 	display: inline-flex;
 	align-items: center;
 	border-radius: 999px;
-	background: #ede9fe;
-	color: #6d28d9;
+	background: #f1f5f9;
+	color: #334155;
 	font-size: 0.8125rem;
 	font-weight: 700;
 	padding: 0.35rem 0.7rem;
@@ -15442,9 +15546,9 @@ main.main-fluid {
 	display: inline-flex;
 	align-items: center;
 	border-radius: 999px;
-	background: #ede9fe;
-	border: 1px solid #ddd6fe;
-	color: #5b21b6;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	color: #0f172a;
 	font-size: 0.8125rem;
 	font-weight: 700;
 	padding: 0.28rem 0.7rem;
@@ -15511,12 +15615,14 @@ main.main-fluid {
 	font-weight: 500;
 }
 
-/* Form IV — wider layout, top Back + circular progress */
-.service-form-page--rent-authority.service-form-page--modern {
-	max-width: min(88rem, 100%);
+/* Modern service forms — same content width for Authority / Court / Tribunal */
+.service-form-page--rent-authority.service-form-page--modern,
+.service-form-page--rent-court.service-form-page--modern,
+.service-form-page--rent-tribunal.service-form-page--modern {
+	max-width: min(80rem, 100%);
 	width: 100%;
 	box-sizing: border-box;
-	padding-inline: clamp(0.5rem, 1.8vw, 1.25rem);
+	padding-inline: clamp(0.5rem, 1.5vw, 1.1rem);
 }
 
 .service-form-page--modern .form-iv-topbar {
@@ -15552,9 +15658,9 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-back-btn:hover:not(:disabled) {
-	border-color: #6d28d9;
-	color: #5b21b6;
-	background: #faf5ff;
+	border-color: #334155;
+	color: #0f172a;
+	background: #e3f2fd;
 }
 
 .service-form-page--modern .form-iv-back-btn:disabled {
@@ -15563,7 +15669,7 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-back-btn:focus-visible {
-	outline: 2px solid #6d28d9;
+	outline: 2px solid #334155;
 	outline-offset: 2px;
 }
 
@@ -15613,9 +15719,9 @@ main.main-fluid {
 	display: flex;
 	flex-direction: column;
 	gap: 0;
-	border: 1px solid #cbd5e1;
-	border-radius: 8px;
-	background: #fff;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
 	overflow: visible;
 	box-shadow: none;
 	min-width: 0;
@@ -15676,10 +15782,10 @@ main.main-fluid {
 	min-width: 1.45rem;
 	height: 1.45rem;
 	padding: 0 0.3rem;
-	border: 1px solid #c4b5fd;
+	border: 1px solid var(--sf-navy-border, #90caf9);
 	border-radius: 4px;
-	background: #ede9fe;
-	color: #5b21b6;
+	background: var(--sf-navy-soft, #e3f2fd);
+	color: var(--sf-navy, #0d47a1);
 	font-size: 0.75rem;
 	font-weight: 700;
 	line-height: 1;
@@ -15700,7 +15806,7 @@ main.main-fluid {
 	gap: 0.15rem;
 	padding: 0.7rem 0.85rem;
 	border: 1px solid #dbe3ee;
-	border-left: 3px solid #6d28d9;
+	border-left: 3px solid #334155;
 	border-radius: 4px;
 	background: #f8fafc;
 }
@@ -15782,8 +15888,8 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-tick.is-checked {
-	border-color: #6d28d9;
-	background: #6d28d9;
+	border-color: #334155;
+	background: #334155;
 }
 
 .service-form-page--modern .form-iv-legal-advice.form-iv-detail-item {
@@ -15818,7 +15924,7 @@ main.main-fluid {
 	gap: 0.45rem;
 	font-size: 0.9rem;
 	font-weight: 700;
-	color: #6d28d9;
+	color: #334155;
 }
 
 .service-form-page--modern .form-iv-legal-advice__hint {
@@ -15939,13 +16045,13 @@ main.main-fluid {
 	font-weight: 700;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	color: #6d28d9;
+	color: #334155;
 }
 
 .service-form-page--modern .form-iv-verify__identity-action {
 	border: 0;
 	background: transparent;
-	color: #6d28d9;
+	color: #334155;
 	font-size: 0.8125rem;
 	font-weight: 700;
 	cursor: pointer;
@@ -15955,7 +16061,7 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-verify__identity-action:hover {
-	color: #5b21b6;
+	color: #0f172a;
 }
 
 .service-form-page--modern .form-iv-verify__identity-body {
@@ -16024,7 +16130,7 @@ main.main-fluid {
 	font-weight: 700;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: #6d28d9;
+	color: #334155;
 }
 
 .service-form-page--modern .form-iv-clause-shell .verification--modern .verification__oath {
@@ -16041,7 +16147,7 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-clause-shell .verification--modern .clause__blank:focus {
-	border-color: #6d28d9;
+	border-color: #334155;
 	box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15);
 }
 
@@ -16069,9 +16175,9 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-clause-shell .verification__relation-toggle.is-selected {
-	border-color: #6d28d9;
-	background: #ede9fe;
-	color: #6d28d9;
+	border-color: #0d47a1;
+	background: #e3f2fd;
+	color: #0d47a1;
 }
 
 .service-form-page--modern .form-iv-clause-shell .verification--modern .verification__foot {
@@ -16119,9 +16225,9 @@ main.main-fluid {
 
 .service-form-page--modern .form-iv-clause-shell .verification--modern .verification__place input:focus {
 	outline: none;
-	border-color: #6d28d9;
+	border-color: #334155;
 	background: #fff;
-	box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12);
+	box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12);
 }
 
 .service-form-page--modern .form-iv-clause-shell .verification--modern .verification__date-value {
@@ -16149,9 +16255,9 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-clause-shell .verification--modern .inline-para-selector__button.has-selection {
-	border-color: #c4b5fd;
-	background: #ede9fe;
-	color: #6d28d9;
+	border-color: #90caf9;
+	background: #f1f5f9;
+	color: #334155;
 }
 
 @media (max-width: 640px) {
@@ -16160,9 +16266,245 @@ main.main-fluid {
 	}
 }
 
-.service-form-page--modern .form-iv-matter.matter-accordion .matter-accordion__item.is-selected {
-	border-color: #c4b5fd;
-	background: #ede9fe;
+/* Form II grounds — clearer selected fill + floating (i) tooltips */
+.service-form-page--modern .form-ii-basis.matter-accordion .matter-accordion__item.is-selected,
+.service-form-page--rent-court.service-form-page--modern .form-ii-basis .matter-accordion__item.is-selected {
+	border-color: #64b5f6 !important;
+	background: linear-gradient(180deg, #eaf4ff 0%, #e3f2fd 100%) !important;
+	box-shadow: inset 3px 0 0 #0d47a1;
+}
+
+.service-form-page--modern .form-ii-basis .matter-accordion__item.is-selected .matter-accordion__title {
+	color: #0a3a82;
+	font-weight: 700;
+}
+
+.service-form-page--modern #form-ii-section-2,
+.service-form-page--modern .form-ii-basis,
+.service-form-page--modern .form-ii-basis .matter-accordion__item,
+.service-form-page--modern .form-ii-basis .form-ii-grounds-panel,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card .form-iv-service-card__body,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card .form-iv-service-card__head,
+.service-form-page--modern .form-ii-grounds-card .form-iv-col-list,
+.service-form-page--modern .form-ii-grounds-card .form-iv-col-list__col {
+	overflow: visible !important;
+}
+
+.service-form-page--modern .form-ii-basis .form-ii-grounds-panel {
+	padding: 0 0.9rem 0.85rem 2.5rem;
+	border-top: 1px solid #eef2f7;
+	background: #fff;
+}
+
+.service-form-page--modern .form-ii-ground-check {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 0.4rem;
+	position: relative;
+	z-index: 0;
+}
+
+.service-form-page--modern .form-ii-ground-check__copy {
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-ii-ground-check .form-iv-repair-check__text {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-ii-ground-check__info {
+	flex: 0 0 auto;
+	margin-top: 0.1rem;
+	color: #94a3b8;
+	position: relative;
+}
+
+.service-form-page--modern .form-ii-ground-check__info:hover,
+.service-form-page--modern .form-ii-ground-check__info:focus {
+	color: #0a3a82;
+}
+
+/* Floating tooltips — raise hovered row; open left on right column so text is not clipped */
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.matter-accordion__info:hover),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.matter-accordion__info:focus),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.matter-accordion__info:focus-within),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.form-ii-ground-check__info:hover),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.form-ii-ground-check__info:focus),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.form-ii-ground-check__info:focus-within) {
+	z-index: 50;
+	overflow: visible !important;
+}
+
+.service-form-page--modern .form-ii-ground-check:has(.form-ii-ground-check__info:hover),
+.service-form-page--modern .form-ii-ground-check:has(.form-ii-ground-check__info:focus),
+.service-form-page--modern .form-ii-ground-check:has(.form-ii-ground-check__info:focus-within) {
+	z-index: 60;
+}
+
+.service-form-page--modern .form-ii-basis .matter-accordion__info .ground-choice__info-popup,
+.service-form-page--modern .form-ii-ground-info-popup {
+	position: absolute;
+	top: calc(100% + 0.35rem);
+	left: 0;
+	right: auto;
+	transform: none;
+	width: min(22rem, 70vw);
+	max-width: min(22rem, calc(100vw - 2.5rem));
+	max-height: min(20rem, 60vh);
+	overflow-x: hidden;
+	overflow-y: auto;
+	z-index: 80;
+	box-sizing: border-box;
+	word-break: break-word;
+}
+
+.service-form-page--modern .form-ii-grounds-card .form-iv-col-list__col:last-child .form-ii-ground-info-popup {
+	left: auto;
+	right: 0;
+}
+
+.service-form-page--modern .form-ii-grounds-card .form-iv-repair-check.form-ii-ground-check.is-checked {
+	background: #eaf4ff;
+	border-bottom-color: #bbdefb;
+}
+
+/* Portaled Form II (i) notes — always fully visible over the workspace */
+.form-ii-floating-info-popup {
+	display: block !important;
+	position: fixed !important;
+	transform: none !important;
+	max-height: min(20rem, 60vh);
+	overflow-x: hidden;
+	overflow-y: auto;
+	box-sizing: border-box;
+	word-break: break-word;
+	pointer-events: none;
+}
+
+/* Jurisdiction venue — same dark fetched/UIN readonly look as party fields (Forms II / III / IV) */
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction,
+.service-form-page--modern .form-iv-details .form-iv-jurisdiction {
+	margin-left: 0;
+	align-items: stretch;
+	gap: 0.75rem;
+	width: 100%;
+	max-width: none;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	min-width: 0;
+	width: 100%;
+	max-width: min(28rem, 100%);
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction > label,
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__declare {
+	display: flex !important;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	gap: 0.65rem;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__declare-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	padding-top: 0.05rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	line-height: 1.45;
+	color: #0f172a;
+	white-space: normal;
+	text-wrap: pretty;
+}
+
+/* Shared form tick — compact, aligned with declaration text */
+.service-form-page--modern .sf-form-tick {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 1.125rem;
+	height: 1.125rem;
+	margin-top: 0.2rem;
+	border: 1.5px solid #94a3b8;
+	border-radius: 4px;
+	background: #fff;
+	color: #fff;
+	box-sizing: border-box;
+	transition: border-color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.service-form-page--modern .sf-form-tick.is-checked {
+	border-color: #0d47a1;
+	background: #0d47a1;
+	color: #fff;
+	box-shadow: none;
+}
+
+.service-form-page--modern label:hover .sf-form-tick:not(.is-checked),
+.service-form-page--modern .sf-undertaking-box:hover .sf-form-tick:not(.is-checked) {
+	border-color: #64748b;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched-label {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__field {
+	min-height: 0;
+	align-items: stretch;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched-name {
+	font-size: 0.9375rem;
+	font-weight: 700;
+	font-style: italic;
+	line-height: 1.35;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched-addr {
+	margin-top: 0.2rem;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	font-style: normal;
+	line-height: 1.4;
+	color: #334155;
+}
+
+.service-form-page--modern
+	.form-iv-details
+	.form-i-readonly-value.is-empty
+	.form-ii-jurisdiction__fetched-addr {
+	color: #94a3b8;
+	font-style: italic;
+	font-weight: 400;
+}
+
+@media (max-width: 640px) {
+	.service-form-page--modern .form-ii-basis .form-ii-grounds-panel {
+		padding-left: 0.9rem;
+	}
 }
 
 .service-form-page--modern .form-iv-matter .matter-accordion__title-row {
@@ -16322,6 +16664,11 @@ main.main-fluid {
 	background: #fff;
 }
 
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card .form-iv-service-card__body {
+	overflow: visible;
+}
+
 .service-form-page--modern .form-iv-repair-part__head,
 .service-form-page--modern .form-iv-service-card__head {
 	display: block;
@@ -16454,7 +16801,7 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-ib-undertaking.is-checked {
-	box-shadow: inset 3px 0 0 #6d28d9;
+	box-shadow: inset 3px 0 0 #334155;
 }
 
 .service-form-page--modern .form-ib-clause-shell {
@@ -16471,13 +16818,13 @@ main.main-fluid {
 .service-form-page--modern .form-ib-clause-shell .clause__sync-note {
 	margin: 0;
 	padding: 0.7rem 0.85rem;
-	border: 1px solid #ddd6fe;
-	border-left: 3px solid #6d28d9;
+	border: 1px solid #e2e8f0;
+	border-left: 3px solid #334155;
 	border-radius: 8px;
-	background: #ede9fe;
+	background: #f1f5f9;
 	font-size: 0.8125rem;
 	line-height: 1.5;
-	color: #5b21b6;
+	color: #0a3a82;
 }
 
 .service-form-page--modern .form-ib-clause-shell .clause__block-label {
@@ -16486,7 +16833,7 @@ main.main-fluid {
 	font-weight: 700;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: #6d28d9;
+	color: #334155;
 }
 
 .service-form-page--modern .form-ib-clause-shell .verification__oath {
@@ -16518,7 +16865,7 @@ main.main-fluid {
 	display: inline;
 	margin: 0 0.05rem;
 	padding: 0.05rem 0.15rem;
-	border-bottom: 2px solid #6d28d9;
+	border-bottom: 2px solid #334155;
 	font-weight: 700;
 	font-style: italic;
 	color: #151717;
@@ -16533,7 +16880,7 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-ib-clause-shell .clause--embedded .clause__blank:focus {
-	border-color: #6d28d9;
+	border-color: #334155;
 	box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15);
 }
 
@@ -17435,8 +17782,8 @@ main.main-fluid {
 
 /* Rent Court — blue accent on neutral tile */
 .tenant-service-tile--rent-court {
-	--tenant-tile-accent: #2563eb;
-	--tenant-tile-accent-strong: #1e40af;
+	--tenant-tile-accent: #6d28d9;
+	--tenant-tile-accent-strong: #5b21b6;
 	--tenant-tile-tint: rgba(219, 234, 254, 0.65);
 }
 
@@ -19365,7 +19712,7 @@ main.main-fluid {
 .tenancy-docs-step__header {
 	padding: 16px 18px;
 	border-radius: 8px;
-	border: 1px solid #dbeafe;
+	border: 1px solid #ede9fe;
 	background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
 }
 
@@ -19413,7 +19760,7 @@ main.main-fluid {
 	background: var(--ws-accent-soft);
 	font-size: 0.84rem;
 	line-height: 1.45;
-	color: #1e3a5f;
+	color: #0d47a1;
 }
 
 .tenancy-docs-step__disclaimer strong {
@@ -22200,7 +22547,7 @@ fieldset.profile-type-row label {
 }
 
 .app-toast--info {
-	background: #1e3a5f;
+	background: #0d47a1;
 	color: #fff;
 }
 
