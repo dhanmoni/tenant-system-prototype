@@ -34,6 +34,7 @@ class RentCourtPossessionApplicationController extends Controller
 
             'tenancy_uin' => ['required', 'string', 'max:64'],
             'tenant_name' => ['required', 'string', 'max:255'],
+            'tenant_residential_address' => ['required', 'string'],
 
             // Form II recital. Section 21(2) allows "one or more of the following grounds" and
             // lists eight clauses, so the selection is a closed set rather than free text. Section
@@ -107,6 +108,7 @@ class RentCourtPossessionApplicationController extends Controller
             'applicant_residential_address' => $data['applicant_residential_address'],
             'tenancy_uin' => $data['tenancy_uin'],
             'tenant_name' => $data['tenant_name'] ?? null,
+            'tenant_residential_address' => $data['tenant_residential_address'] ?? null,
             'particulars_of_application' => $data['particulars_of_application'] ?? null,
             'statutory_basis' => $data['statutory_basis'],
             'eviction_grounds' => $groundsForBasis,

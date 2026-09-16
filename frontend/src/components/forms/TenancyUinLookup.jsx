@@ -96,7 +96,7 @@ function TenancyUinLookup({
 							}
 						}}
 						required={required}
-						placeholder="e.g. ATRMS-01012026-0303"
+						placeholder="Enter Tenancy UIN"
 						spellCheck={false}
 						autoCapitalize="characters"
 						aria-label={label}
@@ -156,7 +156,7 @@ function TenancyUinLookup({
 								}
 							}}
 							required={required}
-							placeholder="e.g. ATRMS-01012026-0303"
+							placeholder="Enter Tenancy UIN"
 							spellCheck={false}
 							autoCapitalize="characters"
 							aria-label={label}
@@ -204,7 +204,7 @@ function TenancyUinLookup({
 							if (status) setStatus(null)
 						}}
 						required={required}
-						placeholder="e.g. ATRMS-01012026-0303"
+						placeholder="Enter Tenancy UIN"
 					/>
 					<button
 						type="button"

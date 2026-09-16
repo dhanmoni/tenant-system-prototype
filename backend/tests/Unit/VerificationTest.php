@@ -161,10 +161,11 @@ class VerificationTest extends TestCase
             99 => Verification::PERSONAL_KNOWLEDGE,
         ]));
 
+        // Paragraph 2 is on the form, but is only named once the jurisdiction declaration is accepted.
         $this->assertSame([3, 5, 8], $sets['personal']);
     }
 
-    /** When the jurisdiction declaration is accepted, paragraph 2 is named in the personal blank. */
+    /** When the jurisdiction declaration is accepted, paragraph 2 defaults to the personal blank. */
     public function test_accepted_jurisdiction_names_paragraph_2_in_personal_knowledge(): void
     {
         foreach ([
@@ -183,6 +184,23 @@ class VerificationTest extends TestCase
 
             $this->assertContains(2, $sets['personal'], "{$fieldId} should name paragraph 2");
             $this->assertSame([1, 2, 3], $sets['personal']);
+        }
+    }
+
+    /** The Gazette does not fix paragraph 2 as personal knowledge; legal advice is allowed. */
+    public function test_accepted_jurisdiction_may_be_marked_as_legal_advice(): void
+    {
+        foreach (self::FORMS as $fieldId) {
+            $sets = Verification::paragraphSets($fieldId, $this->data([
+                1 => Verification::PERSONAL_KNOWLEDGE,
+                2 => Verification::LEGAL_ADVICE,
+                3 => Verification::PERSONAL_KNOWLEDGE,
+            ], [
+                'jurisdiction_declaration_accepted' => '1',
+            ]));
+
+            $this->assertContains(2, $sets['advised'], "{$fieldId} should honour legal advice on paragraph 2");
+            $this->assertNotContains(2, $sets['personal'], "{$fieldId} must not also name paragraph 2 as personal knowledge");
         }
     }
 
@@ -220,16 +238,15 @@ class VerificationTest extends TestCase
     }
 
     /**
-     * Paragraph 2 is sworn separately under its own wording on every form. Every form (II to VI)
-     * offers paragraphs 5 and 8 so earlier proceedings / enclosures can be marked as based on
-     * legal advice when they apply.
+     * Paragraph 2 is still accepted as a jurisdiction declaration, but it is also offered so the
+     * filer can mark it as based on legal advice. Every form (II to VI) also offers 5 and 8.
      */
-    public function test_the_separately_sworn_paragraphs_are_not_offered_for_verification(): void
+    public function test_every_form_offers_paragraphs_1_through_8_for_verification(): void
     {
         foreach (self::FORMS as $fieldId) {
             $numbers = array_keys(Verification::paragraphs($fieldId));
-            $this->assertNotContains(2, $numbers, "{$fieldId} must not offer paragraph 2");
-            $this->assertSame([1, 3, 4, 5, 6, 7, 8], $numbers, "{$fieldId} offers the wrong paragraphs");
+            $this->assertContains(2, $numbers, "{$fieldId} must offer paragraph 2");
+            $this->assertSame([1, 2, 3, 4, 5, 6, 7, 8], $numbers, "{$fieldId} offers the wrong paragraphs");
         }
     }
 

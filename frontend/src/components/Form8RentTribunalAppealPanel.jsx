@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, Children, cloneElement, isValidElement } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Check, IdCard, MapPin, Scale, Upload, User } from 'lucide-react'
+import { ArrowLeft, Check, MapPin, Scale, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import UinPrefillNotice from './forms/UinPrefillNotice'
 import ApplyingAsToggle from './forms/ApplyingAsToggle'
+import LoadedUinChip from './forms/LoadedUinChip'
 import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormVILegalDocument from './forms/FormVILegalDocument'
@@ -62,6 +63,7 @@ function FormTick({ checked, className = '' }) {
 /** Unticked parts default to personal knowledge; tick only those based on legal advice. */
 const FORM_VI_PART_SHORT = {
 	1: 'Particulars of the order',
+	2: 'Jurisdiction',
 	3: 'Limitation',
 	4: 'Memorandum of Appeal',
 	5: 'Earlier proceedings',
@@ -84,7 +86,7 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle, error = '' 
 			<legend className="m-0 w-full min-w-0 px-0">
 				<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#334155]">
 					<span
-						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] text-[#334155]"
+						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] text-[#0d47a1]"
 						aria-hidden
 					>
 						<Scale size={15} strokeWidth={2.25} />
@@ -130,13 +132,14 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle, error = '' 
 	)
 }
 
-function FormCard({ title, description, badge, children }) {
+function FormCard({ title, description, badge, uin, onChangeUin, children }) {
 	return (
 		<section className="sf-form-card overflow-hidden sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
 			<div className="sf-form-card__header">
 				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
 				<h1 className="sf-form-card__title">{title}</h1>
 				{description ? <p className="sf-form-card__lead">{description}</p> : null}
+				{uin ? <LoadedUinChip value={uin} onChange={onChangeUin} /> : null}
 			</div>
 			<div className="flex flex-col gap-4 p-[22px] sm:p-[30px]">{children}</div>
 		</section>
@@ -353,7 +356,7 @@ function ReadOnlyField({
 				{label}
 				{fromUin ? (
 					<span
-						className="form-iv-from-uin-tag !normal-case !text-[#16a34a]"
+						className="form-iv-from-uin-tag !normal-case"
 						title="Filled from the loaded tenancy UIN"
 					>
 						{' '}
@@ -553,15 +556,12 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 	const resolvedVerificationParagraphs = useMemo(() => {
 		const paragraphs = {}
 		requiredVerificationParas.forEach((option) => {
+			if (option.number === 2 && !jurisdictionAccepted) return
 			paragraphs[option.number] =
 				verification.paragraphs?.[option.number] === PARA_ANSWER.LEGAL_ADVICE
 					? PARA_ANSWER.LEGAL_ADVICE
 					: PARA_ANSWER.PERSONAL_KNOWLEDGE
 		})
-		// Para 2 is the jurisdiction undertaking — include it in the sworn blank when accepted.
-		if (jurisdictionAccepted) {
-			paragraphs[2] = PARA_ANSWER.PERSONAL_KNOWLEDGE
-		}
 		return paragraphs
 	}, [requiredVerificationParas, verification.paragraphs, jurisdictionAccepted])
 
@@ -771,11 +771,10 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 				'This UIN has no district on record. Place of filing cannot be set automatically.'
 			)
 		}
+		const resolvedAnswers = Object.values(resolvedVerificationParagraphs)
 		const allOnLegalAdvice =
-			requiredVerificationParas.length > 0 &&
-			requiredVerificationParas.every(
-				(option) => resolvedVerificationParagraphs[option.number] === PARA_ANSWER.LEGAL_ADVICE
-			)
+			resolvedAnswers.length > 0 &&
+			resolvedAnswers.every((answer) => answer === PARA_ANSWER.LEGAL_ADVICE)
 		if (allOnLegalAdvice) {
 			fail(
 				'form-vi-legal-advice',
@@ -958,7 +957,7 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 		return 1
 	}
 
-	const formTitle = serviceMeta?.label || 'Form VI — Appeal against Rent Court order'
+	const formTitle = serviceMeta?.formName || 'Form VI'
 	const formBadge = serviceMeta?.groupTitle || 'Rent Tribunal'
 	const formLead = serviceMeta
 		? `${serviceMeta.matter || 'Appeal against order of the Rent Court'}${
@@ -984,7 +983,7 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 						<ServiceFormReadyGate
 							badge={formBadge}
 							title={formTitle}
-							description={serviceMeta?.rule || null}
+							description={formLead}
 							knowBefore={[
 								'Order / case details of the Rent Court decision under appeal',
 								'A certified copy of the Rent Court order (Rule 13(3) enclosure)',
@@ -1011,7 +1010,16 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 				) : (
 					<>
 						<FormTopBar onBack={onBack} disabled={submitting} />
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
+						<FormCard
+							title={formTitle}
+							description={formLead}
+							badge={formBadge}
+							uin={tenancyUIN}
+							onChangeUin={() => {
+								clearTenancyRecord()
+								setTenancyUIN('')
+							}}
+						>
 							<div className="form-iv-main">
 								<FormSection
 									step={1}
@@ -1019,34 +1027,12 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 									title="Appellant details"
 									description="First choose Applying as — this decides who is the appellant. Then review the parties from your UIN and complete relation and age."
 								>
-									<ReadOnlyField
-										label="UIN issued by the Rent Authority"
-										value={tenancyUIN}
-										icon={IdCard}
-										variant="uin"
-										action={
-											<button
-												type="button"
-												className="form-i-change-uin"
-												onClick={() => {
-													clearTenancyRecord()
-													setTenancyUIN('')
-												}}
-											>
-												Change UIN
-											</button>
-										}
-									/>
-
 									<ApplyingAsToggle
 										value={applyingAs}
 										onChange={handleApplyingAsChange}
 										name="applying_as"
-										hint="This decides who is the appellant on this appeal."
 									/>
-
 									<UinPrefillNotice />
-									<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
 									<div className="grid gap-3 sm:grid-cols-2">
 										<ReadOnlyField
 											label="A. Appellant name"
@@ -1259,7 +1245,7 @@ export default function Form8RentTribunalAppealPanel({ onBack, serviceMeta, user
 												<span className="form-ii-jurisdiction__fetched-label">
 													Filing venue
 													<span
-														className="form-iv-from-uin-tag !normal-case !text-[#16a34a]"
+														className="form-iv-from-uin-tag !normal-case"
 														title="Filled from the loaded tenancy UIN"
 													>
 														{' '}

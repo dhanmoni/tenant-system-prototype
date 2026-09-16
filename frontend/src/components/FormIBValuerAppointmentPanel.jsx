@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Building2, Check, IdCard, MapPin, Upload, User } from 'lucide-react'
+import { ArrowLeft, Building2, Check, MapPin, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import UinPrefillNotice from './forms/UinPrefillNotice'
 import ApplyingAsToggle from './forms/ApplyingAsToggle'
+import LoadedUinChip from './forms/LoadedUinChip'
 import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormIBLegalDocument from './forms/FormIBLegalDocument'
@@ -22,13 +23,14 @@ const inputClass =
 const inputShellClass = 'form-i-field'
 const textareaShellClass = 'form-i-field form-i-field--multiline'
 
-function FormCard({ title, description, badge, children }) {
+function FormCard({ title, description, badge, uin, onChangeUin, children }) {
 	return (
 		<section className="sf-form-card overflow-hidden sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
 			<div className="sf-form-card__header">
 				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
 				<h1 className="sf-form-card__title">{title}</h1>
 				{description ? <p className="sf-form-card__lead">{description}</p> : null}
+				{uin ? <LoadedUinChip value={uin} onChange={onChangeUin} /> : null}
 			</div>
 			<div className="flex flex-col gap-4 p-[30px]">{children}</div>
 		</section>
@@ -164,7 +166,7 @@ function ReadOnlyField({
 			>
 				{label}
 				{fromUin ? (
-					<span className="form-iv-from-uin-tag !normal-case !text-[#16a34a]" title="Filled from the loaded tenancy UIN">
+					<span className="form-iv-from-uin-tag !normal-case" title="Filled from the loaded tenancy UIN">
 						{' '}
 						(from UIN)
 					</span>
@@ -428,7 +430,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 		[landlordAddress, landlordName, profile.address, profile.name, tenantAddress, tenantName]
 	)
 
-	const formTitle = serviceMeta?.label || 'Form I-B — Appointment of valuer'
+	const formTitle = serviceMeta?.formName || 'Form I-B'
 	const formBadge = serviceMeta?.groupTitle || 'Rent Authority'
 	const formLead = serviceMeta
 		? `${serviceMeta.matter || 'Appointment of valuer'}${serviceMeta.rule ? ` (${serviceMeta.rule})` : ''}`
@@ -452,7 +454,7 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 						<ServiceFormReadyGate
 							badge={formBadge}
 							title={formTitle}
-							description={serviceMeta?.rule || null}
+							description={formLead}
 							knowBefore={[
 								'Father / mother / spouse name for the relation field',
 								'A scanned signature for the declaration',
@@ -476,40 +478,28 @@ export default function FormIBValuerAppointmentPanel({ onBack, serviceMeta, user
 				) : (
 					<>
 						<FormTopBar onBack={onBack} disabled={submitting} />
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
+						<FormCard
+							title={formTitle}
+							description={formLead}
+							badge={formBadge}
+							uin={tenancyUIN}
+							onChangeUin={() => {
+								clearTenancyRecord()
+								setTenancyUIN('')
+							}}
+						>
 							<FormSection
 								step={1}
 								tone="record"
 								title="Applicant details"
 								description="First choose Applying as. Then review the tenancy record from your UIN and complete premises and relation details."
 							>
-								<ReadOnlyField
-									label="UIN issued by the Rent Authority"
-									value={tenancyUIN}
-									icon={IdCard}
-									variant="uin"
-									action={
-										<button
-											type="button"
-											className="form-i-change-uin"
-											onClick={() => {
-												clearTenancyRecord()
-												setTenancyUIN('')
-											}}
-										>
-											Change UIN
-										</button>
-									}
-								/>
-
 								<ApplyingAsToggle
 									value={applicantLandlordOrTenant}
 									onChange={setCapacity}
 									name="capacity_ib"
 								/>
-
 								<UinPrefillNotice />
-								<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
 								<div className="grid gap-3 sm:grid-cols-2 sm:gap-x-5 sm:gap-y-3">
 									<ReadOnlyField label="Landlord name" value={landlordName} icon={User} fromUin />
 									<ReadOnlyField label="Tenant name" value={tenantName} icon={User} fromUin />

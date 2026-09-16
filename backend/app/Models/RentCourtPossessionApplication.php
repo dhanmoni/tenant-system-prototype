@@ -35,6 +35,7 @@ class RentCourtPossessionApplication extends Model
 
         'tenancy_uin',
         'tenant_name',
+        'tenant_residential_address',
 
         // Form II recital: grounds under Act s. 21(2) clauses (a)-(h), or s. 22.
         'particulars_of_application',

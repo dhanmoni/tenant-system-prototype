@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { Icon } from '../../../components/dashboard/Icons'
 import { STATUS } from '../../../constants/status'
 import { APPLICATION_TYPES } from '../../../constants/application'
-import { isProfileComplete } from '../../../utils/profileCompleteness'
 
 function isTenancyApplication(app) {
 	const type = String(app?.application_type || '').toLowerCase()
@@ -14,7 +13,7 @@ function isInProgressStatus(status) {
 	return [STATUS.IN_REVIEW, STATUS.PENDING, STATUS.UNDER_PROCESS].includes(s)
 }
 
-function buildNextSteps(applications, user) {
+function buildNextSteps(applications) {
 	const steps = []
 	const normalized = applications.map((app) => ({
 		...app,
@@ -29,7 +28,7 @@ function buildNextSteps(applications, user) {
 
 		steps.push({
 			id: `draft-${draft.application_no || 'unknown'}`,
-			icon: 'documentPlus',
+			icon: 'idCard',
 			tone: 'accent',
 			title: 'Resume draft application',
 			description: draft.application_no
@@ -62,7 +61,7 @@ function buildNextSteps(applications, user) {
 
 		steps.push({
 			id: 'track-progress',
-			icon: 'clock',
+			icon: 'status',
 			tone: 'pending',
 			title:
 				inProgress.length === 1
@@ -74,22 +73,10 @@ function buildNextSteps(applications, user) {
 		})
 	}
 
-	if (user && !isProfileComplete(user)) {
-		steps.push({
-			id: 'profile',
-			icon: 'user',
-			tone: 'neutral',
-			title: 'Complete your profile',
-			description: 'Add address, PAN, and passport photo to speed up future applications.',
-			actionLabel: 'Update profile',
-			to: '/dashboard/profile',
-		})
-	}
-
 	if (applications.length === 0) {
 		steps.push({
 			id: 'apply-uin',
-			icon: 'documentPlus',
+			icon: 'idCard',
 			tone: 'accent',
 			title: 'Apply for UIN',
 			description: 'Start tenancy registration with a Unique Identification Number.',
@@ -112,7 +99,7 @@ function buildNextSteps(applications, user) {
 }
 
 function CitizenNextSteps({ applications = [], user, loading = false, onNavigate }) {
-	const steps = useMemo(() => buildNextSteps(applications, user), [applications, user])
+	const steps = useMemo(() => buildNextSteps(applications), [applications])
 
 	if (loading) {
 		return <div className="ws-citizen-next-steps ws-citizen-next-steps--loading">Loading suggestions…</div>

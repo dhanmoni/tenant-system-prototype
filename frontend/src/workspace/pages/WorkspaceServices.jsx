@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import { Icon } from '../../components/dashboard/Icons'
-import { getAllServiceForms, tenantServiceGroups } from '../../data/tenantServices'
+import { tenantServiceGroups } from '../../data/tenantServices'
 import { APPLICATION_TYPES } from '../../constants/application'
 import { ROLES } from '../../constants/roles'
 import { useLanguage } from '../../i18n'
@@ -22,6 +22,12 @@ const AUTHORITY_CHIP_KEYS = {
 	'rent-authority': 'ws.services.chip.sec30',
 	'rent-court': 'ws.services.chip.sec33',
 	'rent-tribunal': 'ws.services.chip.sec34',
+}
+
+const AUTHORITY_ICONS = {
+	'rent-authority': 'landmark',
+	'rent-court': 'gavel',
+	'rent-tribunal': 'scale',
 }
 
 const FORM_I18N_KEYS = {
@@ -83,80 +89,32 @@ function translateForm(form, t) {
 	}
 }
 
-function ServiceFormRow({ form, groupId, t }) {
-	const navigate = useNavigate()
-	const location = useLocation()
-	const isActive = location.pathname === form.to
-	const copy = translateForm(form, t)
-
-	const handleActivate = () => navigate(form.to)
-
-	return (
-		<tr
-			className={`ws-services-row${isActive ? ' is-active' : ''}`}
-			tabIndex={0}
-			role="link"
-			aria-current={isActive ? 'page' : undefined}
-			onClick={handleActivate}
-			onKeyDown={(e) => {
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.preventDefault()
-					handleActivate()
-				}
-			}}
-		>
-			<td className="ws-services-cell-form">
-				<span className={`ws-services-form-badge ws-services-form-badge--${groupId}`}>
-					{copy.formName}
-				</span>
-			</td>
-			<td className="ws-services-cell-desc">
-				<span className="ws-services-cell-title" title={copy.matter}>
-					{copy.matter}
-				</span>
-				<span className="ws-services-cell-meta" title={copy.label}>
-					{copy.label}
-				</span>
-			</td>
-			<td className="ws-services-cell-action">
-				<span className="ws-services-row-cta">
-					<span className="ws-services-row-cta-label">{t('ws.services.applyForm')}</span>
-					<Icon name="chevron" />
-				</span>
-			</td>
-		</tr>
-	)
-}
-
-function ServiceFormCard({ form, groupId, t }) {
+function ServiceFormItem({ form, groupId, t }) {
 	const navigate = useNavigate()
 	const location = useLocation()
 	const isActive = location.pathname === form.to
 	const copy = translateForm(form, t)
 
 	return (
-		<button
-			type="button"
-			className={`ws-services-card ws-services-card--${groupId}${isActive ? ' is-active' : ''}`}
-			aria-current={isActive ? 'page' : undefined}
-			onClick={() => navigate(form.to)}
-		>
-			<div className="ws-services-card__top">
-				<span className={`ws-services-form-badge ws-services-form-badge--${groupId}`}>
-					{copy.formName}
+		<li>
+			<button
+				type="button"
+				className={`ws-services-form-row ws-services-form-row--${groupId}${isActive ? ' is-active' : ''}`}
+				aria-current={isActive ? 'page' : undefined}
+				onClick={() => navigate(form.to)}
+			>
+				<span className="ws-services-form-id">
+					<span className={`ws-services-form-badge ws-services-form-badge--${groupId}`}>
+						{copy.formName}
+					</span>
+					{form.rule ? <span className="ws-services-form-row__meta">{form.rule}</span> : null}
 				</span>
-			</div>
-			<span className="ws-services-card__title">{copy.matter}</span>
-			{copy.label ? (
-				<span className="ws-services-card__meta" title={copy.label}>
-					{copy.label}
+				<span className="ws-services-form-row__copy">
+					<span className="ws-services-form-row__title">{copy.matter}</span>
 				</span>
-			) : null}
-			<span className="ws-services-card__cta">
-				{t('ws.services.applyForm')}
-				<Icon name="chevron" />
-			</span>
-		</button>
+				<span className="ws-services-form-row__apply">{t('ws.services.applyForm')}</span>
+			</button>
+		</li>
 	)
 }
 
@@ -211,8 +169,6 @@ function WorkspaceServices() {
 		return <Navigate to="/403" replace />
 	}
 
-	const totalForms = useMemo(() => getAllServiceForms().length, [])
-
 	const catalogGroups = useMemo(() => {
 		if (activeGroup === 'all') return tenantServiceGroups
 		return tenantServiceGroups.filter((g) => g.id === activeGroup)
@@ -225,31 +181,24 @@ function WorkspaceServices() {
 					<h1 className="ws-services-title">{t('ws.services.title')}</h1>
 					<p className="ws-services-lead">{t('ws.services.lead')}</p>
 				</div>
-				<dl className="ws-services-stats" aria-label={t('ws.services.stats.aria')}>
-					<div>
-						<dt>{t('ws.services.stats.authorities')}</dt>
-						<dd>{tenantServiceGroups.length}</dd>
-					</div>
-					<div>
-						<dt>{t('ws.services.stats.forms')}</dt>
-						<dd>{totalForms}</dd>
-					</div>
-				</dl>
 			</header>
 
 			<div
-				className="ws-services-filters"
+				className={`ws-services-filters ws-services-filters--${activeGroup}`}
 				role="tablist"
 				aria-label={t('ws.services.filter.aria')}
 			>
 				<button
 					type="button"
 					role="tab"
-					className={`ws-services-filter${activeGroup === 'all' ? ' is-active' : ''}`}
+					className={`ws-services-filter ws-services-filter--all${activeGroup === 'all' ? ' is-active' : ''}`}
 					aria-selected={activeGroup === 'all'}
 					onClick={() => selectGroup('all')}
 				>
-					{t('ws.services.filter.all')}
+					<span className="ws-services-filter__icon" aria-hidden>
+						<Icon name="services" />
+					</span>
+					<span className="ws-services-filter__label">{t('ws.services.filter.all')}</span>
 				</button>
 				{tenantServiceGroups.map((group) => (
 					<button
@@ -262,7 +211,12 @@ function WorkspaceServices() {
 						aria-selected={activeGroup === group.id}
 						onClick={() => selectGroup(group.id)}
 					>
-						{t(AUTHORITY_TITLE_KEYS[group.id] || group.title)}
+						<span className="ws-services-filter__icon" aria-hidden>
+							<Icon name={AUTHORITY_ICONS[group.id]} />
+						</span>
+						<span className="ws-services-filter__label">
+							{t(AUTHORITY_TITLE_KEYS[group.id] || group.title)}
+						</span>
 					</button>
 				))}
 			</div>
@@ -282,66 +236,45 @@ function WorkspaceServices() {
 							aria-labelledby={`ws-services-catalog-${group.id}`}
 						>
 							<div className="ws-card-header ws-services-catalog-header">
-								<div className="ws-services-catalog-heading">
-									<p className="ws-services-catalog-kicker">
-										{t(AUTHORITY_CHIP_KEYS[group.id] || 'ws.services.chip.authority')}
-									</p>
-									<h2
-										id={`ws-services-catalog-${group.id}`}
-										className="ws-card-title"
-									>
-										{title}
-									</h2>
-									{AUTHORITY_DESC_KEYS[group.id] ? (
-										<p className="ws-services-catalog-desc">
-											{t(AUTHORITY_DESC_KEYS[group.id])}
+								<div className="ws-services-catalog-identity">
+									<span className="ws-services-catalog-icon" aria-hidden>
+										<Icon name={AUTHORITY_ICONS[group.id] || 'services'} />
+									</span>
+									<div className="ws-services-catalog-heading">
+										<p className="ws-services-catalog-kicker">
+											{t(AUTHORITY_CHIP_KEYS[group.id] || 'ws.services.chip.authority')}
 										</p>
-									) : null}
+										<h2
+											id={`ws-services-catalog-${group.id}`}
+											className="ws-card-title"
+										>
+											{title}
+										</h2>
+										{AUTHORITY_DESC_KEYS[group.id] ? (
+											<p className="ws-services-catalog-desc">
+												{t(AUTHORITY_DESC_KEYS[group.id])}
+											</p>
+										) : null}
+									</div>
 								</div>
 								<span className="ws-services-catalog-count">{formCountLabel}</span>
 							</div>
 
-							<div className="ws-card-body ws-table-wrap ws-services-table-wrap">
-								<table className="ws-table ws-services-table">
-									<colgroup>
-										<col className="ws-services-col-form" />
-										<col className="ws-services-col-desc" />
-										<col className="ws-services-col-action" />
-									</colgroup>
-									<thead>
-										<tr>
-											<th scope="col" className="ws-services-th-form">
-												{t('ws.services.col.form')}
-											</th>
-											<th scope="col">{t('ws.services.col.application')}</th>
-											<th scope="col" className="ws-services-th-action">
-												<span className="ws-sr-only">{t('ws.services.col.action')}</span>
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{group.forms.map((form) => (
-											<ServiceFormRow
-												key={form.to}
-												form={form}
-												groupId={group.id}
-												t={t}
-											/>
-										))}
-									</tbody>
-								</table>
+							<div className="ws-services-list-head" aria-hidden="true">
+								<span>{t('ws.services.col.form')}</span>
+								<span>{t('ws.services.col.application')}</span>
+								<span>{t('ws.services.col.action')}</span>
 							</div>
-
-							<div className="ws-services-card-list" aria-label={title}>
+							<ul className="ws-services-list" aria-label={title}>
 								{group.forms.map((form) => (
-									<ServiceFormCard
-										key={`card-${form.to}`}
+									<ServiceFormItem
+										key={form.to}
 										form={form}
 										groupId={group.id}
 										t={t}
 									/>
 								))}
-							</div>
+							</ul>
 						</section>
 					)
 				})}

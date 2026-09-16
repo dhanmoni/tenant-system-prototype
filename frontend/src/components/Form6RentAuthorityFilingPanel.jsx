@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Children, cloneElement, isValidElement } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Building2, Check, IdCard, Info, MapPin, Scale, Upload, User } from 'lucide-react'
+import { ArrowLeft, Building2, Check, Info, MapPin, Scale, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import UinPrefillNotice from './forms/UinPrefillNotice'
+import LoadedUinChip from './forms/LoadedUinChip'
 import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormIVLegalDocument from './forms/FormIVLegalDocument'
@@ -52,13 +53,14 @@ function dobInputMax() {
 	return `${year}-${month}-${day}`
 }
 
-function FormCard({ title, description, badge, children }) {
+function FormCard({ title, description, badge, uin, onChangeUin, children }) {
 	return (
 		<section className="sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
 			<div className="sf-form-card__header overflow-hidden rounded-t-[20px]">
 				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
 				<h1 className="sf-form-card__title">{title}</h1>
 				{description ? <p className="sf-form-card__lead">{description}</p> : null}
+				{uin ? <LoadedUinChip value={uin} onChange={onChangeUin} /> : null}
 			</div>
 			<div className="flex flex-col gap-3.5 p-[22px] sm:p-[26px]">{children}</div>
 		</section>
@@ -274,6 +276,7 @@ function InputShell({ icon: Icon, children, className = inputShellClass }) {
  */
 const FORM_IV_PART_SHORT = {
 	1: 'Particulars of the violation',
+	2: 'Jurisdiction',
 	3: 'Facts of the case',
 	4: 'Grounds for relief',
 	5: 'Earlier proceedings',
@@ -296,7 +299,7 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle, error = '' 
 			<legend className="m-0 w-full min-w-0 px-0">
 				<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#334155]">
 					<span
-						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] text-[#334155]"
+						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] text-[#0d47a1]"
 						aria-hidden
 					>
 						<Scale size={15} strokeWidth={2.25} />
@@ -369,7 +372,7 @@ function ReadOnlyField({
 			>
 				{label}
 				{fromUin ? (
-					<span className="form-iv-from-uin-tag !normal-case !text-[#16a34a]" title="Filled from the loaded tenancy UIN">
+					<span className="form-iv-from-uin-tag !normal-case" title="Filled from the loaded tenancy UIN">
 						{' '}
 						(from UIN)
 					</span>
@@ -617,15 +620,12 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 	const resolvedVerificationParagraphs = useMemo(() => {
 		const paragraphs = {}
 		requiredVerificationParas.forEach((option) => {
+			if (option.number === 2 && !jurisdictionAccepted) return
 			paragraphs[option.number] =
 				verification.paragraphs?.[option.number] === PARA_ANSWER.LEGAL_ADVICE
 					? PARA_ANSWER.LEGAL_ADVICE
 					: PARA_ANSWER.PERSONAL_KNOWLEDGE
 		})
-		// Para 2 is the jurisdiction undertaking — include it in the sworn blank when accepted.
-		if (jurisdictionAccepted) {
-			paragraphs[2] = PARA_ANSWER.PERSONAL_KNOWLEDGE
-		}
 		return paragraphs
 	}, [requiredVerificationParas, verification.paragraphs, jurisdictionAccepted])
 
@@ -840,12 +840,10 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				'This UIN has no district on record. Place of filing cannot be set automatically.'
 			)
 		}
+		const resolvedAnswers = Object.values(resolvedVerificationParagraphs)
 		const allOnLegalAdvice =
-			requiredVerificationParas.length > 0 &&
-			requiredVerificationParas.every(
-				(option) =>
-					resolvedVerificationParagraphs[option.number] === PARA_ANSWER.LEGAL_ADVICE
-			)
+			resolvedAnswers.length > 0 &&
+			resolvedAnswers.every((answer) => answer === PARA_ANSWER.LEGAL_ADVICE)
 		if (allOnLegalAdvice) {
 			fail(
 				'form-iv-legal-advice',
@@ -1029,7 +1027,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 		return filled
 	}
 
-	const formTitle = serviceMeta?.label || 'Form IV — Matters under Rule 11'
+	const formTitle = serviceMeta?.formName || 'Form IV'
 	const formBadge = serviceMeta?.groupTitle || 'Rent Authority'
 	const formLead = serviceMeta
 		? `${serviceMeta.matter || 'Application before the Rent Authority'}${serviceMeta.rule ? ` (${serviceMeta.rule})` : ''}`
@@ -1053,7 +1051,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 						<ServiceFormReadyGate
 							badge={formBadge}
 							title={formTitle}
-							description={serviceMeta?.rule || null}
+							description={formLead}
 							knowBefore={[
 								'Date of birth and relation details for verification',
 								'A scanned signature for the declaration',
@@ -1077,7 +1075,16 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 				) : (
 					<>
 						<FormTopBar onBack={onBack} disabled={submitting} />
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
+						<FormCard
+							title={formTitle}
+							description={formLead}
+							badge={formBadge}
+							uin={tenancyUIN}
+							onChangeUin={() => {
+								clearTenancyRecord()
+								setTenancyUIN('')
+							}}
+						>
 							<div className="form-iv-main">
 							<FormSection
 								step={1}
@@ -1085,26 +1092,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 								title="Applicant details"
 								description="Review the party and tenancy details loaded from your UIN, then complete relation and age details."
 							>
-								<ReadOnlyField
-									label="UIN issued by the Rent Authority"
-									value={tenancyUIN}
-									icon={IdCard}
-									variant="uin"
-									action={
-										<button
-											type="button"
-											className="form-i-change-uin"
-											onClick={() => {
-												clearTenancyRecord()
-												setTenancyUIN('')
-											}}
-										>
-											Change UIN
-										</button>
-									}
-								/>
 								<UinPrefillNotice />
-								<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
 								<div className="grid gap-3 sm:grid-cols-2">
 									<ReadOnlyField label="A. Applicant name" value={applicantName} icon={User} fromUin />
 									<ReadOnlyField label="B. Opposite party name" value={oppositePartyName} icon={User} fromUin />
@@ -1488,7 +1476,7 @@ export default function Form6RentAuthorityFilingPanel({ onBack, serviceMeta, use
 												<span className="form-ii-jurisdiction__fetched-label">
 													Filing venue
 													<span
-														className="form-iv-from-uin-tag !normal-case !text-[#16a34a]"
+														className="form-iv-from-uin-tag !normal-case"
 														title="Filled from the loaded tenancy UIN"
 													>
 														{' '}

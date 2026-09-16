@@ -126,13 +126,14 @@ export const PARA_ANSWER = {
 /**
  * The paragraphs a filer may assign, under the Gazette's own headings.
  *
- * Paragraph 2 is absent because it is itself a sworn declaration, accepted separately.
- * Forms II, III and IV offer paragraphs 5 and 8 (earlier proceedings / enclosures) so they
- * can be marked as based on legal advice when they apply.
+ * Paragraph 2 (jurisdiction) is still accepted as a declaration, but the Gazette does not say
+ * it is always personal knowledge — the filer may mark it as based on legal advice.
+ * Forms II to VI also offer paragraphs 5 and 8 (earlier proceedings / enclosures).
  */
 export const VERIFICATION_PARAGRAPHS = {
 	[VERIFICATION.FORM_II]: {
 		1: 'Particulars of application',
+		2: 'Jurisdiction of the Rent Court',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
 		5: 'Matters not previously filed',
@@ -142,6 +143,7 @@ export const VERIFICATION_PARAGRAPHS = {
 	},
 	[VERIFICATION.FORM_III]: {
 		1: 'Particulars of application',
+		2: 'Jurisdiction of the Rent Court',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
 		5: 'Matters not previously filed',
@@ -151,6 +153,7 @@ export const VERIFICATION_PARAGRAPHS = {
 	},
 	[VERIFICATION.FORM_IV]: {
 		1: 'Particulars of violation against which the present application is made',
+		2: 'Jurisdiction of the Rent Authority',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
 		5: 'Earlier proceedings',
@@ -162,6 +165,7 @@ export const VERIFICATION_PARAGRAPHS = {
 	// Both also offer 5 and 8 (earlier proceedings / enclosures) for legal-advice marking.
 	[VERIFICATION.FORM_V]: {
 		1: 'Particulars of the order of the Rent Authority as against which the appeal is made',
+		2: 'Jurisdiction of the Rent Court',
 		3: 'Limitation',
 		4: 'Memorandum of Appeal',
 		5: 'Matters not previously filed',
@@ -171,6 +175,7 @@ export const VERIFICATION_PARAGRAPHS = {
 	},
 	[VERIFICATION.FORM_VI]: {
 		1: 'Particulars of the order of the Rent Court as against which the Appeal is made',
+		2: 'Jurisdiction of the Rent Tribunal',
 		3: 'Limitation',
 		4: 'Memorandum of Appeal',
 		5: 'Matters not previously filed',
@@ -205,18 +210,8 @@ export function renderParagraphNumbers(numbers) {
 
 /** The paragraph numbers carrying a given answer, in order. */
 export function paragraphsWithAnswer(fieldId, answers, wanted) {
-	const base = Object.keys(verificationParagraphs(fieldId)).map(Number)
-	// Para 2 is sworn via the jurisdiction checkbox; when present in answers, include it in the blank.
-	const hasJurisdictionAnswer =
-		(fieldId === VERIFICATION.FORM_II ||
-			fieldId === VERIFICATION.FORM_III ||
-			fieldId === VERIFICATION.FORM_IV ||
-			fieldId === VERIFICATION.FORM_V ||
-			fieldId === VERIFICATION.FORM_VI) &&
-		(answers[2] != null || answers['2'] != null)
-	const candidates = hasJurisdictionAnswer ? [...new Set([2, ...base])] : base
-
-	return candidates
+	return Object.keys(verificationParagraphs(fieldId))
+		.map(Number)
 		.filter((n) => (answers[n] ?? answers[String(n)]) === wanted)
 		.sort((a, b) => a - b)
 }

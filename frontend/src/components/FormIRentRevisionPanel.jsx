@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Building2, FileText, IdCard, IndianRupee, MapPin, Upload, User } from 'lucide-react'
+import { ArrowLeft, Building2, FileText, IndianRupee, MapPin, Upload, User } from 'lucide-react'
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import UinPrefillNotice from './forms/UinPrefillNotice'
 import ApplyingAsToggle from './forms/ApplyingAsToggle'
+import LoadedUinChip from './forms/LoadedUinChip'
 import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormILegalDocument from './forms/FormILegalDocument'
@@ -46,13 +47,14 @@ const inputClass =
 const textareaShellClass =
 	'form-i-field flex min-h-[120px] w-full overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white px-3.5 py-3 transition-[border-color] duration-200 ease-in-out focus-within:border-[#64748b]'
 
-function FormCard({ title, description, badge, children }) {
+function FormCard({ title, description, badge, uin, onChangeUin, children }) {
 	return (
 		<section className="sf-form-card overflow-hidden sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
 			<div className="sf-form-card__header">
 				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
 				<h1 className="sf-form-card__title">{title}</h1>
 				{description ? <p className="sf-form-card__lead">{description}</p> : null}
+				{uin ? <LoadedUinChip value={uin} onChange={onChangeUin} /> : null}
 			</div>
 			<div className="flex flex-col gap-4 p-[30px]">{children}</div>
 		</section>
@@ -202,7 +204,7 @@ function ReadOnlyField({
 			>
 				{label}
 				{fromUin ? (
-					<span className="form-iv-from-uin-tag !normal-case !text-[#16a34a]" title="Filled from the loaded tenancy UIN">
+					<span className="form-iv-from-uin-tag !normal-case" title="Filled from the loaded tenancy UIN">
 						{' '}
 						(from UIN)
 					</span>
@@ -456,7 +458,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 	}
 
 	const presentRentDisplay = String(presentMonthlyRent || '').trim()
-	const formTitle = serviceMeta?.label || 'Form I — Revision or fixation of rent'
+	const formTitle = serviceMeta?.formName || 'Form I'
 	const formBadge = serviceMeta?.groupTitle || 'Rent Authority'
 	const formLead = serviceMeta
 		? `${serviceMeta.matter || 'Revision or fixation of rent'}${serviceMeta.rule ? ` (${serviceMeta.rule})` : ''}`
@@ -480,7 +482,7 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 						<ServiceFormReadyGate
 							badge={formBadge}
 							title={formTitle}
-							description={serviceMeta?.rule || null}
+							description={formLead}
 							knowBefore={[
 								'Proposed / revised rent amount (if known)',
 								'A scanned signature for the declaration',
@@ -504,40 +506,28 @@ export default function FormIRentRevisionPanel({ onBack, serviceMeta, user }) {
 				) : (
 					<>
 						<FormTopBar onBack={onBack} disabled={submitting} />
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
+						<FormCard
+							title={formTitle}
+							description={formLead}
+							badge={formBadge}
+							uin={tenancyUIN}
+							onChangeUin={() => {
+								clearTenancyRecord()
+								setTenancyUIN('')
+							}}
+						>
 							<FormSection
 								step={1}
 								tone="record"
 								title="Applicant details"
 								description="First choose Applying as. Then review the tenancy record from your UIN and add the document number if any."
 							>
-								<ReadOnlyField
-									label="UIN issued by the Rent Authority"
-									value={tenancyUIN}
-									icon={IdCard}
-									variant="uin"
-									action={
-										<button
-											type="button"
-											className="form-i-change-uin"
-											onClick={() => {
-												clearTenancyRecord()
-												setTenancyUIN('')
-											}}
-										>
-											Change UIN
-										</button>
-									}
-								/>
-
 								<ApplyingAsToggle
 									value={signedBy}
 									onChange={setSignedBy}
 									name="signed_by"
 								/>
-
 								<UinPrefillNotice />
-								<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
 								<div className="grid gap-3 sm:grid-cols-2 sm:gap-x-5 sm:gap-y-3">
 									{/* Same-height rows: landlord left, tenant right */}
 									<ReadOnlyField label="Landlord name" value={landlordName} icon={User} fromUin />

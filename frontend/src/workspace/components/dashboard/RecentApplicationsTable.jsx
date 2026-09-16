@@ -11,7 +11,7 @@ function formatStatus(status) {
 
 function statusClass(status) {
 	const s = String(status || '').toUpperCase()
-	if ([STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(s)) {
+	if ([STATUS.APPROVED, STATUS.COMPLETED].includes(s)) {
 		return 'ws-badge ws-badge--success'
 	}
 	if (s === STATUS.REJECTED) return 'ws-badge ws-badge--danger'

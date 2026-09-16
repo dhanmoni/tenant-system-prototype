@@ -194,6 +194,8 @@ class DemoTestDataSeeder extends Seeder
                             'before_rent_court' => 'District Rent Court',
                             'applicant_name' => $tenantUser->name,
                             'applicant_residential_address' => 'Demo Address ' . $i,
+                            'tenant_name' => 'Tenant ' . $i,
+                            'tenant_residential_address' => 'Demo tenant address ' . $i,
                         ]);
                     } elseif ($cat['model'] === RentTribunalAppealApplication::class) {
                         $data = array_merge($data, [

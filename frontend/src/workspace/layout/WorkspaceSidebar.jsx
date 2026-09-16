@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { NavLink, useLocation } from 'react-router-dom'
 import { Icon } from '../../components/dashboard/Icons'
 import { useLanguage } from '../../i18n'
@@ -69,7 +70,77 @@ function prefetchForPath(to) {
 	if (run) void run()
 }
 
-function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
+function SidebarHoverTip({ tip }) {
+	if (!tip || typeof document === 'undefined') return null
+	return createPortal(
+		<div
+			className="ws-nav-hover-tip"
+			aria-hidden="true"
+			style={{ top: `${tip.top}px`, left: `${tip.left}px` }}
+		>
+			{tip.text}
+		</div>,
+		document.body,
+	)
+}
+
+function useNavHoverTip() {
+	const [tip, setTip] = useState(null)
+	const timerRef = useRef(null)
+	const targetRef = useRef(null)
+
+	const clearTimer = () => {
+		if (timerRef.current) {
+			window.clearTimeout(timerRef.current)
+			timerRef.current = null
+		}
+	}
+
+	const hideTip = () => {
+		clearTimer()
+		targetRef.current = null
+		setTip(null)
+	}
+
+	const placeTip = (el, text) => {
+		if (!el || !text) return
+		const rect = el.getBoundingClientRect()
+		const top = Math.min(Math.max(rect.top + rect.height / 2, 20), window.innerHeight - 20)
+		setTip({
+			text,
+			top,
+			left: Math.round(rect.right + 10),
+		})
+	}
+
+	const showTip = (event, text) => {
+		const el = event.currentTarget
+		if (!el || !text) {
+			hideTip()
+			return
+		}
+		clearTimer()
+		targetRef.current = el
+		timerRef.current = window.setTimeout(() => {
+			placeTip(el, text)
+		}, 90)
+	}
+
+	useEffect(() => {
+		const onViewportChange = () => hideTip()
+		window.addEventListener('scroll', onViewportChange, true)
+		window.addEventListener('resize', onViewportChange)
+		return () => {
+			clearTimer()
+			window.removeEventListener('scroll', onViewportChange, true)
+			window.removeEventListener('resize', onViewportChange)
+		}
+	}, [])
+
+	return { tip, showTip, hideTip }
+}
+
+function ServicesNavMenu({ item, collapsed, onNavClick, t, showTip, hideTip }) {
 	const location = useLocation()
 	const panelId = useId()
 	const label = t(item.labelKey)
@@ -87,10 +158,20 @@ function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
 			<NavLink
 				to={item.to}
 				className={({ isActive }) => `ws-nav-link${isActive || onServicesRoute ? ' active' : ''}`}
-				title={label}
-				onClick={onNavClick}
-				onMouseEnter={() => prefetchForPath(item.to)}
-				onFocus={() => prefetchForPath(item.to)}
+				onClick={() => {
+					hideTip()
+					onNavClick?.()
+				}}
+				onMouseEnter={(e) => {
+					prefetchForPath(item.to)
+					showTip(e, label)
+				}}
+				onFocus={(e) => {
+					prefetchForPath(item.to)
+					showTip(e, label)
+				}}
+				onMouseLeave={hideTip}
+				onBlur={hideTip}
 			>
 				<Icon name={item.icon} className={`ws-nav-link-icon ws-nav-link-icon--${item.icon}`} />
 				<span className="ws-nav-link-label">{label}</span>
@@ -105,7 +186,10 @@ function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
 				className={`ws-nav-link ws-nav-disclosure__trigger${onServicesRoute ? ' active' : ''}`}
 				aria-expanded={open}
 				aria-controls={panelId}
-				onClick={() => setOpen((prev) => !prev)}
+				onClick={() => {
+					hideTip()
+					setOpen((prev) => !prev)
+				}}
 			>
 				<Icon name={item.icon} className={`ws-nav-link-icon ws-nav-link-icon--${item.icon}`} />
 				<span className="ws-nav-link-label">{label}</span>
@@ -117,7 +201,10 @@ function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
 			{open ? (
 				<div id={panelId} className="ws-nav-disclosure__panel" role="group" aria-label={label}>
 					{tenantServiceGroups.map((group) => (
-						<div key={group.id} className="ws-nav-disclosure__group">
+						<div
+							key={group.id}
+							className={`ws-nav-disclosure__group ws-nav-disclosure__group--${group.id}`}
+						>
 							<div className="ws-nav-disclosure__group-label">
 								{t(AUTHORITY_TITLE_KEYS[group.id] || group.title)}
 							</div>
@@ -131,9 +218,17 @@ function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
 												className={({ isActive }) =>
 													`ws-nav-disclosure__link${isActive ? ' active' : ''}`
 												}
-												title={copy.label}
-												onClick={onNavClick}
-												onMouseEnter={() => prefetchForPath('/dashboard/services')}
+												onClick={() => {
+													hideTip()
+													onNavClick?.()
+												}}
+												onMouseEnter={(e) => {
+													prefetchForPath('/dashboard/services')
+													showTip(e, copy.label || copy.name)
+												}}
+												onFocus={(e) => showTip(e, copy.label || copy.name)}
+												onMouseLeave={hideTip}
+												onBlur={hideTip}
 											>
 												{copy.name}
 											</NavLink>
@@ -149,8 +244,10 @@ function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
 						className={({ isActive }) =>
 							`ws-nav-disclosure__catalog${isActive ? ' active' : ''}`
 						}
-						title={label}
-						onClick={onNavClick}
+						onClick={() => {
+							hideTip()
+							onNavClick?.()
+						}}
 						onMouseEnter={() => prefetchForPath(item.to)}
 					>
 						{t('ws.nav.browseAllServices')}
@@ -161,7 +258,16 @@ function ServicesNavMenu({ item, collapsed, onNavClick, t }) {
 	)
 }
 
-function SidebarNavGroup({ group, collapsed, linkClass, onNavClick, t }) {
+function SidebarNavGroup({
+	group,
+	collapsed,
+	linkClass,
+	onNavClick,
+	t,
+	showTip,
+	hideTip,
+	profileIncomplete = false,
+}) {
 	const sectionLabel = t(group.sectionKey)
 	const showSectionLabel = group.sectionKey !== 'ws.nav.workspace'
 
@@ -179,27 +285,54 @@ function SidebarNavGroup({ group, collapsed, linkClass, onNavClick, t }) {
 							collapsed={collapsed}
 							onNavClick={onNavClick}
 							t={t}
+							showTip={showTip}
+							hideTip={hideTip}
 						/>
 					)
 				}
 
 				const label = t(item.labelKey)
+				const isProfileItem = item.to === '/dashboard/profile'
+				const showProfileCue = isProfileItem && profileIncomplete
+				const tipLabel = showProfileCue ? t('ws.nav.completeProfile') : label
+
 				return (
 					<NavLink
 						key={`${item.to}-${item.labelKey}`}
 						to={item.to}
 						end={item.end}
-						className={linkClass}
-						title={collapsed ? label : undefined}
-						onClick={onNavClick}
-						onMouseEnter={() => prefetchForPath(item.to)}
-						onFocus={() => prefetchForPath(item.to)}
+						className={(state) =>
+							`${linkClass(state)}${showProfileCue ? ' ws-nav-link--profile-cue' : ''}`
+						}
+						aria-label={showProfileCue ? `${label}. ${t('ws.nav.completeProfile')}` : undefined}
+						onClick={() => {
+							hideTip()
+							onNavClick?.()
+						}}
+						onMouseEnter={(e) => {
+							prefetchForPath(item.to)
+							if (collapsed) showTip(e, tipLabel)
+						}}
+						onFocus={(e) => {
+							prefetchForPath(item.to)
+							if (collapsed) showTip(e, tipLabel)
+						}}
+						onMouseLeave={hideTip}
+						onBlur={hideTip}
 					>
-						<Icon
-							name={item.icon}
-							className={`ws-nav-link-icon ws-nav-link-icon--${item.icon}`}
-						/>
-						<span className="ws-nav-link-label">{label}</span>
+						<span className="ws-nav-link-icon-wrap">
+							<Icon
+								name={item.icon}
+								className={`ws-nav-link-icon ws-nav-link-icon--${item.icon}`}
+							/>
+							{showProfileCue ? <span className="ws-nav-profile-dot" aria-hidden /> : null}
+						</span>
+						<span className="ws-nav-link-copy">
+							<span className="ws-nav-link-label">{label}</span>
+							{showProfileCue ? (
+								<span className="ws-nav-profile-cue">{t('ws.nav.completeProfile')}</span>
+							) : null}
+						</span>
 					</NavLink>
 				)
 			})}
@@ -213,12 +346,16 @@ function WorkspaceSidebar({
 	collapsed = false,
 	onToggleCollapse,
 	user,
+	profileIncomplete = false,
 }) {
 	const { t } = useLanguage()
 	const navGroups = getWorkspaceNavigation(user)
 	const linkClass = ({ isActive }) => `ws-nav-link${isActive ? ' active' : ''}`
+	const { tip, showTip, hideTip } = useNavHoverTip()
+	const collapseLabel = collapsed ? t('ws.nav.expandSidebar') : t('ws.nav.collapseSidebar')
 
 	const handleNavClick = () => {
+		hideTip()
 		onClose?.()
 	}
 
@@ -236,12 +373,16 @@ function WorkspaceSidebar({
 					<button
 						type="button"
 						className="ws-sidebar-collapse-btn"
-						aria-label={
-							collapsed ? t('ws.nav.expandSidebar') : t('ws.nav.collapseSidebar')
-						}
+						aria-label={collapseLabel}
 						aria-expanded={!collapsed}
-						title={collapsed ? t('ws.nav.expandSidebar') : t('ws.nav.collapseSidebar')}
-						onClick={onToggleCollapse}
+						onClick={() => {
+							hideTip()
+							onToggleCollapse()
+						}}
+						onMouseEnter={(e) => showTip(e, collapseLabel)}
+						onFocus={(e) => showTip(e, collapseLabel)}
+						onMouseLeave={hideTip}
+						onBlur={hideTip}
 					>
 						<Icon name={collapsed ? 'panelOpen' : 'panelClose'} className="ws-sidebar-collapse-icon" />
 					</button>
@@ -267,6 +408,9 @@ function WorkspaceSidebar({
 						linkClass={linkClass}
 						onNavClick={handleNavClick}
 						t={t}
+						showTip={showTip}
+						hideTip={hideTip}
+						profileIncomplete={profileIncomplete}
 					/>
 				))}
 			</nav>
@@ -278,8 +422,15 @@ function WorkspaceSidebar({
 						<NavLink
 							to="/contact"
 							className="ws-sidebar-support-item"
-							title={collapsed ? t('ws.support.contactUs') : undefined}
 							onClick={handleNavClick}
+							onMouseEnter={(e) => {
+								if (collapsed) showTip(e, t('ws.support.contactUs'))
+							}}
+							onFocus={(e) => {
+								if (collapsed) showTip(e, t('ws.support.contactUs'))
+							}}
+							onMouseLeave={hideTip}
+							onBlur={hideTip}
 						>
 							<Icon name="mail" className="ws-sidebar-support-icon ws-sidebar-support-icon--mail" />
 							<div className="ws-sidebar-support-copy">
@@ -290,6 +441,8 @@ function WorkspaceSidebar({
 					</div>
 				</div>
 			) : null}
+
+			<SidebarHoverTip tip={tip} />
 		</aside>
 	)
 }

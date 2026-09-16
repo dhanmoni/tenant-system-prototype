@@ -37,12 +37,16 @@ class TenantFormsStatusController extends Controller
 
         $applicationNo = $request->input('application_no');
         $uid = $request->input('uid');
+        $q = trim((string) $request->input('q', ''));
+        if ($q === '') {
+            $q = trim((string) ($applicationNo ?: $uid ?: ''));
+        }
         $typeFilter = strtolower((string) $request->input('type', 'all'));
         $statusFilter = strtolower((string) $request->input('status_filter', 'all'));
 
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = strtolower((string) $request->input('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
-        $allowedSort = ['created_at', 'application_no', 'uid', 'status'];
+        $allowedSort = ['created_at', 'application_no', 'uid', 'status', 'form'];
         if (!in_array($sortBy, $allowedSort, true)) {
             $sortBy = 'created_at';
         }
@@ -68,11 +72,11 @@ class TenantFormsStatusController extends Controller
                     }
                 });
 
-            if (!empty($applicationNo)) {
+            if ($q === '' && !empty($applicationNo)) {
                 $tenancyQuery->where('application_no', 'like', '%' . $applicationNo . '%');
             }
 
-            if (!empty($uid)) {
+            if ($q === '' && !empty($uid)) {
                 $tenancyQuery->where('uid', 'like', '%' . $uid . '%');
             }
 
@@ -175,7 +179,7 @@ class TenantFormsStatusController extends Controller
                 $query = $model::query()
                     ->where('user_id', $user->id);
 
-                if (!empty($applicationNo)) {
+                if ($q === '' && !empty($applicationNo)) {
                     $query->where('application_no', 'like', '%' . $applicationNo . '%');
                 }
 
@@ -226,6 +230,20 @@ class TenantFormsStatusController extends Controller
             }
         }
 
+        if ($q !== '') {
+            $needle = mb_strtolower($q);
+            $items = array_values(array_filter($items, function ($i) use ($needle) {
+                $hay = mb_strtolower(implode(' ', [
+                    $i['application_no'] ?? '',
+                    $i['uid'] ?? '',
+                    $i['application_type'] ?? '',
+                    $i['status'] ?? '',
+                    $i['form_key'] ?? '',
+                ]));
+                return str_contains($hay, $needle);
+            }));
+        }
+
         if ($statusFilter !== '' && $statusFilter !== 'all') {
             $items = array_values(array_filter(
                 $items,
@@ -244,6 +262,8 @@ class TenantFormsStatusController extends Controller
                     return $dir * strcasecmp((string) ($a['uid'] ?? ''), (string) ($b['uid'] ?? ''));
                 case 'status':
                     return $dir * strcasecmp((string) ($a['status'] ?? ''), (string) ($b['status'] ?? ''));
+                case 'form':
+                    return $dir * strcasecmp((string) ($a['application_type'] ?? ''), (string) ($b['application_type'] ?? ''));
                 case 'created_at':
                 default:
                     $ta = !empty($a['created_at']) ? strtotime($a['created_at']) : 0;
@@ -276,13 +296,13 @@ class TenantFormsStatusController extends Controller
             'draft' => $normalized === 'DRAFT',
             'partial' => $normalized === 'PARTIAL',
             'submitted' => in_array($normalized, ['SUBMITTED', 'UNDER_PROCESS'], true),
-            'in_review' => $normalized === 'IN_REVIEW',
+            'in_review' => in_array($normalized, ['IN_REVIEW', 'VALUER_ASSIGNED', 'VALUER_REPORT_SUBMITTED'], true),
             'approved' => in_array($normalized, ['APPROVED', 'COMPLETED'], true),
             'rejected' => $normalized === 'REJECTED',
             'withdrawn' => $normalized === 'WITHDRAWN',
             'cancelled' => $normalized === 'CANCELLED',
-            'pending' => in_array($normalized, ['PENDING', 'DRAFT', 'PARTIAL'], true),
-            'in_progress' => in_array($normalized, ['IN_REVIEW', 'UNDER_PROCESS', 'PENDING', 'PARTIAL', 'DRAFT'], true),
+            'pending' => $normalized === 'PENDING',
+            'in_progress' => in_array($normalized, ['IN_REVIEW', 'UNDER_PROCESS', 'PENDING', 'PARTIAL', 'DRAFT', 'VALUER_ASSIGNED', 'VALUER_REPORT_SUBMITTED'], true),
             'completed' => in_array($normalized, ['APPROVED', 'COMPLETED', 'SUBMITTED'], true),
             default => true,
         };

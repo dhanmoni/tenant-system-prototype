@@ -134,7 +134,8 @@ export default function FormVILegalDocument({
 
 	const verificationAnswers = (() => {
 		const answers = { ...(verification?.paragraphs || {}) }
-		// Jurisdiction is sworn separately; mirror it into the verification blank when accepted.
+		// Jurisdiction is sworn separately. Unticked para 2 defaults to personal knowledge;
+		// a legal-advice tick is kept so the Gazette blank can go either way.
 		if (jurisdictionAccepted && answers[2] == null && answers['2'] == null) {
 			answers[2] = PARA_ANSWER.PERSONAL_KNOWLEDGE
 		}

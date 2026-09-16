@@ -1,12 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Icon } from '../../../components/dashboard/Icons'
 import { tenantServiceGroups } from '../../../data/tenantServices'
 import { useLanguage } from '../../../i18n'
 
 const SERVICE_TILE_ICONS = {
-	'rent-authority': 'building',
-	'rent-court': 'file',
-	'rent-tribunal': 'chart',
+	'rent-authority': 'landmark',
+	'rent-court': 'gavel',
+	'rent-tribunal': 'scale',
 }
 
 const AUTHORITY_TITLE_KEYS = {
@@ -30,72 +30,12 @@ function CitizenDashboardSkeleton({ showActions = false }) {
 			aria-live="polite"
 			aria-label={t('ws.citizen.recent.loading')}
 		>
-			<header className="ws-citizen-welcome">
-				<div className="ws-citizen-welcome-accent" aria-hidden />
-				<div className="ws-citizen-welcome-inner">
-					<div className="ws-citizen-welcome-stats" aria-label={t('ws.citizen.stats.aria')}>
-						<Link
-							to="/dashboard/status"
-							className="ws-citizen-stat-card ws-citizen-stat-card--total"
-							aria-label={t('ws.citizen.stat.openTotal')}
-						>
-							<div className="ws-citizen-stat-card-top">
-								<span className="ws-citizen-stat-card-icon" aria-hidden>
-									<Icon name="list" />
-								</span>
-								<span className="ws-citizen-stat-card-label">{t('ws.citizen.stat.total')}</span>
-							</div>
-							<span className="ws-citizen-stat-card-value">
-								<Skel className="ws-skel--stat" />
-							</span>
-						</Link>
-						<Link
-							to="/dashboard/status"
-							className="ws-citizen-stat-card ws-citizen-stat-card--progress"
-							aria-label={t('ws.citizen.stat.openInProgress')}
-						>
-							<div className="ws-citizen-stat-card-top">
-								<span className="ws-citizen-stat-card-icon" aria-hidden>
-									<Icon name="clock" />
-								</span>
-								<span className="ws-citizen-stat-card-label">
-									{t('ws.citizen.stat.inProgress')}
-								</span>
-							</div>
-							<span className="ws-citizen-stat-card-value">
-								<Skel className="ws-skel--stat" />
-							</span>
-						</Link>
-						<Link
-							to="/dashboard/status"
-							className="ws-citizen-stat-card ws-citizen-stat-card--done"
-							aria-label={t('ws.citizen.stat.openCompleted')}
-						>
-							<div className="ws-citizen-stat-card-top">
-								<span className="ws-citizen-stat-card-icon" aria-hidden>
-									<Icon name="check" />
-								</span>
-								<span className="ws-citizen-stat-card-label">
-									{t('ws.citizen.stat.completed')}
-								</span>
-							</div>
-							<span className="ws-citizen-stat-card-value">
-								<Skel className="ws-skel--stat" />
-							</span>
-						</Link>
-					</div>
-				</div>
-			</header>
-
 			{showActions ? (
-				<section className="ws-card ws-citizen-actions-card" aria-labelledby="citizen-actions-heading">
-					<div className="ws-card-header ws-citizen-actions-header">
-						<div>
-							<h2 id="citizen-actions-heading" className="ws-card-title">
-								{t('ws.citizen.actions.title')}
-							</h2>
-							<p className="ws-citizen-actions-lead">{t('ws.citizen.actions.lead')}</p>
-						</div>
+				<section className="ws-card ws-citizen-apply" aria-labelledby="citizen-apply-heading">
+					<div className="ws-card-header">
+						<h2 id="citizen-apply-heading" className="ws-card-title">
+							{t('ws.citizen.actions.title')}
+						</h2>
 						<button
 							type="button"
 							className="ws-btn ws-btn--outline ws-btn--sm"
@@ -104,55 +44,45 @@ function CitizenDashboardSkeleton({ showActions = false }) {
 							{t('ws.citizen.actions.browseAll')}
 						</button>
 					</div>
-					<div className="ws-card-body ws-citizen-actions-body">
-						<div className="ws-citizen-actions-layout">
-							<button
-								type="button"
-								className="ws-citizen-uin-card"
-								onClick={() => navigate('/dashboard/tenancy-certificate')}
-							>
-								<span className="ws-citizen-uin-icon" aria-hidden>
-									<Icon name="documentPlus" />
+					<div className="ws-citizen-bento">
+						<button
+							type="button"
+							className="ws-citizen-uin-card"
+							aria-labelledby="citizen-uin-heading"
+							onClick={() => navigate('/dashboard/tenancy-certificate')}
+						>
+							<span className="ws-citizen-uin-icon" aria-hidden>
+								<Icon name="idCard" />
+							</span>
+							<span className="ws-citizen-uin-copy">
+								<span className="ws-citizen-uin-kicker">{t('ws.citizen.uin.kicker')}</span>
+								<span id="citizen-uin-heading" className="ws-citizen-uin-title">
+									{t('ws.citizen.uin.title')}
 								</span>
-								<div className="ws-citizen-uin-copy">
-									<span className="ws-citizen-uin-kicker">{t('ws.citizen.uin.kicker')}</span>
-									<span className="ws-citizen-uin-title">{t('ws.citizen.uin.title')}</span>
-									<p className="ws-citizen-uin-desc">{t('ws.citizen.uin.desc')}</p>
-								</div>
-								<span className="ws-citizen-uin-cta">{t('ws.citizen.uin.cta')}</span>
-							</button>
-							<div className="ws-citizen-services-panel">
-								<p className="ws-citizen-services-label">{t('ws.citizen.services.label')}</p>
-								<div className="ws-citizen-services-grid">
-									{tenantServiceGroups.map((group) => (
-										<button
-											key={group.id}
-											type="button"
-											className={`ws-citizen-service-tile ws-citizen-service-tile--${group.id}`}
-											onClick={() =>
-												navigate(`/dashboard/services?authority=${group.id}`)
-											}
-										>
-											<span className="ws-citizen-service-tile-icon" aria-hidden>
-												<Icon name={SERVICE_TILE_ICONS[group.id] || 'services'} />
-											</span>
-											<span className="ws-citizen-service-tile-body">
-												<span className="ws-citizen-service-tile-title">
-													{t(AUTHORITY_TITLE_KEYS[group.id] || group.title)}
-												</span>
-												<span className="ws-citizen-service-tile-meta">
-													{t('ws.citizen.services.formsAvailable', {
-														count: group.forms.length,
-													})}
-												</span>
-											</span>
-											<span className="ws-citizen-service-tile-arrow" aria-hidden>
-												→
-											</span>
-										</button>
-									))}
-								</div>
-							</div>
+								<span className="ws-citizen-uin-desc">{t('ws.citizen.uin.desc')}</span>
+							</span>
+							<span className="ws-citizen-uin-cta">{t('ws.citizen.uin.cta')}</span>
+						</button>
+						<div className="ws-citizen-forms-stack">
+							{tenantServiceGroups.map((group) => (
+								<button
+									key={group.id}
+									type="button"
+									className={`ws-citizen-form-card ws-citizen-form-card--${group.id}`}
+									aria-hidden
+								>
+									<span className="ws-citizen-form-card__icon" aria-hidden>
+										<Icon name={SERVICE_TILE_ICONS[group.id] || 'services'} />
+									</span>
+									<span className="ws-citizen-form-card__copy">
+										<span className="ws-citizen-form-card__title">
+											{t(AUTHORITY_TITLE_KEYS[group.id] || group.title)}
+										</span>
+										<Skel className="ws-skel--form-names" />
+									</span>
+									<span className="ws-citizen-form-card__cta">{t('ws.citizen.uin.cta')}</span>
+								</button>
+							))}
 						</div>
 					</div>
 				</section>
@@ -179,15 +109,7 @@ function CitizenDashboardSkeleton({ showActions = false }) {
 						<h2 className="ws-card-title">{t('ws.citizen.chart.title')}</h2>
 					</div>
 					<div className="ws-card-body ws-citizen-lower-body">
-						<p className="ws-citizen-chart-hint">{t('ws.citizen.chart.hint')}</p>
 						<CitizenChartSkeleton />
-						<button
-							type="button"
-							className="ws-btn ws-btn--outline ws-citizen-status-link"
-							onClick={() => navigate('/dashboard/status')}
-						>
-							{t('ws.citizen.chart.openStatus')}
-						</button>
 					</div>
 				</aside>
 			</div>
@@ -232,23 +154,33 @@ export function CitizenRecentSkeleton({ rows = 6 }) {
 
 export function CitizenChartSkeleton() {
 	return (
-		<div className="ws-chart-wrap ws-chart-wrap--doughnut ws-citizen-chart ws-citizen-chart--skel">
-			<Skel className="ws-skel--donut" />
-			<div className="ws-citizen-chart-skel-legend">
-				<span className="ws-citizen-chart-skel-swatch">
-					<Skel className="ws-skel--swatch" />
+		<>
+			<div className="ws-citizen-status-tabs" aria-hidden>
+				<span className="ws-citizen-status-tab">
 					<Skel className="ws-skel--legend" />
 				</span>
-				<span className="ws-citizen-chart-skel-swatch">
-					<Skel className="ws-skel--swatch" />
+				<span className="ws-citizen-status-tab">
 					<Skel className="ws-skel--legend" />
 				</span>
-				<span className="ws-citizen-chart-skel-swatch">
-					<Skel className="ws-skel--swatch" />
+				<span className="ws-citizen-status-tab">
 					<Skel className="ws-skel--legend" />
 				</span>
 			</div>
-		</div>
+			<ul className="ws-citizen-status-list" aria-hidden>
+				{Array.from({ length: 4 }, (_, index) => (
+					<li key={index} className="ws-citizen-status-item">
+						<span className="ws-citizen-status-item__icon">
+							<Skel className="ws-skel--swatch" />
+						</span>
+						<Skel className="ws-skel--legend" />
+						<Skel className="ws-skel--stat" />
+					</li>
+				))}
+			</ul>
+			<div className="ws-citizen-status-footer">
+				<Skel className="ws-skel--legend" />
+			</div>
+		</>
 	)
 }
 

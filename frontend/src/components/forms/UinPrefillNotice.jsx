@@ -1,14 +1,15 @@
-import { Info } from 'lucide-react'
-
-/** Quiet helper under UIN-loaded applicant details — not an alert banner. */
+/** Section head for UIN-loaded party fields. */
 function UinPrefillNotice({
-	message = 'Filled from UIN / profile — please confirm.',
+	title = 'Tenancy details — review',
+	message = 'Verify details',
 }) {
 	return (
-		<p className="sf-uin-prefill-note" role="status">
-			<Info size={14} strokeWidth={2.25} className="sf-uin-prefill-note__icon" aria-hidden />
-			<span>{message}</span>
-		</p>
+		<div className="sf-record-review-head" role="status">
+			<p className="sf-record-review-label">{title}</p>
+			{message ? (
+				<span className="sf-record-review-hint">{message}</span>
+			) : null}
+		</div>
 	)
 }
 

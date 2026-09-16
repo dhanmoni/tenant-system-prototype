@@ -12,12 +12,18 @@ export const Icon = ({ name, className = '' }) => {
 		),
 		services: (
 			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-				<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+				<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+				<rect width="20" height="14" x="2" y="6" rx="2" />
 			</svg>
 		),
 		status: (
 			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-				<circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+				<rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+				<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+				<path d="M8 11h.01" />
+				<path d="M12 11h4" />
+				<path d="M8 16h.01" />
+				<path d="M12 16h4" />
 			</svg>
 		),
 		timeline: (
@@ -35,6 +41,34 @@ export const Icon = ({ name, className = '' }) => {
 		building: (
 			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
 				<path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01" /><path d="M9 12v.01" /><path d="M9 15v.01" /><path d="M9 18v.01" />
+			</svg>
+		),
+		landmark: (
+			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+				<line x1="3" y1="22" x2="21" y2="22" />
+				<line x1="6" y1="18" x2="6" y2="11" />
+				<line x1="10" y1="18" x2="10" y2="11" />
+				<line x1="14" y1="18" x2="14" y2="11" />
+				<line x1="18" y1="18" x2="18" y2="11" />
+				<polygon points="12 2 22 9 2 9" />
+			</svg>
+		),
+		gavel: (
+			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+				<path d="m14 13-7.5 7.5a2.12 2.12 0 1 1-3-3L11 10" />
+				<path d="m16 16 6-6" />
+				<path d="m8 8 6-6" />
+				<path d="m9 7 8 8" />
+				<path d="m21 11-8-8" />
+			</svg>
+		),
+		scale: (
+			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+				<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+				<path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+				<path d="M7 21h10" />
+				<path d="M12 3v18" />
+				<path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
 			</svg>
 		),
 		chart: (
@@ -104,6 +138,14 @@ export const Icon = ({ name, className = '' }) => {
 		documentPlus: (
 			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
 				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
+			</svg>
+		),
+		idCard: (
+			<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+				<rect x="2" y="5" width="20" height="14" rx="2" />
+				<circle cx="8" cy="12" r="2.25" />
+				<path d="M13.5 10h5" />
+				<path d="M13.5 14h3.5" />
 			</svg>
 		),
 		check: (

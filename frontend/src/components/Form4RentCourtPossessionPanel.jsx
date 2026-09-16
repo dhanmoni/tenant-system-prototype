@@ -5,7 +5,6 @@ import {
 	ArrowLeft,
 	Building2,
 	Check,
-	IdCard,
 	MapPin,
 	Scale,
 	Upload,
@@ -14,6 +13,7 @@ import {
 import api, { csrf } from '../api'
 import TenancyUinLookup from './forms/TenancyUinLookup'
 import UinPrefillNotice from './forms/UinPrefillNotice'
+import LoadedUinChip from './forms/LoadedUinChip'
 import ServiceFormReadyGate from './forms/ServiceFormReadyGate'
 import ServiceFormPreviewModal from './forms/ServiceFormPreviewModal'
 import FormIILegalDocument from './forms/FormIILegalDocument'
@@ -76,6 +76,7 @@ function FormTick({ checked, className = '' }) {
 /** Unticked parts default to personal knowledge; tick only those based on legal advice. */
 const FORM_II_PART_SHORT = {
 	1: 'Particulars of application',
+	2: 'Jurisdiction',
 	3: 'Facts of the case',
 	4: 'Grounds for relief',
 	5: 'Earlier proceedings',
@@ -98,7 +99,7 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle, error = '' 
 			<legend className="m-0 w-full min-w-0 px-0">
 				<span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-[#334155]">
 					<span
-						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] text-[#334155]"
+						className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#cbd5e1] bg-[#f1f5f9] text-[#0d47a1]"
 						aria-hidden
 					>
 						<Scale size={15} strokeWidth={2.25} />
@@ -144,13 +145,14 @@ function LegalAdvicePartPicker({ options, selectedNumbers, onToggle, error = '' 
 	)
 }
 
-function FormCard({ title, description, badge, children }) {
+function FormCard({ title, description, badge, uin, onChangeUin, children }) {
 	return (
 		<section className="sf-form-card overflow-hidden sf-form-card rounded-[20px] bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
 			<div className="sf-form-card__header">
 				{badge ? <span className="sf-form-card__badge">{badge}</span> : null}
 				<h1 className="sf-form-card__title">{title}</h1>
 				{description ? <p className="sf-form-card__lead">{description}</p> : null}
+				{uin ? <LoadedUinChip value={uin} onChange={onChangeUin} /> : null}
 			</div>
 			<div className="flex flex-col gap-4 p-[22px] sm:p-[30px]">{children}</div>
 		</section>
@@ -364,7 +366,7 @@ function ReadOnlyField({
 				{label}
 				{fromUin ? (
 					<span
-						className="form-iv-from-uin-tag !normal-case !text-[#16a34a]"
+						className="form-iv-from-uin-tag !normal-case"
 						title="Filled from the loaded tenancy UIN"
 					>
 						{' '}
@@ -461,6 +463,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 
 	const [tenancyUIN, setTenancyUIN] = useState('')
 	const [tenantName, setTenantName] = useState('')
+	const [tenantResidentialAddress, setTenantResidentialAddress] = useState('')
 	const [premisesSituatedAt, setPremisesSituatedAt] = useState('')
 	const [tenancyDistrict, setTenancyDistrict] = useState('')
 	const [recordLoaded, setRecordLoaded] = useState(false)
@@ -573,15 +576,12 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 	const resolvedVerificationParagraphs = useMemo(() => {
 		const paragraphs = {}
 		requiredVerificationParas.forEach((option) => {
+			if (option.number === 2 && !jurisdictionAccepted) return
 			paragraphs[option.number] =
 				verification.paragraphs?.[option.number] === PARA_ANSWER.LEGAL_ADVICE
 					? PARA_ANSWER.LEGAL_ADVICE
 					: PARA_ANSWER.PERSONAL_KNOWLEDGE
 		})
-		// Para 2 is the jurisdiction undertaking — include it in the sworn blank when accepted.
-		if (jurisdictionAccepted) {
-			paragraphs[2] = PARA_ANSWER.PERSONAL_KNOWLEDGE
-		}
 		return paragraphs
 	}, [requiredVerificationParas, verification.paragraphs, jurisdictionAccepted])
 
@@ -634,6 +634,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 		setApplicantName(profile.name)
 		setApplicantResidentialAddress(profile.address)
 		setTenantName('')
+		setTenantResidentialAddress('')
 		setPremisesSituatedAt('')
 		setTenancyDistrict('')
 		setBeforeRentCourt('')
@@ -767,12 +768,10 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 				'This UIN has no district on record. Place of filing cannot be set automatically.'
 			)
 		}
+		const resolvedAnswers = Object.values(resolvedVerificationParagraphs)
 		const allOnLegalAdvice =
-			requiredVerificationParas.length > 0 &&
-			requiredVerificationParas.every(
-				(option) =>
-					resolvedVerificationParagraphs[option.number] === PARA_ANSWER.LEGAL_ADVICE
-			)
+			resolvedAnswers.length > 0 &&
+			resolvedAnswers.every((answer) => answer === PARA_ANSWER.LEGAL_ADVICE)
 		if (allOnLegalAdvice) {
 			fail(
 				'form-ii-legal-advice',
@@ -787,6 +786,9 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 		}
 		if (!tenantName.trim()) {
 			fail('form-ii-applicant', 'Tenant name is missing from the tenancy record.')
+		}
+		if (!tenantResidentialAddress.trim()) {
+			fail('form-ii-applicant', 'Tenant residential address is missing from the tenancy record.')
 		}
 		if (!signatureImage) {
 			fail('form-ii-signature', 'Upload your signature image.')
@@ -811,6 +813,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 
 			formData.append('tenancy_uin', tenancyUIN.trim())
 			formData.append('tenant_name', tenantName.trim())
+			formData.append('tenant_residential_address', tenantResidentialAddress.trim())
 
 			formData.append('statutory_basis', statutoryBasis)
 			if (groundsApply) {
@@ -890,6 +893,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 		verifierName,
 		tenancyUIN,
 		tenantName,
+		tenantResidentialAddress,
 		statutoryBasis,
 		evictionGrounds,
 		groundsApply,
@@ -906,6 +910,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 		const nextLandlordName = String(tenancy.landlord_name || '').trim()
 		const nextLandlordAddress = String(tenancy.landlord_address || '').trim()
 		const nextTenantName = String(tenancy.tenant_name || '').trim()
+		const nextTenantAddress = String(tenancy.tenant_address || '').trim()
 		const premises = String(tenancy.property_premises_description || '').trim()
 		const districtName = String(tenancy.district?.name || tenancy.office?.district?.name || '').trim()
 
@@ -919,6 +924,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 		setApplicantName(nextLandlordName || profile.name)
 		setApplicantResidentialAddress(nextLandlordAddress || profile.address)
 		setTenantName(nextTenantName)
+		setTenantResidentialAddress(nextTenantAddress)
 		setPremisesSituatedAt(premises)
 		setTenancyDistrict(districtName)
 		if (districtName) setBeforeRentCourt(districtName)
@@ -947,7 +953,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 		return 1
 	}
 
-	const formTitle = serviceMeta?.label || 'Form II — Recovery of possession'
+	const formTitle = serviceMeta?.formName || 'Form II'
 	const formBadge = serviceMeta?.groupTitle || 'Rent Court'
 	const formLead = serviceMeta
 		? `${serviceMeta.matter || 'Application for recovery of possession'}${
@@ -973,7 +979,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 						<ServiceFormReadyGate
 							badge={formBadge}
 							title={formTitle}
-							description={serviceMeta?.rule || null}
+							description={formLead}
 							knowBefore={[
 								'Date of birth and relation details for verification',
 								'Eviction ground / facts ready to state',
@@ -998,7 +1004,16 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 				) : (
 					<>
 						<FormTopBar onBack={onBack} disabled={submitting} />
-						<FormCard title={formTitle} description={formLead} badge={formBadge}>
+						<FormCard
+							title={formTitle}
+							description={formLead}
+							badge={formBadge}
+							uin={tenancyUIN}
+							onChangeUin={() => {
+								clearTenancyRecord()
+								setTenancyUIN('')
+							}}
+						>
 							<div className="form-iv-main">
 							<FormSection
 								step={1}
@@ -1006,26 +1021,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 								title="Applicant details"
 								description="On Form II the applicant is the landlord. Review the parties and premises from your UIN, then complete relation and age."
 							>
-								<ReadOnlyField
-									label="UIN issued by the Rent Authority"
-									value={tenancyUIN}
-									icon={IdCard}
-									variant="uin"
-									action={
-										<button
-											type="button"
-											className="form-i-change-uin"
-											onClick={() => {
-												clearTenancyRecord()
-												setTenancyUIN('')
-											}}
-										>
-											Change UIN
-										</button>
-									}
-								/>
 								<UinPrefillNotice />
-								<p className="sf-record-review-label">Tenancy details (from UIN) — review only</p>
 								<div className="grid gap-3 sm:grid-cols-2">
 									<ReadOnlyField
 										label="A. Applicant name (landlord)"
@@ -1033,16 +1029,27 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 										icon={User}
 										fromUin
 									/>
-									<ReadOnlyField label="B. Tenant name" value={tenantName} icon={User} fromUin />
-									<div className="sm:col-span-2">
-										<ReadOnlyField
-											label="Applicant residential address"
-											value={applicantResidentialAddress}
-											icon={MapPin}
-											multiline
-											fromUin
-										/>
-									</div>
+									<ReadOnlyField
+										label="B. Respondent name (tenant)"
+										value={tenantName}
+										icon={User}
+										fromUin
+									/>
+									<ReadOnlyField
+										label="Applicant residential address"
+										value={applicantResidentialAddress}
+										icon={MapPin}
+										multiline
+										fromUin
+									/>
+									<ReadOnlyField
+										label="Respondent residential address"
+										value={tenantResidentialAddress}
+										icon={MapPin}
+										multiline
+										empty="Not on record"
+										fromUin
+									/>
 									<div className="sm:col-span-2">
 										<ReadOnlyField
 											label="Premises situated at"
@@ -1417,7 +1424,7 @@ export default function Form4RentCourtPossessionPanel({ onBack, serviceMeta, use
 											<span className="form-ii-jurisdiction__fetched-label">
 												Filing venue
 												<span
-													className="form-iv-from-uin-tag !normal-case !text-[#16a34a]"
+													className="form-iv-from-uin-tag !normal-case"
 													title="Filled from the loaded tenancy UIN"
 												>
 													{' '}

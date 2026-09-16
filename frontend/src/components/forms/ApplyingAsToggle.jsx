@@ -1,16 +1,16 @@
-/** Shared landlord/tenant role picker — segmented navy toggle (matches UIN apply UX). */
+import { Building2, UserRound } from 'lucide-react'
+
+/** Shared landlord/tenant role picker — same pill language as Relation. */
 function ApplyingAsToggle({
 	value,
 	onChange,
 	name = 'applying_as',
 	label = 'Applying as',
-	hint = 'This decides who is the applicant on this form.',
+	hint = '',
 	landlordLabel = 'Landlord',
 	tenantLabel = 'Tenant',
 	required = true,
 }) {
-	const isTenant = value === 'tenant'
-
 	return (
 		<div className="sf-applying-as">
 			<div className="sf-applying-as__label-row">
@@ -22,15 +22,8 @@ function ApplyingAsToggle({
 				) : null}
 			</div>
 			{hint ? <p className="sf-applying-as__hint">{hint}</p> : null}
-			<div
-				className={`sf-applying-as__toggle${isTenant ? ' is-tenant' : ' is-landlord'}`}
-				role="radiogroup"
-				aria-label={label}
-			>
-				<span className="sf-applying-as__indicator" aria-hidden />
-				<label
-					className={`sf-applying-as__btn${value === 'landlord' ? ' is-active' : ''}`}
-				>
+			<div className="sf-applying-as__options" role="radiogroup" aria-label={label}>
+				<label className={`sf-applying-as__pill${value === 'landlord' ? ' is-active' : ''}`}>
 					<input
 						type="radio"
 						name={name}
@@ -39,9 +32,10 @@ function ApplyingAsToggle({
 						onChange={() => onChange('landlord')}
 						className="sr-only"
 					/>
+					<Building2 size={17} strokeWidth={2.25} aria-hidden />
 					<span>{landlordLabel}</span>
 				</label>
-				<label className={`sf-applying-as__btn${value === 'tenant' ? ' is-active' : ''}`}>
+				<label className={`sf-applying-as__pill${value === 'tenant' ? ' is-active' : ''}`}>
 					<input
 						type="radio"
 						name={name}
@@ -50,6 +44,7 @@ function ApplyingAsToggle({
 						onChange={() => onChange('tenant')}
 						className="sr-only"
 					/>
+					<UserRound size={17} strokeWidth={2.25} aria-hidden />
 					<span>{tenantLabel}</span>
 				</label>
 			</div>

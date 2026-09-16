@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react'
+import { useCallback, useEffect, useRef, useState, Suspense } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api'
-import ProfileCompletionBanner from '../../components/dashboard/ProfileCompletionBanner'
 import { Icon } from '../../components/dashboard/Icons'
 import NavDashboardMenu from '../../components/landing/NavDashboardMenu'
 import { useProfile } from '../../hooks/useProfile'
@@ -11,9 +10,6 @@ import { getRoleLabel } from '../../constants/roleLabels'
 import {
 	isProfileComplete,
 	resolvePassportPhotoUrl,
-	PROFILE_REMINDER_DISMISSED_KEY,
-	PROFILE_REMINDER_SUPPRESSED_KEY,
-	PROFILE_REMINDER_NOTIF_ID,
 } from '../../utils/profileCompleteness'
 import { useLanguage } from '../../i18n'
 import { useToast } from '../../context/ToastContext'
@@ -35,7 +31,7 @@ function workspaceLoaderLabel(pathname) {
 	if (pathname.includes('/admin/inbox')) return 'Opening inbox…'
 	if (pathname.includes('/admin/districts')) return 'Opening districts…'
 	if (pathname.includes('/tenancy-certificate')) return 'Opening application…'
-	if (pathname.includes('/status')) return 'Opening UIN status…'
+	if (pathname.includes('/status')) return 'Opening UIN & application status…'
 	if (pathname.includes('/profile')) return 'Opening profile…'
 	if (pathname.includes('/services')) return 'Opening services…'
 	if (pathname === '/dashboard') return 'Opening dashboard…'
@@ -74,13 +70,6 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	const [isSwitching, setIsSwitching] = useState(false)
 	const [profilePickerOpen, setProfilePickerOpen] = useState(false)
 	const [profileIncomplete, setProfileIncomplete] = useState(false)
-	const [profileNotifRead, setProfileNotifRead] = useState(false)
-	const [reminderDismissed, setReminderDismissed] = useState(
-		() => sessionStorage.getItem(PROFILE_REMINDER_DISMISSED_KEY) === '1'
-	)
-	const [reminderSuppressed, setReminderSuppressed] = useState(
-		() => localStorage.getItem(PROFILE_REMINDER_SUPPRESSED_KEY) === '1'
-	)
 
 	const topbarName = formatDisplayName(user?.name)
 	const topbarAvatarUrl = resolvePassportPhotoUrl(user)
@@ -90,19 +79,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		return translated === key ? getRoleLabel(role) : translated
 	}
 	const currentRoleLabel = translateRole(user?.role)
-	const displayNotifications = useMemo(() => {
-		if (user?.role !== ROLES.USER || !profileIncomplete) return notifications
-		const reminder = {
-			id: PROFILE_REMINDER_NOTIF_ID,
-			title: t('ws.profile.notifTitle'),
-			body: t('ws.profile.notifBody'),
-			time: t('ws.profile.notifTime'),
-			unread: !profileNotifRead,
-			to: '/dashboard/profile',
-		}
-		return [reminder, ...notifications.filter((item) => item.id !== PROFILE_REMINDER_NOTIF_ID)]
-	}, [user?.role, profileIncomplete, notifications, profileNotifRead, t])
-	const unreadCount = displayNotifications.filter((n) => n.unread).length
+	const unreadCount = notifications.filter((n) => n.unread).length
 
 	const syncTopbarPanels = useCallback(() => {
 		const topbar = topbarRef.current
@@ -207,10 +184,6 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 	const { data: profileData } = useProfile()
 
 	useEffect(() => {
-		setReminderDismissed(sessionStorage.getItem(PROFILE_REMINDER_DISMISSED_KEY) === '1')
-	}, [])
-
-	useEffect(() => {
 		if (user?.role !== ROLES.USER) {
 			setProfileIncomplete(false)
 			return
@@ -220,30 +193,11 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 		}
 	}, [user?.role, profileData])
 
-	const showProfileBanner =
-		user?.role === ROLES.USER &&
-		profileIncomplete &&
-		!reminderDismissed &&
-		!reminderSuppressed &&
-		location.pathname !== '/dashboard/profile'
-
-	const handleDismissProfileReminder = useCallback(() => {
-		sessionStorage.setItem(PROFILE_REMINDER_DISMISSED_KEY, '1')
-		setReminderDismissed(true)
-	}, [])
-
-	const handleCompleteProfile = () => {
-		handleDismissProfileReminder()
-		navigate('/dashboard/profile')
-	}
-
 	const markAllNotificationsRead = () => {
-		setProfileNotifRead(true)
 		markAllRead()
 	}
 
 	const openNotification = (item) => {
-		if (item.id === PROFILE_REMINDER_NOTIF_ID) setProfileNotifRead(true)
 		markOneRead(item.id)
 		setNotifOpen(false)
 		if (item.to) navigate(item.to)
@@ -279,6 +233,7 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 					onClose={() => setNavOpen(false)}
 					collapsed={sidebarCollapsed}
 					onToggleCollapse={toggleSidebarCollapsed}
+					profileIncomplete={profileIncomplete}
 				/>
 				<div className="ws-main-column">
 					<header className="ws-topbar" ref={topbarRef}>
@@ -343,13 +298,13 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 												) : null}
 											</div>
 											<ul className="ws-topbar-notif-list">
-												{notificationsLoading && displayNotifications.length === 0 ? (
+												{notificationsLoading && notifications.length === 0 ? (
 													<li className="ws-topbar-notif-empty">{t('ws.top.notifLoading')}</li>
 												) : null}
-												{!notificationsLoading && displayNotifications.length === 0 ? (
+												{!notificationsLoading && notifications.length === 0 ? (
 													<li className="ws-topbar-notif-empty">{t('ws.top.notifEmpty')}</li>
 												) : null}
-												{displayNotifications.map((item) => (
+												{notifications.map((item) => (
 													<li key={item.id}>
 														<button
 															type="button"
@@ -431,12 +386,6 @@ function WorkspaceLayout({ user, onLogout, onUserUpdate }) {
 							</div>
 						</div>
 					</header>
-					{showProfileBanner ? (
-						<ProfileCompletionBanner
-							onComplete={handleCompleteProfile}
-							onDismiss={handleDismissProfileReminder}
-						/>
-					) : null}
 					<div
 						className="ws-main"
 						id="dashboard-primary-content"

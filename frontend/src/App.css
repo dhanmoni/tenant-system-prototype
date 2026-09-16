@@ -15302,12 +15302,8 @@ main.main-fluid {
 	color: #0d47a1;
 }
 
-.service-form-page--modern .form-iv-uin-field {
-	background: #ffffff !important;
-}
-
 .service-form-page--modern .form-iv-uin-field .form-iv-uin-field__icon {
-	color: #334155 !important;
+	color: #0d47a1 !important;
 }
 
 .service-form-page--modern .form-iv-applicant-extras {
@@ -15323,7 +15319,7 @@ main.main-fluid {
 .service-form-page--modern .form-ib-relation-row {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: flex-start;
+	align-items: flex-end;
 	gap: 1.1rem 1.5rem;
 	width: 100%;
 	margin: 0;
@@ -15399,6 +15395,9 @@ main.main-fluid {
 .service-form-page--modern .form-iv-relative-name-input {
 	width: 100%;
 	max-width: 100%;
+	height: 50px;
+	min-height: 50px;
+	align-items: center;
 }
 
 .service-form-page--modern .form-iv-relation-field__options {
@@ -15414,8 +15413,8 @@ main.main-fluid {
 	flex-direction: row !important;
 	align-items: center;
 	justify-content: center;
-	min-height: 38px;
-	padding: 0.4rem 1.15rem;
+	min-height: 46px;
+	padding: 0.5rem 1.45rem;
 	border: 1px solid #cbd5e1;
 	border-radius: 999px;
 	background: #fff;
@@ -15424,7 +15423,7 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-relation-option span {
-	font-size: 0.8125rem;
+	font-size: 0.9375rem;
 	font-weight: 600;
 	color: #334155;
 }
@@ -16404,8 +16403,8 @@ main.main-fluid {
 	flex-direction: column;
 	gap: 0.4rem;
 	min-width: 0;
-	width: 100%;
-	max-width: min(28rem, 100%);
+	width: fit-content;
+	max-width: 100%;
 }
 
 .service-form-page--modern .form-iv-details .form-ii-jurisdiction > label,
@@ -16471,14 +16470,25 @@ main.main-fluid {
 }
 
 .service-form-page--modern .form-iv-details .form-ii-jurisdiction__field {
+	width: max-content;
+	max-width: 100%;
+	min-width: min(22rem, 100%);
 	min-height: 0;
 	align-items: stretch;
+	background: #ffffff !important;
+	border: 0 !important;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__field .form-i-icon-gutter {
+	border-right: 1px solid #e2e8f0 !important;
+	background: transparent !important;
 }
 
 .service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched-name {
 	font-size: 0.9375rem;
-	font-weight: 700;
-	font-style: italic;
+	font-weight: 600;
+	font-style: normal;
 	line-height: 1.35;
 	color: #0f172a;
 }
@@ -16727,49 +16737,36 @@ main.main-fluid {
 	scroll-margin-top: 5.5rem;
 }
 
-.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check.is-checked {
-	background: #f1f5f9;
-}
-
-.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check__code {
-	color: #475569;
-}
-
-.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check input {
-	accent-color: #334155;
-}
-
-.service-form-page--modern .form-iv-service-other {
-	padding: 0 0.15rem 0.15rem;
-}
-
-@media (max-width: 640px) {
-	.service-form-page--modern .form-iv-col-list {
-		grid-template-columns: 1fr;
-	}
-}
-
 .service-form-page--modern .form-iv-repair-check {
 	align-items: flex-start;
 	gap: 0.4rem;
-	padding: 0.35rem 0.15rem;
-	border: 0;
-	border-radius: 0;
-	border-bottom: 1px solid #f1f5f9;
+	padding: 0.4rem 0.45rem;
+	border: 1px solid transparent;
+	border-radius: 8px;
 	background: transparent;
 	font-size: 0.8125rem;
 	line-height: 1.4;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.service-form-page--modern .form-iv-repair-check:hover {
+	background: #f8fafc;
+	border-color: #e2e8f0;
 }
 
 .service-form-page--modern .form-iv-repair-check.is-checked {
-	border-color: #e2e8f0;
-	background: transparent;
+	border-color: #90caf9;
+	background: #eaf4ff;
+	box-shadow: none;
 }
 
 .service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-check.is-checked,
 .service-form-page--modern .form-iv-repair-part--tenant .form-iv-repair-check.is-checked {
-	border-color: #e2e8f0;
-	background: transparent;
+	border-color: #90caf9;
+	background: #eaf4ff;
+	box-shadow: none;
 }
 
 .service-form-page--modern .form-iv-repair-check__code {
@@ -16778,6 +16775,10 @@ main.main-fluid {
 	font-size: 0.75rem;
 	font-weight: 600;
 	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-repair-check.is-checked .form-iv-repair-check__code {
+	color: #0d47a1;
 }
 
 .service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-check__code,
@@ -16790,14 +16791,47 @@ main.main-fluid {
 	color: #334155;
 }
 
+.service-form-page--modern .form-iv-repair-check.is-checked .form-iv-repair-check__text {
+	color: #0f172a;
+	font-weight: 600;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check.is-checked {
+	border-color: #90caf9;
+	background: #eaf4ff;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check__code {
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check.is-checked .form-iv-repair-check__code {
+	color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check input {
+	accent-color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-service-other {
+	padding: 0 0.15rem 0.15rem;
+}
+
+@media (max-width: 640px) {
+	.service-form-page--modern .form-iv-col-list {
+		grid-template-columns: 1fr;
+	}
+}
+
 .service-form-page--modern .form-iv-repair-check input {
 	margin-top: 0.15rem;
-	accent-color: #334155;
+	accent-color: #0d47a1;
 }
 
 .service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-check input,
 .service-form-page--modern .form-iv-repair-part--tenant .form-iv-repair-check input {
-	accent-color: #334155;
+	accent-color: #0d47a1;
 }
 
 .service-form-page--modern .form-ib-undertaking.is-checked {
