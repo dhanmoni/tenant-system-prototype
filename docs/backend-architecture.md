@@ -533,7 +533,7 @@ sequenceDiagram
     participant T as USB token
 
     O->>S: POST .../proceedings  (record the proceeding)
-    S->>S: NoticeDocument::pdf() -> documents disk, document_path frozen
+    S->>S: NoticeDocument::render() -> documents disk, document_path + signature_placement frozen
     O->>S: GET .../proceedings/{id}/document
     S-->>O: draft PDF (marked NOT YET SIGNED)
     O->>A: POST /sign/pdf {pdfBase64, apiKey, requirePin}
@@ -570,6 +570,32 @@ other would put a false statement in the record.
 signed proceedings only, because an unsigned notice is a draft and says so on its face. Re-signing
 is refused (409) — a notice that must change is a fresh proceeding. `CaseProceedingController` also
 gained the district check its `index()`/`store()` previously carried only as a comment.
+
+**Where the signature goes.** At the top of the sign area: a blank box directly above the name of
+the issuing authority, at the end of every notice (`resources/views/notices/_signature.blade.php`).
+Notices are US Legal. Every notice except a final order is signed there only, and the sign area
+follows the text. A final order is also stamped on every page — and the agent puts all of a
+document's stamps at the one corner it is given (confirmed by signing one, 15 Sep 2026) — so its sign
+area and name are pinned in a 54mm bottom margin on the last page; each earlier page's stamp lands in
+the same spot, on blank margin. While Dompdf renders,
+`NoticeDocument::render()` records the box's page and rectangle, and the controller freezes that in
+`case_proceedings.signature_placement` beside `document_path`:
+
+```json
+{"page_count": 2, "every_page": false, "sign_area": {"page": 2, "rect": [left, top, right, bottom]}}
+```
+
+Points from the top left of the page, pages from 1 — the agent's own terms. `dscAgent.js` sends
+`rectMode: "top-left"`, `rect: [left, top]` and `page`, plus `stampAllPages` for a final order.
+Those fields come from the vendor's test page (`test-sign.html`); their SDK omits them, and nothing
+there sets the stamp's size. The agent sizes the stamp to the certificate holder's name (257 × 36pt
+for the first certificate used), so the sign box spans the text width and the stamp is right-aligned
+in it: `CaseProceedingController::signature()` records the widget's width
+(`NoticeDocument::stampWidth()`) in `signature_metadata.observed.stamp_width`,
+`GET /api/admin/signing-profile` returns the officer's latest, and `dscAgent.js` sends
+`left = max(box left, box right − width)`, defaulting to 260pt before an officer's first signature.
+Notices without a `sign_area` — rendered before 15 Sep 2026 — are signed as before: the agent's
+default bottom-right position on every page.
 
 **What is not done here.** The server does not verify the certificate chain; it checks structurally
 that a signature dictionary is present (`/ByteRange`), which catches the case that actually occurs —

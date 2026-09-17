@@ -89,6 +89,14 @@ export function useNoticeSigning(formType, applicationId) {
 					if (!pin) throw new DscAgentError('A PIN is needed to sign.', 'pin_cancelled')
 				}
 
+				// How wide this officer's stamp came out last time, so it can be right-aligned over the
+				// authority's name. Only the stamp's position depends on it: if it cannot be had, sign
+				// anyway at the default position rather than refuse.
+				const stampWidth = await api
+					.get('/api/admin/signing-profile')
+					.then(({ data }) => data?.stamp_width ?? null)
+					.catch(() => null)
+
 				const { signedPdfBase64, agentResponse } = await signPdf(current.base, pdfBase64, {
 					// Shown in the signature panel of any PDF reader, so it names the forum the
 					// notice issues from rather than the account that clicked the button.
@@ -96,6 +104,9 @@ export function useNoticeSigning(formType, applicationId) {
 						? `Issued by ${proceeding.signature_authority_hint}`
 						: 'Issued through the Assam Tenancy Portal',
 					pin,
+					// Where the server measured the sign area above the authority's name.
+					placement: proceeding.signature_placement,
+					stampWidth,
 				})
 
 				const { data } = await api.post(`${base}/${proceeding.id}/signature`, {

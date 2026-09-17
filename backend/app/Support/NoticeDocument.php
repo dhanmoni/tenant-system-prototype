@@ -55,6 +55,18 @@ class NoticeDocument
      */
     private const EMPTY_LIST = "1.\n2.\n3.";
 
+    /**
+     * Notice types stamped on every page. Every other notice is signed once, in its sign area.
+     *
+     * The agent puts all of a document's stamps at the one corner it is given, so these cannot have
+     * the sign area follow the text: it sits at the foot of the last page instead, where the stamp on
+     * every earlier page falls in the same blank bottom margin.
+     */
+    private const SIGNED_ON_EVERY_PAGE = ['final_order'];
+
+    /** The class of the blank box in notices._signature that the signature is drawn into. */
+    private const STAMP_CLASS = 'signature-stamp';
+
     public static function supports(?string $noticeType): bool
     {
         return isset(self::VIEWS[(string) $noticeType]);
@@ -63,6 +75,39 @@ class NoticeDocument
     public static function titleFor(?string $noticeType): string
     {
         return self::TITLES[(string) $noticeType] ?? 'Notice';
+    }
+
+    /**
+     * The fields each notice prints, and so cannot be issued without.
+     *
+     * Read off the templates. A notice with a blank date, time or venue summons a party to nowhere at
+     * no time, and a final order with no terms disposes of the case on nothing. A field a template
+     * does not print stays optional: it is kept on the proceeding but never reaches the page. The
+     * templates' own fallbacks (the "1. 2. 3." placeholder, the recorded date standing in for a
+     * previous hearing) remain only for proceedings recorded before these were enforced.
+     *
+     * ProceedingModal.jsx mirrors this list so the form can say so before submitting; this is the
+     * authority.
+     */
+    private const REQUIRED_FIELDS = [
+        'appearance' => ['hearing_date', 'hearing_time', 'venue'],
+        'applicant_absent' => ['previous_hearing_date', 'hearing_date', 'hearing_time', 'venue'],
+        'respondent_absent' => ['previous_hearing_date', 'hearing_date', 'hearing_time', 'venue'],
+        'adjournment' => ['previous_hearing_date', 'hearing_date', 'hearing_time'],
+        'proceeding_sheet' => ['hearing_date', 'remarks', 'additional_remarks'],
+        'final_order' => ['hearing_date', 'remarks'],
+        'ex_parte' => ['remarks', 'additional_remarks'],
+    ];
+
+    /** @return string[] */
+    public static function requiredFields(?string $noticeType): array
+    {
+        return self::REQUIRED_FIELDS[(string) $noticeType] ?? [];
+    }
+
+    public static function signsEveryPage(?string $noticeType): bool
+    {
+        return in_array((string) $noticeType, self::SIGNED_ON_EVERY_PAGE, true);
     }
 
     /**
@@ -196,6 +241,7 @@ class NoticeDocument
             // Drives the closing attestation: a draft says so in terms, so an unsigned copy that
             // escapes the office cannot be mistaken for an issued notice.
             'signed' => $signed,
+            'signatureAtPageFoot' => self::signsEveryPage($proceeding->notice_type),
         ];
     }
 
@@ -210,23 +256,101 @@ class NoticeDocument
     }
 
     /**
-     * The PDF bytes.
+     * The PDF bytes, and where on them the digital signature goes.
      *
-     * A4 to match the paper these are printed on, and because the DSC agent places its visible
-     * signature widget by absolute coordinates - a page size that varied would move the stamp.
+     * The DSC agent draws its visible signature into a rectangle on a page. Left to itself it uses
+     * one fixed rectangle from its own config, bottom right, wherever the text happened to end. The
+     * signature belongs over the authority's name, and that name moves with what the officer typed,
+     * so the renderer - the only thing that knows where it landed - measures it while Dompdf draws
+     * the page: each signature box reports its page and position as it is rendered.
+     *
+     * The placement is recorded in the agent's own terms. Its request takes `rectMode: "top-left"`,
+     * the stamp's left and top edge in points from the top left of the page, and a page number from
+     * 1; so the sign area is [left, top, right, bottom] measured the same way:
+     *
+     *     ['page_count' => int, 'every_page' => bool, 'sign_area' => ['page' => int, 'rect' => [...]]]
+     *
+     * The agent is only given the corner and sizes the stamp to the certificate holder's name, so the
+     * box spans the text width and the browser right-aligns the stamp inside it, using the width the
+     * officer's previous stamp came out at - see stampWidth() and .signature-stamp in the layout.
+     *
+     * US Legal (8.5 x 14 in, 612 x 1008 pt), the paper these are issued on. Always the one size,
+     * because coordinates on a page size that varied would not mean the same thing twice. How much
+     * of each page the notice fills does vary, with the remarks, and needs no handling beyond the
+     * measurement: the box goes wherever the name went.
+     *
+     * @return array{0: string, 1: array}
      */
-    public static function pdf(CaseProceeding $proceeding, Model $application, bool $signed): string
+    public static function render(CaseProceeding $proceeding, Model $application, bool $signed): array
     {
         if (!class_exists('Dompdf\\Dompdf')) {
             throw new \RuntimeException('Dompdf is not installed, so notices cannot be issued as PDFs.');
         }
 
+        $signArea = null;
+
         $dompdf = new \Dompdf\Dompdf();
+        $dompdf->setCallbacks([[
+            'event' => 'end_frame',
+            'f' => function ($frame, $canvas) use (&$signArea) {
+                $node = $frame->get_node();
+                if (!$node instanceof \DOMElement
+                    || !in_array(self::STAMP_CLASS, explode(' ', $node->getAttribute('class')), true)) {
+                    return;
+                }
+
+                // Dompdf measures from the top left of the page, as the agent's top-left mode does.
+                [$x, $y, $width, $height] = $frame->get_border_box();
+
+                $signArea = [
+                    'page' => $canvas->get_page_number(),
+                    'rect' => array_map(fn ($value) => round($value, 2), [$x, $y, $x + $width, $y + $height]),
+                ];
+            },
+        ]]);
         $dompdf->loadHtml(self::html($proceeding, $application, $signed));
-        $dompdf->setPaper('A4');
+        $dompdf->setPaper('legal');
         $dompdf->render();
 
-        return $dompdf->output();
+        $placement = [
+            'page_count' => $dompdf->getCanvas()->get_page_count(),
+            'every_page' => self::signsEveryPage($proceeding->notice_type),
+            'sign_area' => $signArea,
+        ];
+
+        return [$dompdf->output(), $placement];
+    }
+
+    /**
+     * How wide the agent drew the visible signature on a signed notice, in points.
+     *
+     * The agent sizes its stamp to the certificate holder's name and is only told where the stamp's
+     * top-left corner goes. To right-align the next stamp an officer applies, the signing flow needs
+     * to know how wide theirs comes out, and the only place that is written down is the signature
+     * widget's /Rect in the PDF the agent returns - which it writes as a plain, uncompressed object.
+     *
+     * Null when no widget with a width is found; the next signing then falls back to a default.
+     */
+    public static function stampWidth(string $signedPdf): ?float
+    {
+        if (!preg_match_all('#\bobj\b(.*?)\bendobj\b#s', $signedPdf, $objects)) {
+            return null;
+        }
+
+        foreach ($objects[1] as $body) {
+            if (!preg_match('#/Subtype\s*/Widget\b#', $body)
+                || !preg_match('#/Rect\s*\[\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*\]#', $body, $rect)) {
+                continue;
+            }
+
+            // An invisible signature has a zero-size widget; it says nothing about the stamp.
+            $width = abs((float) $rect[3] - (float) $rect[1]);
+            if ($width > 0) {
+                return round($width, 2);
+            }
+        }
+
+        return null;
     }
 
     /** The filename a party sees when they download it. */

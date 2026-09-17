@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import WorkflowConfirmModal from './WorkflowConfirmModal'
 
 const noticeTypes = [
@@ -11,6 +11,24 @@ const noticeTypes = [
 	{ value: 'ex_parte', label: 'Ex-Parte Order' },
 ]
 
+/**
+ * The fields each notice prints, and so cannot be issued without.
+ *
+ * Mirrors NoticeDocument::REQUIRED_FIELDS on the server, which is the authority and refuses a
+ * proceeding that leaves one of these blank. This copy only lets the form say so before sending.
+ */
+const REQUIRED_FIELDS = {
+	appearance: ['hearing_date', 'hearing_time', 'venue'],
+	applicant_absent: ['previous_hearing_date', 'hearing_date', 'hearing_time', 'venue'],
+	respondent_absent: ['previous_hearing_date', 'hearing_date', 'hearing_time', 'venue'],
+	adjournment: ['previous_hearing_date', 'hearing_date', 'hearing_time'],
+	proceeding_sheet: ['hearing_date', 'remarks', 'additional_remarks'],
+	final_order: ['hearing_date', 'remarks'],
+	ex_parte: ['remarks', 'additional_remarks'],
+}
+
+const RESCHEDULING_NOTICES = ['applicant_absent', 'respondent_absent', 'adjournment']
+
 const emptyForm = {
 	notice_type: 'appearance',
 	previous_hearing_date: '',
@@ -21,21 +39,88 @@ const emptyForm = {
 	additional_remarks: '',
 }
 
+const fieldId = (name) => `proceeding-${name.replaceAll('_', '-')}`
+
+/** Open the browser's date or time picker when the field is clicked, not only its icon. */
+function openPicker(event) {
+	try {
+		event.currentTarget.showPicker?.()
+	} catch {
+		// Some contexts refuse showPicker (a cross-origin frame, for one); typing still works.
+	}
+}
+
 export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting }) {
 	const [formData, setFormData] = useState(emptyForm)
+	const [missing, setMissing] = useState([])
+	const [wasOpen, setWasOpen] = useState(open)
+	const fieldRefs = useRef({})
 
-	useEffect(() => {
-		if (open) setFormData(emptyForm)
-	}, [open])
+	// Start clean each time the modal opens. Done while rendering rather than in an effect, so the
+	// first frame of the reopened modal never shows the last proceeding's values.
+	if (open !== wasOpen) {
+		setWasOpen(open)
+		if (open) {
+			setFormData(emptyForm)
+			setMissing([])
+		}
+	}
+
+	const required = REQUIRED_FIELDS[formData.notice_type] || []
+	const isRequired = (name) => required.includes(name)
+	// A field left blank under one notice type is not an error once the type no longer needs it.
+	const hasError = (name) => isRequired(name) && missing.includes(name)
 
 	const handleChange = (e) => {
-		setFormData({ ...formData, [e.target.name]: e.target.value })
+		const { name, value } = e.target
+		setFormData({ ...formData, [name]: value })
+		if (missing.includes(name)) setMissing(missing.filter((field) => field !== name))
 	}
 
 	const handleSubmit = () => {
 		if (!formData.notice_type) return
+
+		const blank = required.filter((name) => !String(formData[name] ?? '').trim())
+		setMissing(blank)
+		if (blank.length) {
+			fieldRefs.current[blank[0]]?.focus()
+			return
+		}
+
 		onSubmit(formData)
 	}
+
+	const fieldProps = (name) => ({
+		id: fieldId(name),
+		name,
+		value: formData[name],
+		onChange: handleChange,
+		ref: (el) => {
+			fieldRefs.current[name] = el
+		},
+		required: isRequired(name),
+		'aria-invalid': hasError(name) || undefined,
+		'aria-describedby': hasError(name) ? `${fieldId(name)}-error` : undefined,
+	})
+
+	const renderLabel = (name, text) => (
+		<label className="proceeding-modal__label" htmlFor={fieldId(name)}>
+			{text}
+			{isRequired(name) && (
+				<>
+					{' '}
+					<span className="proceeding-modal__required">*</span>
+				</>
+			)}
+		</label>
+	)
+
+	const renderError = (name) =>
+		hasError(name) ? (
+			<p className="proceeding-modal__error" id={`${fieldId(name)}-error`}>
+				This is required for this notice.
+			</p>
+		) : null
 
 	const getRemarksLabel = (type) => {
 		switch (type) {
@@ -89,6 +174,8 @@ export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting 
 		}
 	}
 
+	const reschedules = RESCHEDULING_NOTICES.includes(formData.notice_type)
+
 	return (
 		<WorkflowConfirmModal
 			open={open}
@@ -122,97 +209,76 @@ export default function ProceedingModal({ open, onClose, onSubmit, isSubmitting 
 					</select>
 				</div>
 
-				{['applicant_absent', 'respondent_absent', 'adjournment'].includes(formData.notice_type) && (
+				{reschedules && (
 					<div className="proceeding-modal__field proceeding-modal__field--full">
-						<label className="proceeding-modal__label" htmlFor="proceeding-previous-hearing-date">
-							Previous Hearing date
-						</label>
+						{renderLabel('previous_hearing_date', 'Previous Hearing date')}
 						<input
-							id="proceeding-previous-hearing-date"
 							type="date"
 							className="proceeding-modal__control"
-							name="previous_hearing_date"
-							value={formData.previous_hearing_date}
-							onChange={handleChange}
+							onClick={openPicker}
+							{...fieldProps('previous_hearing_date')}
 						/>
+						{renderError('previous_hearing_date')}
 					</div>
 				)}
 
 				<div className="proceeding-modal__row">
 					<div className="proceeding-modal__field">
-						<label className="proceeding-modal__label" htmlFor="proceeding-hearing-date">
-							{['applicant_absent', 'respondent_absent', 'adjournment'].includes(formData.notice_type) ? 'Next Hearing date' : 'Hearing date'}
-						</label>
+						{renderLabel('hearing_date', reschedules ? 'Next Hearing date' : 'Hearing date')}
 						<input
-							id="proceeding-hearing-date"
 							type="date"
 							className="proceeding-modal__control"
-							name="hearing_date"
-							value={formData.hearing_date}
-							onChange={handleChange}
+							onClick={openPicker}
+							{...fieldProps('hearing_date')}
 						/>
+						{renderError('hearing_date')}
 					</div>
 
 					<div className="proceeding-modal__field">
-						<label className="proceeding-modal__label" htmlFor="proceeding-hearing-time">
-							Hearing time
-						</label>
+						{renderLabel('hearing_time', 'Hearing time')}
 						<input
-							id="proceeding-hearing-time"
 							type="time"
 							className="proceeding-modal__control"
-							name="hearing_time"
-							value={formData.hearing_time}
-							onChange={handleChange}
+							onClick={openPicker}
+							{...fieldProps('hearing_time')}
 						/>
+						{renderError('hearing_time')}
 					</div>
 				</div>
 
 				<div className="proceeding-modal__field proceeding-modal__field--full">
-					<label className="proceeding-modal__label" htmlFor="proceeding-venue">
-						Venue
-					</label>
+					{renderLabel('venue', 'Venue')}
 					<input
-						id="proceeding-venue"
 						type="text"
 						className="proceeding-modal__control"
-						name="venue"
 						placeholder="e.g. Office of the Rent Tribunal, District XYZ"
-						value={formData.venue}
-						onChange={handleChange}
 						autoComplete="off"
+						{...fieldProps('venue')}
 					/>
+					{renderError('venue')}
 				</div>
 
 				<div className="proceeding-modal__field proceeding-modal__field--full">
-					<label className="proceeding-modal__label" htmlFor="proceeding-remarks">
-						{getRemarksLabel(formData.notice_type)}
-					</label>
+					{renderLabel('remarks', getRemarksLabel(formData.notice_type))}
 					<textarea
-						id="proceeding-remarks"
 						className="proceeding-modal__control proceeding-modal__control--textarea"
-						name="remarks"
 						rows={5}
 						placeholder={getRemarksPlaceholder(formData.notice_type)}
-						value={formData.remarks}
-						onChange={handleChange}
+						{...fieldProps('remarks')}
 					/>
+					{renderError('remarks')}
 				</div>
 
 				{(formData.notice_type === 'proceeding_sheet' || formData.notice_type === 'ex_parte') && (
 					<div className="proceeding-modal__field proceeding-modal__field--full">
-						<label className="proceeding-modal__label" htmlFor="proceeding-additional-remarks">
-							{getAdditionalRemarksLabel(formData.notice_type)}
-						</label>
+						{renderLabel('additional_remarks', getAdditionalRemarksLabel(formData.notice_type))}
 						<textarea
-							id="proceeding-additional-remarks"
 							className="proceeding-modal__control proceeding-modal__control--textarea"
-							name="additional_remarks"
 							rows={5}
 							placeholder={getAdditionalRemarksPlaceholder(formData.notice_type)}
-							value={formData.additional_remarks}
-							onChange={handleChange}
+							{...fieldProps('additional_remarks')}
 						/>
+						{renderError('additional_remarks')}
 					</div>
 				)}
 			</div>

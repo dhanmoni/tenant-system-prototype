@@ -107,23 +107,58 @@ export async function agentHealth(base) {
 }
 
 /**
+ * Where the visible signature goes, in the agent's request fields.
+ *
+ * `placement` is the proceeding's signature_placement, measured by the server when it rendered the
+ * notice. The agent takes the stamp's top-left corner in PDF points from the top left of the page
+ * (`rectMode: 'top-left'`, `rect: [left, top]`) and a page number, and sizes the stamp to its own
+ * text. These fields are in the vendor's test page (test-sign.html) but not in their SDK.
+ *
+ * Because only the corner is sent, the stamp is right-aligned by stepping left from the sign area's
+ * right edge by the stamp's own width. That width depends on the certificate holder's name, so it is
+ * `stampWidth` - what this officer's last stamp measured, from the server - or, before they have
+ * signed anything, the width the sign box used to have. The corner never goes left of the sign area,
+ * which spans the text width, so a long name grows into blank space rather than off the page.
+ *
+ * A final order also asks for the stamp on every page. A notice rendered before the placement was
+ * measured has no sign area to aim at, so it keeps what the agent did before: its default
+ * bottom-right position, on every page.
+ */
+const DEFAULT_STAMP_WIDTH = 260
+
+function placementFields(placement, stampWidth) {
+	const area = placement?.sign_area
+	if (!area || !Array.isArray(area.rect)) {
+		return { stampAllPages: true, duplicateWidgets: true }
+	}
+
+	const [areaLeft, top, areaRight] = area.rect
+	const width = stampWidth > 0 ? stampWidth : DEFAULT_STAMP_WIDTH
+	const left = Math.max(areaLeft, areaRight - width)
+
+	return {
+		rectMode: 'top-left',
+		rect: [Math.floor(left), Math.round(top)],
+		page: area.page,
+		...(placement.every_page ? { stampAllPages: true, duplicateWidgets: true } : {}),
+	}
+}
+
+/**
  * Sign one PDF with the token in the officer's machine.
  *
  * `pin` is only ever passed when the agent cannot prompt for itself. When it can - which is the
  * normal case, promptAvailable in /health - we send requirePin and the agent raises its own dialog,
  * so the PIN is never typed into a web page and never enters this application's memory at all.
  */
-export async function signPdf(base, pdfBase64, { reason, pin, requirePin = true } = {}) {
+export async function signPdf(base, pdfBase64, { reason, pin, requirePin = true, placement, stampWidth } = {}) {
 	const body = {
 		pdfBase64,
 		reason: reason || 'Signed via DSC Agent',
 		includeESS: true,
 		embedIntermediates: true,
 		signingTime: '',
-		// The visible stamp goes on every page: a hearing notice is served as a whole, and a
-		// signature on the last page alone leaves the earlier pages looking unattested.
-		stampAllPages: true,
-		duplicateWidgets: true,
+		...placementFields(placement, stampWidth),
 		apiKey: API_KEY,
 	}
 

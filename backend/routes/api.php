@@ -150,6 +150,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\CheckIfBlocked::class])-
         // local DSC agent is about to sign - and the endpoint that records the signed result.
         Route::get('/admin/applications/{type}/{id}/proceedings/{proceeding}/document', [\App\Http\Controllers\CaseProceedingController::class, 'document']);
         Route::post('/admin/applications/{type}/{id}/proceedings/{proceeding}/signature', [\App\Http\Controllers\CaseProceedingController::class, 'signature']);
+        Route::get('/admin/signing-profile', [\App\Http\Controllers\CaseProceedingController::class, 'signingProfile']);
     });
 
     // Admin user management

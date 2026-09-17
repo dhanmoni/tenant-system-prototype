@@ -2,7 +2,6 @@
 
 @section('masthead')
     @include('notices._masthead', [
-        'preTitle' => 'FINAL ORDER',
         'mainTitle' => 'FINAL ORDER',
     ])
 @endsection
