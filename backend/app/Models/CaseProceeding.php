@@ -27,6 +27,7 @@ class CaseProceeding extends Model
         'document_generated_at' => 'datetime',
         'signed_at' => 'datetime',
         'signature_metadata' => 'array',
+        'signature_placement' => 'array',
     ];
 
     /**

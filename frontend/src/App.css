@@ -13697,6 +13697,8 @@ main.main-fluid {
 }
 
 .proceeding-modal__label {
+	/* The site-wide `label { display: grid }` would put the required star on a row of its own. */
+	display: block;
 	font-size: 0.8125rem;
 	font-weight: 700;
 	letter-spacing: 0.01em;
@@ -13744,6 +13746,30 @@ main.main-fluid {
 
 .proceeding-modal__control::placeholder {
 	color: #94a3b8;
+}
+
+/* A required field left blank. After the hover and focus rules above so it outranks them. */
+.proceeding-modal__control[aria-invalid='true'],
+.proceeding-modal__control[aria-invalid='true']:hover:not(:disabled) {
+	border-color: #b91c1c;
+}
+
+.proceeding-modal__control[aria-invalid='true']:focus {
+	border-color: #b91c1c;
+	box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.15);
+}
+
+.proceeding-modal__error {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #b91c1c;
+}
+
+/* The whole date or time field opens its picker, so it should look clickable. */
+.proceeding-modal input[type='date'].proceeding-modal__control,
+.proceeding-modal input[type='time'].proceeding-modal__control {
+	cursor: pointer;
 }
 
 .proceeding-modal select.proceeding-modal__control {

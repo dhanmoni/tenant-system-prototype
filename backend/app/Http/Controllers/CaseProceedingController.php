@@ -77,12 +77,26 @@ class CaseProceedingController extends Controller
 
         $request->validate([
             'notice_type' => 'required|string|in:appearance,applicant_absent,respondent_absent,adjournment,proceeding_sheet,final_order,ex_parte',
-            'hearing_date' => 'nullable|date',
-            'hearing_time' => 'nullable|date_format:H:i',
-            'venue' => 'nullable|string',
-            'previous_hearing_date' => 'nullable|date',
-            'remarks' => 'nullable|string',
-            'additional_remarks' => 'nullable|string',
+        ]);
+
+        // What the notice prints, it cannot be issued without - see NoticeDocument::requiredFields().
+        $required = NoticeDocument::requiredFields($request->notice_type);
+        $presence = fn (string $field) => in_array($field, $required, true) ? 'required' : 'nullable';
+
+        $request->validate([
+            'hearing_date' => [$presence('hearing_date'), 'date'],
+            'hearing_time' => [$presence('hearing_time'), 'date_format:H:i'],
+            'venue' => [$presence('venue'), 'string'],
+            'previous_hearing_date' => [$presence('previous_hearing_date'), 'date'],
+            'remarks' => [$presence('remarks'), 'string'],
+            'additional_remarks' => [$presence('additional_remarks'), 'string'],
+        ], [
+            'required' => 'The :attribute is required for this notice.',
+        ], [
+            'hearing_date' => 'hearing date',
+            'hearing_time' => 'hearing time',
+            'previous_hearing_date' => 'previous hearing date',
+            'additional_remarks' => 'additional remarks',
         ]);
 
         $proceeding = CaseProceeding::create([
@@ -243,6 +257,26 @@ class CaseProceedingController extends Controller
         ]);
     }
 
+    /**
+     * What the signing flow needs to know about the officer, as opposed to the notice.
+     *
+     * The DSC agent sizes its visible stamp to the certificate holder's name and is told only the
+     * stamp's top-left corner. Right-aligning it over the authority's name means stepping left by the
+     * stamp's own width, which is known only once this officer has signed something: it is read off
+     * their most recent signed notice. Null before that, and the browser uses a default.
+     */
+    public function signingProfile(Request $request)
+    {
+        $width = CaseProceeding::where('signed_by_user_id', $request->user()->id)
+            ->whereNotNull('signature_metadata->observed->stamp_width')
+            ->orderByDesc('signed_at')
+            ->value('signature_metadata->observed->stamp_width');
+
+        return response()->json([
+            'stamp_width' => $width === null ? null : (float) $width,
+        ]);
+    }
+
     // ---------------------------------------------------------------- internals
 
     /**
@@ -308,19 +342,19 @@ class CaseProceedingController extends Controller
         }
 
         try {
-            $path = DocumentStore::putContents(
-                NoticeDocument::pdf($proceeding, $application, false),
-                'tenancy/notices/draft'
-            );
+            [$pdf, $placement] = NoticeDocument::render($proceeding, $application, false);
+            $path = DocumentStore::putContents($pdf, 'tenancy/notices/draft');
         } catch (\Throwable $e) {
             report($e);
 
             return null;
         }
 
+        // Frozen with the PDF: a placement measured later, after an edit, would describe other bytes.
         $proceeding->forceFill([
             'document_path' => $path,
             'document_generated_at' => now(),
+            'signature_placement' => $placement,
         ])->save();
 
         return $path;
@@ -387,6 +421,8 @@ class CaseProceedingController extends Controller
             'observed' => [
                 'bytes' => strlen($pdf),
                 'sha256' => hash('sha256', $pdf),
+                // Read back by signingProfile() to right-align this officer's next stamp.
+                'stamp_width' => NoticeDocument::stampWidth($pdf),
             ],
             'operated_by' => [
                 'user_id' => $request->user()->id,

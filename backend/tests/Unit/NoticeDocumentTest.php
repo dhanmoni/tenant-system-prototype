@@ -116,6 +116,21 @@ class NoticeDocumentTest extends TestCase
                 "{$type} is accepted when a proceeding is recorded but has no template"
             );
             $this->assertNotSame('Notice', NoticeDocument::titleFor($type), "{$type} has no title");
+            $this->assertNotEmpty(
+                NoticeDocument::requiredFields($type),
+                "{$type} prints fields of the proceeding, so some of them must be required"
+            );
+        }
+    }
+
+    public function test_required_fields_are_ones_a_proceeding_actually_has(): void
+    {
+        $fillable = (new CaseProceeding())->getFillable();
+
+        foreach (['appearance', 'applicant_absent', 'respondent_absent', 'adjournment', 'proceeding_sheet', 'final_order', 'ex_parte'] as $type) {
+            foreach (NoticeDocument::requiredFields($type) as $field) {
+                $this->assertContains($field, $fillable, "{$type} requires {$field}, which a proceeding cannot hold");
+            }
         }
     }
 
@@ -137,5 +152,24 @@ class NoticeDocumentTest extends TestCase
                 $application
             )
         );
+    }
+
+    public function test_the_stamp_width_is_read_off_the_signature_widget(): void
+    {
+        // The shape the DSC agent actually returned for a notice signed on 15 Sep 2026.
+        $pdf = "%PDF-1.7\n"
+            . "31 0 obj\n<< /Type /XObject /Subtype /Form /BBox [ 0 0 257 36 ] >>\nstream\nq Q\nendstream\nendobj\n"
+            . "32 0 obj\n<< /Type /Annot /Subtype /Widget /Rect [ 319 36 576 72 ] /F 4 /P 20 0 R /AP << /N 31 0 R >> /Parent 34 0 R >>\nendobj\n"
+            . "34 0 obj\n<< /FT /Sig /Kids [ 32 0 R ] /T (Signature1) /V 30 0 R >>\nendobj\n";
+
+        $this->assertSame(257.0, NoticeDocument::stampWidth($pdf));
+    }
+
+    public function test_an_invisible_signature_or_none_gives_no_stamp_width(): void
+    {
+        $invisible = "1 0 obj\n<< /Type /Annot /Subtype /Widget /Rect [ 0 0 0 0 ] >>\nendobj\n";
+
+        $this->assertNull(NoticeDocument::stampWidth($invisible));
+        $this->assertNull(NoticeDocument::stampWidth("%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n"));
     }
 }

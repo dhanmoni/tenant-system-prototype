@@ -8,8 +8,17 @@
   could be attached to. A DSC signs bytes; it cannot sign a DOM.
 
   The markup deliberately stays plain: Dompdf, which renders it, supports little beyond tables and
-  basic block layout, and this has to paginate predictably because the DSC agent stamps its visible
-  signature widget onto the page at fixed coordinates.
+  basic block layout.
+
+  Where the signature goes. Every notice closes with a sign area - notices._signature, a blank box
+  directly above the name of the authority it issues under - and the signature goes at the top of
+  that box. App\Support\NoticeDocument::render() measures where Dompdf put the box, and that
+  measurement is what the DSC agent is told.
+
+  On most notices the sign area follows the text. A final order is also stamped on every page, and
+  the agent puts every one of those stamps at the same corner it is given for the sign area. So on a
+  final order the sign area and the name sit at the foot of the last page, in the bottom margin:
+  the stamp lands on them there, and in the same blank margin on each earlier page.
 --}}
 <!doctype html>
 <html lang="en">
@@ -17,9 +26,15 @@
     <meta charset="utf-8" />
     <title>{{ $documentTitle }} — {{ $caseNo }}</title>
     <style>
-        @page { margin: 28mm 20mm 34mm 20mm; }
+        {{-- A final order's bottom margin holds its sign area and name; see the note above. --}}
+        @page { margin: 28mm 20mm {{ $signatureAtPageFoot ? '54mm' : '34mm' }} 20mm; }
         body {
-            font-family: DejaVu Sans, sans-serif;
+            {{--
+              Times, as legal documents are set. Dompdf has no Times New Roman file, so this resolves
+              to the PDF standard Times-Roman, the same design, which every reader has built in. Its
+              character set is Western European only: text outside it will not print correctly.
+            --}}
+            font-family: 'Times New Roman', Times, serif;
             font-size: 11pt;
             line-height: 1.5;
             color: #000;
@@ -40,7 +55,23 @@
         table.appearances th, table.appearances td {
             border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 10.5pt;
         }
-        .signature-block { margin-top: 28px; }
+        /* The box and the name are one unit: a page break between them would sign an empty page. */
+        .signature-block { margin-top: 28px; page-break-inside: avoid; }
+        /*
+          Out of the flow and into the bottom margin of the last page. An absolute offset counts from
+          the content edge, so -42mm of a 54mm margin leaves the name's last line 12mm above the paper
+          edge. The box and the three lines under it come to about 39mm, which keeps the top of the
+          box a few millimetres clear of the text.
+        */
+        .signature-block-foot { position: absolute; left: 0; right: 0; bottom: -42mm; margin-top: 0; }
+        /*
+          Blank on the page; the agent draws the visible signature into it. The agent sizes the stamp
+          to the certificate holder's name and is told only its top-left corner, so the box spans the
+          whole text width: the browser steps left from the right edge by the officer's own stamp
+          width (dscAgent.js), and a long name grows into the blank space rather than off the page.
+          48pt is tall enough for the agent's two lines, which came out 36pt.
+        */
+        .signature-stamp { height: 48pt; }
         .authority { font-weight: bold; }
         .attestation {
             margin-top: 22px; padding-top: 8px; border-top: 1px solid #000;
@@ -59,12 +90,8 @@
 
 @yield('body')
 
-<div class="signature-block right">
-    <div class="authority">{{ $officeName }}</div>
-    @if ($districtName)
-        <div>{{ $districtName }}</div>
-    @endif
-    <div>Government of Assam</div>
+<div class="signature-block right{{ $signatureAtPageFoot ? ' signature-block-foot' : '' }}">
+    @include('notices._signature')
 </div>
 
 {{--
