@@ -33,6 +33,84 @@ export function formatJurisdiction(tenancy) {
 	return [office, district].filter(Boolean).join(', ')
 }
 
+/**
+ * Two address lines under "To / The Rent Authority" on Form I,
+ * taken from the office that issued the UIN.
+ */
+export function formatRentAuthorityAddressee(tenancy) {
+	if (!tenancy) return { line1: '', line2: '' }
+	const officeName = String(tenancy.office?.name || '').trim()
+	const officeAddress = String(tenancy.office?.address || '').trim()
+	const districtName = String(tenancy.district?.name || tenancy.office?.district?.name || '').trim()
+
+	const line1 = officeName
+		? `Rent Authority — ${officeName}`
+		: districtName
+			? `Rent Authority — ${districtName}`
+			: 'Rent Authority'
+
+	const line2Parts = []
+	if (officeAddress) line2Parts.push(officeAddress)
+	if (districtName && !officeAddress.toLowerCase().includes(districtName.toLowerCase())) {
+		line2Parts.push(`District: ${districtName}`)
+	}
+	const line2 = line2Parts.join(', ') || (districtName ? `District: ${districtName}` : '')
+
+	return { line1, line2 }
+}
+
+/**
+ * Rent Court name + address for Form II / III jurisdiction undertaking.
+ * Prefer district seat; fall back to the office that issued the UIN.
+ */
+export function formatRentCourtAddressee(tenancy) {
+	if (!tenancy) return { line1: '', line2: '' }
+	const officeName = String(tenancy.office?.name || '').trim()
+	const officeAddress = String(tenancy.office?.address || '').trim()
+	const districtName = String(tenancy.district?.name || tenancy.office?.district?.name || '').trim()
+
+	const line1 = districtName
+		? `Rent Court at ${districtName}`
+		: officeName
+			? `Rent Court — ${officeName}`
+			: 'Rent Court'
+
+	const line2Parts = []
+	if (officeAddress) line2Parts.push(officeAddress)
+	if (districtName && !officeAddress.toLowerCase().includes(districtName.toLowerCase())) {
+		line2Parts.push(`District: ${districtName}`)
+	}
+	const line2 = line2Parts.join(', ') || (districtName ? `District: ${districtName}` : '')
+
+	return { line1, line2 }
+}
+
+/**
+ * Rent Tribunal name + address for the Form VI jurisdiction undertaking.
+ * Prefer district seat; fall back to the office that issued the UIN.
+ */
+export function formatRentTribunalAddressee(tenancy) {
+	if (!tenancy) return { line1: '', line2: '' }
+	const officeName = String(tenancy.office?.name || '').trim()
+	const officeAddress = String(tenancy.office?.address || '').trim()
+	const districtName = String(tenancy.district?.name || tenancy.office?.district?.name || '').trim()
+
+	const line1 = districtName
+		? `Rent Tribunal at ${districtName}`
+		: officeName
+			? `Rent Tribunal — ${officeName}`
+			: 'Rent Tribunal'
+
+	const line2Parts = []
+	if (officeAddress) line2Parts.push(officeAddress)
+	if (districtName && !officeAddress.toLowerCase().includes(districtName.toLowerCase())) {
+		line2Parts.push(`District: ${districtName}`)
+	}
+	const line2 = line2Parts.join(', ') || (districtName ? `District: ${districtName}` : '')
+
+	return { line1, line2 }
+}
+
 export function formatOtherCharges(tenancy) {
 	const lines = []
 	if (tenancy.property_charge_electricity) {

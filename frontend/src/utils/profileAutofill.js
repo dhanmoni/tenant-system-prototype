@@ -17,6 +17,41 @@ function text(value) {
 	return value === null || value === undefined ? '' : String(value).trim()
 }
 
+/** Parse a calendar date without UTC shift (YYYY-MM-DD stays that civil day). */
+export function parseDateOnly(value) {
+	const raw = text(value)
+	if (!raw) return null
+
+	const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+	if (iso) {
+		const year = Number(iso[1])
+		const month = Number(iso[2]) - 1
+		const day = Number(iso[3])
+		const born = new Date(year, month, day)
+		if (
+			born.getFullYear() !== year ||
+			born.getMonth() !== month ||
+			born.getDate() !== day
+		) {
+			return null
+		}
+		return born
+	}
+
+	const born = new Date(raw)
+	return Number.isNaN(born.getTime()) ? null : born
+}
+
+/** Value suitable for `<input type="date" />`. */
+export function toDateInputValue(value) {
+	const born = parseDateOnly(value)
+	if (!born) return ''
+	const year = born.getFullYear()
+	const month = String(born.getMonth() + 1).padStart(2, '0')
+	const day = String(born.getDate()).padStart(2, '0')
+	return `${year}-${month}-${day}`
+}
+
 /**
  * Age in completed years, which is what "aged ......" on the verification asks for.
  *
@@ -24,10 +59,8 @@ function text(value) {
  * sentence, so a wrong one is worse than a blank the filer has to fill.
  */
 export function ageOn(dateOfBirth, on = new Date()) {
-	if (!dateOfBirth) return ''
-
-	const born = new Date(dateOfBirth)
-	if (Number.isNaN(born.getTime())) return ''
+	const born = parseDateOnly(dateOfBirth)
+	if (!born) return ''
 
 	let age = on.getFullYear() - born.getFullYear()
 	const monthDelta = on.getMonth() - born.getMonth()
@@ -39,6 +72,16 @@ export function ageOn(dateOfBirth, on = new Date()) {
 	return age > 0 && age < 120 ? String(age) : ''
 }
 
+export function formatLongDate(value) {
+	const born = parseDateOnly(value)
+	if (!born) return ''
+	return born.toLocaleDateString('en-IN', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric',
+	})
+}
+
 export function profileDefaults(user) {
 	const profile = user || {}
 
@@ -48,6 +91,7 @@ export function profileDefaults(user) {
 	return {
 		name: text(profile.name),
 		address: text(address),
+		dateOfBirth: text(profile.date_of_birth),
 		age: ageOn(profile.date_of_birth),
 		district: text(profile.district?.name),
 		phone: text(profile.phone),

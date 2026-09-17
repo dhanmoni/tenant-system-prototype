@@ -109,9 +109,10 @@ class RequiredFieldsTest extends TestCase
     {
         $this->assertRequired('RentCourtPossessionApplicationController', [
             'particulars_of_application', 'facts_of_case', 'grounds_for_relief', 'relief_sought',
-            // Form II prints no respondent block; the tenant named in the recital is the only
-            // identification of the party sought to be evicted.
+            // Form II prints no respondent block; the portal still captures tenant name +
+            // residential address so notice can be served (gazette-divergences A2).
             'tenant_name',
+            'tenant_residential_address',
         ]);
         $this->assertOptional('RentCourtPossessionApplicationController', ['interim_order_sought']);
 

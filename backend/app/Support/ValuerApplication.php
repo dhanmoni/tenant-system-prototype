@@ -18,7 +18,7 @@ use App\Constants\Declarations;
 class ValuerApplication
 {
     /** As printed on p.4182. The filer strikes out two; here they pick one. */
-    public const RELATIONS = ['Son', 'Daughter', 'Wife'];
+    public const RELATIONS = ['Son', 'Daughter', 'Spouse'];
 
     /** "landlord or tenant of premises situated at" - again a pair to strike one of. */
     public const CAPACITIES = ['landlord', 'tenant'];

@@ -25,6 +25,7 @@ class RentCourtPossessionApplicationSeeder extends Seeder
                 'applicant_residential_address' => 'Demo residential address, Assam',
                 'tenancy_uin' => 'UID-DEMO-001',
                 'tenant_name' => 'Tenant Demo',
+                'tenant_residential_address' => 'Demo tenant residential address, Assam',
 
                 'jurisdiction_statement' => 'The applicant states that this matter is within the jurisdiction of the Rent Court.',
                 'facts_of_case' => 'Premises were rented out to the tenant, and recovery of possession is requested as per rules (demo).',

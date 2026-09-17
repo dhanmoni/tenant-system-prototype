@@ -13762,7 +13762,7 @@ main.main-fluid {
 	bottom: 0;
 	margin-top: 0.35rem;
 	padding-top: 1rem;
-	border-top: 1px solid #e8eef5;
+	border-top: 1px solid #e3f2fd;
 	background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), #fff 40%);
 }
 
@@ -14297,7 +14297,2658 @@ main.main-fluid {
 	background: #f8fafc;
 }
 
-/* Legacy alias ΓÇö inbox modals used this class without styles */
+/* Legal / Gazette-style A4 preview (Form I) — Google Drive–like viewer */
+.drive-preview {
+	position: fixed;
+	inset: 0;
+	z-index: 1300;
+	display: flex;
+	flex-direction: column;
+	background: #202124;
+}
+
+.drive-preview__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	flex-shrink: 0;
+	min-height: 3.5rem;
+	padding: 0.55rem 0.85rem 0.55rem 1rem;
+	background: #2d2e30;
+	border-bottom: 1px solid #3c4043;
+	color: #e8eaed;
+}
+
+.drive-preview__file {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	min-width: 0;
+}
+
+.drive-preview__file-icon {
+	display: inline-flex;
+	color: #a78bfa;
+	flex-shrink: 0;
+}
+
+.drive-preview__file-meta {
+	min-width: 0;
+}
+
+.drive-preview__file-name {
+	margin: 0;
+	font-family: var(--font-gov, 'Lato', system-ui, sans-serif);
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: #e8eaed;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.drive-preview__file-sub {
+	margin: 0.1rem 0 0;
+	font-size: 0.75rem;
+	color: #9aa0a6;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.drive-preview__actions {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-shrink: 0;
+}
+
+.drive-preview__btn {
+	margin: 0;
+	border-radius: 999px;
+	font-family: var(--font-gov, 'Lato', system-ui, sans-serif);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	padding: 0.55rem 1rem;
+	border: 1px solid transparent;
+}
+
+.drive-preview__btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.drive-preview__btn--ghost {
+	background: transparent;
+	border-color: #5f6368;
+	color: #e8eaed;
+}
+
+.drive-preview__btn--ghost:hover:not(:disabled) {
+	background: #3c4043;
+}
+
+.drive-preview__btn--primary {
+	background: #6d28d9;
+	border-color: #6d28d9;
+	color: #fff;
+}
+
+.drive-preview__btn--primary:hover:not(:disabled) {
+	background: #5b21b6;
+}
+
+.drive-preview__close {
+	margin: 0;
+	width: 2.25rem;
+	height: 2.25rem;
+	border: none;
+	border-radius: 999px;
+	background: transparent;
+	color: #e8eaed;
+	font-size: 1.5rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.drive-preview__close:hover:not(:disabled) {
+	background: #3c4043;
+}
+
+.drive-preview__canvas {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	padding: 1.25rem 1rem 2.5rem;
+	background:
+		radial-gradient(ellipse at top, #3c4043 0%, transparent 55%),
+		#202124;
+	cursor: zoom-out;
+}
+
+.drive-preview__sheet-wrap {
+	width: min(100%, 210mm);
+	cursor: default;
+}
+
+.drive-preview__hint {
+	position: absolute;
+	left: 50%;
+	bottom: 0.65rem;
+	transform: translateX(-50%);
+	margin: 0;
+	padding: 0.35rem 0.75rem;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.55);
+	color: #c5c7c9;
+	font-size: 0.72rem;
+	pointer-events: none;
+	white-space: nowrap;
+}
+
+.form-i-legal {
+	width: 100%;
+	/* Indian Gazette / court filings use A4 (210×297 mm), not US Legal */
+	aspect-ratio: 210 / 297;
+	box-sizing: border-box;
+	/* ~25 mm side / ~20–25 mm top-bottom — formal A4 margins */
+	padding: 22mm 22mm 20mm;
+	background: #fff;
+	color: #000;
+	border: none;
+	border-radius: 2px;
+	box-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.2),
+		0 8px 28px rgba(0, 0, 0, 0.35);
+	font-family: 'Times New Roman', Times, 'Noto Serif', Georgia, serif;
+	font-size: 12pt;
+	line-height: 1.45;
+	overflow: auto;
+}
+
+@media (max-height: 900px) {
+	.form-i-legal {
+		aspect-ratio: auto;
+		min-height: min(170mm, 78vh);
+		padding: 18mm 16mm 16mm;
+		font-size: 11pt;
+	}
+}
+
+.form-i-legal__header {
+	text-align: center;
+	margin-bottom: 1.15em;
+}
+
+.form-i-legal__form-no {
+	margin: 0;
+	font-size: 14pt;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.form-i-legal__rule {
+	margin: 0.2em 0 0;
+	font-size: 11pt;
+	font-weight: 700;
+}
+
+.form-i-legal__subject {
+	margin: 0.55em 0 0;
+	font-size: 12pt;
+	font-weight: 400;
+}
+
+.form-i-legal__to {
+	margin: 0 0 1.15em;
+}
+
+.form-i-legal__to-label {
+	margin: 0;
+	font-size: 12pt;
+	font-weight: 400;
+}
+
+.form-i-legal__to-authority {
+	margin: 0.1em 0 0.35em 1.75em;
+	font-size: 12pt;
+	font-weight: 400;
+}
+
+.form-i-legal__to-lines {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15em;
+	margin: 0.25em 0 0 1.75em;
+	max-width: 72%;
+}
+
+.form-i-legal__to-line {
+	margin: 0;
+	min-height: 1.35em;
+	border-bottom: 1px solid #111;
+	padding: 0 0 0.1em;
+	font-size: 11pt;
+	font-weight: 700;
+	line-height: 1.35;
+	color: #000;
+}
+
+.form-i-legal__to-line:not(.is-filled) {
+	font-weight: 400;
+}
+
+.form-i-legal__list {
+	margin: 0;
+	padding: 0 0 0 1.5em;
+	list-style: decimal;
+}
+
+.form-i-legal__item {
+	margin: 0 0 0.7em;
+	padding-left: 0.35em;
+	text-align: justify;
+	hyphens: auto;
+}
+
+.form-i-legal__item-label {
+	font-weight: 400;
+	font-size: 12pt;
+}
+
+.form-i-legal__value {
+	font-weight: 700;
+	color: #000;
+	font-size: 12pt;
+}
+
+.form-i-legal__addr {
+	font-weight: 700;
+}
+
+.form-i-legal__value--uin {
+	font-family: 'Courier New', Courier, ui-monospace, monospace;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	font-size: 11pt;
+}
+
+.form-i-legal__sign {
+	margin-top: 1.75em;
+	margin-left: auto;
+	width: 42%;
+	max-width: 12.5rem;
+	text-align: center;
+}
+
+.form-i-legal__sign-blank {
+	height: 2.75em;
+	border-bottom: 1px solid #111;
+	margin: 0 auto 0.35em;
+	width: 90%;
+}
+
+.form-i-legal__sign-image-wrap {
+	display: flex;
+	justify-content: center;
+	margin: 0 0 0.25em;
+	min-height: 2.75em;
+	border-bottom: 1px solid #111;
+	padding-bottom: 0.2em;
+}
+
+.form-i-legal__sign-image {
+	max-width: 100%;
+	max-height: 2.85em;
+	object-fit: contain;
+}
+
+.form-i-legal__sign-name {
+	margin: 0.4em 0 0;
+	font-size: 12pt;
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.form-i-legal__sign-role {
+	margin: 0.2em 0 0;
+	font-size: 10pt;
+	font-style: italic;
+	color: #222;
+}
+
+.form-i-legal__sign-caption {
+	margin: 0.55em 0 0;
+	font-size: 10pt;
+	font-weight: 400;
+	line-height: 1.3;
+	text-align: center;
+}
+
+.form-i-legal__item--block .form-i-legal__item-label {
+	display: block;
+}
+
+.form-i-legal__item-body {
+	margin-top: 0.35em;
+	padding-left: 0.15em;
+	white-space: pre-wrap;
+}
+
+.form-ia-legal .form-i-legal__item {
+	margin-bottom: 0.85em;
+}
+
+.form-ib-legal__ref {
+	margin: 0 0 1em;
+	font-size: 12pt;
+}
+
+.form-ib-legal__recital {
+	margin: 0 0 1.15em;
+	font-size: 12pt;
+	text-align: justify;
+	line-height: 1.55;
+}
+
+.form-ib-legal__undertaking {
+	margin: 0 0 0.5em;
+	font-size: 12pt;
+	font-weight: 400;
+	line-height: 1.5;
+}
+
+.form-iv-legal__before {
+	margin: 0 0 1em;
+	text-align: center;
+}
+
+.form-iv-legal__before-title {
+	margin: 0;
+	font-size: 12pt;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	line-height: 1.4;
+}
+
+.form-iv-legal__uin-line {
+	margin: 0.65em 0 0;
+	font-size: 11pt;
+	text-align: center;
+	line-height: 1.45;
+}
+
+.form-iv-legal__matter-line {
+	margin: 0.75em 0 1em;
+	font-size: 10.5pt;
+	line-height: 1.45;
+	text-align: left;
+}
+
+.form-iv-legal__matter-label {
+	font-weight: 400;
+}
+
+.form-iv-legal__parties {
+	margin: 0 0 1.1em;
+}
+
+.form-iv-legal__party {
+	margin: 0 0 0.35em;
+}
+
+.form-iv-legal__party-heading {
+	margin: 0;
+	font-size: 12pt;
+	font-weight: 700;
+}
+
+.form-iv-legal__party-hint {
+	margin: 0.15em 0 0.35em;
+	font-size: 10.5pt;
+	line-height: 1.4;
+	font-style: italic;
+	color: #222;
+}
+
+.form-iv-legal__party-filled {
+	margin: 0 0 0.35em;
+	font-size: 12pt;
+	line-height: 1.45;
+	min-height: 1.35em;
+}
+
+.form-iv-legal__party-role {
+	margin: 0.15em 0 0.55em;
+	text-align: right;
+	font-size: 11pt;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+}
+
+.form-iv-legal__versus {
+	margin: 0.35em 0 0.75em;
+	text-align: center;
+	font-size: 12pt;
+	font-weight: 700;
+	font-style: italic;
+}
+
+.form-iv-legal__details-heading {
+	margin: 0 0 0.55em;
+	font-size: 12pt;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+.form-ii-legal__recital {
+	margin: 0.75em 0 0.5em;
+	font-size: 11.5pt;
+	line-height: 1.5;
+	text-align: justify;
+}
+
+.form-ii-legal__grounds {
+	margin: 0.35em 0 1em;
+	padding: 0 0 0 1.75em;
+	list-style: lower-roman;
+}
+
+.form-ii-legal__grounds > li {
+	margin: 0 0 0.4em;
+	font-size: 11pt;
+	line-height: 1.4;
+}
+
+.form-ii-legal__grounds--blank > li {
+	min-height: 1.35em;
+	border-bottom: 1px solid #94a3b8;
+}
+
+.form-iv-legal__details {
+	margin: 0;
+	padding: 0 0 0 1.35em;
+	list-style: decimal;
+}
+
+.form-iii-legal__details {
+	padding-left: 1.75em;
+	list-style-position: outside;
+}
+
+.form-iv-legal__details > li {
+	margin: 0 0 0.85em;
+	padding: 0;
+	font-size: 11.5pt;
+	line-height: 1.45;
+}
+
+.form-iv-legal__item-label {
+	font-weight: 700;
+}
+
+.form-iv-legal__paren,
+.form-iv-legal__lead {
+	margin: 0.25em 0 0;
+	font-size: 10.5pt;
+	font-weight: 400;
+	line-height: 1.4;
+}
+
+.form-iv-legal__filled {
+	margin: 0.35em 0 0;
+	font-size: 11.5pt;
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+.form-iv-legal__prior-list {
+	margin: 0.35em 0 0;
+	padding-left: 1.25em;
+	font-size: 11pt;
+	line-height: 1.45;
+}
+
+.form-iv-legal__enclosures {
+	margin: 0.35em 0 0;
+	padding-left: 1.35em;
+	list-style: decimal;
+}
+
+.form-iv-legal__enclosures > li {
+	margin: 0.2em 0;
+	min-height: 1.25em;
+	border-bottom: 1px dotted #999;
+	padding-bottom: 0.15em;
+}
+
+.form-iv-legal__blank-line {
+	display: inline-block;
+	min-width: 60%;
+}
+
+.form-iv-legal__verification {
+	margin: 1.35em 0 1.1em;
+}
+
+.form-iv-legal__verification-heading {
+	margin: 0 0 0.55em;
+	font-size: 12pt;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.form-iv-legal__verification-body {
+	margin: 0;
+	font-size: 11pt;
+	line-height: 1.55;
+	text-align: justify;
+}
+
+.form-iv-legal__blank {
+	font-weight: 700;
+	color: #000;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	text-decoration-thickness: 1px;
+}
+
+.form-iv-legal__footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 1.5rem;
+	margin-top: 1.25em;
+}
+
+.form-iv-legal__footer-meta {
+	flex: 0 1 auto;
+	font-size: 11pt;
+	line-height: 1.7;
+}
+
+.form-iv-legal__footer-meta p {
+	margin: 0;
+}
+
+.form-iv-legal__footer-sign {
+	flex: 0 0 auto;
+	min-width: 10rem;
+	text-align: center;
+}
+
+.form-iv-legal__sign-blank {
+	width: 9rem;
+	height: 2.4rem;
+	margin: 0 auto 0.25em;
+	border-bottom: 1px solid #111;
+}
+
+.form-iv-legal__sign-name {
+	margin: 0.15em 0 0.1em;
+	font-size: 11pt;
+	font-weight: 700;
+}
+
+.form-iv-legal__sign-caption {
+	margin: 0;
+	font-size: 10.5pt;
+	line-height: 1.3;
+}
+
+.service-form-page--modern .form-iv-prior {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	overflow: visible;
+	position: relative;
+}
+
+.service-form-page--modern .form-iv-prior__hint {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-prior__choices {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	overflow: visible;
+}
+
+.service-form-page--modern .form-iv-prior__choice {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	margin: 0;
+	padding: 0.7rem 0.85rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	cursor: pointer;
+	transition: border-color 0.15s ease;
+	overflow: visible;
+}
+
+.service-form-page--modern .form-iv-prior__choice--compact {
+	align-items: center;
+	min-height: 2.85rem;
+	padding: 0.65rem 0.85rem;
+}
+
+.service-form-page--modern .form-iv-prior__choice:hover {
+	border-color: #cbd5e1;
+}
+
+.service-form-page--modern .form-iv-prior__choice.is-selected {
+	border-color: #64b5f6;
+	background: linear-gradient(180deg, #eaf4ff 0%, #e3f2fd 100%);
+	box-shadow: inset 3px 0 0 #0d47a1;
+}
+
+/* Nest case particulars under the Yes option */
+.service-form-page--modern .form-iv-prior__yes-block {
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #fff;
+	overflow: visible;
+	transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block.is-selected {
+	border-color: #64b5f6;
+	background: linear-gradient(180deg, #eaf4ff 0%, #e3f2fd 100%);
+	box-shadow: inset 3px 0 0 #0d47a1;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block .form-iv-prior__choice--yes {
+	border: 0;
+	border-radius: 10px 10px 0 0;
+	background: transparent;
+	box-shadow: none;
+	width: 100%;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block:not(.is-open) .form-iv-prior__choice--yes {
+	border-radius: 10px;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block .form-iv-prior__choice--yes.is-selected {
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-prior__yes-block.is-open .form-iv-prior__cases-wrap {
+	margin: 0;
+	padding: 0.85rem 0.9rem 0.95rem;
+	border-top: 1px solid #cfe3f8;
+	background: #fff;
+	border-radius: 0 0 9px 9px;
+}
+
+.service-form-page--modern .form-iv-prior__choice:has(.form-iv-prior__info:hover),
+.service-form-page--modern .form-iv-prior__choice:has(.form-iv-prior__info:focus),
+.service-form-page--modern .form-iv-prior__choice:has(.form-iv-prior__info:focus-within) {
+	z-index: 40;
+}
+
+.service-form-page--modern .form-iv-prior__choice input {
+	margin-top: 0;
+	accent-color: #0d47a1;
+	flex-shrink: 0;
+	width: 1.05rem;
+	height: 1.05rem;
+	outline: none;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-prior__choice input:focus,
+.service-form-page--modern .form-iv-prior__choice input:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-prior__choice-title {
+	flex: 1;
+	min-width: 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 1.35;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-prior__info {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	margin-top: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #64748b;
+	cursor: help;
+	outline: none;
+}
+
+.service-form-page--modern .form-iv-prior__info:hover,
+.service-form-page--modern .form-iv-prior__info:focus,
+.service-form-page--modern .form-iv-prior__info:focus-visible {
+	color: #334155;
+	outline: none;
+}
+
+.service-form-page--modern .form-iv-prior__info .form-iv-prior__info-popup,
+.service-form-page--modern .form-iv-prior__info .ground-choice__info-popup {
+	left: auto;
+	right: 0;
+	transform: none;
+	width: min(22rem, 70vw);
+	z-index: 50;
+}
+
+.service-form-page--modern .form-iv-prior__info:hover .form-iv-prior__info-popup,
+.service-form-page--modern .form-iv-prior__info:focus .form-iv-prior__info-popup,
+.service-form-page--modern .form-iv-prior__info:focus-within .form-iv-prior__info-popup,
+.service-form-page--modern .form-iv-prior__info:hover .ground-choice__info-popup,
+.service-form-page--modern .form-iv-prior__info:focus .ground-choice__info-popup,
+.service-form-page--modern .form-iv-prior__info:focus-within .ground-choice__info-popup {
+	display: block;
+}
+
+.service-form-page--modern .form-iv-prior__cases-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.service-form-page--modern .form-iv-prior__cases-title {
+	margin: 0;
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-prior__cases-note {
+	margin: 0.2rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-prior__cases {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.service-form-page--modern .form-iv-prior__case {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	padding: 0.95rem 1rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.service-form-page--modern .form-iv-prior__case-head {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+}
+
+.service-form-page--modern .form-iv-prior__case-heading {
+	flex: 1;
+	min-width: 0;
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-prior__row-no {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	margin: 0;
+	border-radius: 999px;
+	background: #f1f5f9;
+	color: #0d47a1;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+.service-form-page--modern .form-iv-prior__case-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.75rem 0.85rem;
+}
+
+@media (min-width: 640px) {
+	.service-form-page--modern .form-iv-prior__case-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.service-form-page--modern .form-iv-prior__field--detail {
+		grid-column: 1 / -1;
+	}
+}
+
+@media (min-width: 960px) {
+	.service-form-page--modern .form-iv-prior__case-grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+
+	.service-form-page--modern .form-iv-prior__field--detail {
+		grid-column: 1 / -1;
+	}
+}
+
+.service-form-page--modern .form-iv-prior__field {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	gap: 0.35rem;
+	min-width: 0;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	background: transparent !important;
+}
+
+.service-form-page--modern .form-iv-prior__field-label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #334155;
+	line-height: 1.3;
+}
+
+.service-form-page--modern .form-iv-prior__status {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.35rem;
+	width: 100%;
+}
+
+.service-form-page--modern .form-iv-prior__status-option {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	min-height: 2.35rem;
+	margin: 0 !important;
+	padding: 0.35rem 0.5rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #fff;
+	color: #334155;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	cursor: pointer;
+	text-align: center;
+	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.service-form-page--modern .form-iv-prior__status-option:hover {
+	border-color: #90caf9;
+}
+
+.service-form-page--modern .form-iv-prior__status-option.is-selected {
+	border-color: #0d47a1;
+	background: #e3f2fd;
+	color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-prior__field input,
+.service-form-page--modern .form-iv-prior__field textarea {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 8px;
+	background: #fff;
+	font: inherit;
+	font-size: 0.875rem;
+	color: #151717;
+}
+
+.service-form-page--modern .form-iv-prior__field input[type='date'] {
+	min-height: 2.55rem;
+	color-scheme: light;
+}
+
+.service-form-page--modern .form-iv-prior__field textarea {
+	min-height: 4.5rem;
+	resize: vertical;
+	line-height: 1.45;
+}
+
+.service-form-page--modern .form-iv-prior__field input:focus,
+.service-form-page--modern .form-iv-prior__field textarea:focus {
+	outline: none;
+	border-color: #334155;
+	box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12);
+}
+
+.service-form-page--modern .form-iv-prior__remove {
+	margin-left: auto;
+	border: 0;
+	background: transparent;
+	color: #64748b;
+	font-size: 0.75rem;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	padding: 0;
+}
+
+.service-form-page--modern .form-iv-prior__remove:hover {
+	color: #b91c1c;
+}
+
+.service-form-page--modern .form-iv-prior__add {
+	align-self: flex-start;
+	min-height: 2.4rem;
+	padding: 0.45rem 0.9rem;
+	border: 1px dashed #90caf9;
+	border-radius: 10px;
+	background: #f1f5f9;
+	color: #334155;
+	font-size: 0.875rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-iv-prior__add:hover {
+	border-style: solid;
+	background: #f1f5f9;
+}
+
+.service-form-page--modern .form-iv-from-uin-tag {
+	display: inline !important;
+	margin-left: 0.3rem;
+	font-size: 0.7rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.01em;
+	text-transform: none !important;
+	color: #0d47a1 !important;
+}
+
+.service-form-page--modern .form-iv-verify .form-i-upload-field .form-i-upload-body > .sf-upload-btn,
+.service-form-page--modern .form-iv-verify .form-i-upload-field .form-i-upload-body > span:first-child {
+	background: #e3f2fd;
+	border: 1px solid #90caf9;
+	color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-uin-field .form-iv-uin-field__icon {
+	color: #0d47a1 !important;
+}
+
+.service-form-page--modern .form-iv-applicant-extras {
+	display: block;
+	margin-top: 0.55rem;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	width: 100%;
+}
+
+.service-form-page--modern .form-ib-relation-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 1.1rem 1.5rem;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+}
+
+.service-form-page--modern .form-ib-relation-row > .form-iv-field:first-child {
+	flex: 1 1 18rem;
+	max-width: 28rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-ib-relation-row__relation {
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 100%;
+	padding-top: 0.2rem;
+}
+
+.service-form-page--modern .form-iv-applicant-extras__grid {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 1.1rem 1.5rem;
+}
+
+.service-form-page--modern .form-iv-applicant-extras .form-iv-field {
+	gap: 0.4rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-iv-applicant-extras__grid > .form-iv-field:first-child {
+	flex: 1 1 18rem;
+	max-width: 28rem;
+}
+
+.service-form-page--modern .form-iv-applicant-extras__relation {
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 100%;
+	padding-top: 0.2rem;
+}
+
+.service-form-page--modern .form-iv-applicant-extras__grid > .form-iv-field:last-child {
+	flex: 1 0 100%;
+}
+
+.service-form-page--modern .form-iv-applicant-extras__legend {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	float: none;
+	width: 100%;
+	margin: 0 0 0.35rem;
+	padding: 0;
+}
+
+.service-form-page--modern .form-iv-applicant-extras__legend-title {
+	font-size: 14px;
+	font-weight: 600;
+	color: #151717;
+}
+
+.service-form-page--modern .form-iv-applicant-extras__legend-hint {
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.4;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-relative-name-input {
+	width: 100%;
+	max-width: 100%;
+	height: 50px;
+	min-height: 50px;
+	align-items: center;
+}
+
+.service-form-page--modern .form-iv-relation-field__options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem;
+	margin-top: 0.35rem;
+}
+
+.service-form-page--modern .form-iv-relation-option {
+	margin: 0 !important;
+	display: inline-flex !important;
+	flex-direction: row !important;
+	align-items: center;
+	justify-content: center;
+	min-height: 46px;
+	padding: 0.5rem 1.45rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 999px;
+	background: #fff;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.service-form-page--modern .form-iv-relation-option span {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: #334155;
+}
+
+.service-form-page--modern .form-iv-relation-option:hover {
+	border-color: #90caf9;
+	background: #e3f2fd;
+}
+
+.service-form-page--modern .form-iv-relation-option.is-selected {
+	border-color: #0d47a1;
+	background: #e3f2fd;
+}
+
+.service-form-page--modern .form-iv-relation-option.is-selected span {
+	color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-age-edit {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.65rem;
+}
+
+.service-form-page--modern .form-iv-dob-input {
+	width: 15.5rem;
+	max-width: 100%;
+	min-height: 50px;
+	flex: 0 0 auto;
+}
+
+.service-form-page--modern .form-i-field.form-iv-dob-input,
+.service-form-page--modern .form-date-picker.form-iv-dob-input .form-date-picker__field {
+	width: 15.5rem;
+	max-width: 100%;
+	height: 50px;
+	min-height: 50px;
+	flex: 0 0 auto;
+}
+
+.service-form-page--modern .form-iv-dob-input input[type='date'] {
+	min-width: 0;
+	height: 100%;
+	color-scheme: light;
+}
+
+.service-form-page--modern .form-iv-signature-preview {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.45rem;
+	margin-top: 0.75rem;
+}
+
+.service-form-page--modern .form-iv-signature-preview__img {
+	display: block;
+	width: 300px;
+	max-width: 100%;
+	aspect-ratio: 3 / 1;
+	height: auto;
+	object-fit: contain;
+	object-position: center;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #fff;
+	padding: 0.5rem 0.75rem;
+	box-sizing: border-box;
+}
+
+.service-form-page--modern .form-iv-signature-preview__remove {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: #64748b;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.service-form-page--modern .form-iv-signature-preview__remove:hover {
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-dob-age-chip {
+	display: inline-flex;
+	align-items: center;
+	border-radius: 999px;
+	background: #f1f5f9;
+	color: #334155;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	padding: 0.35rem 0.7rem;
+	white-space: nowrap;
+}
+
+.service-form-page--modern .form-iv-age-readonly {
+	align-items: center;
+	min-height: 50px;
+	gap: 0;
+}
+
+.service-form-page--modern .form-iv-age-readonly__line {
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.65rem;
+	min-width: 0;
+	flex: 1 1 auto;
+	padding: 0.45rem 0.75rem;
+	line-height: 1.35;
+}
+
+.service-form-page--modern .form-iv-age-readonly__value {
+	display: inline-flex;
+	align-items: center;
+	border-radius: 999px;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	color: #0f172a;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	padding: 0.28rem 0.7rem;
+	white-space: nowrap;
+	font-style: normal;
+}
+
+.service-form-page--modern .form-iv-age-readonly__source {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: #64748b;
+	font-style: normal;
+}
+
+.service-form-page--modern .form-iv-age-readonly__empty {
+	font-size: 0.95rem;
+	font-weight: 500;
+	color: #94a3b8;
+	font-style: normal;
+}
+
+.service-form-page--modern .form-iv-age-readonly .form-i-field-action {
+	padding-right: 0.55rem;
+}
+
+.service-form-page--modern .form-iv-optional-gate__toggle {
+	margin: 0 !important;
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: flex-start;
+	gap: 0.65rem;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-iv-optional-gate__title {
+	display: block;
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.service-form-page--modern .form-iv-optional-gate__opt {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 0.35rem;
+	padding: 0.05rem 0.4rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 3px;
+	background: #f8fafc;
+	color: #64748b;
+	font-size: 0.625rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	vertical-align: middle;
+}
+
+.service-form-page--modern .form-iv-optional-gate__hint {
+	display: block;
+	margin-top: 0.2rem;
+	font-size: 0.75rem;
+	line-height: 1.45;
+	color: #64748b;
+	font-weight: 500;
+}
+
+/* Modern service forms — same content width for Authority / Court / Tribunal */
+.service-form-page--rent-authority.service-form-page--modern,
+.service-form-page--rent-court.service-form-page--modern,
+.service-form-page--rent-tribunal.service-form-page--modern {
+	max-width: min(80rem, 100%);
+	width: 100%;
+	box-sizing: border-box;
+	padding-inline: clamp(0.5rem, 1.5vw, 1.1rem);
+}
+
+.service-form-page--modern .form-iv-topbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.75rem 1rem;
+	margin: 0 0 0.35rem;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	backdrop-filter: none;
+	position: static;
+}
+
+.service-form-page--modern .form-iv-back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	min-height: 2.5rem;
+	padding: 0.4rem 0.9rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 10px;
+	background: #fff;
+	color: #0f172a;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.service-form-page--modern .form-iv-back-btn:hover:not(:disabled) {
+	border-color: #334155;
+	color: #0f172a;
+	background: #e3f2fd;
+}
+
+.service-form-page--modern .form-iv-back-btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.service-form-page--modern .form-iv-back-btn:focus-visible {
+	outline: 2px solid #334155;
+	outline-offset: 2px;
+}
+
+.service-form-page--modern .form-iv-dob-field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.55rem 0.85rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-iv-dob-age {
+	font-size: 0.8125rem;
+	color: #475569;
+}
+
+.service-form-page--modern .form-iv-dob-age strong {
+	color: #0f172a;
+	font-weight: 700;
+}
+
+.service-form-page--modern .form-iv-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.875rem;
+	min-width: 0;
+	width: 100%;
+}
+
+.service-form-page--modern #form-iv-section-1,
+.service-form-page--modern #form-iv-section-2,
+.service-form-page--modern #form-iv-section-3,
+.service-form-page--modern #form-iv-section-4 {
+	scroll-margin-top: 5.5rem;
+}
+
+.service-form-page--modern .form-iv-field [aria-invalid='true'] {
+	outline: none;
+}
+
+.service-form-page--modern .form-iv-field:has([aria-invalid='true']) .form-i-field,
+.service-form-page--modern .form-iv-field:has([aria-invalid='true']) .form-i-field--multiline {
+	border-color: #f87171;
+	box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
+}
+.service-form-page--modern .form-iv-details {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	overflow: visible;
+	box-shadow: none;
+	min-width: 0;
+	width: 100%;
+	max-width: 100%;
+}
+
+.service-form-page--modern .form-iv-detail-item {
+	padding: 1rem 1.1rem 1.05rem;
+	margin: 0;
+	border: 0;
+	border-bottom: 1px solid #e2e8f0;
+	border-radius: 0 !important;
+	background: transparent;
+	box-shadow: none;
+	min-width: 0;
+	overflow: visible;
+	position: relative;
+}
+
+.service-form-page--modern .form-iv-detail-item:has(.form-iv-prior__info:hover),
+.service-form-page--modern .form-iv-detail-item:has(.form-iv-prior__info:focus),
+.service-form-page--modern .form-iv-detail-item:has(.form-iv-prior__info:focus-within) {
+	z-index: 45;
+}
+
+.service-form-page--modern .form-iv-detail-item:last-child {
+	border-bottom: 0;
+}
+
+.service-form-page--modern .form-iv-detail-item.form-iv-field {
+	gap: 0.55rem;
+}
+
+.service-form-page--modern .form-iv-detail-item__head {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	margin-bottom: 0.15rem;
+}
+
+.service-form-page--modern .form-iv-detail-item__label {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #0f172a;
+	letter-spacing: 0.01em;
+}
+
+.service-form-page--modern .form-iv-detail-item__hint {
+	margin-left: 1.9rem !important;
+	max-width: 42rem;
+}
+
+.service-form-page--modern .form-iv-detail-num {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.45rem;
+	height: 1.45rem;
+	padding: 0 0.3rem;
+	border: 1px solid var(--sf-navy-border, #90caf9);
+	border-radius: 4px;
+	background: var(--sf-navy-soft, #e3f2fd);
+	color: var(--sf-navy, #0d47a1);
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1;
+	flex-shrink: 0;
+	font-variant-numeric: tabular-nums;
+}
+
+.service-form-page--modern .form-iv-jurisdiction {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+	margin-left: 1.9rem;
+}
+
+.service-form-page--modern .form-iv-jurisdiction__authority {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	padding: 0.7rem 0.85rem;
+	border: 1px solid #dbe3ee;
+	border-left: 3px solid #334155;
+	border-radius: 4px;
+	background: #f8fafc;
+}
+
+.service-form-page--modern .form-iv-jurisdiction__name {
+	margin: 0;
+	font-size: 0.9rem;
+	font-weight: 700;
+	line-height: 1.4;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-jurisdiction__address {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #475569;
+	white-space: pre-wrap;
+}
+
+.service-form-page--modern .form-iv-jurisdiction__address.is-empty {
+	color: #94a3b8;
+	font-style: italic;
+}
+
+.service-form-page--modern .form-iv-details .form-iv-declare {
+	margin-left: 0 !important;
+}
+
+.service-form-page--modern .form-iv-details .form-i-field,
+.service-form-page--modern .form-iv-details .form-i-field--multiline {
+	margin-left: 0;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.service-form-page--modern .form-iv-details .form-iv-prior,
+.service-form-page--modern .form-iv-details .prior-proceedings,
+.service-form-page--modern .form-iv-details .tenancy-field-full {
+	margin-left: 0;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.service-form-page--modern .form-iv-optional-gate.form-iv-detail-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+
+.service-form-page--modern .form-iv-optional-gate .form-iv-detail-item {
+	padding: 0;
+	border: 0;
+	background: transparent;
+}
+
+.service-form-page--modern .form-iv-optional-gate .form-iv-detail-item .form-i-field,
+.service-form-page--modern .form-iv-optional-gate .form-iv-detail-item .form-i-field--multiline {
+	margin-left: 0;
+}
+
+.service-form-page--modern .form-iv-tick {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.1rem;
+	height: 1.1rem;
+	margin-top: 0.15rem;
+	border: 1.5px solid #64748b;
+	border-radius: 3px;
+	background: #fff;
+	color: #fff;
+	flex-shrink: 0;
+	transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.service-form-page--modern .form-iv-tick.is-checked {
+	border-color: #334155;
+	background: #334155;
+}
+
+.service-form-page--modern .form-iv-legal-advice.form-iv-detail-item {
+	background: transparent;
+	padding: 1.75rem 1.1rem 0.65rem;
+	margin-top: 0;
+	min-inline-size: 0;
+	gap: 0.65rem;
+}
+
+.service-form-page--modern .form-iv-legal-advice.form-iv-detail-item > legend {
+	float: left;
+	width: 100%;
+	padding: 0;
+	margin: 0 0 0.35rem;
+}
+
+.service-form-page--modern .form-iv-legal-advice.form-iv-detail-item > legend + * {
+	clear: both;
+}
+
+.service-form-page--modern .form-iv-legal-advice.form-iv-detail-item > ul {
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
+.service-form-page--modern .form-iv-legal-advice__title {
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.45rem;
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: #334155;
+}
+
+.service-form-page--modern .form-iv-legal-advice__hint {
+	margin: 0.35rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	color: #64748b;
+	max-width: 44rem;
+}
+
+.service-form-page--modern .form-iv-legal-advice__badge {
+	display: inline-flex;
+	align-items: center;
+	min-height: 1.25rem;
+	padding: 0.05rem 0.4rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 3px;
+	background: #fff;
+	color: #64748b;
+	font-size: 0.625rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.service-form-page--modern .form-iv-legal-advice__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.35rem 1rem;
+}
+
+.service-form-page--modern .form-iv-legal-advice__row {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	width: 100%;
+	margin: 0 !important;
+	padding: 0.4rem 0.15rem;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	text-align: left;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-iv-legal-advice__row:hover {
+	border-color: transparent;
+}
+
+.service-form-page--modern .form-iv-legal-advice__row.is-selected {
+	border-color: transparent;
+	background: transparent;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-legal-advice__row .form-iv-tick {
+	margin-top: 0;
+}
+
+.service-form-page--modern .form-iv-legal-advice__row-label {
+	font-size: 0.84375rem;
+	font-weight: 600;
+	line-height: 1.35;
+	color: #1e293b;
+}
+
+@media (max-width: 640px) {
+	.service-form-page--modern .form-iv-legal-advice__list {
+		grid-template-columns: 1fr;
+	}
+
+	.service-form-page--modern .form-iv-jurisdiction,
+	.service-form-page--modern .form-iv-details .form-i-field,
+	.service-form-page--modern .form-iv-details .form-i-field--multiline,
+	.service-form-page--modern .form-iv-details .form-iv-prior,
+	.service-form-page--modern .form-iv-details .prior-proceedings,
+	.service-form-page--modern .form-iv-details .tenancy-field-full,
+	.service-form-page--modern .form-iv-detail-item__hint {
+		margin-left: 0 !important;
+	}
+}
+
+.service-form-page--modern .form-iv-verify {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.service-form-page--modern .form-iv-verify__place-date > * {
+	min-width: 0;
+}
+
+.service-form-page--modern .form-iv-verify__date-hint {
+	min-height: 1.05rem;
+}
+
+.service-form-page--modern .form-iv-verify__identity {
+	padding: 0.85rem 0.95rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #f8fafc;
+}
+
+.service-form-page--modern .form-iv-verify__identity-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-bottom: 0.55rem;
+}
+
+.service-form-page--modern .form-iv-verify__identity-title {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #334155;
+}
+
+.service-form-page--modern .form-iv-verify__identity-action {
+	border: 0;
+	background: transparent;
+	color: #334155;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	padding: 0;
+}
+
+.service-form-page--modern .form-iv-verify__identity-action:hover {
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-verify__identity-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+}
+
+.service-form-page--modern .form-iv-verify__identity-name {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-verify__identity-addr {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #475569;
+	white-space: pre-wrap;
+}
+
+.service-form-page--modern .form-iv-verify__sign-block {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding-top: 0.35rem;
+	border-top: 1px dashed #e2e8f0;
+}
+
+.service-form-page--modern .form-iv-verify__sign-caption {
+	margin: 0;
+}
+
+.service-form-page--modern .form-iv-clause-shell .clause--embedded {
+	margin: 0;
+}
+
+.service-form-page--modern .form-iv-declare.is-checked {
+	border-color: #cbd5e1;
+	background: #fff;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__guide {
+	margin: 0;
+	padding: 0.7rem 0.85rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	background: #f8fafc;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification__block-label {
+	margin: 0 0 -0.35rem;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #334155;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__oath {
+	padding: 1rem 1.1rem 1.15rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .clause__sentence {
+	font-size: 0.9375rem;
+	line-height: 2.35;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .clause__blank:focus {
+	border-color: #334155;
+	box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15);
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification__relation-toggles {
+	display: inline-flex;
+	vertical-align: middle;
+	gap: 0.3rem;
+	margin: 0 0.15rem;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification__relation-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 1.75rem;
+	margin: 0;
+	padding: 0.15rem 0.55rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 999px;
+	background: #fff;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #334155;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification__relation-toggle.is-selected {
+	border-color: #0d47a1;
+	background: #e3f2fd;
+	color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__foot {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__place,
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__date {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin: 0;
+	padding: 0.85rem 0.95rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__place .label-text,
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__date .label-text {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__place input {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid #d5deea;
+	border-radius: 8px;
+	background: #f8fafc;
+	font: inherit;
+	line-height: 1.4;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__place input:focus {
+	outline: none;
+	border-color: #334155;
+	background: #fff;
+	box-shadow: 0 0 0 3px rgba(51, 65, 85, 0.12);
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__date-value {
+	display: flex;
+	align-items: center;
+	min-height: 2.4rem;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	background: #f1f5f9;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #475569;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .clause__note--prefilled {
+	margin: 0;
+	padding: 0.65rem 0.8rem;
+	border: 1px solid #fcd34d;
+	border-left: 3px solid #f59e0b;
+	border-radius: 8px;
+	background: #fffbeb;
+	font-size: 0.8125rem;
+	color: #92400e;
+}
+
+.service-form-page--modern .form-iv-clause-shell .verification--modern .inline-para-selector__button.has-selection {
+	border-color: #90caf9;
+	background: #f1f5f9;
+	color: #334155;
+}
+
+@media (max-width: 640px) {
+	.service-form-page--modern .form-iv-clause-shell .verification--modern .verification__foot {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Form II grounds — clearer selected fill + floating (i) tooltips */
+.service-form-page--modern .form-ii-basis.matter-accordion .matter-accordion__item.is-selected,
+.service-form-page--rent-court.service-form-page--modern .form-ii-basis .matter-accordion__item.is-selected {
+	border-color: #64b5f6 !important;
+	background: linear-gradient(180deg, #eaf4ff 0%, #e3f2fd 100%) !important;
+	box-shadow: inset 3px 0 0 #0d47a1;
+}
+
+.service-form-page--modern .form-ii-basis .matter-accordion__item.is-selected .matter-accordion__title {
+	color: #0a3a82;
+	font-weight: 700;
+}
+
+.service-form-page--modern #form-ii-section-2,
+.service-form-page--modern .form-ii-basis,
+.service-form-page--modern .form-ii-basis .matter-accordion__item,
+.service-form-page--modern .form-ii-basis .form-ii-grounds-panel,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card .form-iv-service-card__body,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card .form-iv-service-card__head,
+.service-form-page--modern .form-ii-grounds-card .form-iv-col-list,
+.service-form-page--modern .form-ii-grounds-card .form-iv-col-list__col {
+	overflow: visible !important;
+}
+
+.service-form-page--modern .form-ii-basis .form-ii-grounds-panel {
+	padding: 0 0.9rem 0.85rem 2.5rem;
+	border-top: 1px solid #eef2f7;
+	background: #fff;
+}
+
+.service-form-page--modern .form-ii-ground-check {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 0.4rem;
+	position: relative;
+	z-index: 0;
+}
+
+.service-form-page--modern .form-ii-ground-check__copy {
+	display: inline-flex;
+	flex: 0 1 auto;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-ii-ground-check .form-iv-repair-check__text {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-ii-ground-check__info {
+	flex: 0 0 auto;
+	margin-top: 0.1rem;
+	color: #94a3b8;
+	position: relative;
+}
+
+.service-form-page--modern .form-ii-ground-check__info:hover,
+.service-form-page--modern .form-ii-ground-check__info:focus {
+	color: #0a3a82;
+}
+
+/* Floating tooltips — raise hovered row; open left on right column so text is not clipped */
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.matter-accordion__info:hover),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.matter-accordion__info:focus),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.matter-accordion__info:focus-within),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.form-ii-ground-check__info:hover),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.form-ii-ground-check__info:focus),
+.service-form-page--modern .form-ii-basis .matter-accordion__item:has(.form-ii-ground-check__info:focus-within) {
+	z-index: 50;
+	overflow: visible !important;
+}
+
+.service-form-page--modern .form-ii-ground-check:has(.form-ii-ground-check__info:hover),
+.service-form-page--modern .form-ii-ground-check:has(.form-ii-ground-check__info:focus),
+.service-form-page--modern .form-ii-ground-check:has(.form-ii-ground-check__info:focus-within) {
+	z-index: 60;
+}
+
+.service-form-page--modern .form-ii-basis .matter-accordion__info .ground-choice__info-popup,
+.service-form-page--modern .form-ii-ground-info-popup {
+	position: absolute;
+	top: calc(100% + 0.35rem);
+	left: 0;
+	right: auto;
+	transform: none;
+	width: min(22rem, 70vw);
+	max-width: min(22rem, calc(100vw - 2.5rem));
+	max-height: min(20rem, 60vh);
+	overflow-x: hidden;
+	overflow-y: auto;
+	z-index: 80;
+	box-sizing: border-box;
+	word-break: break-word;
+}
+
+.service-form-page--modern .form-ii-grounds-card .form-iv-col-list__col:last-child .form-ii-ground-info-popup {
+	left: auto;
+	right: 0;
+}
+
+.service-form-page--modern .form-ii-grounds-card .form-iv-repair-check.form-ii-ground-check.is-checked {
+	background: #eaf4ff;
+	border-bottom-color: #bbdefb;
+}
+
+/* Portaled Form II (i) notes — always fully visible over the workspace */
+.form-ii-floating-info-popup {
+	display: block !important;
+	position: fixed !important;
+	transform: none !important;
+	max-height: min(20rem, 60vh);
+	overflow-x: hidden;
+	overflow-y: auto;
+	box-sizing: border-box;
+	word-break: break-word;
+	pointer-events: none;
+}
+
+/* Jurisdiction venue — same dark fetched/UIN readonly look as party fields (Forms II / III / IV) */
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction,
+.service-form-page--modern .form-iv-details .form-iv-jurisdiction {
+	margin-left: 0;
+	align-items: stretch;
+	gap: 0.75rem;
+	width: 100%;
+	max-width: none;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	min-width: 0;
+	width: fit-content;
+	max-width: 100%;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction > label,
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__declare {
+	display: flex !important;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	gap: 0.65rem;
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	cursor: pointer;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__declare-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	padding-top: 0.05rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	line-height: 1.45;
+	color: #0f172a;
+	white-space: normal;
+	text-wrap: pretty;
+}
+
+/* Shared form tick — compact, aligned with declaration text */
+.service-form-page--modern .sf-form-tick {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 1.125rem;
+	height: 1.125rem;
+	margin-top: 0.2rem;
+	border: 1.5px solid #94a3b8;
+	border-radius: 4px;
+	background: #fff;
+	color: #fff;
+	box-sizing: border-box;
+	transition: border-color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.service-form-page--modern .sf-form-tick.is-checked {
+	border-color: #0d47a1;
+	background: #0d47a1;
+	color: #fff;
+	box-shadow: none;
+}
+
+.service-form-page--modern label:hover .sf-form-tick:not(.is-checked),
+.service-form-page--modern .sf-undertaking-box:hover .sf-form-tick:not(.is-checked) {
+	border-color: #64748b;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched-label {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__field {
+	width: max-content;
+	max-width: 100%;
+	min-width: min(22rem, 100%);
+	min-height: 0;
+	align-items: stretch;
+	background: #ffffff !important;
+	border: 0 !important;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__field .form-i-icon-gutter {
+	border-right: 1px solid #e2e8f0 !important;
+	background: transparent !important;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched-name {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	font-style: normal;
+	line-height: 1.35;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-details .form-ii-jurisdiction__fetched-addr {
+	margin-top: 0.2rem;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	font-style: normal;
+	line-height: 1.4;
+	color: #334155;
+}
+
+.service-form-page--modern
+	.form-iv-details
+	.form-i-readonly-value.is-empty
+	.form-ii-jurisdiction__fetched-addr {
+	color: #94a3b8;
+	font-style: italic;
+	font-weight: 400;
+}
+
+@media (max-width: 640px) {
+	.service-form-page--modern .form-ii-basis .form-ii-grounds-panel {
+		padding-left: 0.9rem;
+	}
+}
+
+.service-form-page--modern .form-iv-matter .matter-accordion__title-row {
+	align-items: flex-start;
+	gap: 0.4rem;
+}
+
+.service-form-page--modern .form-iv-matter .matter-accordion__title {
+	font-size: 0.95rem;
+	font-weight: 600;
+	line-height: 1.35;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-matter .matter-accordion__cite {
+	display: none;
+}
+
+.service-form-page--modern .form-iv-repairs {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.service-form-page--modern .form-iv-followup-intro {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	margin: 0.75rem 0 0.15rem;
+	padding: 0.75rem 0.85rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #f8fafc;
+}
+
+.service-form-page--modern .form-iv-followup-intro__title {
+	margin: 0;
+	font-size: 0.875rem;
+	font-weight: 700;
+	line-height: 1.35;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-followup-intro__hint {
+	margin: 0.25rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.45;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-followup-intro__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+}
+
+.service-form-page--modern .form-iv-followup-intro__meta--row {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	padding-bottom: 0.1rem;
+	-webkit-overflow-scrolling: touch;
+}
+
+.service-form-page--modern .form-iv-followup-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex-shrink: 0;
+	min-height: 1.5rem;
+	padding: 0.15rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+}
+
+.service-form-page--modern .form-iv-followup-chip--multi {
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	color: #475569;
+}
+
+.service-form-page--modern .form-iv-followup-chip--count {
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	color: #475569;
+}
+
+.service-form-page--modern .form-iv-followup-chip--part-a,
+.service-form-page--modern .form-iv-followup-chip--part-b {
+	border: 1px solid #e2e8f0;
+	background: #fff;
+	color: #475569;
+}
+
+.service-form-page--modern .form-iv-followup-chip__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2rem;
+	padding: 0.05rem 0.35rem;
+	border-radius: 999px;
+	background: rgba(15, 23, 42, 0.06);
+	font-variant-numeric: tabular-nums;
+}
+
+.service-form-page--modern .form-iv-followup-chip--part-a .form-iv-followup-chip__count,
+.service-form-page--modern .form-iv-followup-chip--part-b .form-iv-followup-chip__count {
+	background: rgba(15, 23, 42, 0.06);
+}
+
+@media (max-width: 640px) {
+	.service-form-page--modern .form-iv-followup-intro__meta--row {
+		flex-wrap: wrap;
+	}
+}
+
+.service-form-page--modern .form-iv-repair-parts {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.service-form-page--modern .form-iv-followup-plain {
+	margin: 0.65rem 0 0.75rem;
+	padding: 0;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: #475569;
+}
+
+.service-form-page--modern .form-iv-repair-part {
+	overflow: hidden;
+	border: 1px solid #cbd5e1;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.service-form-page--modern .form-iv-repair-part--landlord,
+.service-form-page--modern .form-iv-repair-part--tenant {
+	border-color: #cbd5e1;
+	background: #fff;
+}
+
+.service-form-page--modern .form-iv-services {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.service-form-page--modern .form-iv-service-card {
+	overflow: hidden;
+	border: 1px solid #cbd5e1;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card,
+.service-form-page--modern .form-iv-service-card.form-ii-grounds-card .form-iv-service-card__body {
+	overflow: visible;
+}
+
+.service-form-page--modern .form-iv-repair-part__head,
+.service-form-page--modern .form-iv-service-card__head {
+	display: block;
+	padding: 0.65rem 0.85rem 0.5rem;
+	border-bottom: 1px solid #e2e8f0;
+	background: #f8fafc;
+}
+
+.service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-part__head,
+.service-form-page--modern .form-iv-repair-part--tenant .form-iv-repair-part__head {
+	border-bottom-color: #e2e8f0;
+}
+
+.service-form-page--modern .form-iv-repair-part__title,
+.service-form-page--modern .form-iv-service-card__title {
+	margin: 0;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	line-height: 1.35;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-part__title,
+.service-form-page--modern .form-iv-repair-part--tenant .form-iv-repair-part__title {
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-iv-repair-part__sub,
+.service-form-page--modern .form-iv-service-card__sub {
+	margin: 0.15rem 0 0;
+	font-size: 0.6875rem;
+	line-height: 1.35;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-repair-part__list,
+.service-form-page--modern .form-iv-service-card__body {
+	padding: 0.55rem 0.65rem 0.7rem;
+}
+
+.service-form-page--modern .form-iv-col-list {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.35rem 0.75rem;
+	align-items: start;
+}
+
+.service-form-page--modern .form-iv-col-list__col {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	min-width: 0;
+}
+
+.service-form-page--modern .form-iv-matter .matter-accordion__item.is-open {
+	scroll-margin-top: 5.5rem;
+}
+
+.service-form-page--modern .form-iv-repair-check {
+	align-items: flex-start;
+	gap: 0.4rem;
+	padding: 0.4rem 0.45rem;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	background: transparent;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.service-form-page--modern .form-iv-repair-check:hover {
+	background: #f8fafc;
+	border-color: #e2e8f0;
+}
+
+.service-form-page--modern .form-iv-repair-check.is-checked {
+	border-color: #90caf9;
+	background: #eaf4ff;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-check.is-checked,
+.service-form-page--modern .form-iv-repair-part--tenant .form-iv-repair-check.is-checked {
+	border-color: #90caf9;
+	background: #eaf4ff;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-repair-check__code {
+	flex-shrink: 0;
+	min-width: 1.25rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-repair-check.is-checked .form-iv-repair-check__code {
+	color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-check__code,
+.service-form-page--modern .form-iv-repair-part--tenant .form-iv-repair-check__code {
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-repair-check__text {
+	min-width: 0;
+	color: #334155;
+}
+
+.service-form-page--modern .form-iv-repair-check.is-checked .form-iv-repair-check__text {
+	color: #0f172a;
+	font-weight: 600;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check.is-checked {
+	border-color: #90caf9;
+	background: #eaf4ff;
+	box-shadow: none;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check__code {
+	color: #64748b;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check.is-checked .form-iv-repair-check__code {
+	color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-col-list--services .form-iv-repair-check input {
+	accent-color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-service-other {
+	padding: 0 0.15rem 0.15rem;
+}
+
+@media (max-width: 640px) {
+	.service-form-page--modern .form-iv-col-list {
+		grid-template-columns: 1fr;
+	}
+}
+
+.service-form-page--modern .form-iv-repair-check input {
+	margin-top: 0.15rem;
+	accent-color: #0d47a1;
+}
+
+.service-form-page--modern .form-iv-repair-part--landlord .form-iv-repair-check input,
+.service-form-page--modern .form-iv-repair-part--tenant .form-iv-repair-check input {
+	accent-color: #0d47a1;
+}
+
+.service-form-page--modern .form-ib-undertaking.is-checked {
+	box-shadow: inset 3px 0 0 #334155;
+}
+
+.service-form-page--modern .form-ib-clause-shell {
+	padding: 0.25rem 0.15rem;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause--embedded {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause__sync-note {
+	margin: 0;
+	padding: 0.7rem 0.85rem;
+	border: 1px solid #e2e8f0;
+	border-left: 3px solid #334155;
+	border-radius: 8px;
+	background: #f1f5f9;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: #0a3a82;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause__block-label {
+	margin: 0 0 0.45rem;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #334155;
+}
+
+.service-form-page--modern .form-ib-clause-shell .verification__oath {
+	padding: 1rem 1.1rem 1.15rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause__undertaking-block {
+	padding: 0.9rem 1.1rem;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #f8fafc;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause__undertaking-block .clause__sentence--undertaking,
+.service-form-page--modern .form-ib-clause-shell .clause__undertaking-block .verification__undertaking {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font-size: 0.9375rem;
+	line-height: 1.55;
+	color: #0f172a;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause__filled {
+	display: inline;
+	margin: 0 0.05rem;
+	padding: 0.05rem 0.15rem;
+	border-bottom: 2px solid #334155;
+	font-weight: 700;
+	font-style: italic;
+	color: #151717;
+	white-space: normal;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause__filled.is-empty {
+	border-bottom-color: #94a3b8;
+	font-weight: 500;
+	font-style: normal;
+	color: #94a3b8;
+}
+
+.service-form-page--modern .form-ib-clause-shell .clause--embedded .clause__blank:focus {
+	border-color: #334155;
+	box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15);
+}
+
+@media (max-width: 640px) {
+	.drive-preview__toolbar {
+		flex-wrap: wrap;
+		padding: 0.55rem 0.65rem;
+	}
+
+	.drive-preview__actions {
+		width: 100%;
+		justify-content: flex-end;
+	}
+
+	.drive-preview__hint {
+		display: none;
+	}
+
+	.form-i-legal {
+		aspect-ratio: auto;
+		padding: 14mm 12mm;
+		font-size: 10.5pt;
+	}
+
+	.form-i-legal__to-lines {
+		max-width: 90%;
+	}
+
+	.form-i-legal__sign {
+		width: 55%;
+	}
+}
+
+/* Legacy alias — inbox modals used this class without styles */
 .modal-overlay {
 	position: fixed;
 	inset: 0;
@@ -15165,8 +17816,8 @@ main.main-fluid {
 
 /* Rent Court — blue accent on neutral tile */
 .tenant-service-tile--rent-court {
-	--tenant-tile-accent: #2563eb;
-	--tenant-tile-accent-strong: #1e40af;
+	--tenant-tile-accent: #6d28d9;
+	--tenant-tile-accent-strong: #5b21b6;
 	--tenant-tile-tint: rgba(219, 234, 254, 0.65);
 }
 
@@ -17095,7 +19746,7 @@ main.main-fluid {
 .tenancy-docs-step__header {
 	padding: 16px 18px;
 	border-radius: 8px;
-	border: 1px solid #dbeafe;
+	border: 1px solid #ede9fe;
 	background: linear-gradient(180deg, #f8fbff 0%, #f1f5f9 100%);
 }
 
@@ -17143,7 +19794,7 @@ main.main-fluid {
 	background: var(--ws-accent-soft);
 	font-size: 0.84rem;
 	line-height: 1.45;
-	color: #1e3a5f;
+	color: #0d47a1;
 }
 
 .tenancy-docs-step__disclaimer strong {
@@ -19900,7 +22551,7 @@ fieldset.profile-type-row label {
 	position: fixed;
 	top: 1rem;
 	left: 50%;
-	z-index: 1400;
+	z-index: 1600;
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -19930,7 +22581,7 @@ fieldset.profile-type-row label {
 }
 
 .app-toast--info {
-	background: #1e3a5f;
+	background: #0d47a1;
 	color: #fff;
 }
 

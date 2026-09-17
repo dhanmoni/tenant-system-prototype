@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import { IdCard, Search } from 'lucide-react'
 import api from '../../api'
 
 function TenancyUinLookup({
@@ -6,10 +7,21 @@ function TenancyUinLookup({
 	onChange,
 	onLoaded,
 	label = 'Tenancy UIN',
+	hint,
 	required = true,
+	actionLabel = 'Fetch details',
+	loadingLabel = 'Looking up…',
+	successMessage,
+	errorFallback = 'Could not load tenancy details for this UIN.',
+	variant = 'default',
+	/** Center the UIN field as the focal action (Form I gate). */
+	align = 'start',
 }) {
 	const [loading, setLoading] = useState(false)
 	const [status, setStatus] = useState(null)
+	const inputId = useId()
+	const modern = variant === 'modern'
+	const centered = align === 'center'
 
 	const handleLookup = async () => {
 		const uid = value.trim()
@@ -25,12 +37,16 @@ function TenancyUinLookup({
 				params: { uid },
 			})
 			const filledCount = onLoaded?.(data?.tenancy) ?? 0
+			const defaultSuccess =
+				filledCount > 0
+					? `UIN verified. ${filledCount} field(s) auto-filled from the tenancy record.`
+					: 'UIN verified. No matching fields were available to auto-fill.'
 			setStatus({
 				type: 'success',
 				message:
-					filledCount > 0
-						? `UIN verified. ${filledCount} field(s) auto-filled from the tenancy record.`
-						: 'UIN verified. No matching fields were available to auto-fill.',
+					typeof successMessage === 'function'
+						? successMessage(filledCount)
+						: successMessage || defaultSuccess,
 			})
 		} catch (err) {
 			// The server answers "no such UIN" and "not your UIN" identically, on purpose - see
@@ -39,7 +55,7 @@ function TenancyUinLookup({
 			const fallback =
 				err?.response?.status === 429
 					? 'Too many lookups. Wait a minute and try again.'
-					: 'Could not fetch tenancy details for this UIN.'
+					: errorFallback
 			setStatus({
 				type: 'error',
 				message: err?.response?.data?.message || fallback,
@@ -47,6 +63,132 @@ function TenancyUinLookup({
 		} finally {
 			setLoading(false)
 		}
+	}
+
+	if (modern && centered) {
+		return (
+			<div className="form-i-uin-lookup form-i-uin-lookup--center sf-uin-search">
+				<label className="sf-uin-search__label" htmlFor={inputId}>
+					<span>{label}</span>
+					{required ? (
+						<span className="sf-uin-search__required" aria-hidden>
+							*
+						</span>
+					) : null}
+				</label>
+
+				<div className="sf-uin-search__bar">
+					<span className="sf-uin-search__icon" aria-hidden>
+						<IdCard size={20} strokeWidth={2} />
+					</span>
+					<input
+						id={inputId}
+						type="text"
+						value={value}
+						onChange={(e) => {
+							onChange(e.target.value)
+							if (status) setStatus(null)
+						}}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault()
+								if (!loading) handleLookup()
+							}
+						}}
+						required={required}
+						placeholder="Enter Tenancy UIN"
+						spellCheck={false}
+						autoCapitalize="characters"
+						aria-label={label}
+						className="sf-uin-search__input"
+					/>
+					<button
+						type="button"
+						onClick={handleLookup}
+						disabled={loading}
+						className="sf-uin-search__submit"
+					>
+						<Search size={16} strokeWidth={2.25} aria-hidden />
+						<span>{loading ? loadingLabel : actionLabel}</span>
+					</button>
+				</div>
+
+				{status ? (
+					<p
+						className={`sf-uin-search__status sf-uin-search__status--${status.type}`}
+						role="status"
+					>
+						{status.message}
+					</p>
+				) : (
+					<p className="sf-uin-search__hint">
+						{hint ||
+							'Enter the Tenancy UIN issued for your tenancy and load details. Only a party to that tenancy may load the record.'}
+					</p>
+				)}
+			</div>
+		)
+	}
+
+	if (modern) {
+		return (
+			<div className="form-i-uin-lookup flex flex-col gap-3">
+				<div className="flex flex-row flex-wrap items-center gap-x-1.5 gap-y-0 text-[15px] font-semibold text-[#151717]">
+					<span>{label}</span>
+					{required ? <span className="text-red-500">*</span> : null}
+				</div>
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2.5">
+					<div className="form-i-field form-i-uin-field flex h-[52px] min-w-0 w-full flex-1 items-stretch overflow-hidden rounded-[10px] border border-[#cbd5e1] bg-white transition-[border-color] duration-200 ease-in-out focus-within:border-[#0d47a1]">
+						<span className="form-i-icon-gutter" aria-hidden>
+							<IdCard size={18} strokeWidth={2} />
+						</span>
+						<input
+							type="text"
+							value={value}
+							onChange={(e) => {
+								onChange(e.target.value)
+								if (status) setStatus(null)
+							}}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault()
+									if (!loading) handleLookup()
+								}
+							}}
+							required={required}
+							placeholder="Enter Tenancy UIN"
+							spellCheck={false}
+							autoCapitalize="characters"
+							aria-label={label}
+							className="form-i-control form-i-uin-input h-full w-full min-w-0 flex-1 border-0 bg-transparent px-3.5 text-left outline-none"
+						/>
+					</div>
+					<button
+						type="button"
+						onClick={handleLookup}
+						disabled={loading}
+						className="inline-flex h-[52px] w-full shrink-0 items-center justify-center rounded-[10px] border-0 bg-[#0d47a1] px-5 text-[15px] font-medium text-white transition hover:bg-[#0a3a82] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[12rem]"
+					>
+						{loading ? loadingLabel : actionLabel}
+					</button>
+				</div>
+				{status ? (
+					<p
+						className={`m-0 text-sm leading-relaxed ${
+							status.type === 'success' ? 'text-emerald-700' : 'text-red-600'
+						}`}
+						role="status"
+					>
+						{status.message}
+					</p>
+				) : (
+					<p className="m-0 text-sm leading-relaxed text-slate-500">
+						{hint ||
+							'Enter the Tenancy UIN issued for your tenancy and load details. Only a party to that tenancy may load the record.'}
+					</p>
+				)}
+			</div>
+		)
 	}
 
 	return (
@@ -62,7 +204,7 @@ function TenancyUinLookup({
 							if (status) setStatus(null)
 						}}
 						required={required}
-						placeholder="e.g. ATRMS-01012026-0303"
+						placeholder="Enter Tenancy UIN"
 					/>
 					<button
 						type="button"
@@ -70,7 +212,7 @@ function TenancyUinLookup({
 						onClick={handleLookup}
 						disabled={loading}
 					>
-						{loading ? 'Looking up…' : 'Fetch details'}
+						{loading ? loadingLabel : actionLabel}
 					</button>
 				</div>
 			</label>
@@ -88,8 +230,8 @@ function TenancyUinLookup({
 				</p>
 			) : (
 				<p className="tenancy-uin-lookup__hint">
-					Enter the Tenancy UIN issued for your tenancy and fetch details to auto-fill matching
-					fields below. Tenancy details can only be fetched by a party to that tenancy.
+					{hint ||
+						'Enter the Tenancy UIN issued for your tenancy and fetch details to auto-fill matching fields below. Tenancy details can only be fetched by a party to that tenancy.'}
 				</p>
 			)}
 		</div>

@@ -27,28 +27,48 @@ export function prefetchServiceFormPanels() {
 	})
 }
 
+function isModernForm(formType) {
+	return (
+		formType === APPLICATION_TYPES.RENT_REVISION ||
+		formType === APPLICATION_TYPES.OTHER_CHARGES_REVISION ||
+		formType === APPLICATION_TYPES.VALUER_APPOINTMENT ||
+		formType === APPLICATION_TYPES.RENT_AUTHORITY_FILING ||
+		formType === APPLICATION_TYPES.RENT_COURT_POSSESSION ||
+		formType === APPLICATION_TYPES.RENT_COURT_FILING ||
+		formType === APPLICATION_TYPES.RENT_COURT_APPEAL ||
+		formType === APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL
+	)
+}
+
+/** Shell + panel — suspended as a unit so the loader fills `.ws-main`, not a short form chrome. */
+function FormPortalBody({ formType, user, serviceMeta, onBack }) {
+	const Panel = formPanels[formType]
+	return (
+		<ServiceFormShell serviceMeta={serviceMeta} variant={isModernForm(formType) ? 'modern' : 'default'}>
+			<Panel user={user} serviceMeta={serviceMeta} onBack={onBack} />
+		</ServiceFormShell>
+	)
+}
+
 function FormPortal() {
 	const { user } = useOutletContext()
 	const { formType } = useParams()
 	const navigate = useNavigate()
 	const serviceMeta = getFormServiceMeta(formType)
 	const onBack = () => navigate('/dashboard/services')
-	const Panel = formPanels[formType]
 
 	useEffect(() => {
 		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
 	}, [formType])
 
-	if (!Panel) {
+	if (!formPanels[formType]) {
 		return <Navigate to="/404" replace />
 	}
 
 	return (
-		<ServiceFormShell serviceMeta={serviceMeta}>
-			<Suspense fallback={<WorkspaceRouteLoader label="Opening form…" />}>
-				<Panel user={user} serviceMeta={serviceMeta} onBack={onBack} />
-			</Suspense>
-		</ServiceFormShell>
+		<Suspense fallback={<WorkspaceRouteLoader label="Opening form…" />}>
+			<FormPortalBody formType={formType} user={user} serviceMeta={serviceMeta} onBack={onBack} />
+		</Suspense>
 	)
 }
 

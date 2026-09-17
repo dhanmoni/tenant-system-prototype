@@ -161,6 +161,7 @@ class NoticeDocument
             ?: 'Respondent';
 
         $respondentAddress = $application->respondent_residential_address
+            ?: $application->tenant_residential_address
             ?: ($isLandlordApp ? $application->tenant_address : $application->landlord_address)
             ?: 'Address';
 

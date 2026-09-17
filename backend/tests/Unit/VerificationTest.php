@@ -161,7 +161,47 @@ class VerificationTest extends TestCase
             99 => Verification::PERSONAL_KNOWLEDGE,
         ]));
 
-        $this->assertSame([3], $sets['personal']);
+        // Paragraph 2 is on the form, but is only named once the jurisdiction declaration is accepted.
+        $this->assertSame([3, 5, 8], $sets['personal']);
+    }
+
+    /** When the jurisdiction declaration is accepted, paragraph 2 defaults to the personal blank. */
+    public function test_accepted_jurisdiction_names_paragraph_2_in_personal_knowledge(): void
+    {
+        foreach ([
+            Declarations::FORM_II_VERIFICATION,
+            Declarations::FORM_III_VERIFICATION,
+            Declarations::FORM_IV_VERIFICATION,
+            Declarations::FORM_V_VERIFICATION,
+            Declarations::FORM_VI_VERIFICATION,
+        ] as $fieldId) {
+            $sets = Verification::paragraphSets($fieldId, $this->data([
+                1 => Verification::PERSONAL_KNOWLEDGE,
+                3 => Verification::PERSONAL_KNOWLEDGE,
+            ], [
+                'jurisdiction_declaration_accepted' => '1',
+            ]));
+
+            $this->assertContains(2, $sets['personal'], "{$fieldId} should name paragraph 2");
+            $this->assertSame([1, 2, 3], $sets['personal']);
+        }
+    }
+
+    /** The Gazette does not fix paragraph 2 as personal knowledge; legal advice is allowed. */
+    public function test_accepted_jurisdiction_may_be_marked_as_legal_advice(): void
+    {
+        foreach (self::FORMS as $fieldId) {
+            $sets = Verification::paragraphSets($fieldId, $this->data([
+                1 => Verification::PERSONAL_KNOWLEDGE,
+                2 => Verification::LEGAL_ADVICE,
+                3 => Verification::PERSONAL_KNOWLEDGE,
+            ], [
+                'jurisdiction_declaration_accepted' => '1',
+            ]));
+
+            $this->assertContains(2, $sets['advised'], "{$fieldId} should honour legal advice on paragraph 2");
+            $this->assertNotContains(2, $sets['personal'], "{$fieldId} must not also name paragraph 2 as personal knowledge");
+        }
     }
 
     public function test_a_verification_asserting_nothing_of_personal_knowledge_is_rejected(): void
@@ -198,14 +238,15 @@ class VerificationTest extends TestCase
     }
 
     /**
-     * Paragraphs 2 and 5 are sworn separately under their own wording, and 8 asserts no fact.
-     * Offering them here would have a filer swear the same thing twice, two different ways.
+     * Paragraph 2 is still accepted as a jurisdiction declaration, but it is also offered so the
+     * filer can mark it as based on legal advice. Every form (II to VI) also offers 5 and 8.
      */
-    public function test_the_separately_sworn_paragraphs_are_not_offered_for_verification(): void
+    public function test_every_form_offers_paragraphs_1_through_8_for_verification(): void
     {
         foreach (self::FORMS as $fieldId) {
             $numbers = array_keys(Verification::paragraphs($fieldId));
-            $this->assertSame([1, 3, 4, 6, 7], $numbers, "{$fieldId} offers the wrong paragraphs");
+            $this->assertContains(2, $numbers, "{$fieldId} must offer paragraph 2");
+            $this->assertSame([1, 2, 3, 4, 5, 6, 7, 8], $numbers, "{$fieldId} offers the wrong paragraphs");
         }
     }
 

@@ -126,45 +126,62 @@ export const PARA_ANSWER = {
 /**
  * The paragraphs a filer may assign, under the Gazette's own headings.
  *
- * Paragraphs 2 and 5 are absent because they are themselves sworn declarations, accepted separately
- * under their own wording. Paragraph 8 is absent because a list of enclosures asserts no fact.
+ * Paragraph 2 (jurisdiction) is still accepted as a declaration, but the Gazette does not say
+ * it is always personal knowledge — the filer may mark it as based on legal advice.
+ * Forms II to VI also offer paragraphs 5 and 8 (earlier proceedings / enclosures).
  */
 export const VERIFICATION_PARAGRAPHS = {
 	[VERIFICATION.FORM_II]: {
 		1: 'Particulars of application',
+		2: 'Jurisdiction of the Rent Court',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	[VERIFICATION.FORM_III]: {
 		1: 'Particulars of application',
+		2: 'Jurisdiction of the Rent Court',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	[VERIFICATION.FORM_IV]: {
 		1: 'Particulars of violation against which the present application is made',
+		2: 'Jurisdiction of the Rent Authority',
 		3: 'Facts of the case',
 		4: 'Grounds for relief',
+		5: 'Earlier proceedings',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	// Forms V and VI have no "Facts of the case": para 3 is Limitation, para 4 the Memorandum.
+	// Both also offer 5 and 8 (earlier proceedings / enclosures) for legal-advice marking.
 	[VERIFICATION.FORM_V]: {
 		1: 'Particulars of the order of the Rent Authority as against which the appeal is made',
+		2: 'Jurisdiction of the Rent Court',
 		3: 'Limitation',
 		4: 'Memorandum of Appeal',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 	[VERIFICATION.FORM_VI]: {
 		1: 'Particulars of the order of the Rent Court as against which the Appeal is made',
+		2: 'Jurisdiction of the Rent Tribunal',
 		3: 'Limitation',
 		4: 'Memorandum of Appeal',
+		5: 'Matters not previously filed',
 		6: 'Relief sought',
 		7: 'Interim order, if any prayed for',
+		8: 'List of enclosures',
 	},
 }
 
@@ -195,7 +212,8 @@ export function renderParagraphNumbers(numbers) {
 export function paragraphsWithAnswer(fieldId, answers, wanted) {
 	return Object.keys(verificationParagraphs(fieldId))
 		.map(Number)
-		.filter((n) => answers[n] === wanted)
+		.filter((n) => (answers[n] ?? answers[String(n)]) === wanted)
+		.sort((a, b) => a - b)
 }
 
 /**
@@ -249,7 +267,7 @@ export const FORM_IB_UNDERTAKING_TEXT =
 	'I hereby agree to bear the fee of the valuer as determined by the Rent Authority.'
 
 /** As printed. The filer strikes out two on paper; here they pick one. */
-export const FORM_IB_RELATIONS = ['Son', 'Daughter', 'Wife']
+export const FORM_IB_RELATIONS = ['Son', 'Daughter', 'Spouse']
 
 /** "landlord or tenant of premises situated at" - again a pair to strike one of. */
 export const FORM_IB_CAPACITIES = ['landlord', 'tenant']

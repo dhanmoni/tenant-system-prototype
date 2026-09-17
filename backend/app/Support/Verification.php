@@ -38,11 +38,10 @@ class Verification
     /**
      * The paragraphs a filer may assign, per form, under the Gazette's own headings.
      *
-     * Paragraphs 2 and 5 are excluded because they are themselves sworn declarations, attested
-     * separately and under their own wording; sweeping them into "true to my personal knowledge"
-     * would have the filer swear the same thing twice under two different formulas. Paragraph 8 is
-     * excluded because a list of enclosures asserts no fact. What remains is everything the filer
-     * states in their own words.
+     * Paragraph 2 is still accepted as a jurisdiction declaration, but the Gazette does not
+     * say it is always personal knowledge — the filer may mark it as based on legal advice.
+     * Every form (II to VI) also offers paragraphs 5 and 8 so earlier proceedings /
+     * enclosures can be marked that way when they apply.
      */
     public static function paragraphs(string $fieldId): array
     {
@@ -64,11 +63,36 @@ class Verification
         ];
 
         $byForm = [
-            Declarations::FORM_II_VERIFICATION => [1 => 'Particulars of application'] + $application + $shared,
-            Declarations::FORM_III_VERIFICATION => [1 => 'Particulars of application'] + $application + $shared,
-            Declarations::FORM_IV_VERIFICATION => [1 => 'Particulars of violation against which the present application is made'] + $application + $shared,
-            Declarations::FORM_V_VERIFICATION => [1 => 'Particulars of the order of the Rent Authority as against which the appeal is made'] + $appeal + $shared,
-            Declarations::FORM_VI_VERIFICATION => [1 => 'Particulars of the order of the Rent Court as against which the Appeal is made'] + $appeal + $shared,
+            Declarations::FORM_II_VERIFICATION => [
+                1 => 'Particulars of application',
+                2 => 'Jurisdiction of the Rent Court',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $application + $shared,
+            Declarations::FORM_III_VERIFICATION => [
+                1 => 'Particulars of application',
+                2 => 'Jurisdiction of the Rent Court',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $application + $shared,
+            Declarations::FORM_IV_VERIFICATION => [
+                1 => 'Particulars of violation against which the present application is made',
+                2 => 'Jurisdiction of the Rent Authority',
+                5 => 'Earlier proceedings',
+                8 => 'List of enclosures',
+            ] + $application + $shared,
+            Declarations::FORM_V_VERIFICATION => [
+                1 => 'Particulars of the order of the Rent Authority as against which the appeal is made',
+                2 => 'Jurisdiction of the Rent Court',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $appeal + $shared,
+            Declarations::FORM_VI_VERIFICATION => [
+                1 => 'Particulars of the order of the Rent Court as against which the Appeal is made',
+                2 => 'Jurisdiction of the Rent Tribunal',
+                5 => 'Matters not previously filed',
+                8 => 'List of enclosures',
+            ] + $appeal + $shared,
         ];
 
         if (!isset($byForm[$fieldId])) {
@@ -119,7 +143,15 @@ class Verification
         $personal = [];
         $advised = [];
 
+        $jurisdictionNamed = self::shouldNameJurisdictionParagraph($fieldId, $data);
+
         foreach (array_keys(self::paragraphs($fieldId)) as $number) {
+            // Paragraph 2 is only named in the sworn blanks once the jurisdiction declaration
+            // itself has been accepted.
+            if ($number === 2 && !$jurisdictionNamed) {
+                continue;
+            }
+
             $answer = $answers[$number] ?? ($answers[(string) $number] ?? null);
             if ($answer === self::PERSONAL_KNOWLEDGE) {
                 $personal[] = $number;
@@ -128,7 +160,34 @@ class Verification
             }
         }
 
+        // Unticked paragraph 2 defaults to personal knowledge when the declaration is accepted.
+        if ($jurisdictionNamed && !in_array(2, $advised, true) && !in_array(2, $personal, true)) {
+            $personal[] = 2;
+            sort($personal);
+        }
+
         return ['personal' => $personal, 'advised' => $advised];
+    }
+
+    /** Forms II to VI swear jurisdiction in paragraph 2 via a separate declaration checkbox. */
+    private static function shouldNameJurisdictionParagraph(string $fieldId, array $data): bool
+    {
+        if (
+            $fieldId !== Declarations::FORM_II_VERIFICATION
+            && $fieldId !== Declarations::FORM_III_VERIFICATION
+            && $fieldId !== Declarations::FORM_IV_VERIFICATION
+            && $fieldId !== Declarations::FORM_V_VERIFICATION
+            && $fieldId !== Declarations::FORM_VI_VERIFICATION
+        ) {
+            return false;
+        }
+
+        $flag = $data['jurisdiction_declaration_accepted'] ?? null;
+        if ($flag === true || $flag === 1 || $flag === '1') {
+            return true;
+        }
+
+        return is_string($flag) && strtolower($flag) === 'on';
     }
 
     /**

@@ -11,16 +11,16 @@ import {
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend)
 
 export const STATUS_CHART_COLORS = {
-	SUBMITTED: '#1565c0',
+	SUBMITTED: '#1d4ed8',
 	IN_REVIEW: '#d97706',
-	REJECTED: '#dc2626',
-	COMPLETED: '#16a34a',
-	APPROVED: '#15803d',
-	VALUER_ASSIGNED: '#0891b2',
-	VALUER_REPORT_SUBMITTED: '#7c3aed',
-	OTHER: '#94a3b8',
-	DRAFT: '#8b5cf6',
-	PARTIAL: '#0d9488',
+	REJECTED: '#b91c1c',
+	COMPLETED: '#047857',
+	APPROVED: '#047857',
+	VALUER_ASSIGNED: '#d97706',
+	VALUER_REPORT_SUBMITTED: '#d97706',
+	OTHER: '#475569',
+	DRAFT: '#b45309',
+	PARTIAL: '#b45309',
 }
 
 export const STATUS_CHART_LABELS = {
