@@ -18,6 +18,103 @@ const RENT_COURT_FORM_TYPES = new Set([
 
 const RENT_TRIBUNAL_FORM_TYPES = new Set([APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL])
 
+function resolveServiceFormType(application = {}) {
+	const candidates = [
+		application.form_type,
+		application.form_key,
+		application.application_type,
+	]
+		.map((value) => String(value || '').trim())
+		.filter(Boolean)
+
+	for (const value of candidates) {
+		if (Object.values(APPLICATION_TYPES).includes(value)) return value
+	}
+
+	const blob = candidates.join(' ').toLowerCase()
+	if (blob.includes(APPLICATION_TYPES.VALUER_APPOINTMENT) || blob.includes('form-i-b') || blob.includes('valuer')) {
+		return APPLICATION_TYPES.VALUER_APPOINTMENT
+	}
+	if (
+		blob.includes(APPLICATION_TYPES.OTHER_CHARGES_REVISION) ||
+		blob.includes('form-i-a') ||
+		blob.includes('other charges')
+	) {
+		return APPLICATION_TYPES.OTHER_CHARGES_REVISION
+	}
+	if (
+		blob.includes(APPLICATION_TYPES.RENT_REVISION) ||
+		/\bform-i\b/.test(blob) ||
+		blob.includes('rent revision') ||
+		blob.includes('fixation of rent')
+	) {
+		return APPLICATION_TYPES.RENT_REVISION
+	}
+	if (
+		blob.includes(APPLICATION_TYPES.RENT_COURT_POSSESSION) ||
+		blob.includes('form-ii') ||
+		blob.includes('possession')
+	) {
+		return APPLICATION_TYPES.RENT_COURT_POSSESSION
+	}
+	if (
+		blob.includes(APPLICATION_TYPES.RENT_COURT_FILING) ||
+		blob.includes('form-iii') ||
+		blob.includes('filed before the rent court')
+	) {
+		return APPLICATION_TYPES.RENT_COURT_FILING
+	}
+	if (
+		blob.includes(APPLICATION_TYPES.RENT_AUTHORITY_FILING) ||
+		blob.includes('form-iv') ||
+		blob.includes('filed before the rent authority')
+	) {
+		return APPLICATION_TYPES.RENT_AUTHORITY_FILING
+	}
+	if (
+		blob.includes(APPLICATION_TYPES.RENT_COURT_APPEAL) ||
+		blob.includes('form-v') ||
+		blob.includes('appeal against rent authority') ||
+		blob.includes('appeal before the rent court')
+	) {
+		return APPLICATION_TYPES.RENT_COURT_APPEAL
+	}
+	if (
+		blob.includes(APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL) ||
+		blob.includes('form-vi') ||
+		blob.includes('tribunal')
+	) {
+		return APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL
+	}
+	return ''
+}
+
+function getServiceOfficeProfile(application = {}) {
+	const formType = resolveServiceFormType(application)
+	if (RENT_TRIBUNAL_FORM_TYPES.has(formType)) {
+		return {
+			formType,
+			office: ROLE_LABELS[ROLES.RENT_TRIBUNAL],
+			assistant: ROLE_LABELS[ROLES.RT_ASSISTANT],
+			isAppeal: true,
+		}
+	}
+	if (RENT_COURT_FORM_TYPES.has(formType)) {
+		return {
+			formType,
+			office: ROLE_LABELS[ROLES.RENT_COURT],
+			assistant: ROLE_LABELS[ROLES.RC_ASSISTANT],
+			isAppeal: formType === APPLICATION_TYPES.RENT_COURT_APPEAL,
+		}
+	}
+	return {
+		formType,
+		office: ROLE_LABELS[ROLES.RENT_AUTHORITY],
+		assistant: ROLE_LABELS[ROLES.RA_ASSISTANT],
+		isAppeal: false,
+	}
+}
+
 const WORKFLOW_ORDER = [
 	STATUS.DRAFT,
 	STATUS.PARTIAL,
@@ -53,26 +150,20 @@ function formatTimestamp(value) {
 	}
 }
 
+function timestampIfReached(state, value) {
+	if (state === 'pending') return null
+	return formatTimestamp(value)
+}
+
+function issuedUin(application) {
+	const value = String(application?.uid || application?.uin || '').trim()
+	if (!value || value === '.' || value === '-' || value === '—') return ''
+	return value
+}
+
 function statusRank(status) {
 	const idx = WORKFLOW_ORDER.indexOf(status)
 	return idx === -1 ? 0 : idx
-}
-
-function resolveState(stepStatus, currentStatus, isTerminal) {
-	const stepRank = statusRank(stepStatus)
-	const currentRank = statusRank(currentStatus)
-
-	if (currentStatus === STATUS.REJECTED) {
-		if (stepStatus === STATUS.REJECTED) return 'warning'
-		/* Earlier workflow stages still count as done once a rejection is issued */
-		if (stepRank < statusRank(STATUS.REJECTED) && stepRank > 0) return 'completed'
-		return 'pending'
-	}
-
-	if (stepRank < currentRank) return 'completed'
-	if (stepRank === currentRank && !isTerminal) return 'in_progress'
-	if (stepRank === currentRank && isTerminal) return 'completed'
-	return 'pending'
 }
 
 export function isTenancyApplication(application = {}) {
@@ -98,66 +189,99 @@ function buildTenancyPartySubsteps(application) {
 		{
 			id: 'initiator',
 			title: initiatorLabel,
+			note: initiatorDone ? 'Done' : 'Waiting',
 			state: initiatorDone ? 'completed' : 'in_progress',
 		},
 		{
 			id: 'second-party',
 			title: secondLabel,
+			note: secondDone ? 'Done' : 'Waiting',
 			state: secondDone ? 'completed' : initiatorDone ? 'in_progress' : 'pending',
 		},
 	]
 }
 
-function buildFromMovementHistory(application, currentStatus) {
-	const history = application.movement_history || []
-	const steps = history.map((entry, index) => {
-		const entryStatus = normalizeStatus(entry.status)
-		const isLast = index === history.length - 1
-		const isTerminal = [STATUS.COMPLETED, STATUS.APPROVED, STATUS.REJECTED].includes(currentStatus)
+function tenancyPartyDescription(application, bothPartiesDone) {
+	if (bothPartiesDone) return 'Both parties have completed their sections.'
 
-		let state = 'completed'
-		if (isLast) {
-			if (currentStatus === STATUS.REJECTED) state = 'warning'
-			else if (isTerminal) state = 'completed'
-			else state = 'in_progress'
-		}
+	const initiatorDone = Boolean(application.initiator_completed)
+	const initiatorName = application.initiator_role === 'LANDLORD' ? 'landlord' : 'tenant'
+	const secondName = application.initiator_role === 'LANDLORD' ? 'tenant' : 'landlord'
 
-		return {
-			id: `movement-${index}`,
-			title: entry.action || STATUS_LABELS[entryStatus] || entry.status || 'Status update',
-			description: entry.current_with ? `Held with ${entry.current_with}` : undefined,
-			timestamp: formatTimestamp(entry.moved_at),
-			state,
-			badge: state === 'in_progress' ? 'in-progress' : state === 'warning' ? 'rejected' : state,
-		}
-	})
-
-	if (currentStatus === STATUS.REJECTED && !steps.some((s) => s.state === 'warning')) {
-		steps.push({
-			id: 'rejected',
-			title: 'Application rejected',
-			description: application.rejection_message || 'See remarks from the reviewing officer.',
-			timestamp: formatTimestamp(application.rejected_at),
-			state: 'warning',
-			badge: 'rejected',
-		})
+	if (initiatorDone) {
+		return `The ${initiatorName} has finished. Waiting for the ${secondName} to complete their section.`
 	}
 
-	if (application.uid && currentStatus === STATUS.COMPLETED) {
-		steps.push({
-			id: 'uin',
-			title: 'UIN issued',
-			description: application.uid ? `Unique ID: ${application.uid}` : undefined,
-			state: 'completed',
-			badge: 'completed',
-		})
+	return 'Both parties must complete their sections before the application is filed.'
+}
+
+function tenancyNextHint(application, currentStatus) {
+	const initiatorDone = Boolean(application.initiator_completed)
+	const secondDone = Boolean(application.second_party_completed)
+	const secondName = application.initiator_role === 'LANDLORD' ? 'tenant' : 'landlord'
+
+	if (currentStatus === STATUS.PARTIAL) {
+		if (!initiatorDone) return 'Next: complete your remaining details so the other party can join.'
+		if (!secondDone) {
+			return `Next: waiting for the ${secondName} to complete their details. Filing starts only after both sides finish.`
+		}
 	}
 
-	return steps
+	if (currentStatus === STATUS.SUBMITTED || currentStatus === STATUS.IN_REVIEW) {
+		return 'Next: the office is generating your Unique Identification Number.'
+	}
+
+	return null
+}
+
+function displayStatusLabel(status, application = {}) {
+	if (status === STATUS.COMPLETED || status === STATUS.APPROVED) return 'Approved'
+	if (
+		isTenancyApplication(application) &&
+		[STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(status)
+	) {
+		return 'In review'
+	}
+	if ([STATUS.IN_REVIEW, STATUS.VALUER_ASSIGNED, STATUS.VALUER_REPORT_SUBMITTED].includes(status)) {
+		return 'In review'
+	}
+	if (status === STATUS.UNDER_PROCESS) return STATUS_LABELS[STATUS.SUBMITTED]
+	return STATUS_LABELS[status] || status || 'Unknown'
+}
+
+function statusTone(status, application = {}) {
+	if ([STATUS.COMPLETED, STATUS.APPROVED].includes(status)) return 'success'
+	if (status === STATUS.REJECTED || status === STATUS.CANCELLED) return 'danger'
+	if (
+		isTenancyApplication(application) &&
+		[STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(status)
+	) {
+		return 'review'
+	}
+	if (
+		[
+			STATUS.IN_REVIEW,
+			STATUS.VALUER_ASSIGNED,
+			STATUS.VALUER_REPORT_SUBMITTED,
+		].includes(status)
+	) {
+		return 'review'
+	}
+	if ([STATUS.DRAFT, STATUS.PARTIAL, STATUS.PENDING].includes(status)) return 'warning'
+	if (status === STATUS.WITHDRAWN) return 'muted'
+	return 'submitted'
+}
+
+function isApprovedStatus(status) {
+	return [STATUS.COMPLETED, STATUS.APPROVED].includes(status)
 }
 
 function buildTenancySteps(application, currentStatus) {
 	const steps = []
+	const approved = isApprovedStatus(currentStatus)
+	const bothPartiesDone =
+		Boolean(application.initiator_completed) && Boolean(application.second_party_completed)
+	const filed = statusRank(currentStatus) >= statusRank(STATUS.SUBMITTED)
 
 	if (currentStatus === STATUS.DRAFT || Number(application.wizard_step) > 0) {
 		steps.push({
@@ -173,51 +297,77 @@ function buildTenancySteps(application, currentStatus) {
 		})
 	}
 
-	const partyStep = {
+	const partiesState =
+		currentStatus === STATUS.PARTIAL || (currentStatus === STATUS.DRAFT && !bothPartiesDone)
+			? 'in_progress'
+			: bothPartiesDone || filed
+				? 'completed'
+				: 'pending'
+	const officeWorking =
+		currentStatus === STATUS.SUBMITTED || currentStatus === STATUS.IN_REVIEW
+	const reviewState =
+		approved || (currentStatus === STATUS.REJECTED && filed)
+			? 'completed'
+			: officeWorking
+				? 'in_progress'
+				: 'pending'
+	const assistantDone = filed && currentStatus !== STATUS.SUBMITTED
+
+	steps.push({
 		id: 'parties',
 		title: 'Landlord & tenant details',
-		description: 'Both parties must complete their sections.',
+		description: tenancyPartyDescription(application, bothPartiesDone),
 		substeps: buildTenancyPartySubsteps(application),
-		state: resolveState(
-			STATUS.PARTIAL,
-			currentStatus,
-			[STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
-		),
+		state: partiesState,
 		badge:
 			currentStatus === STATUS.PARTIAL
 				? 'in-progress'
-				: statusRank(currentStatus) > statusRank(STATUS.PARTIAL)
+				: bothPartiesDone || filed
 					? 'completed'
 					: 'pending',
-	}
-
-	if (
-		currentStatus === STATUS.PARTIAL ||
-		currentStatus === STATUS.DRAFT ||
-		!application.initiator_completed ||
-		!application.second_party_completed
-	) {
-		steps.push(partyStep)
-	}
+	})
 
 	steps.push({
-		id: 'submitted',
-		title: 'Submitted to Rent Authority',
-		description: application.current_with
-			? `Currently with ${application.current_with}`
-			: 'Queued for departmental processing.',
-		timestamp: formatTimestamp(application.created_at),
-		state: resolveState(
-			STATUS.SUBMITTED,
-			currentStatus,
-			[STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
-		),
-		badge:
-			currentStatus === STATUS.SUBMITTED || currentStatus === STATUS.UNDER_PROCESS
-				? 'in-progress'
-				: statusRank(currentStatus) > statusRank(STATUS.SUBMITTED)
-					? 'completed'
-					: 'pending',
+		id: 'review',
+		title: 'In review',
+		description: approved
+			? 'The office completed review and issued the UIN.'
+			: officeWorking
+				? 'Both parties have filed. The office is generating your Unique Identification Number.'
+				: 'Starts after both parties finish. The office then generates the UIN.',
+		substeps: [
+			{
+				id: 'assistant',
+				title: 'Assistant verification',
+				note:
+					currentStatus === STATUS.SUBMITTED
+						? 'In progress'
+						: assistantDone || approved
+							? 'Done'
+							: 'Waiting',
+				state:
+					currentStatus === STATUS.SUBMITTED
+						? 'in_progress'
+						: assistantDone || approved
+							? 'completed'
+							: 'pending',
+			},
+			{
+				id: 'authority',
+				title: 'Rent Authority decision',
+				note:
+					currentStatus === STATUS.IN_REVIEW ? 'In progress' : approved ? 'Done' : 'Waiting',
+				state:
+					currentStatus === STATUS.IN_REVIEW
+						? 'in_progress'
+						: approved
+							? 'completed'
+							: 'pending',
+			},
+		],
+		timestamp: timestampIfReached(reviewState, application.created_at || application.forwarded_at),
+		state: reviewState,
+		badge: officeWorking ? 'in-progress' : approved ? 'completed' : 'pending',
 	})
 
 	if (currentStatus === STATUS.REJECTED) {
@@ -229,34 +379,68 @@ function buildTenancySteps(application, currentStatus) {
 			state: 'warning',
 			badge: 'rejected',
 		})
-		return steps
+		return currentStatus === STATUS.DRAFT ? steps : steps.filter((step) => step.id !== 'draft')
 	}
 
+	const uin = issuedUin(application)
+	const uinState = approved && uin ? 'completed' : 'pending'
+
 	steps.push({
-		id: 'completed',
-		title: application.uid ? 'UIN issued' : 'Certificate completed',
-		description: application.uid
-			? `Your Unique Identification Number is ${application.uid}.`
-			: 'Final approval and certificate issuance.',
-		timestamp: formatTimestamp(application.approved_at || application.updated_at),
-		state: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
-			? 'completed'
-			: 'pending',
-		badge: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus) ? 'completed' : 'pending',
+		id: 'uin',
+		title: uin ? 'UIN issued' : 'UIN',
+		description: uin
+			? `Your Unique Identification Number is ${uin}.`
+			: 'Not issued yet. This number appears after the office completes review.',
+		timestamp: timestampIfReached(uinState, application.approved_at),
+		state: uinState,
+		badge: uinState === 'completed' ? 'completed' : 'pending',
 	})
 
-	return steps
+	return currentStatus === STATUS.DRAFT ? steps : steps.filter((step) => step.id !== 'draft')
+}
+
+function serviceNextHint(application, currentStatus) {
+	const { office } = getServiceOfficeProfile(application)
+
+	if (currentStatus === STATUS.SUBMITTED) {
+		return `Next: the ${office} assistant is verifying this application.`
+	}
+	if (currentStatus === STATUS.IN_REVIEW) {
+		return `Next: ${office} is reviewing this application.`
+	}
+	if (currentStatus === STATUS.VALUER_ASSIGNED) {
+		return 'Next: a valuer is preparing the valuation report.'
+	}
+	if (currentStatus === STATUS.VALUER_REPORT_SUBMITTED) {
+		return `Next: ${office} is taking the final decision on the valuer report.`
+	}
+	return null
+}
+
+function isAssistantComplete(application, currentStatus) {
+	if (Boolean(application.forwarded_at)) return true
+	return [
+		STATUS.IN_REVIEW,
+		STATUS.VALUER_ASSIGNED,
+		STATUS.VALUER_REPORT_SUBMITTED,
+		STATUS.COMPLETED,
+		STATUS.APPROVED,
+	].includes(currentStatus)
+}
+
+function citizenAssistantDescription(application, currentStatus) {
+	const { office, assistant } = getServiceOfficeProfile(application)
+	if (isForwardedToOffice(application, currentStatus)) {
+		return `Verified by the ${assistant} and sent to ${office}.`
+	}
+	if (currentStatus === STATUS.SUBMITTED) {
+		return `With the ${assistant} for verification.`
+	}
+	return `The ${assistant} verifies the application after you submit.`
 }
 
 function getOfficeReviewLabel(application) {
-	const assigned = application.assigned_to_role
-	if (assigned) return getRoleLabel(assigned)
-
-	const formType = String(application.form_type || application.application_type || '')
-	if (RENT_TRIBUNAL_FORM_TYPES.has(formType)) return ROLE_LABELS[ROLES.RENT_TRIBUNAL]
-	if (RENT_COURT_FORM_TYPES.has(formType)) return ROLE_LABELS[ROLES.RENT_COURT]
-	if (RENT_AUTHORITY_FORM_TYPES.has(formType)) return ROLE_LABELS[ROLES.RENT_AUTHORITY]
-	return 'Reviewing office'
+	return getServiceOfficeProfile(application).office
 }
 
 function buildOfficeReviewDescription(application, currentStatus) {
@@ -292,32 +476,14 @@ function buildOfficeReviewDescription(application, currentStatus) {
 	return `After assistant verification, the file is reviewed by ${office}.`
 }
 
-function officeReviewState(currentStatus, application = {}) {
-	if (currentStatus === STATUS.IN_REVIEW) return 'in_progress'
-	if (currentStatus === STATUS.VALUER_REPORT_SUBMITTED) return 'in_progress'
-	if (
-		[
-			STATUS.VALUER_ASSIGNED,
-			STATUS.COMPLETED,
-			STATUS.APPROVED,
-		].includes(currentStatus)
-	) {
-		return 'completed'
-	}
-	if (currentStatus === STATUS.REJECTED) {
-		return Boolean(application.forwarded_at) ? 'completed' : 'pending'
-	}
-	return 'pending'
-}
-
 function buildValuerAppointmentSteps(application, currentStatus) {
 	const pastSubmitted = statusRank(currentStatus) > statusRank(STATUS.DRAFT)
-	const assistantDone =
-		statusRank(currentStatus) > statusRank(STATUS.SUBMITTED) ||
-		Boolean(application.forwarded_at)
-	const office = getOfficeReviewLabel(application)
+	const assistantDone = isAssistantComplete(application, currentStatus)
+	const approved = [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
+	const { office, assistant } = getServiceOfficeProfile(application)
 	const valuerName = application.assigned_valuer?.name
-	const hasValuer = Boolean(application.assigned_valuer_id) ||
+	const hasValuer =
+		Boolean(application.assigned_valuer_id) ||
 		[
 			STATUS.VALUER_ASSIGNED,
 			STATUS.VALUER_REPORT_SUBMITTED,
@@ -325,79 +491,81 @@ function buildValuerAppointmentSteps(application, currentStatus) {
 			STATUS.APPROVED,
 		].includes(currentStatus)
 
-	const valuerAssignedState =
-		currentStatus === STATUS.VALUER_ASSIGNED
+	const firstReviewState =
+		currentStatus === STATUS.IN_REVIEW
 			? 'in_progress'
-			: statusRank(currentStatus) > statusRank(STATUS.VALUER_ASSIGNED) ||
-				  (hasValuer &&
-						[
-							STATUS.VALUER_REPORT_SUBMITTED,
-							STATUS.COMPLETED,
-							STATUS.APPROVED,
-							STATUS.REJECTED,
-						].includes(currentStatus))
+			: hasValuer || approved
 				? 'completed'
 				: 'pending'
 
-	const valuerReportState =
-		currentStatus === STATUS.VALUER_REPORT_SUBMITTED
+	const valuerAssignedState =
+		currentStatus === STATUS.VALUER_ASSIGNED ||
+		(hasValuer && currentStatus !== STATUS.IN_REVIEW)
 			? 'completed'
-			: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus) &&
-				  Boolean(application.valuer_report)
+			: 'pending'
+
+	const valuerReportState =
+		currentStatus === STATUS.VALUER_ASSIGNED
+			? 'in_progress'
+			: currentStatus === STATUS.VALUER_REPORT_SUBMITTED ||
+				  (approved && Boolean(application.valuer_report)) ||
+				  statusRank(currentStatus) > statusRank(STATUS.VALUER_REPORT_SUBMITTED)
 				? 'completed'
-				: currentStatus === STATUS.VALUER_ASSIGNED
-					? 'pending'
-					: statusRank(currentStatus) > statusRank(STATUS.VALUER_REPORT_SUBMITTED)
-						? 'completed'
-						: 'pending'
+				: 'pending'
+
+	const finalDecisionState =
+		currentStatus === STATUS.VALUER_REPORT_SUBMITTED
+			? 'in_progress'
+			: approved
+				? 'completed'
+				: 'pending'
+
+	const submittedState = pastSubmitted ? 'completed' : 'pending'
+	const assistantState =
+		currentStatus === STATUS.SUBMITTED ? 'in_progress' : assistantDone ? 'completed' : 'pending'
 
 	const steps = [
 		{
 			id: 'draft',
 			title: 'Draft saved',
 			description: 'Application saved on the portal.',
-			timestamp: formatTimestamp(application.updated_at),
+			timestamp: timestampIfReached(
+				currentStatus === STATUS.DRAFT ? 'in_progress' : 'completed',
+				application.updated_at
+			),
 			state: currentStatus === STATUS.DRAFT ? 'in_progress' : 'completed',
 			badge: currentStatus === STATUS.DRAFT ? 'in-progress' : 'completed',
 		},
 		{
 			id: 'submitted',
-			title: 'Submitted by applicant',
+			title: 'Submitted',
 			description: pastSubmitted
-				? 'Received in the district queue.'
-				: 'Waiting for the applicant to submit.',
-			timestamp: formatTimestamp(application.created_at),
-			state: pastSubmitted ? 'completed' : 'pending',
-			badge: pastSubmitted ? 'completed' : 'pending',
+				? `Your application was filed with ${office}.`
+				: 'Waiting for you to submit.',
+			timestamp: timestampIfReached(submittedState, application.created_at),
+			state: submittedState,
+			badge: submittedState === 'completed' ? 'completed' : 'pending',
 		},
 		{
 			id: 'assistant',
-			title: 'Assistant review',
-			description: buildAssistantReviewDescription(application, null, currentStatus),
-			timestamp: formatTimestamp(application.forwarded_at),
-			state:
-				currentStatus === STATUS.SUBMITTED
-					? 'in_progress'
-					: assistantDone
-						? 'completed'
-						: 'pending',
-			badge:
-				currentStatus === STATUS.SUBMITTED
-					? 'in-progress'
-					: assistantDone
-						? 'completed'
-						: 'pending',
+			title: assistant,
+			description: citizenAssistantDescription(application, currentStatus),
+			timestamp: timestampIfReached(assistantState, application.forwarded_at),
+			state: assistantState,
+			badge: assistantState === 'in_progress' ? 'in-progress' : assistantState,
 		},
 		{
 			id: 'office-review',
 			title: `${office} review`,
-			description: buildOfficeReviewDescription(application, currentStatus),
-			timestamp: formatTimestamp(application.approved_at || application.forwarded_at),
-			state: officeReviewState(currentStatus, application),
-			badge:
-				officeReviewState(currentStatus, application) === 'in_progress'
-					? 'in-progress'
-					: officeReviewState(currentStatus, application),
+			description:
+				currentStatus === STATUS.IN_REVIEW
+					? `${office} is reviewing the application and may appoint a valuer.`
+					: firstReviewState === 'completed'
+						? `Reviewed by ${office}. A valuer was assigned.`
+						: `Starts after assistant verification.`,
+			timestamp: timestampIfReached(firstReviewState, application.forwarded_at),
+			state: firstReviewState,
+			badge: firstReviewState === 'in_progress' ? 'in-progress' : firstReviewState,
 		},
 		{
 			id: 'valuer-assigned',
@@ -406,32 +574,39 @@ function buildValuerAppointmentSteps(application, currentStatus) {
 				? `Assigned to ${valuerName}.`
 				: hasValuer
 					? 'Assigned to a district valuer.'
-					: 'Rent Authority assigns a valuer when valuation is required.',
-			timestamp: formatTimestamp(application.valuer_assigned_at),
+					: `${office} assigns a valuer when valuation is required.`,
+			timestamp: timestampIfReached(valuerAssignedState, application.valuer_assigned_at),
 			state: valuerAssignedState,
-			badge:
-				valuerAssignedState === 'in_progress'
-					? 'in-progress'
-					: valuerAssignedState,
+			badge: valuerAssignedState === 'in_progress' ? 'in-progress' : valuerAssignedState,
 		},
 		{
 			id: 'valuer-report',
 			title: 'Valuer report',
 			description:
 				currentStatus === STATUS.VALUER_ASSIGNED
-					? 'Awaiting the valuation report from the assigned valuer.'
-					: application.valuer_report
+					? 'Waiting for the valuation report from the assigned valuer.'
+					: valuerReportState === 'completed'
 						? 'Valuation report submitted to Rent Authority.'
-						: 'Valuer submits findings for Rent Authority decision.',
-			timestamp: formatTimestamp(
+						: 'The valuer submits findings for the final decision.',
+			timestamp: timestampIfReached(
+				valuerReportState,
 				application.valuer_report_submitted_at ||
 					(application.valuer_report ? application.updated_at : null)
 			),
 			state: valuerReportState,
-			badge:
-				valuerReportState === 'in_progress'
-					? 'in-progress'
-					: valuerReportState,
+			badge: valuerReportState === 'in_progress' ? 'in-progress' : valuerReportState,
+		},
+		{
+			id: 'final-decision',
+			title: 'Final decision',
+			description: approved
+				? `Approved by ${office}.`
+				: currentStatus === STATUS.VALUER_REPORT_SUBMITTED
+					? `Valuer report received. ${office} is taking the final decision.`
+					: `Starts after the valuer report is submitted.`,
+			timestamp: timestampIfReached(finalDecisionState, application.approved_at),
+			state: finalDecisionState,
+			badge: finalDecisionState === 'in_progress' ? 'in-progress' : finalDecisionState,
 		},
 	]
 
@@ -449,17 +624,13 @@ function buildValuerAppointmentSteps(application, currentStatus) {
 	} else {
 		steps.push({
 			id: 'completed',
-			title: 'Completed',
+			title: 'Approved',
 			description: application.approval_message
 				? `Approved. Message: ${application.approval_message}`
-				: 'Application processed successfully.',
-			timestamp: formatTimestamp(application.approved_at),
-			state: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
-				? 'completed'
-				: 'pending',
-			badge: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
-				? 'completed'
-				: 'pending',
+				: 'Recorded when the office completes the final decision.',
+			timestamp: timestampIfReached(approved ? 'completed' : 'pending', application.approved_at),
+			state: approved ? 'completed' : 'pending',
+			badge: approved ? 'completed' : 'pending',
 		})
 	}
 
@@ -471,62 +642,93 @@ function buildValuerAppointmentSteps(application, currentStatus) {
 }
 
 function buildServiceFormSteps(application, currentStatus) {
-	const formType = String(application.form_type || application.application_type || '')
+	const { formType, office, assistant, isAppeal } = getServiceOfficeProfile(application)
 	if (formType === APPLICATION_TYPES.VALUER_APPOINTMENT) {
 		return buildValuerAppointmentSteps(application, currentStatus)
 	}
 
 	const pastSubmitted = statusRank(currentStatus) > statusRank(STATUS.DRAFT)
-	const assistantDone =
-		statusRank(currentStatus) > statusRank(STATUS.SUBMITTED) ||
-		Boolean(application.forwarded_at)
-	const office = getOfficeReviewLabel(application)
-	const officeState = officeReviewState(currentStatus, application)
+	const assistantDone = isAssistantComplete(application, currentStatus)
+	const approved = [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus)
+	const officeWorking = currentStatus === STATUS.SUBMITTED || currentStatus === STATUS.IN_REVIEW
+	const reviewState =
+		approved || (currentStatus === STATUS.REJECTED && assistantDone)
+			? 'completed'
+			: officeWorking
+				? 'in_progress'
+				: 'pending'
+	const submittedState = pastSubmitted ? 'completed' : 'pending'
+	const assistantSubState =
+		currentStatus === STATUS.SUBMITTED ? 'in_progress' : assistantDone ? 'completed' : 'pending'
+	const officeSubState =
+		currentStatus === STATUS.IN_REVIEW ? 'in_progress' : approved ? 'completed' : 'pending'
+	const outcomeTitle = isAppeal ? 'Decision' : 'Approved'
+	const outcomePending = isAppeal
+		? `Recorded when ${office} decides the appeal.`
+		: `Recorded when ${office} completes its decision.`
+	const outcomeDone = application.approval_message
+		? `${isAppeal ? 'Decided' : 'Approved'}. Message: ${application.approval_message}`
+		: isAppeal
+			? `Decided by ${office}.`
+			: `Approved by ${office}.`
 
 	const steps = [
 		{
 			id: 'draft',
 			title: 'Draft saved',
 			description: 'Application saved on the portal.',
-			timestamp: formatTimestamp(application.updated_at),
+			timestamp: timestampIfReached(
+				currentStatus === STATUS.DRAFT ? 'in_progress' : 'completed',
+				application.updated_at
+			),
 			state: currentStatus === STATUS.DRAFT ? 'in_progress' : 'completed',
 			badge: currentStatus === STATUS.DRAFT ? 'in-progress' : 'completed',
 		},
 		{
 			id: 'submitted',
-			title: 'Submitted by applicant',
+			title: 'Submitted',
 			description: pastSubmitted
-				? 'Received in the district queue.'
-				: 'Waiting for the applicant to submit.',
-			timestamp: formatTimestamp(application.created_at),
-			state: pastSubmitted ? 'completed' : 'pending',
-			badge: pastSubmitted ? 'completed' : 'pending',
+				? `Your application was filed with ${office}.`
+				: 'Waiting for you to submit.',
+			timestamp: timestampIfReached(submittedState, application.created_at),
+			state: submittedState,
+			badge: submittedState === 'completed' ? 'completed' : 'pending',
 		},
 		{
-			id: 'assistant',
-			title: 'Assistant review',
-			description: buildAssistantReviewDescription(application, null, currentStatus),
-			timestamp: formatTimestamp(application.forwarded_at),
-			state:
-				currentStatus === STATUS.SUBMITTED
-					? 'in_progress'
-					: assistantDone
-						? 'completed'
-						: 'pending',
-			badge:
-				currentStatus === STATUS.SUBMITTED
-					? 'in-progress'
-					: assistantDone
-						? 'completed'
-						: 'pending',
-		},
-		{
-			id: 'office-review',
-			title: `${office} review`,
-			description: buildOfficeReviewDescription(application, currentStatus),
-			timestamp: formatTimestamp(application.approved_at || application.forwarded_at),
-			state: officeState,
-			badge: officeState === 'in_progress' ? 'in-progress' : officeState,
+			id: 'review',
+			title: 'In review',
+			description: approved
+				? `${office} completed review.`
+				: officeWorking
+					? `${office} is reviewing your application.`
+					: `Starts after you submit. ${assistant} verifies first, then ${office} decides.`,
+			substeps: [
+				{
+					id: 'assistant',
+					title: assistant,
+					note:
+						assistantSubState === 'in_progress'
+							? 'In progress'
+							: assistantSubState === 'completed'
+								? 'Done'
+								: 'Waiting',
+					state: assistantSubState,
+				},
+				{
+					id: 'office',
+					title: `${office} decision`,
+					note:
+						officeSubState === 'in_progress'
+							? 'In progress'
+							: officeSubState === 'completed'
+								? 'Done'
+								: 'Waiting',
+					state: officeSubState,
+				},
+			],
+			timestamp: timestampIfReached(reviewState, application.forwarded_at || application.created_at),
+			state: reviewState,
+			badge: officeWorking ? 'in-progress' : approved ? 'completed' : 'pending',
 		},
 	]
 
@@ -548,13 +750,11 @@ function buildServiceFormSteps(application, currentStatus) {
 
 	steps.push({
 		id: 'completed',
-		title: 'Completed',
-		description: application.approval_message
-			? `Approved. Message: ${application.approval_message}`
-			: 'Application processed successfully.',
-		timestamp: formatTimestamp(application.approved_at),
-		state: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus) ? 'completed' : 'pending',
-		badge: [STATUS.COMPLETED, STATUS.APPROVED].includes(currentStatus) ? 'completed' : 'pending',
+		title: outcomeTitle,
+		description: approved ? outcomeDone : outcomePending,
+		timestamp: timestampIfReached(approved ? 'completed' : 'pending', application.approved_at),
+		state: approved ? 'completed' : 'pending',
+		badge: approved ? 'completed' : 'pending',
 	})
 
 	if (currentStatus !== STATUS.DRAFT) {
@@ -563,6 +763,7 @@ function buildServiceFormSteps(application, currentStatus) {
 
 	return steps
 }
+
 
 function getForwardTargetLabel(application, viewerRole) {
 	const assigned = application.assigned_to_role
@@ -620,7 +821,7 @@ function adaptStepsForViewer(steps, viewerRole, application, currentStatus) {
 
 		result = result
 			.filter((step) => {
-				if (step.id === 'principal' || step.id === 'office-review') return false
+				if (step.id === 'principal' || step.id === 'office-review' || step.id === 'final-decision') return false
 				if (step.id === 'completed' && !showCompleted) return false
 				const title = String(step.title || '').toLowerCase()
 				if (title.includes('principal officer')) return false
@@ -666,11 +867,11 @@ function adaptStepsForViewer(steps, viewerRole, application, currentStatus) {
 				return !title.includes('principal officer') && step.id !== 'principal'
 			})
 			.map((step) => {
-				if (step.id !== 'office-review') return step
+				if (step.id !== 'office-review' && step.id !== 'final-decision') return step
 
 				return {
 					...step,
-					title: `${office} review`,
+					title: step.id === 'final-decision' ? 'Final decision' : `${office} review`,
 					description: application.approved_by?.name
 						? `Decision recorded by ${application.approved_by.name}.`
 						: currentStatus === STATUS.IN_REVIEW ||
@@ -752,9 +953,7 @@ export function buildApplicationStatusProgress(application = {}, options = {}) {
 	const isTenancy = isTenancyApplication(application)
 
 	let steps = []
-	if (Array.isArray(application.movement_history) && application.movement_history.length > 0) {
-		steps = buildFromMovementHistory(application, currentStatus)
-	} else if (isTenancy) {
+	if (isTenancy) {
 		steps = buildTenancySteps(application, currentStatus)
 	} else {
 		steps = buildServiceFormSteps(application, currentStatus)
@@ -764,9 +963,14 @@ export function buildApplicationStatusProgress(application = {}, options = {}) {
 
 	return {
 		steps,
-		currentLabel: STATUS_LABELS[currentStatus] || application.status || 'Unknown',
+		nextHint: isTenancy
+			? tenancyNextHint(application, currentStatus)
+			: serviceNextHint(application, currentStatus),
+		currentLabel: displayStatusLabel(currentStatus, application),
+		currentTone: statusTone(currentStatus, application),
 		applicationNo: application.application_no || '—',
 		formLabel:
+			APPLICATION_LABELS[resolveServiceFormType(application)] ||
 			APPLICATION_LABELS[application.form_type] ||
 			APPLICATION_LABELS[application.application_type] ||
 			application.application_type ||

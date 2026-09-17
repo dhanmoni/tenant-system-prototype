@@ -19,12 +19,12 @@ export function getWorkspaceNavigation(user) {
 			{
 				sectionKey: 'ws.nav.applications',
 				items: [
+					{ to: '/dashboard/status', labelKey: 'ws.nav.uinStatus', icon: 'status' },
 					{
 						to: '/dashboard/tenancy-certificate',
 						labelKey: 'ws.nav.applyUin',
 						icon: 'idCard',
 					},
-					{ to: '/dashboard/status', labelKey: 'ws.nav.uinStatus', icon: 'status' },
 					{ to: '/dashboard/services', labelKey: 'ws.nav.allServices', icon: 'services', servicesMenu: true },
 				],
 			},

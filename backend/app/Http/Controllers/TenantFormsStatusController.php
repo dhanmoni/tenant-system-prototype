@@ -247,7 +247,7 @@ class TenantFormsStatusController extends Controller
         if ($statusFilter !== '' && $statusFilter !== 'all') {
             $items = array_values(array_filter(
                 $items,
-                fn ($i) => $this->matchesStatusFilter($i['status'] ?? null, $statusFilter)
+                fn ($i) => $this->matchesStatusFilter($i['status'] ?? null, $statusFilter, $typeFilter, $i['source_type'] ?? null)
             ));
         }
 
@@ -287,16 +287,19 @@ class TenantFormsStatusController extends Controller
         ]);
     }
 
-    private function matchesStatusFilter(?string $status, string $filter): bool
+    private function matchesStatusFilter(?string $status, string $filter, string $typeFilter = 'all', ?string $sourceType = null): bool
     {
         $normalized = strtoupper(trim((string) $status));
         $filter = strtolower(trim($filter));
+        $isTenancy = $typeFilter === 'tenancy' || $sourceType === 'tenancy';
 
         return match ($filter) {
             'draft' => $normalized === 'DRAFT',
             'partial' => $normalized === 'PARTIAL',
             'submitted' => in_array($normalized, ['SUBMITTED', 'UNDER_PROCESS'], true),
-            'in_review' => in_array($normalized, ['IN_REVIEW', 'VALUER_ASSIGNED', 'VALUER_REPORT_SUBMITTED'], true),
+            'in_review' => $isTenancy
+                ? in_array($normalized, ['SUBMITTED', 'IN_REVIEW', 'UNDER_PROCESS'], true)
+                : in_array($normalized, ['IN_REVIEW', 'VALUER_ASSIGNED', 'VALUER_REPORT_SUBMITTED'], true),
             'approved' => in_array($normalized, ['APPROVED', 'COMPLETED'], true),
             'rejected' => $normalized === 'REJECTED',
             'withdrawn' => $normalized === 'WITHDRAWN',

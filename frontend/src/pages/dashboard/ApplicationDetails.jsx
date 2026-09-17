@@ -1,49 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import api from '../../api'
-import { formatDateTime, formatDate } from '../../utils/formatters'
+import { formatDate } from '../../utils/formatters'
 import { APPLICATION_LABELS, APPLICATION_TYPES } from '../../constants/application'
 import { STATUS } from '../../constants/status'
 import { adminStatusBadgeClass, adminStatusLabel } from '../../utils/adminStatusBadge'
 import WorkflowConfirmModal from '../../components/dashboard/WorkflowConfirmModal'
+import ServiceFormLegalDocument, {
+	serviceFormName,
+	serviceFormViewerLabel,
+} from '../../components/forms/ServiceFormLegalDocument'
 import { useApplicationDetail } from '../../hooks/useApplicationDetail'
 import { useToast } from '../../context/ToastContext'
 import { useLanguage } from '../../i18n'
 import { useTenantProceedings } from '../../hooks/useTenantProceedings'
 import './admin/ApplicationDetails.css'
-
-const FORM_ENDPOINTS = {
-	[APPLICATION_TYPES.RENT_REVISION]: '/api/rent-revision-applications',
-	[APPLICATION_TYPES.OTHER_CHARGES_REVISION]: '/api/other-charges-revision-applications',
-	[APPLICATION_TYPES.VALUER_APPOINTMENT]: '/api/valuer-appointment-applications',
-	[APPLICATION_TYPES.RENT_COURT_POSSESSION]: '/api/rent-court-possession-applications',
-	[APPLICATION_TYPES.RENT_COURT_FILING]: '/api/rent-court-filing-applications',
-	[APPLICATION_TYPES.RENT_AUTHORITY_FILING]: '/api/rent-authority-filing-applications',
-	[APPLICATION_TYPES.RENT_COURT_APPEAL]: '/api/rent-court-appeal-applications',
-	[APPLICATION_TYPES.RENT_TRIBUNAL_APPEAL]: '/api/rent-tribunal-appeal-applications',
-}
-
-const DETAIL_SKIP_KEYS = new Set([
-	'id',
-	'user_id',
-	'user',
-	'district_id',
-	'signature_image_path',
-	'created_at',
-	'updated_at',
-	'deleted_at',
-	'application_no',
-	'status',
-	'form_type',
-	'wizard_step',
-	'ref_code',
-])
-
-function labelizeField(key) {
-	if (key === 'tenancy_uin') return 'Tenancy UIN'
-	return String(key || '').replace(/_/g, ' ')
-}
 
 function userIsLandlord(user, app) {
 	if (!user || !app) return false
@@ -65,7 +37,10 @@ function ApplicationDetails() {
 	const { user } = useOutletContext() || {}
 	const { showToast } = useToast()
 	const { t } = useLanguage()
-	const statusPath = '/dashboard/status'
+	const isTenancy = type === APPLICATION_TYPES.TENANCY_CERTIFICATE
+	const hearingsApply =
+		!isTenancy && type !== APPLICATION_TYPES.VALUER_APPOINTMENT
+	const statusPath = isTenancy ? '/dashboard/status?type=tenancy' : '/dashboard/status?type=service'
 	const typeLabel = APPLICATION_LABELS[type] || 'Application'
 
 
@@ -74,8 +49,8 @@ function ApplicationDetails() {
 	const queryClient = useQueryClient()
 
 	const { data: proceedings = [], isLoading: proceedingsLoading } = useTenantProceedings(
-		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? (application?.form_type || type) : null,
-		type !== APPLICATION_TYPES.TENANCY_CERTIFICATE ? application?.id : null
+		hearingsApply ? (application?.form_type || type) : null,
+		hearingsApply ? application?.id : null
 	)
 	/**
 	 * Open the signed notice.
@@ -104,6 +79,7 @@ function ApplicationDetails() {
 	const [confirmCancelUin, setConfirmCancelUin] = useState(false)
 	const [cancelReason, setCancelReason] = useState('')
 	const [cancellingUin, setCancellingUin] = useState(false)
+	const [proceedingsOpen, setProceedingsOpen] = useState(false)
 
 
 
@@ -177,8 +153,44 @@ function ApplicationDetails() {
 
 	if (loading) {
 		return (
-			<div className="admin-app-details">
-				<p className="ws-muted">Loading application details…</p>
+			<div
+				className={`admin-app-details${isTenancy ? ' admin-tenancy-doc' : ' admin-service-form-view'}`}
+				aria-busy="true"
+			>
+				<p className="ws-breadcrumb no-print">
+					<Link to={statusPath}>My applications</Link>
+					<span className="ws-breadcrumb-sep" aria-hidden>
+						/
+					</span>
+					<span>{typeLabel}</span>
+				</p>
+				<div className="admin-app-details__toolbar no-print">
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm admin-app-details__back"
+						onClick={() => navigate(statusPath)}
+					>
+						{isTenancy ? t('ws.appView.back') : t('ws.appView.backService')}
+					</button>
+				</div>
+				<div className="ws-app-view-loading" role="status" aria-live="polite" aria-label={t('ws.appView.loading')}>
+					<div className="ws-app-view-loading__banner">
+						<span className="ws-route-spinner" aria-hidden />
+						<p>{t('ws.appView.loading')}</p>
+					</div>
+					<div className="ws-app-view-skel-paper" aria-hidden>
+						<span className="ws-skel ws-skel--view-title" />
+						<span className="ws-skel ws-skel--view-line" />
+						<span className="ws-skel ws-skel--view-line ws-skel--view-line-short" />
+						<span className="ws-skel ws-skel--view-line" />
+						<span className="ws-skel ws-skel--view-line ws-skel--view-line-mid" />
+						<span className="ws-skel ws-skel--view-line" />
+						<span className="ws-skel ws-skel--view-line ws-skel--view-line-short" />
+						<span className="ws-skel ws-skel--view-line" />
+						<span className="ws-skel ws-skel--view-line ws-skel--view-line-mid" />
+						<span className="ws-skel ws-skel--view-block" />
+					</div>
+				</div>
 			</div>
 		)
 	}
@@ -191,14 +203,13 @@ function ApplicationDetails() {
 					{error || 'No application data found.'}
 				</div>
 				<Link to={statusPath} className="ws-btn ws-btn--outline ws-btn--sm">
-					Back to my applications
+					{isTenancy ? t('ws.appView.back') : t('ws.appView.backService')}
 				</Link>
 			</div>
 		)
 	}
 
 	const canWithdraw = application.status === STATUS.SUBMITTED
-	const isTenancy = type === APPLICATION_TYPES.TENANCY_CERTIFICATE
 	const canCancelUin =
 		isTenancy &&
 		Boolean(application.uid) &&
@@ -206,96 +217,72 @@ function ApplicationDetails() {
 		userIsLandlord(user, application)
 	const isCancelled = String(application.status || '').toUpperCase() === STATUS.CANCELLED
 
-	const renderProceedings = () => {
-		if (type === APPLICATION_TYPES.TENANCY_CERTIFICATE || type === APPLICATION_TYPES.VALUER_APPOINTMENT) return null
+	const formatNoticeType = (noticeType) =>
+		String(noticeType || '')
+			.replace(/_/g, ' ')
+			.replace(/\b\w/g, (c) => c.toUpperCase())
 
-		const formatNoticeType = (noticeType) =>
-			String(noticeType || '')
-				.replace(/_/g, ' ')
-				.replace(/\b\w/g, (c) => c.toUpperCase())
+	const proceedingsBody = (
+		<div className="ws-proceedings-panel">
+			{proceedingsLoading ? (
+				<p className="admin-app-details__proceedings-empty">{t('ws.appView.proceedingsLoading')}</p>
+			) : proceedings.length === 0 ? (
+				<p className="admin-app-details__proceedings-empty">{t('ws.appView.proceedingsEmpty')}</p>
+			) : (
+				<ul className="admin-app-details__proceedings-list">
+					{proceedings.map((p) => (
+						<li key={p.id} className="admin-app-details__proceeding-item">
+							<div className="admin-app-details__proceeding-main">
+								<div className="admin-app-details__proceeding-title-row">
+									<span className="admin-app-details__proceeding-type">
+										{formatNoticeType(p.notice_type)}
+									</span>
+									<span className="admin-app-details__proceeding-date">
+										{p.created_at
+											? new Date(p.created_at).toLocaleDateString('en-IN', {
+													day: '2-digit',
+													month: 'short',
+													year: 'numeric',
+												})
+											: '—'}
+									</span>
+								</div>
+								{p.hearing_date ? (
+									<p className="admin-app-details__proceeding-meta">
+										{t('ws.appView.hearing')}:{' '}
+										<strong>
+											{p.hearing_date}
+											{p.hearing_time ? ` · ${p.hearing_time}` : ''}
+										</strong>
+										{p.venue ? ` · ${p.venue}` : ''}
+									</p>
+								) : null}
+								<p className="admin-app-details__proceeding-meta">
+									{t('ws.appView.sentBy')}: {p.sent_by?.name || 'Unknown'}
+								</p>
+							</div>
+							<button
+								type="button"
+								className="ws-btn ws-btn--outline ws-btn--sm"
+								onClick={() => openNoticeDocument(p)}
+							>
+								{t('ws.appView.viewDocument')}
+							</button>
+						</li>
+					))}
+				</ul>
+			)}
+		</div>
+	)
 
-		return (
-			<section className="admin-app-details__card admin-app-details__proceedings-card">
-				<div className="admin-app-details__proceedings-head">
-					<div className="admin-app-details__proceedings-head-text">
-						<h3 className="admin-app-details__section-title">Case proceedings & notices</h3>
-						<p className="admin-app-details__proceedings-desc">
-							Hearing notices and orders issued for your application
-						</p>
-					</div>
-				</div>
-				<div className="admin-app-details__proceedings-body">
-					{proceedingsLoading ? (
-						<p className="admin-app-details__proceedings-empty">Loading proceedings…</p>
-					) : proceedings.length === 0 ? (
-						<p className="admin-app-details__proceedings-empty">
-							No proceedings or notices have been recorded for this application yet.
-						</p>
-					) : (
-						<ul className="admin-app-details__proceedings-list">
-							{proceedings.map((p) => (
-								<li key={p.id} className="admin-app-details__proceeding-item">
-									<div className="admin-app-details__proceeding-main">
-										<div className="admin-app-details__proceeding-title-row">
-											<span className="admin-app-details__proceeding-type">
-												{formatNoticeType(p.notice_type)}
-											</span>
-											<span className="admin-app-details__proceeding-date">
-												{p.created_at
-													? new Date(p.created_at).toLocaleDateString('en-IN', {
-															day: '2-digit',
-															month: 'short',
-															year: 'numeric',
-														})
-													: '—'}
-											</span>
-										</div>
-										{p.hearing_date ? (
-											<p className="admin-app-details__proceeding-meta">
-												Hearing:{' '}
-												<strong>
-													{p.hearing_date}
-													{p.hearing_time ? ` · ${p.hearing_time}` : ''}
-												</strong>
-												{p.venue ? ` · ${p.venue}` : ''}
-											</p>
-										) : null}
-										<p className="admin-app-details__proceeding-meta">
-											Sent by: {p.sent_by?.name || 'Unknown'}
-										</p>
-									</div>
-									<button
-										type="button"
-										className="ws-btn ws-btn--outline ws-btn--sm"
-										onClick={() => openNoticeDocument(p)}
-									>
-										View document
-									</button>
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
-			</section>
-		)
-	}
-
-	const detailFields = Object.entries(application).filter(([key, value]) => {
-		if (DETAIL_SKIP_KEYS.has(key)) return false
-		// The signed document URLs are rendered as the image or the link they point at, never as a
-		// field of the application.
-		if (key.endsWith('_url')) return false
-		if (value === null || value === undefined || value === '') return false
-		if (typeof value === 'object') return false
-		return true
-	})
-
-	// Signed and expiring, minted by the API next to the record. The documents disk is not
-	// web-served any more, so the old `{apiBase}/storage/{path}` reaches nothing.
-	const signatureUrl = application.signature_image_url || ''
+	const showProceedings = hearingsApply && proceedings.length > 0
+	const districtLabel =
+		typeof application.district === 'string'
+			? application.district
+			: application.district?.name || ''
 
 	return (
-		<div className={`admin-app-details${isTenancy ? ' admin-tenancy-doc' : ''}`}>
+		<div className={`admin-app-details${isTenancy ? ' admin-tenancy-doc' : ' admin-service-form-view'}`}>
 			{breadcrumb}
 
 			<div className="admin-app-details__toolbar no-print">
@@ -304,28 +291,36 @@ function ApplicationDetails() {
 					className="ws-btn ws-btn--outline ws-btn--sm admin-app-details__back"
 					onClick={() => navigate(statusPath)}
 				>
-					Back to my applications
+					{isTenancy ? t('ws.appView.back') : t('ws.appView.backService')}
 				</button>
 				<div className="admin-app-details__toolbar-actions">
-					{isTenancy ? (
-						<>
-							<button
-								type="button"
-								className="ws-btn ws-btn--outline ws-btn--sm"
-								onClick={() => window.print()}
-							>
-								Print / Save PDF
-							</button>
-							{application.agreement_pdf_url ? (
-								<button
-									type="button"
-									className="ws-btn ws-btn--primary ws-btn--sm"
-									onClick={() => window.open(application.agreement_pdf_url, '_blank')}
-								>
-									View agreement
-								</button>
-							) : null}
-						</>
+					{showProceedings ? (
+						<button
+							type="button"
+							className="ws-btn ws-btn--outline ws-btn--sm ws-proceedings-btn has-alert"
+							onClick={() => setProceedingsOpen(true)}
+						>
+							{t('ws.appView.proceedings')}
+							<span className="ws-proceedings-btn__count" aria-label={`${proceedings.length} notices`}>
+								{proceedings.length}
+							</span>
+						</button>
+					) : null}
+					<button
+						type="button"
+						className="ws-btn ws-btn--outline ws-btn--sm"
+						onClick={() => window.print()}
+					>
+						Print / Save PDF
+					</button>
+					{isTenancy && application.agreement_pdf_url ? (
+						<button
+							type="button"
+							className="ws-btn ws-btn--primary ws-btn--sm"
+							onClick={() => window.open(application.agreement_pdf_url, '_blank')}
+						>
+							View agreement
+						</button>
 					) : null}
 					{canWithdraw ? (
 						<button
@@ -613,68 +608,63 @@ function ApplicationDetails() {
 				</div>
 			) : (
 				<>
-					<div className="ws-user-detail__grid">
-						<div className="ws-user-detail__field">
-							<span className="ws-user-detail__label">Application no.</span>
-							<p className="ws-user-detail__value">{application.application_no || '—'}</p>
-						</div>
-						<div className="ws-user-detail__field">
-							<span className="ws-user-detail__label">Type</span>
-							<p className="ws-user-detail__value">{typeLabel}</p>
-						</div>
-						<div className="ws-user-detail__field">
-							<span className="ws-user-detail__label">Status</span>
-							<p className="ws-user-detail__value">
+					<div className="admin-tenancy-doc__preview">
+						<aside className="admin-tenancy-doc__registry no-print">
+							<div className="admin-tenancy-doc__registry-item">
+								<span>Application no.</span>
+								<strong>{application.application_no || '—'}</strong>
+							</div>
+							<div className="admin-tenancy-doc__registry-item">
+								<span>Form</span>
+								<strong>{serviceFormName(type)}</strong>
+							</div>
+							<div className="admin-tenancy-doc__registry-item">
+								<span>Status</span>
 								<span className={adminStatusBadgeClass(application.status)}>
 									{adminStatusLabel(application.status)}
 								</span>
-							</p>
-						</div>
-						<div className="ws-user-detail__field">
-							<span className="ws-user-detail__label">Submitted</span>
-							<p className="ws-user-detail__value">
-								{formatDateTime(application.created_at) || '—'}
-							</p>
-						</div>
-						{application.signature_name ? (
-							<div className="ws-user-detail__field">
-								<span className="ws-user-detail__label">Signed name</span>
-								<p className="ws-user-detail__value">{application.signature_name}</p>
 							</div>
-						) : null}
+							<div className="admin-tenancy-doc__registry-item">
+								<span>Submitted on</span>
+								<strong>{formatDate(application.created_at)}</strong>
+							</div>
+							{districtLabel ? (
+								<div className="admin-tenancy-doc__registry-item">
+									<span>District</span>
+									<strong>{districtLabel}</strong>
+								</div>
+							) : null}
+							{application.tenancy_uin ? (
+								<div className="admin-tenancy-doc__registry-item">
+									<span>UIN</span>
+									<strong>{application.tenancy_uin}</strong>
+								</div>
+							) : null}
+						</aside>
+
+						<div className="tenancy-preview-container ws-service-form-view">
+							<p className="ws-service-form-view__label no-print">
+								{serviceFormViewerLabel(type)}
+							</p>
+							<ServiceFormLegalDocument application={application} formType={type} />
+						</div>
 					</div>
-
-					{detailFields.length > 0 ? (
-						<section className="admin-app-details__card">
-							<h3 className="admin-app-details__section-title">Submitted details</h3>
-							<div className="ws-user-detail__grid" style={{ border: 'none', padding: '1.15rem 1.25rem' }}>
-								{detailFields.map(([key, value]) => (
-									<div className="ws-user-detail__field" key={key}>
-										<span className="ws-user-detail__label">{labelizeField(key)}</span>
-										<p className="ws-user-detail__value">{String(value)}</p>
-									</div>
-								))}
-							</div>
-						</section>
-					) : null}
-
-					{signatureUrl ? (
-						<section className="admin-app-details__card">
-							<h3 className="admin-app-details__section-title">Signature</h3>
-							<div style={{ padding: '1.15rem 1.25rem' }}>
-								<img
-									className="signature-preview"
-									src={signatureUrl}
-									alt="Applicant signature"
-									style={{ maxWidth: '300px', display: 'block', border: '1px solid #e2e8f0' }}
-								/>
-							</div>
-						</section>
-					) : null}
-
-					{renderProceedings()}
 				</>
 			)}
+
+			{showProceedings ? (
+			<WorkflowConfirmModal
+				open={proceedingsOpen}
+				onClose={() => setProceedingsOpen(false)}
+				title={t('ws.appView.proceedingsTitle')}
+				description={t('ws.appView.proceedingsDesc')}
+				hidePrimary
+				size="wide"
+				bodyClassName="ws-proceedings-modal-body"
+			>
+				{proceedingsBody}
+			</WorkflowConfirmModal>
+			) : null}
 
 			<WorkflowConfirmModal
 				open={confirmWithdraw}

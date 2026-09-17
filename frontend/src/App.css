@@ -13234,14 +13234,14 @@ main.main-fluid {
 }
 
 .table-icon-btn--progress {
-	background: #fff7ed !important;
-	color: var(--landing-accent) !important;
-	border: 1px solid #f3d4bf !important;
+	background: #fffbeb !important;
+	color: #b45309 !important;
+	border: 1px solid #fcd34d !important;
 }
 
 .table-icon-btn--progress:hover {
-	background: var(--landing-cream) !important;
-	border-color: var(--landing-accent) !important;
+	background: #fef3c7 !important;
+	border-color: #fbbf24 !important;
 	transform: translateY(-1px);
 }
 
@@ -13379,9 +13379,21 @@ main.main-fluid {
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 1rem;
-	margin-bottom: 1.15rem;
+	margin-bottom: 0.9rem;
 	padding-bottom: 0.9rem;
 	border-bottom: 1px solid #e2e8f0;
+}
+
+.status-progress__hint {
+	margin: 0 0 1rem;
+	padding: 0.65rem 0.8rem;
+	border-radius: 8px;
+	background: #fffbeb;
+	border: 1px solid #fde68a;
+	color: #92400e;
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	font-weight: 600;
 }
 
 .status-progress__eyebrow {
@@ -13410,11 +13422,47 @@ main.main-fluid {
 	flex-shrink: 0;
 	padding: 0.35rem 0.65rem;
 	border-radius: 999px;
-	background: var(--landing-cream);
-	border: 1px solid color-mix(in srgb, var(--landing-accent) 25%, #e2e8f0);
-	color: var(--landing-accent-dark);
+	background: #dbeafe;
+	border: 1px solid #93c5fd;
+	color: #1d4ed8;
 	font-size: 0.75rem;
 	font-weight: 700;
+}
+
+.status-progress__current--submitted {
+	background: #dbeafe;
+	border-color: #93c5fd;
+	color: #1d4ed8;
+}
+
+.status-progress__current--review {
+	background: #fff7ed;
+	border-color: #fdba74;
+	color: #c2410c;
+}
+
+.status-progress__current--success {
+	background: #d1fae5;
+	border-color: #6ee7b7;
+	color: #047857;
+}
+
+.status-progress__current--warning {
+	background: #fef3c7;
+	border-color: #fcd34d;
+	color: #b45309;
+}
+
+.status-progress__current--danger {
+	background: #fee2e2;
+	border-color: #fca5a5;
+	color: #b91c1c;
+}
+
+.status-progress__current--muted {
+	background: #e2e8f0;
+	border-color: #cbd5e1;
+	color: #475569;
 }
 
 .status-progress__list {
@@ -13597,6 +13645,13 @@ main.main-fluid {
 	margin-bottom: 0.4rem;
 	font-size: 0.8125rem;
 	color: #64748b;
+}
+
+.status-progress__subnote {
+	margin-left: auto;
+	font-size: 0.6875rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
 }
 
 .status-progress__substep--completed {
@@ -19599,7 +19654,8 @@ main.main-fluid {
 		border-radius: 0 !important;
 	}
 
-	.govt-form-document {
+	.govt-form-document,
+	.tenancy-preview-container .form-i-legal {
 		max-width: none !important;
 		width: 100% !important;
 		margin: 0 !important;
@@ -19609,6 +19665,9 @@ main.main-fluid {
 		line-height: 1.35 !important;
 		font-size: 12pt !important;
 		overflow: visible !important;
+		aspect-ratio: auto !important;
+		min-height: 0 !important;
+		height: auto !important;
 	}
 
 	.govt-form-watermark {

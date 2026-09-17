@@ -50,3 +50,30 @@ export const formatDateTime = (value) => {
 	const seconds = String(parsed.getSeconds()).padStart(2, '0')
 	return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
 }
+
+/** Gazette verification date: "16 September 2026". Falls back to today when empty. */
+export const formatLongDate = (value) => {
+	const raw = value ? String(value).trim() : ''
+	const dateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+	if (dateOnly) {
+		const [, year, month, day] = dateOnly
+		return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString('en-IN', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric',
+		})
+	}
+	const parsed = raw ? new Date(raw) : new Date()
+	if (Number.isNaN(parsed.getTime())) {
+		return new Date().toLocaleDateString('en-IN', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric',
+		})
+	}
+	return parsed.toLocaleDateString('en-IN', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric',
+	})
+}

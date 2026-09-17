@@ -9,7 +9,7 @@ const CHART_LABEL_KEYS = {
 	SUBMITTED: 'ws.status.submitted',
 	IN_REVIEW: 'ws.status.inReview',
 	REJECTED: 'ws.status.rejected',
-	COMPLETED: 'ws.status.completed',
+	COMPLETED: 'ws.status.approved',
 	OTHER: 'ws.status.other',
 	DRAFT: 'ws.status.draft',
 	PARTIAL: 'ws.status.partial',
@@ -36,15 +36,16 @@ export function bucketCitizenStatus(status, applicationType = '') {
 	if (s === STATUS.REJECTED) return 'REJECTED'
 	if (s === STATUS.DRAFT) return 'DRAFT'
 	if (s === STATUS.PARTIAL) return 'PARTIAL'
+	if (type.includes('tenancy') && [STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(s)) {
+		return 'IN_REVIEW'
+	}
 	if (
 		[STATUS.IN_REVIEW, STATUS.PENDING, STATUS.VALUER_ASSIGNED, STATUS.VALUER_REPORT_SUBMITTED].includes(s)
 	) {
 		return 'IN_REVIEW'
 	}
 	if (s === STATUS.SUBMITTED) return 'SUBMITTED'
-	if (s === STATUS.UNDER_PROCESS) {
-		return type.includes('tenancy') ? 'SUBMITTED' : 'IN_REVIEW'
-	}
+	if (s === STATUS.UNDER_PROCESS) return 'IN_REVIEW'
 	return CHART_LABEL_KEYS[s] ? s : 'OTHER'
 }
 
@@ -74,7 +75,10 @@ function CitizenStatusChart({ applications = [] }) {
 	)
 
 	const chart = useMemo(() => {
-		const counts = Object.fromEntries([...ALWAYS_KEYS, ...EXTRA_KEYS].map((k) => [k, 0]))
+		const alwaysKeys =
+			scope === 'uin' ? ['IN_REVIEW', 'COMPLETED', 'REJECTED'] : ALWAYS_KEYS
+		const extraKeys = scope === 'uin' ? ['DRAFT', 'PARTIAL'] : EXTRA_KEYS
+		const counts = Object.fromEntries([...alwaysKeys, ...extraKeys].map((k) => [k, 0]))
 
 		scopedApps.forEach((app) => {
 			const key = bucketCitizenStatus(app.status, app.application_type)
@@ -82,7 +86,7 @@ function CitizenStatusChart({ applications = [] }) {
 			else counts.OTHER += 1
 		})
 
-		const keys = [...ALWAYS_KEYS, ...EXTRA_KEYS.filter((k) => counts[k] > 0)]
+		const keys = [...alwaysKeys, ...extraKeys.filter((k) => counts[k] > 0)]
 
 		return {
 			hasData: scopedApps.length > 0,
@@ -93,7 +97,7 @@ function CitizenStatusChart({ applications = [] }) {
 				icon: STATUS_ICONS[k] || 'list',
 			})),
 		}
-	}, [scopedApps, t])
+	}, [scopedApps, scope, t])
 
 	const emptyKey =
 		scope === 'uin'

@@ -24,11 +24,20 @@ class ApplicationResource extends JsonResource
             'edit_history', 'cancelled_at', 'cancelled_by_user_id', 'cancellation_reason',
         ];
         
-        // Get all attributes of the model
-        $attributes = $this->resource->getAttributes();
-        
-        // Filter out common fields to get specific fields
-        $specificFields = array_diff_key($attributes, array_flip($commonFields));
+        if (method_exists($this->resource, 'district') && $this->resource->district_id) {
+            $this->resource->loadMissing('district');
+        }
+
+        // Cast JSON / boolean / date columns so the Gazette view receives arrays, not strings.
+        $specificFields = [];
+        foreach ($this->resource->getAttributes() as $key => $value) {
+            if (in_array($key, $commonFields, true)) {
+                continue;
+            }
+            $specificFields[$key] = $this->resource->hasCast($key)
+                ? $this->resource->{$key}
+                : $value;
+        }
 
         return array_merge([
             'id' => $this->id,

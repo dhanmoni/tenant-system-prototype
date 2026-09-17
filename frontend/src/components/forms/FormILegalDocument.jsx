@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useLegalSignatureUrl } from '../../hooks/useLegalSignatureUrl'
 
 function boldOrDash(value) {
 	const text = String(value ?? '').trim()
@@ -44,17 +44,7 @@ export default function FormILegalDocument({
 	authorityLine1 = '',
 	authorityLine2 = '',
 }) {
-	const [signatureUrl, setSignatureUrl] = useState('')
-
-	useEffect(() => {
-		if (!(signatureImage instanceof File) || !signatureImage.type?.startsWith('image/')) {
-			setSignatureUrl('')
-			return undefined
-		}
-		const url = URL.createObjectURL(signatureImage)
-		setSignatureUrl(url)
-		return () => URL.revokeObjectURL(url)
-	}, [signatureImage])
+	const signatureUrl = useLegalSignatureUrl(signatureImage)
 
 	const managerDisplayName = String(managerName ?? '').trim() || 'None'
 	const managerDisplayAddress = String(managerAddress ?? '').trim()

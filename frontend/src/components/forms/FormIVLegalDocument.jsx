@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import {
 	DECLARATION,
 	PARA_ANSWER,
@@ -8,6 +7,8 @@ import {
 	paragraphsWithAnswer,
 	renderParagraphNumbers,
 } from '../../constants/declarations'
+import { formatLongDate } from '../../utils/formatters'
+import { useLegalSignatureUrl } from '../../hooks/useLegalSignatureUrl'
 import { PRIOR_STATUS } from '../../constants/priorProceedings'
 import {
 	describeMatter,
@@ -62,18 +63,9 @@ export default function FormIVLegalDocument({
 	signatureImage,
 	authorityLine1 = '',
 	authorityLine2 = '',
+	verifiedOn,
 }) {
-	const [signatureUrl, setSignatureUrl] = useState('')
-
-	useEffect(() => {
-		if (!(signatureImage instanceof File) || !signatureImage.type?.startsWith('image/')) {
-			setSignatureUrl('')
-			return undefined
-		}
-		const url = URL.createObjectURL(signatureImage)
-		setSignatureUrl(url)
-		return () => URL.revokeObjectURL(url)
-	}, [signatureImage])
+	const signatureUrl = useLegalSignatureUrl(signatureImage)
 
 	const auth1 = String(authorityLine1 ?? '').trim()
 	const auth2 = String(authorityLine2 ?? '').trim()
@@ -143,11 +135,7 @@ export default function FormIVLegalDocument({
 		)
 	})()
 
-	const verificationDate = new Date().toLocaleDateString('en-IN', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric',
-	})
+	const verificationDate = formatLongDate(verifiedOn)
 
 	const personalParas = renderParagraphNumbers(
 		paragraphsWithAnswer(VERIFICATION.FORM_IV, verification?.paragraphs || {}, PARA_ANSWER.PERSONAL_KNOWLEDGE)

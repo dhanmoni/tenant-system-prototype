@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import { FORM_IB_UNDERTAKING_TEXT } from '../../constants/declarations'
+import { useLegalSignatureUrl } from '../../hooks/useLegalSignatureUrl'
 
 function blank(value) {
 	const text = String(value ?? '').trim()
@@ -24,17 +24,7 @@ export default function FormIBLegalDocument({
 	authorityLine1 = '',
 	authorityLine2 = '',
 }) {
-	const [signatureUrl, setSignatureUrl] = useState('')
-
-	useEffect(() => {
-		if (!(signatureImage instanceof File) || !signatureImage.type?.startsWith('image/')) {
-			setSignatureUrl('')
-			return undefined
-		}
-		const url = URL.createObjectURL(signatureImage)
-		setSignatureUrl(url)
-		return () => URL.revokeObjectURL(url)
-	}, [signatureImage])
+	const signatureUrl = useLegalSignatureUrl(signatureImage)
 
 	const auth1 = String(authorityLine1 ?? '').trim()
 	const auth2 = String(authorityLine2 ?? '').trim()

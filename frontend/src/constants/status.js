@@ -24,7 +24,7 @@ export const STATUS_LABELS = {
 	[STATUS.IN_REVIEW]: 'In Review',
 	[STATUS.REJECTED]: 'Rejected',
 	[STATUS.APPROVED]: 'Approved',
-	[STATUS.COMPLETED]: 'Completed',
+	[STATUS.COMPLETED]: 'Approved',
 	[STATUS.UNDER_PROCESS]: 'Under Process',
 	[STATUS.DRAFT]: 'Draft',
 	[STATUS.PARTIAL]: 'Awaiting second party',

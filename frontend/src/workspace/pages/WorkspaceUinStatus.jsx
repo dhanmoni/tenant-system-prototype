@@ -26,7 +26,6 @@ function buildTenancyStatusFilters(t) {
 		{ key: 'all', label: t('ws.uinStatus.filter.all') },
 		{ key: 'draft', label: t('ws.status.draft') },
 		{ key: 'partial', label: t('ws.status.partial') },
-		{ key: 'submitted', label: t('ws.status.submitted') },
 		{ key: 'in_review', label: t('ws.status.inReview') },
 		{ key: 'approved', label: t('ws.status.approved') },
 		{ key: 'rejected', label: t('ws.status.rejected') },
@@ -60,13 +59,19 @@ function formatStatusText(status, applicationType = '', t) {
 	const normalizedType = String(applicationType || '').toLowerCase()
 	const normalizedStatus = String(status || '').trim().toUpperCase()
 
+	const isTenancyType = normalizedType.includes(APPLICATION_TYPES.TENANCY_CERTIFICATE)
+
+	if (isTenancyType && [STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(normalizedStatus)) {
+		return t('ws.status.inReview')
+	}
+
 	if (normalizedStatus === STATUS.SUBMITTED) return t('ws.status.submitted')
 	if (normalizedStatus === STATUS.IN_REVIEW) return t('ws.status.inReview')
 	if (normalizedStatus === STATUS.REJECTED) return t('ws.status.rejected')
 	if (normalizedStatus === STATUS.DRAFT) return t('ws.status.draft')
 	if (normalizedStatus === STATUS.PARTIAL) return t('ws.status.partial')
 	if (normalizedStatus === STATUS.APPROVED) return t('ws.status.approved')
-	if (normalizedStatus === STATUS.COMPLETED) return t('ws.status.completed')
+	if (normalizedStatus === STATUS.COMPLETED) return t('ws.status.approved')
 
 	if (
 		normalizedType.includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) &&
@@ -77,21 +82,31 @@ function formatStatusText(status, applicationType = '', t) {
 
 	if (normalizedStatus === STATUS.UNDER_PROCESS) return t('ws.status.underProcess')
 	if (normalizedStatus === STATUS.PENDING) return t('ws.status.pending')
-	if (normalizedStatus === STATUS.VALUER_ASSIGNED) return t('ws.status.valuerAssigned')
-	if (normalizedStatus === STATUS.VALUER_REPORT_SUBMITTED) return t('ws.status.valuerReport')
+	if (
+		normalizedStatus === STATUS.VALUER_ASSIGNED ||
+		normalizedStatus === STATUS.VALUER_REPORT_SUBMITTED
+	) {
+		return t('ws.status.inReview')
+	}
 	if (normalizedStatus === STATUS.WITHDRAWN) return t('ws.status.withdrawn')
 	if (normalizedStatus === STATUS.CANCELLED) return t('ws.status.cancelled')
 
 	return status || '—'
 }
 
-function statusBadgeClass(status) {
+function statusBadgeClass(status, isTenancy = false) {
 	const s = String(status || '').toUpperCase()
-	if ([STATUS.APPROVED, STATUS.COMPLETED, STATUS.SUBMITTED].includes(s)) {
+	if ([STATUS.APPROVED, STATUS.COMPLETED].includes(s)) {
 		return 'ws-badge ws-badge--success'
 	}
-	if (s === STATUS.REJECTED) return 'ws-badge ws-badge--danger'
-	if ([STATUS.WITHDRAWN, STATUS.CANCELLED].includes(s)) return 'ws-badge ws-badge--muted'
+	if (s === STATUS.REJECTED || s === STATUS.CANCELLED) return 'ws-badge ws-badge--danger'
+	if (isTenancy && [STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(s)) {
+		return 'ws-badge ws-badge--review'
+	}
+	if ([STATUS.IN_REVIEW, STATUS.VALUER_ASSIGNED, STATUS.VALUER_REPORT_SUBMITTED].includes(s)) {
+		return 'ws-badge ws-badge--review'
+	}
+	if ([STATUS.WITHDRAWN].includes(s)) return 'ws-badge ws-badge--muted'
 	if ([STATUS.PARTIAL, STATUS.PENDING, STATUS.DRAFT].includes(s)) return 'ws-badge ws-badge--warning'
 	return 'ws-badge ws-badge--pending'
 }
@@ -182,6 +197,9 @@ function formatRowStatus(app, isTenancy, t) {
 			party: getAwaitingPartyLabel(app.initiator_role, t),
 		})
 	}
+	if (isTenancy && [STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(status)) {
+		return t('ws.status.inReview')
+	}
 	return formatStatusText(app.status, app.application_type, t)
 }
 
@@ -233,6 +251,80 @@ function serviceFormCopy(app, t) {
 function ariaSortValue(sortBy, sortOrder, column) {
 	if (sortBy !== column) return 'none'
 	return sortOrder === 'asc' ? 'ascending' : 'descending'
+}
+
+function ApplicationsTableSkeleton({ isTenancy, t, rows = 8 }) {
+	return (
+		<div
+			className="ws-status-table-wrap ws-status-table-wrap--loading"
+			role="status"
+			aria-live="polite"
+			aria-busy="true"
+			aria-label={t('ws.uinStatus.loading')}
+		>
+			<div className="ws-status-loading-banner">
+				<span className="ws-route-spinner ws-route-spinner--sm" aria-hidden />
+				<span>{t('ws.uinStatus.loading')}</span>
+			</div>
+			<table className={`ws-table ws-status-table${isTenancy ? '' : ' ws-status-table--service'}`}>
+				<thead>
+					<tr>
+						<th scope="col" className="ws-status-col-app">
+							{t('ws.uinStatus.col.appNo')}
+						</th>
+						<th scope="col" className="ws-status-col-uin">
+							{t('ws.uinStatus.col.uin')}
+						</th>
+						{!isTenancy ? (
+							<th scope="col" className="ws-status-col-form">
+								{t('ws.uinStatus.col.form')}
+							</th>
+						) : null}
+						<th scope="col" className="ws-status-col-date">
+							{t('ws.uinStatus.col.date')}
+						</th>
+						<th scope="col" className="ws-status-col-status">
+							{t('ws.uinStatus.col.status')}
+						</th>
+						<th scope="col" className="ws-status-th-actions">
+							{t('ws.uinStatus.col.actions')}
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{Array.from({ length: rows }, (_, index) => (
+						<tr key={index} className="ws-status-row ws-status-row--skel">
+							<td className="ws-status-col-app">
+								<span className="ws-skel ws-skel--appno" />
+							</td>
+							<td className="ws-status-col-uin">
+								<span className="ws-skel ws-skel--date" />
+							</td>
+							{!isTenancy ? (
+								<td className="ws-status-col-form">
+									<span className="ws-skel ws-skel--type" />
+								</td>
+							) : null}
+							<td className="ws-status-col-date">
+								<span className="ws-skel ws-skel--date" />
+							</td>
+							<td className="ws-status-col-status">
+								<span className="ws-skel ws-skel--badge" />
+							</td>
+							<td className="ws-status-actions">
+								<div className="ws-status-actions-inner" aria-hidden>
+									<span className="ws-skel ws-skel--action" />
+									<span className="ws-skel ws-skel--action" />
+									<span className="ws-skel ws-skel--action" />
+									<span className="ws-skel ws-skel--action" />
+								</div>
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	)
 }
 
 function ApplicationsTable({
@@ -441,7 +533,7 @@ function ApplicationsTable({
 									)}
 								</td>
 								<td className="ws-status-col-status" data-label={t('ws.uinStatus.col.status')}>
-									<span className={statusBadgeClass(app.status)}>
+									<span className={statusBadgeClass(app.status, isTenancy)}>
 										{formatRowStatus(app, isTenancy, t)}
 									</span>
 								</td>
@@ -557,7 +649,7 @@ export default function WorkspaceUinStatus() {
 	const queryClient = useQueryClient()
 	const { user } = useOutletContext()
 	const navigate = useNavigate()
-	const [searchParams] = useSearchParams()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const { t } = useLanguage()
 	const { showToast } = useToast()
 
@@ -583,6 +675,13 @@ export default function WorkspaceUinStatus() {
 	const [sortBy, setSortBy] = useState('created_at')
 	const [sortOrder, setSortOrder] = useState('desc')
 
+	useEffect(() => {
+		const raw = searchParams.get('type')
+		if (raw === TAB_SERVICE || raw === TAB_TENANCY) {
+			setActiveTab(raw)
+		}
+	}, [searchParams])
+
 	const endpoint = user?.role === 'user' ? '/api/tenant-forms/my' : '/api/tenancy-applications/my'
 	const queryParams = {
 		page,
@@ -593,7 +692,9 @@ export default function WorkspaceUinStatus() {
 		status_filter: statusFilter,
 	}
 
-	const { data, isLoading: loading, isError, refetch } = useCitizenApplications(endpoint, queryParams)
+	const { data, isLoading, isFetching, isError, refetch } = useCitizenApplications(endpoint, queryParams)
+	const loading = isLoading || (isFetching && !data)
+	const refreshing = isFetching && Boolean(data)
 	const error = isError ? t('ws.uinStatus.error.load') : ''
 	const applications = useMemo(() => {
 		if (!data) return []
@@ -647,6 +748,14 @@ export default function WorkspaceUinStatus() {
 			setSortOrder('desc')
 		}
 		setPage(1)
+		setSearchParams(
+			(prev) => {
+				const next = new URLSearchParams(prev)
+				next.set('type', tab)
+				return next
+			},
+			{ replace: true },
+		)
 	}
 
 	const handleStatusFilter = (key) => {
@@ -748,12 +857,16 @@ export default function WorkspaceUinStatus() {
 		submittedQuery.trim() !== ''
 
 	useEffect(() => {
+		if (isTenancyTab && statusFilter === 'submitted') {
+			setStatusFilter('in_review')
+			return
+		}
 		if (statusFilters.some((sf) => sf.key === statusFilter)) return
 		setStatusFilter('all')
-	}, [statusFilters, statusFilter])
+	}, [statusFilters, statusFilter, isTenancyTab])
 
 	return (
-		<div className="ws-page ws-status-page">
+		<div className="ws-page ws-status-page" aria-busy={loading || refreshing}>
 			<header className="ws-status-page-head">
 				<h1 className="ws-status-title">{t('ws.uinStatus.title')}</h1>
 				<p className="ws-status-lead">{t('ws.uinStatus.lead')}</p>
@@ -895,22 +1008,28 @@ export default function WorkspaceUinStatus() {
 						) : null}
 					</div>
 
-					<div className="ws-status-results">
+					<div className={`ws-status-results${refreshing ? ' is-fetching' : ''}`}>
 						<div className="ws-status-results-head">
 							<span className="ws-status-results-label">
 								{isTenancyTab ? t('ws.uinStatus.results') : t('ws.uinStatus.serviceResults')}
 							</span>
 							<span className="ws-status-panel-count">
-								{loading
-									? '…'
+								{loading || refreshing
+									? t('ws.uinStatus.loading')
 									: t('ws.uinStatus.matching', {
 											shown: displayedItems.length,
 											total: totalResults,
 										})}
 							</span>
 						</div>
+						{refreshing ? (
+							<div className="ws-status-loading-banner" role="status" aria-live="polite">
+								<span className="ws-route-spinner ws-route-spinner--sm" aria-hidden />
+								<span>{t('ws.uinStatus.loading')}</span>
+							</div>
+						) : null}
 						{loading ? (
-							<div className="ws-empty ws-empty--compact">{t('ws.uinStatus.loading')}</div>
+							<ApplicationsTableSkeleton isTenancy={isTenancyTab} t={t} />
 						) : (
 							<ApplicationsTable
 								items={displayedItems}

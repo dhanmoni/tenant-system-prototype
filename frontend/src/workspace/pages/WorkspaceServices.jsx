@@ -18,12 +18,6 @@ const AUTHORITY_DESC_KEYS = {
 	'rent-tribunal': 'ws.services.authority.desc.rentTribunal',
 }
 
-const AUTHORITY_CHIP_KEYS = {
-	'rent-authority': 'ws.services.chip.sec30',
-	'rent-court': 'ws.services.chip.sec33',
-	'rent-tribunal': 'ws.services.chip.sec34',
-}
-
 const AUTHORITY_ICONS = {
 	'rent-authority': 'landmark',
 	'rent-court': 'gavel',
@@ -107,7 +101,6 @@ function ServiceFormItem({ form, groupId, t }) {
 					<span className={`ws-services-form-badge ws-services-form-badge--${groupId}`}>
 						{copy.formName}
 					</span>
-					{form.rule ? <span className="ws-services-form-row__meta">{form.rule}</span> : null}
 				</span>
 				<span className="ws-services-form-row__copy">
 					<span className="ws-services-form-row__title">{copy.matter}</span>
@@ -241,9 +234,6 @@ function WorkspaceServices() {
 										<Icon name={AUTHORITY_ICONS[group.id] || 'services'} />
 									</span>
 									<div className="ws-services-catalog-heading">
-										<p className="ws-services-catalog-kicker">
-											{t(AUTHORITY_CHIP_KEYS[group.id] || 'ws.services.chip.authority')}
-										</p>
 										<h2
 											id={`ws-services-catalog-${group.id}`}
 											className="ws-card-title"

@@ -242,7 +242,7 @@ function ServicesNavMenu({ item, collapsed, onNavClick, t, showTip, hideTip }) {
 						to={item.to}
 						end
 						className={({ isActive }) =>
-							`ws-nav-disclosure__catalog${isActive ? ' active' : ''}`
+							`ws-nav-disclosure__catalog${isActive ? ' is-active' : ''}`
 						}
 						onClick={() => {
 							hideTip()

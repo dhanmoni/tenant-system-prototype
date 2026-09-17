@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import {
 	DECLARATION,
 	PARA_ANSWER,
@@ -8,6 +7,8 @@ import {
 	paragraphsWithAnswer,
 	renderParagraphNumbers,
 } from '../../constants/declarations'
+import { formatLongDate } from '../../utils/formatters'
+import { useLegalSignatureUrl } from '../../hooks/useLegalSignatureUrl'
 import { PRIOR_STATUS } from '../../constants/priorProceedings'
 
 function blank(value) {
@@ -57,18 +58,9 @@ export default function FormIIILegalDocument({
 	verification,
 	signatureName,
 	signatureImage,
+	verifiedOn,
 }) {
-	const [signatureUrl, setSignatureUrl] = useState('')
-
-	useEffect(() => {
-		if (!(signatureImage instanceof File) || !signatureImage.type?.startsWith('image/')) {
-			setSignatureUrl('')
-			return undefined
-		}
-		const url = URL.createObjectURL(signatureImage)
-		setSignatureUrl(url)
-		return () => URL.revokeObjectURL(url)
-	}, [signatureImage])
+	const signatureUrl = useLegalSignatureUrl(signatureImage)
 
 	const courtBracket =
 		String(beforeRentCourt ?? '').trim() ||
@@ -122,11 +114,7 @@ export default function FormIIILegalDocument({
 		)
 	})()
 
-	const verificationDate = new Date().toLocaleDateString('en-IN', {
-		day: 'numeric',
-		month: 'long',
-		year: 'numeric',
-	})
+	const verificationDate = formatLongDate(verifiedOn)
 
 	const personalParas = renderParagraphNumbers(
 		paragraphsWithAnswer(

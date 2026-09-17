@@ -239,13 +239,29 @@
 }
 
 .ws-nav-disclosure {
+	position: relative;
 	margin: 0;
 }
 
+.ws-nav-disclosure.is-open::before {
+	content: '';
+	position: absolute;
+	left: calc(0.75rem + 8px);
+	top: 2.15rem;
+	bottom: 0.35rem;
+	width: 2px;
+	background: #cbd5e1;
+	border-radius: 1px;
+	pointer-events: none;
+	z-index: 0;
+}
+
 .ws-nav-disclosure__trigger {
+	position: relative;
+	z-index: 1;
 	width: 100%;
 	border: 0;
-	background: transparent;
+	background: var(--ws-surface);
 	cursor: pointer;
 	text-align: left;
 	font: inherit;
@@ -281,27 +297,31 @@
 }
 
 .ws-nav-disclosure__panel {
-	margin: 0.15rem 0 0.35rem 0.55rem;
-	padding: 0.2rem 0 0.15rem 0.65rem;
-	border-left: 2px solid #e2e8f0;
+	position: relative;
+	z-index: 1;
+	margin: 0 0 0.15rem calc(0.75rem + 8px);
+	padding: 0.2rem 0 0.15rem 0.7rem;
 }
 
 .ws-nav-disclosure__group {
-	margin: 0 0 0.55rem;
+	margin: 0 0 0.4rem;
 }
 
 .ws-nav-disclosure__group:last-of-type {
-	margin-bottom: 0.35rem;
+	margin-bottom: 0;
 }
 
 .ws-nav-disclosure__group-label {
-	padding: 0.2rem 0.45rem 0.25rem;
-	font-size: 0.65rem;
+	padding: 0.15rem 0.2rem 0.15rem 0.15rem;
+	font-size: 0.625rem;
 	font-weight: 700;
-	letter-spacing: 0.06em;
+	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	color: #94a3b8;
 	line-height: 1.2;
+	white-space: nowrap;
+	hyphens: none;
+	-webkit-hyphens: none;
 }
 
 .ws-nav-disclosure__group--rent-authority .ws-nav-disclosure__group-label {
@@ -327,7 +347,7 @@
 
 .ws-nav-disclosure__link {
 	display: block;
-	padding: 0.4rem 0.5rem;
+	padding: 0.32rem 0.4rem 0.32rem 0.15rem;
 	border-radius: 6px;
 	color: #475569;
 	font-size: 0.8125rem;
@@ -351,34 +371,27 @@
 
 .ws-nav-disclosure__catalog {
 	display: block;
-	margin-top: 0.45rem;
-	padding: 0.45rem 0.5rem 0.2rem;
-	border-top: 1px solid #e8edf3;
-	border-radius: 0;
+	margin: 0.2rem 0 0;
+	padding: 0.32rem 0.4rem 0.32rem 0.15rem;
+	border-top: 1px solid #e2e8f0;
+	border-radius: 6px;
 	background: transparent;
-	color: #64748b;
-	font-size: 0.75rem;
+	color: #475569;
+	font-size: 0.8125rem;
 	font-weight: 600;
 	line-height: 1.25;
 	text-decoration: none;
 }
 
-.ws-nav-disclosure__catalog::after {
-	content: ' →';
-	font-weight: 500;
-	color: #94a3b8;
-}
-
 .page.page-dashboard .ws-root a.ws-nav-disclosure__catalog:hover {
-	background: transparent;
-	color: #334155;
+	background: #f1f5f9;
+	color: #0f172a;
 	text-decoration: none;
 }
 
-.page.page-dashboard .ws-root a.ws-nav-disclosure__catalog.active {
-	background: transparent;
-	color: #334155;
-	font-weight: 700;
+.page.page-dashboard .ws-root a.ws-nav-disclosure__catalog.is-active {
+	background: var(--ws-accent-soft);
+	color: #1e293b;
 }
 
 .ws-nav-link-icon--dashboard {
@@ -1634,6 +1647,13 @@ a.ws-sidebar-support-item:hover {
 	animation: ws-route-spin 0.65s linear infinite;
 }
 
+.ws-route-spinner--sm {
+	width: 16px;
+	height: 16px;
+	border-width: 2px;
+	flex-shrink: 0;
+}
+
 @keyframes ws-route-spin {
 	to {
 		transform: rotate(360deg);
@@ -1968,16 +1988,16 @@ a.ws-sidebar-support-item:hover {
 }
 
 .page.page-dashboard .ws-root button.table-icon-btn--progress {
-	background: #eef2ff !important;
-	color: #4338ca !important;
-	border: 1px solid #c7d2fe !important;
+	background: #fffbeb !important;
+	color: #b45309 !important;
+	border: 1px solid #fcd34d !important;
 }
 
 .page.page-dashboard .ws-root button.table-icon-btn--progress:hover:not(:disabled) {
-	background: #e0e7ff !important;
-	border-color: #a5b4fc !important;
-	color: #3730a3 !important;
-	box-shadow: 0 2px 4px rgba(67, 56, 202, 0.12);
+	background: #fef3c7 !important;
+	border-color: #fbbf24 !important;
+	color: #92400e !important;
+	box-shadow: 0 2px 4px rgba(180, 83, 9, 0.12);
 	transform: translateY(-1px);
 }
 
@@ -3120,9 +3140,7 @@ a.ws-sidebar-support-item:hover {
 
 .ws-services-form-id {
 	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 4px;
+	align-items: center;
 	min-width: 0;
 }
 
@@ -3615,6 +3633,47 @@ a.ws-sidebar-support-item:hover {
 	letter-spacing: 0.04em;
 }
 
+.ws-status-results.is-fetching {
+	position: relative;
+}
+
+.ws-status-results.is-fetching::after {
+	content: '';
+	position: absolute;
+	inset: 40px 0 0;
+	background: color-mix(in srgb, #fff 55%, transparent);
+	pointer-events: none;
+	z-index: 1;
+}
+
+.ws-status-loading-banner {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	color: #1d4ed8;
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+.ws-status-table-wrap--loading {
+	pointer-events: none;
+}
+
+.ws-status-row--skel td {
+	vertical-align: middle;
+}
+
+.ws-skel--action {
+	height: 2rem;
+	width: 100%;
+	border-radius: 6px;
+}
+
 .ws-status-page .ws-badge--warning {
 	background: #fffbeb;
 	color: #92400e;
@@ -4041,7 +4100,7 @@ a.ws-sidebar-support-item:hover {
 	overflow-x: auto;
 	max-width: 100%;
 	min-width: 0;
-	margin: 0 -4px;
+	margin: 0;
 	border: 1px solid var(--ws-border);
 	border-radius: 10px;
 	background: #f8fafc;
@@ -4051,9 +4110,13 @@ a.ws-sidebar-support-item:hover {
 .ws-status-table {
 	width: 100%;
 	margin: 0;
-	table-layout: fixed;
+	table-layout: auto;
 	border-collapse: separate;
 	border-spacing: 0;
+}
+
+.ws-status-page .ws-status-table {
+	table-layout: fixed;
 }
 
 .ws-status-table thead th {
@@ -4339,16 +4402,20 @@ a.ws-sidebar-support-item:hover {
 
 .ws-status-table thead th.ws-status-th-actions,
 .ws-status-table tbody td.ws-status-actions {
-	width: 16%;
-	min-width: 0;
+	width: 1%;
+	min-width: 6.75rem;
 	text-align: right;
-	white-space: normal;
+	white-space: nowrap;
 	vertical-align: middle;
 }
 
-.ws-status-table--service thead th.ws-status-th-actions,
-.ws-status-table--service tbody td.ws-status-actions {
-	width: 18%;
+.ws-status-page .ws-status-table thead th.ws-status-th-actions,
+.ws-status-page .ws-status-table tbody td.ws-status-actions,
+.ws-status-page .ws-status-table--service thead th.ws-status-th-actions,
+.ws-status-page .ws-status-table--service tbody td.ws-status-actions {
+	width: 16.5rem;
+	min-width: 16.5rem;
+	white-space: normal;
 }
 
 .ws-status-actions {
@@ -4356,13 +4423,21 @@ a.ws-sidebar-support-item:hover {
 }
 
 .ws-status-actions-inner {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 6px;
+	width: auto;
+	margin-left: auto;
+}
+
+.ws-status-page .ws-status-actions-inner {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	align-items: stretch;
 	justify-items: stretch;
-	gap: 6px;
 	width: 100%;
-	margin-left: auto;
 }
 
 .page.page-dashboard .ws-root button.ws-status-action-btn {
@@ -4371,26 +4446,32 @@ a.ws-sidebar-support-item:hover {
 	align-items: center;
 	justify-content: center;
 	gap: 4px;
-	width: 100%;
-	min-width: 0;
+	width: auto;
+	min-width: 4.75rem;
 	min-height: 2rem;
 	box-sizing: border-box;
 	margin: 0 !important;
-	padding: 5px 6px !important;
+	padding: 5px 8px !important;
 	border-radius: 6px !important;
 	border: 1px solid var(--ws-border-strong) !important;
 	background: #fff !important;
 	color: var(--ws-text) !important;
-	font-size: 0.75rem !important;
+	font-size: 0.72rem !important;
 	font-weight: 600 !important;
 	line-height: 1.2;
 	white-space: nowrap;
 	box-shadow: none !important;
 }
 
+.page.page-dashboard .ws-root .ws-status-page button.ws-status-action-btn {
+	width: 100%;
+	min-width: 0;
+}
+
 .page.page-dashboard .ws-root button.ws-status-action-btn span {
-	overflow: hidden;
-	text-overflow: ellipsis;
+	overflow: visible;
+	text-overflow: clip;
+	flex-shrink: 0;
 }
 
 .page.page-dashboard .ws-root button.ws-status-action-btn svg {
@@ -4417,17 +4498,17 @@ a.ws-sidebar-support-item:hover {
 	color: #fff !important;
 }
 
-/* Progress action — indigo, matches Applications / services nav (not orange) */
+/* Progress — amber, distinct from View (blue), Receipt (green), Join (teal) */
 .page.page-dashboard .ws-root button.ws-status-action-btn--progress {
-	background: #eef2ff !important;
-	color: #4338ca !important;
-	border-color: #c7d2fe !important;
+	background: #fffbeb !important;
+	color: #b45309 !important;
+	border-color: #fcd34d !important;
 }
 
 .page.page-dashboard .ws-root button.ws-status-action-btn--progress:hover:not(:disabled) {
-	background: #e0e7ff !important;
-	color: #3730a3 !important;
-	border-color: #a5b4fc !important;
+	background: #fef3c7 !important;
+	color: #92400e !important;
+	border-color: #fbbf24 !important;
 }
 
 .page.page-dashboard .ws-root button.ws-status-action-btn--view {
@@ -4455,15 +4536,15 @@ a.ws-sidebar-support-item:hover {
 }
 
 .page.page-dashboard .ws-root button.ws-status-action-btn--join {
-	background: #f0fdf4 !important;
-	color: #15803d !important;
-	border-color: #86efac !important;
+	background: #f0fdfa !important;
+	color: #0f766e !important;
+	border-color: #5eead4 !important;
 }
 
 .page.page-dashboard .ws-root button.ws-status-action-btn--join:hover:not(:disabled) {
-	background: #dcfce7 !important;
-	color: #166534 !important;
-	border-color: #4ade80 !important;
+	background: #ccfbf1 !important;
+	color: #115e59 !important;
+	border-color: #2dd4bf !important;
 }
 
 .page.page-dashboard .ws-root button.ws-status-action-btn--resume {
@@ -4540,6 +4621,34 @@ a.ws-sidebar-support-item:hover {
 .ws-admin-page .ws-status-category {
 	margin-top: 0;
 	margin-bottom: 0;
+}
+
+.ws-admin-page .ws-status-table-wrap,
+.ws-official-dashboard .ws-status-table-wrap {
+	margin: 0;
+	overflow-x: auto;
+	max-width: 100%;
+}
+
+.ws-admin-page .ws-status-table,
+.ws-official-dashboard .ws-status-table {
+	table-layout: auto;
+	width: 100%;
+	min-width: 52rem;
+}
+
+.ws-admin-page .ws-status-table thead th:first-child,
+.ws-admin-page .ws-status-table tbody td:first-child,
+.ws-official-dashboard .ws-status-table thead th:first-child,
+.ws-official-dashboard .ws-status-table tbody td:first-child {
+	overflow: visible;
+}
+
+.ws-admin-page .ws-status-table thead th:last-child,
+.ws-admin-page .ws-status-table tbody td:last-child,
+.ws-official-dashboard .ws-status-table thead th:last-child,
+.ws-official-dashboard .ws-status-table tbody td:last-child {
+	padding-right: 1rem;
 }
 
 .ws-admin-page .ws-table .th-content {
@@ -4744,21 +4853,21 @@ a.ws-sidebar-support-item:hover {
 		min-width: 9rem;
 	}
 
-	.ws-status-table thead th.ws-status-th-actions,
-	.ws-status-table tbody td.ws-status-actions,
-	.ws-status-table--service thead th.ws-status-th-actions,
-	.ws-status-table--service tbody td.ws-status-actions {
-		width: 12.5rem;
-		min-width: 12.5rem;
+	.ws-status-page .ws-status-table thead th.ws-status-th-actions,
+	.ws-status-page .ws-status-table tbody td.ws-status-actions,
+	.ws-status-page .ws-status-table--service thead th.ws-status-th-actions,
+	.ws-status-page .ws-status-table--service tbody td.ws-status-actions {
+		width: 15.5rem;
+		min-width: 15.5rem;
 	}
 
-	.ws-status-actions-inner {
+	.ws-status-page .ws-status-actions-inner {
 		width: 100%;
-		max-width: 12.25rem;
+		max-width: none;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.page.page-dashboard .ws-root button.ws-status-action-btn {
+	.page.page-dashboard .ws-root .ws-status-page button.ws-status-action-btn {
 		min-height: 2rem;
 		width: 100%;
 	}
@@ -5561,6 +5670,10 @@ a.ws-sidebar-support-item:hover {
 		padding: 0;
 		transform: translateX(-6px);
 		pointer-events: none;
+	}
+
+	.ws-root.is-sidebar-collapsed .ws-nav-disclosure.is-open::before {
+		display: none;
 	}
 
 	.ws-root.is-sidebar-collapsed .ws-sidebar-brand-text {
@@ -7857,7 +7970,9 @@ a.ws-sidebar-support-item:hover {
 }
 
 .ws-official-dashboard .ws-card-body--pad .ws-table-wrap {
-	margin: 0 -4px;
+	margin: 0;
+	overflow-x: auto;
+	max-width: 100%;
 }
 
 .ws-map-panel {

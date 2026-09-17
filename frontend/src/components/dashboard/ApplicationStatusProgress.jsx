@@ -60,7 +60,15 @@ function badgeLabel(badge) {
 
 function ProgressStep({ step, isLast }) {
 	const isDone = step.state === 'completed'
-	const label = badgeLabel(step.badge || step.state)
+	const isPending = step.state === 'pending'
+	const label = isPending ? null : badgeLabel(step.badge || step.state)
+	const titleClass = [
+		'status-progress__title',
+		isDone ? 'is-done' : '',
+		isPending ? 'is-muted' : '',
+	]
+		.filter(Boolean)
+		.join(' ')
 
 	return (
 		<li className={`status-progress__step status-progress__step--${step.state}`}>
@@ -70,7 +78,7 @@ function ProgressStep({ step, isLast }) {
 			</div>
 			<div className="status-progress__content">
 				<div className="status-progress__row">
-					<p className={`status-progress__title${isDone ? ' is-done' : ''}`}>{step.title}</p>
+					<p className={titleClass}>{step.title}</p>
 					{label ? (
 						<span className={`status-progress__badge status-progress__badge--${step.badge || step.state}`}>
 							{label}
@@ -90,6 +98,7 @@ function ProgressStep({ step, isLast }) {
 							>
 								<span className="status-progress__subdot" aria-hidden />
 								<span className="status-progress__subtitle">{sub.title}</span>
+								{sub.note ? <span className="status-progress__subnote">{sub.note}</span> : null}
 							</li>
 						))}
 					</ul>
@@ -100,10 +109,8 @@ function ProgressStep({ step, isLast }) {
 }
 
 function ApplicationStatusProgress({ application, viewerRole }) {
-	const { steps, currentLabel, applicationNo, formLabel } = buildApplicationStatusProgress(
-		application,
-		{ viewerRole }
-	)
+	const { steps, nextHint, currentLabel, currentTone, applicationNo, formLabel } =
+		buildApplicationStatusProgress(application, { viewerRole })
 
 	return (
 		<div className="status-progress">
@@ -113,8 +120,12 @@ function ApplicationStatusProgress({ application, viewerRole }) {
 					<h3 className="status-progress__heading">{applicationNo}</h3>
 					<p className="status-progress__meta">{formLabel}</p>
 				</div>
-				<span className="status-progress__current">{currentLabel}</span>
+				<span className={`status-progress__current status-progress__current--${currentTone}`}>
+					{currentLabel}
+				</span>
 			</header>
+
+			{nextHint ? <p className="status-progress__hint">{nextHint}</p> : null}
 
 			{steps.length === 0 ? (
 				<p className="status-progress__empty">No progress information available yet.</p>

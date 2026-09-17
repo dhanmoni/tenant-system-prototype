@@ -55,7 +55,7 @@ const STATUS_KEYS = {
 	[STATUS.SUBMITTED]: 'ws.status.submitted',
 	[STATUS.IN_REVIEW]: 'ws.status.inReview',
 	[STATUS.REJECTED]: 'ws.status.rejected',
-	[STATUS.COMPLETED]: 'ws.status.completed',
+	[STATUS.COMPLETED]: 'ws.status.approved',
 	[STATUS.APPROVED]: 'ws.status.approved',
 	[STATUS.DRAFT]: 'ws.status.draft',
 	[STATUS.PARTIAL]: 'ws.status.partial',
@@ -109,13 +109,20 @@ function UserOverview() {
 	const formatStatus = (status, applicationType = '') => {
 		const normalizedType = String(applicationType || '').toLowerCase()
 		const normalizedStatus = String(status || '').trim().toUpperCase()
-		if (normalizedStatus === STATUS.SUBMITTED) return t(STATUS_KEYS[STATUS.SUBMITTED])
 		if (
 			normalizedType.includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) &&
-			normalizedStatus === STATUS.UNDER_PROCESS
+			[STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(normalizedStatus)
 		) {
-			return t(STATUS_KEYS[STATUS.SUBMITTED])
+			return t(STATUS_KEYS[STATUS.IN_REVIEW])
 		}
+		if (
+			[STATUS.IN_REVIEW, STATUS.VALUER_ASSIGNED, STATUS.VALUER_REPORT_SUBMITTED].includes(
+				normalizedStatus
+			)
+		) {
+			return t(STATUS_KEYS[STATUS.IN_REVIEW])
+		}
+		if (normalizedStatus === STATUS.SUBMITTED) return t(STATUS_KEYS[STATUS.SUBMITTED])
 		const key = STATUS_KEYS[normalizedStatus]
 		return key ? t(key) : status || '—'
 	}
@@ -125,17 +132,26 @@ function UserOverview() {
 		return key ? t(key) : applicationType || t('ws.citizen.recent.fallbackType')
 	}
 
-	const statusBadgeClass = (status) => {
+	const statusBadgeClass = (status, applicationType = '') => {
 		const s = String(status || '').toUpperCase()
+		const type = String(applicationType || '').toLowerCase()
 		if ([STATUS.APPROVED, STATUS.COMPLETED].includes(s)) {
 			return 'ws-badge ws-badge--success'
 		}
-		if (s === STATUS.REJECTED) return 'ws-badge ws-badge--danger'
-		if ([STATUS.DRAFT, STATUS.PARTIAL].includes(s)) return 'ws-badge ws-badge--warning'
-		if ([STATUS.IN_REVIEW, STATUS.PENDING, STATUS.VALUER_ASSIGNED, STATUS.VALUER_REPORT_SUBMITTED].includes(s)) {
+		if (s === STATUS.REJECTED || s === STATUS.CANCELLED) return 'ws-badge ws-badge--danger'
+		if (
+			type.includes(APPLICATION_TYPES.TENANCY_CERTIFICATE) &&
+			[STATUS.SUBMITTED, STATUS.IN_REVIEW, STATUS.UNDER_PROCESS].includes(s)
+		) {
 			return 'ws-badge ws-badge--review'
 		}
-		if ([STATUS.WITHDRAWN, STATUS.CANCELLED].includes(s)) return 'ws-badge ws-badge--muted'
+		if ([STATUS.DRAFT, STATUS.PARTIAL].includes(s)) return 'ws-badge ws-badge--warning'
+		if (
+			[STATUS.IN_REVIEW, STATUS.PENDING, STATUS.VALUER_ASSIGNED, STATUS.VALUER_REPORT_SUBMITTED].includes(s)
+		) {
+			return 'ws-badge ws-badge--review'
+		}
+		if ([STATUS.WITHDRAWN].includes(s)) return 'ws-badge ws-badge--muted'
 		return 'ws-badge ws-badge--pending'
 	}
 
@@ -300,7 +316,7 @@ function UserOverview() {
 														{t('ws.citizen.recent.col.status')}
 													</span>
 													<span
-														className={`ws-citizen-recent-status ${statusBadgeClass(app.status)}`}
+														className={`ws-citizen-recent-status ${statusBadgeClass(app.status, app.application_type)}`}
 													>
 														{formatStatus(app.status, app.application_type)}
 													</span>
